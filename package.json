@@ -1,0 +1,23 @@
+{
+  "name": "halo",
+  "version": "1.0.0",
+  "description": "Viljandi Kutseõppekeskuse sisseastumiskatsete rakendus",
+  "main": "index.js",
+  "directories": {
+    "doc": "doc"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@bitbucket.org:diarainfra/sisseastumine.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bootstrap": "^5.3.3",
+    "jquery": "^3.7.1"
+  }
+}

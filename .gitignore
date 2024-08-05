@@ -1,0 +1,6 @@
+/.idea
+/node_modules
+/vendor
+/config.php
+node_modules
+**/.DS_Store

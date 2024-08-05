@@ -1,0 +1,26 @@
+{
+  "require": {
+    "php": ">=8",
+    "phpmailer/phpmailer": "^6.8",
+    "ext-mysqli": "*",
+    "stichoza/google-translate-php": "^4.1",
+    "ezyang/htmlpurifier": "^4.16",
+    "ext-json": "*",
+    "doctrine/sql-formatter": "^1.1",
+    "sentry/sdk": "^3.5"
+  },
+  "autoload": {
+    "psr-4": {
+      "App\\": [
+        "system/classes/",
+        "classes/App",
+        "classes/Exceptions"
+      ]
+    }
+  },
+  "config": {
+    "allow-plugins": {
+      "php-http/discovery": true
+    }
+  }
+}
