@@ -29,7 +29,7 @@
 
 <body>
 
-<div class="ui container">
+<div class="container" id="container">
     <?php
     /** @var string $controller set in Application::__construct() */
     /** @var string $action set in Application::__construct() */

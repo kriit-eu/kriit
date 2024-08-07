@@ -8,6 +8,11 @@ table.clickable-rows tr:hover {
     width: auto !important;
 }
 
+#container {
+    padding-top: 50px;
+    margin-top: 1em
+}
+
 a {
     cursor: pointer;
 }
