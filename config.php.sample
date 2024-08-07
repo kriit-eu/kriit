@@ -1,32 +1,37 @@
 <?php
 
-define('ENV', 'ENV_DEVELOPMENT');
+const ENV = 'ENV_DEVELOPMENT';
 
 // Local configuration
-define('DATABASE_HOSTNAME', '127.0.0.1');
-define('DATABASE_USERNAME', 'root');
-define('DATABASE_PASSWORD', '');
-define('DATABASE_DATABASE', '');
-define('SMTP_AUTH_PASSWORD', '');
-define('SMTP_AUTH_USERNAME', '');
-define('SMTP_AUTH', false);
-define('SMTP_DEBUG', 0);
-define('SMTP_ENCRYPTION', 'none');
-define('SMTP_FROM', PROJECT_NAME . '@example.com');
-define('SMTP_HOST', 'localhost');
-define('SMTP_PORT', 1025); // 1025 - Mailhog, 25 - live
-define('SMTP_USE_SENDMAIL', false); // Send mail via system sendmail command or directly via SMTP
-define('SMTP_DKIM_ENABLED', false);
-define('SMTP_DKIM_DOMAIN', 'example.com');
-define('SMTP_DKIM_PRIVATE_KEY', '.certs/dkim_private_key.pem');
-define('SMTP_DKIM_SELECTOR', 'example');
-define('SMTP_DKIM_PASSPHRASE', '');
-define('SMTP_DKIM_IDENTITY', SMTP_FROM);
+const DATABASE_HOSTNAME = 'mysql';
+const DATABASE_USERNAME = 'root';
+const DATABASE_PASSWORD = '';
+const DATABASE_DATABASE = 'sisseastumine';
+
+//Mail
+const SMTP_AUTH_PASSWORD = '';
+const SMTP_AUTH_USERNAME = '';
+const SMTP_AUTH = false;
+const SMTP_DEBUG = 0;
+const SMTP_ENCRYPTION = 'none';
+const SMTP_FROM = PROJECT_NAME . '@example.com';
+const SMTP_HOST = 'mailhog';
+const SMTP_PORT = 1025; // 1025 - Mailhog, 25 - live
+const SMTP_USE_SENDMAIL = false; // Send mail via system sendmail command or directly via SMTP
+const SMTP_DKIM_ENABLED = false;
+const SMTP_DKIM_DOMAIN = 'example.com';
+const SMTP_DKIM_PRIVATE_KEY = '.certs/dkim_private_key.pem';
+const SMTP_DKIM_SELECTOR = 'example';
+const SMTP_DKIM_PASSPHRASE = '';
+const SMTP_DKIM_IDENTITY = SMTP_FROM;
 
 // Make sure timestamps are correct
 date_default_timezone_set('Europe/Tallinn');
 
 // In which language you have translatable phrases in the code
-define('DEFAULT_LANGUAGE', 'en');
+const DEFAULT_LANGUAGE = 'en';
+
+// List of allowed IP addresses for applicants
+const ALLOWED_IP_ADDRESSES = ['127.0.0.1', '::1'];
 
 const SENTRY_DSN = '';

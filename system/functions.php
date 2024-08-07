@@ -44,7 +44,7 @@ function get_translation_strings($lang)
         ? "NULL AS translationIn$lang" : "translationIn$lang";
 
     $translations_raw = Db::getAll("
-        SELECT translationPhrase, $translationColumn 
+        SELECT translationPhrase, $translationColumn
         FROM translations");
 
     foreach ($translations_raw as $item) {
@@ -173,4 +173,22 @@ function handleProductionError(\Exception $exception){
     if($eventCode){
         echo " and this event id: <b>" .  $eventCode . "</b>";
     }
+}
+
+function validate($var, $type = IS_ID, $must_not_be_empty = false): bool
+{
+    if (($must_not_be_empty && empty($var)) || ($type == IS_ID && !isValidID($var)
+            || $type == IS_ARRAY && !is_array($var)
+            || $type == IS_STRING && !is_string($var)
+            || $type == IS_DATE && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $var)
+            || $type == IS_0OR1 && !($var === 0 || $var === 1))) {
+        throw new \Exception('Invalid parameter value');
+    }
+
+    return true;
+}
+
+function isValidID($id): bool
+{
+    return !!filter_var($id, FILTER_VALIDATE_INT) && $id > 0;
 }

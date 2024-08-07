@@ -18,7 +18,7 @@ class Db
         $this->conn = new \mysqli($host, $user, $password, $dbname);
 
         // Set error reporting level
-        $this->conn->report_mode = MYSQLI_REPORT_ALL;
+        mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
         if ($this->conn->connect_error) {
             throw new \Exception("Connection failed: " . $this->conn->connect_error);

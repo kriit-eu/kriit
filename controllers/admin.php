@@ -153,7 +153,7 @@ class admin extends Controller
             stop(400, 'Invalid' . ' userId');
         }
 
-        stop(200, Db::getFirst("SELECT userIsAdmin,userEmail,userName FROM users WHERE userId = $_POST[userId]"));
+        stop(200, Db::getFirst("SELECT userIsAdmin,userPersonalCode,userName FROM users WHERE userId = $_POST[userId]"));
     }
 
     public function htmlIsValid($html): bool

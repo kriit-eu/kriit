@@ -1,6 +1,53 @@
 const RELOAD = 33;
 var error_modal = $("#error-modal");
 
+$(document).ready(function () {
+    const $userPersonalCodeInput = $("#userPersonalCode");
+    const $userPersonalCodeHelp = $("#userPersonalCodeHelp");
+    const $submitButton = $("#submitButton");
+    const $passwordField = $("#password-field");
+    const $passwordInput = $("#userPassword");
+    const userPersonalCodePattern = /^[1-6]\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{4}$/;
+    let userPersonalCodeValue = "";
+
+    $userPersonalCodeInput.on("input", function () {
+        userPersonalCodeValue = $userPersonalCodeInput.val();
+        if (userPersonalCodeValue.length > 11) {
+            $userPersonalCodeHelp.text("Isikukood ei vasta mustrile").addClass("text-danger");
+            $passwordField.hide();
+            $submitButton.prop("disabled", true);
+        } else if (userPersonalCodeValue.length === 11) {
+            if (userPersonalCodePattern.test(userPersonalCodeValue) && validateControlNumber(userPersonalCodeValue)) {
+                ajax("users/check", {userPersonalCode: userPersonalCodeValue}, function (response) {
+                    if (!response || !response.data || !response.data.user) {
+                        return $userPersonalCodeHelp.text("Selle isikukoodiga isik ei ole registreeritud.").addClass("text-danger");
+                    }
+                    if (response.data.user.userIsAdmin) {
+                        return $passwordField.show();
+                    }
+                    $submitButton.prop("disabled", false);
+                });
+            } else {
+                $userPersonalCodeHelp.text("Isikukood ei vasta mustrile").addClass("text-danger");
+                $passwordField.hide();
+                $submitButton.prop("disabled", true);
+            }
+        } else {
+            $userPersonalCodeHelp.text("Sisesta enda isikukood").removeClass("text-danger");
+            $passwordField.hide();
+            $submitButton.prop("disabled", true);
+        }
+    });
+
+    $passwordInput.on("input", () => {
+        if ($passwordInput.val()) {
+            $submitButton.prop("disabled", false)
+        } else {
+            $submitButton.prop("disabled", true)
+        }
+    })
+});
+
 function tryToParseJSON(jsonString) {
     try {
         var o = JSON.parse(jsonString);
@@ -94,11 +141,32 @@ function ajax(url, options, callback_or_redirect_url, error_callback) {
                 } else if (callback_or_redirect_url === RELOAD) {
                     location.reload();
                 }
-
             }
-
         });
+}
 
+function validateControlNumber(code) {
+    const multipliers1 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 1];
+    const multipliers2 = [3, 4, 5, 6, 7, 8, 9, 1, 2, 3];
+    let sum = 0;
+    for (let i = 0; i < 10; i++) {
+        sum += parseInt(code[i]) * multipliers1[i];
+    }
+    let mod = sum % 11;
+
+    if (mod === 10) {
+        sum = 0;
+        for (let i = 0; i < 10; i++) {
+            sum += parseInt(code[i]) * multipliers2[i];
+        }
+
+        mod = sum % 11;
+
+        if (mod === 10) {
+            mod = 0;
+        }
+    }
+    return mod === parseInt(code[10]);
 }
 
 $('table.clickable-rows tr').on('click', function () {

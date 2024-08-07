@@ -5,6 +5,7 @@
  * Class auth authenticates user and permits to check if the user has been logged in
  * Automatically loaded when the controller has $requires_auth property.
  */
+#[\AllowDynamicProperties]
 class Auth
 {
 
@@ -30,7 +31,6 @@ class Auth
     function load_user_data($user)
     {
 
-
         foreach ($user as $user_attr => $value) {
             $this->$user_attr = $value;
         }
@@ -50,40 +50,37 @@ class Auth
         }
 
         // Not all credentials were provided
-        if (!(isset($_POST['userEmail']) && isset($_POST['userPassword']))) {
-
+        if (!(isset($_POST['userPersonalCode']))) {
             $this->show_login();
-
         }
-
-
-        // Prevent SQL injection
-        $email = addslashes($_POST['userEmail']);
-
 
         // Attempt to retrieve user data from database
-        $user = Db::getFirst("SELECT * 
+        $user = Db::getFirst("SELECT *
                            FROM users
-                           WHERE userEmail = '$email'
-                           AND userDeleted = 0");
+                           WHERE userPersonalCode = ?
+                           AND userDeleted = 0", [$_POST['userPersonalCode']]);
 
-
-        // No such user or wrong password
-        if (empty($user['userId']) || !password_verify($_POST['userPassword'], $user['userPassword'])) {
-            $this->show_login([__("Wrong username or password")]);
+        // Show login again if user is not found in the database
+        if (empty($user['userId'])) {
+            $this->show_login(['Tundmatu isik']);
         }
 
+        // Show login again if user is admin and password is wrong
+        if ($user['userIsAdmin'] && !password_verify($_POST['userPassword'], $user['userPassword'])) {
+            $this->show_login(['Vale parool']);
+        }
+
+        if (!$user['userIsAdmin'] && !in_array($_SERVER['REMOTE_ADDR'], ALLOWED_IP_ADDRESSES)) {
+            $this->show_login(["Sellelt IP aadressilt ($_SERVER[REMOTE_ADDR]) pole teil õigust logida sisse"]);
+        }
 
         // User has provided correct login data if we are here
         User::login($user['userId']);
 
-
         // Load $this->auth with users table's field values
         $this->load_user_data($user);
 
-
         return true;
-
     }
 
     /**

@@ -6,10 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
 
-    <!-- Fomantic core CSS -->
-    <link href="node_modules/fomantic-ui-css/semantic.min.css?<?= COMMIT_HASH ?>" rel="stylesheet">
-    <!-- Site core CSS -->
-    <link href="assets/css/main.css?<?= COMMIT_HASH ?>" rel="stylesheet">
+    <!-- Bootstrap core CSS -->
+    <script src="node_modules/bootstrap/dist/js/bootstrap.min.js?<?= COMMIT_HASH ?>"></script>
+    <link href="node_modules/bootstrap/dist/css/bootstrap.min.css?<?= COMMIT_HASH ?>" rel="stylesheet">
+
+    <!-- Fav and touch icons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="manifest" href="site.webmanifest">
 
     <!-- jQuery -->
     <script src="node_modules/jquery/dist/jquery.min.js?<?= COMMIT_HASH ?>"></script>
@@ -17,12 +22,6 @@
     <style>
         body {
             padding-top: 50px;
-        }
-
-        .form-signin {
-            max-width: 330px;
-            padding: 15px;
-            margin: 0 auto;
         }
 
         .form-signin .form-signin-heading,
@@ -60,57 +59,37 @@
             border-top-right-radius: 0;
         }
 
-        span.input-group-addon {
-            width: 50px;
-        }
-
-        div.input-group {
-            width: 100%;
-        }
-
-        form.form-signin {
-            background-color: #ffffff;
-        }
     </style>
 </head>
 
 <body>
 
-<div class="ui container">
-
-    <form class="ui form segment" method="post">
-
-        <h2 class="ui header"><?= __('Please sign in') ?></h2>
+<div class="container">
+    <h2 class="ui header">Tere tulemast Viljandi Kutseõppekeskuse sisseastumiskatsetele</h2>
 
         <?php if (isset($errors)) {
             foreach ($errors as $error): ?>
-                <div class="ui negative message">
+                <div class="alert alert-danger" role="alert">
                     <?= $error ?>
                 </div>
             <?php endforeach;
         } ?>
 
-        <div class="field">
-            <label for="user"><?= __('Email') ?></label>
-            <div class="ui left icon input">
-                <input id="user" name="userEmail" type="text" placeholder="demo@example.com" autofocus>
-                <i class="user icon"></i>
-            </div>
+    <form method="post">
+        <div class="mb-3">
+            <label for="userPersonalCode" class="form-label">Isikukood</label>
+            <input type="text" name="userPersonalCode" class="form-control" id="userPersonalCode"
+                   aria-describedby="userPersonalCode">
+            <div id="userPersonalCodeHelp" class="form-text">Sisesta enda isikukood</div>
         </div>
 
-        <div class="field">
-            <label for="pass"><?= __('Password') ?></label>
-            <div class="ui left icon input">
-                <input id="pass" name="userPassword" type="password" placeholder="******">
-                <i class="lock icon"></i>
+        <div class="mb-3" id="password-field" style="display: none">
+            <label for="userPassword" class="form-label">Parool</label>
+            <input type="password" name="userPassword" class="form-control" id="userPassword">
             </div>
-        </div>
-
-        <button class="ui blue button" type="submit"><?= __('Sign in') ?></button>
+        <button type="submit" id="submitButton" class="btn btn-primary" disabled>Logi sisse</button>
     </form>
-
 </div>
-<script src="node_modules/fomantic-ui-css/semantic.min.js?<?= COMMIT_HASH ?>"></script>
 <script src="assets/js/main.js?<?= COMMIT_HASH ?>"></script>
 </body>
 </html>

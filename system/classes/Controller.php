@@ -4,7 +4,7 @@
  * @property Auth auth
  * @property mixed params
  */
-
+#[\AllowDynamicProperties]
 class Controller
 {
     public $template = 'master';
@@ -43,4 +43,4 @@ class Controller
         // Made it here — all OK
         return $id;
     }
-} 
+}
