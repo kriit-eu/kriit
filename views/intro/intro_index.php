@@ -41,8 +41,9 @@
     <br>
     <button type="button" id="submitButton" class="btn btn-primary" disabled>Alusta</button>
 </div>
-<script>
 
+<script>
+    const userId = <?php echo json_encode($_SESSION['userId']); ?>;
     // Enable submit button when agreement checkbox is checked and disabled otherwise
     $('#agreement').change(function () {
         if (this.checked) {
@@ -52,14 +53,16 @@
         }
     })
 
+
     // Navigate to exercises/ on submit
     $('#submitButton').click(function (e) {
         e.preventDefault();
-        window.location.href = 'exercises/';
+        ajax("exercises/start", {}, () => {
+
+            window.location.href = 'exercises/'
+        })
     })
 
 </script>
-
-<script src="assets/js/main.js?<?= COMMIT_HASH ?>"></script>
 
 

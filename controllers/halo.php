@@ -16,9 +16,8 @@ class halo extends Controller
         }
     }
 
-    function POST_index()
+    function AJAX_create_module()
     {
-
         // Check if the controller's table already exists in the database
         // $table_names_are_singular = true; # currently plural names are not supported
         $name_plural = $_POST['name_plural'];
@@ -31,22 +30,22 @@ class halo extends Controller
         if (!empty(Db::getAll("SHOW TABLES LIKE '$table_name'"))) {
 
             // Show error
-            echo '<div class="alert alert-danger">' . "The table $name_plural already existed. Aborting." . '</div>';
+            stop(409, "The table $name_plural already existed. Aborting.");
 
         } else {
 
             // Add table to database
             Db::q("CREATE TABLE `$name_plural_esc` (
-             `{$name_singular_esc}_id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'Autocreated',
-             `{$name_singular_esc}_name` varchar(50) NOT NULL COMMENT 'Autocreated',
-             PRIMARY KEY (`{$name_singular_esc}_id`)
+             `{$name_singular_esc}Id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'Autocreated',
+             `{$name_singular_esc}Name` varchar(50) NOT NULL COMMENT 'Autocreated',
+             PRIMARY KEY (`{$name_singular_esc}Id`)
            ) ENGINE=InnoDB AUTO_INCREMENT=1");
 
             // Print banner
 
             // Add 2 rows to database
-            Db::insert($table_name, array($table_prefix . '_name' => $name_singular . " #1"));
-            Db::insert($table_name, array($table_prefix . '_name' => $name_singular . " #2"));
+            Db::insert($table_name, array($table_prefix . 'Name' => $name_singular . " #1"));
+            Db::insert($table_name, array($table_prefix . 'Name' => $name_singular . " #2"));
 
             // Add controller from template (substituting module for controller's name)
             $content = file_get_contents('system/scaffolding/controller_template.php');
@@ -90,8 +89,7 @@ class halo extends Controller
             // Prevent git running under developer's user account having permission issues when commiting this file
             exec("chmod -R a+rwX *");
 
-
-            echo '<div class="alert alert-success">' . 'The module <a href="' . BASE_URL . $table_name . '">' . $table_name . '</a> was created.</div>';
+            stop(200, 'The module <a href="' . BASE_URL . $table_name . '">' . $table_name . '</a> was created.');
         }
 
     }

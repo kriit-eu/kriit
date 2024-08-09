@@ -48,7 +48,7 @@ class Application
 				File  <i>controllers/{$this->controller}.php</i> exists but class <i>{$this->controller}</i> does not. You probably copied the file but forgot to rename the class in the copy.",
                 500);
         }
-        $controller = new $controller_fqn();
+        $controller = new $controller_fqn($this);
 
         // Make request and auth properties available to controller
         $controller->controller = $this->controller;

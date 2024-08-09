@@ -28,6 +28,7 @@
 </head>
 
 <body>
+<script src="assets/js/main.js?<?= COMMIT_HASH ?>"></script>
 
 <div class="container" id="container">
     <?php
@@ -42,7 +43,6 @@
 
 <?php require 'templates/partials/error_modal.php'; ?>
 
-<script src="assets/js/main.js?<?= COMMIT_HASH ?>"></script>
 
 </body>
 </html>

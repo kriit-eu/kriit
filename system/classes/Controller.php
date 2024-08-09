@@ -43,4 +43,11 @@ class Controller
         // Made it here — all OK
         return $id;
     }
+
+    protected function redirect($url)
+    {
+        $base_url = BASE_URL;
+        header("Location: $base_url$url");
+        exit();
+    }
 }
