@@ -6,7 +6,7 @@
     reeglid:</p>
 
 <h6><strong>Alustamine</strong></h6>
-<p>Teil on 60 minutit ülesannete lahendamiseks. Te võite kasutada internetti lahenduste leidmiseks, kuid lubatud ei ole
+<p>Teil on 20 minutit ülesannete lahendamiseks. Te võite kasutada internetti lahenduste leidmiseks, kuid lubatud ei ole
     koostöö teiste isikutega, sealhulgas tehisintellektiga. Vahele jäämine tähendab automaatset läbikukkumist.</p>
 
 <h6><strong>Ülesannete lahendamine</strong></h6>
@@ -17,7 +17,7 @@
 
 
 <h6><strong>Lõpp</strong></h6>
-<p>Programm lõppeb, kui kõik ülesanded on lahendatud või 60 minutit on ära kasutatud.</p>
+<p>Programm lõppeb, kui kõik ülesanded on lahendatud või 20 minutit on ära kasutatud.</p>
 <p>Kui lahendate kõik ülesanded, siis mida vähem aega teil kulus, seda eespool olete pingereas. Kui aeg sai enne otsa,
     siis mida rohkem ülesandeid on lahendatud, seda eespool olete pingereas.</p>
 
