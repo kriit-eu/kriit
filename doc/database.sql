@@ -58,7 +58,7 @@ CREATE TABLE `activityLog` (
   `activityId` int unsigned NOT NULL COMMENT 'Autocreated',
   `id` int unsigned DEFAULT NULL,
   PRIMARY KEY (`activityLogId`)
-) ENGINE=InnoDB AUTO_INCREMENT=53 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=112 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -119,8 +119,93 @@ INSERT INTO `activityLog` VALUES
 ('2024-08-12 12:56:30',49,1,4,2),
 ('2024-08-12 12:59:20',50,1,2,NULL),
 ('2024-08-12 13:03:27',51,2,1,NULL),
-('2024-08-12 13:03:32',52,2,3,NULL);
+('2024-08-12 13:03:32',52,2,3,NULL),
+('2024-08-12 13:04:18',53,2,4,1),
+('2024-08-12 13:04:33',54,2,4,2),
+('2024-08-12 13:05:12',55,2,2,NULL),
+('2024-08-12 13:09:24',56,2,1,NULL),
+('2024-08-12 13:09:39',57,2,4,2),
+('2024-08-12 13:09:39',58,2,5,NULL),
+('2024-08-12 13:09:39',59,2,2,NULL),
+('2024-08-12 13:10:44',60,2,1,NULL),
+('2024-08-12 13:10:44',61,2,5,NULL),
+('2024-08-12 13:10:44',62,2,2,NULL),
+('2024-08-12 13:14:20',63,1,1,NULL),
+('2024-08-12 13:53:09',64,1,2,NULL),
+('2024-08-12 13:53:18',65,1,1,NULL),
+('2024-08-12 13:56:55',66,1,2,NULL),
+('2024-08-12 13:57:06',67,1,1,NULL),
+('2024-08-12 16:07:59',68,1,2,NULL),
+('2024-08-12 16:08:34',69,2,1,NULL),
+('2024-08-12 16:08:37',70,2,3,NULL),
+('2024-08-12 16:09:00',71,2,4,2),
+('2024-08-12 16:09:00',72,2,5,NULL),
+('2024-08-12 16:09:01',73,2,2,NULL),
+('2024-08-12 16:15:12',74,2,1,NULL),
+('2024-08-12 16:15:28',75,2,4,2),
+('2024-08-12 16:15:28',76,2,5,NULL),
+('2024-08-12 16:15:28',77,2,2,NULL),
+('2024-08-12 16:19:23',78,2,1,NULL),
+('2024-08-12 16:19:23',79,2,5,NULL),
+('2024-08-12 16:19:23',80,2,2,NULL),
+('2024-08-12 16:21:12',81,1,1,NULL),
+('2024-08-12 16:39:22',82,1,2,NULL),
+('2024-08-12 16:39:55',83,2,1,NULL),
+('2024-08-12 16:40:13',84,2,3,NULL),
+('2024-08-12 16:40:26',85,2,4,1),
+('2024-08-12 16:40:26',86,2,5,NULL),
+('2024-08-12 16:40:26',87,2,2,NULL),
+('2024-08-12 16:40:42',88,1,1,NULL),
+('2024-08-12 16:47:59',89,1,2,NULL),
+('2024-08-12 16:48:06',90,2,1,NULL),
+('2024-08-12 16:48:06',91,2,5,NULL),
+('2024-08-12 16:48:06',92,2,2,NULL),
+('2024-08-12 16:48:20',93,2,1,NULL),
+('2024-08-12 16:48:20',94,2,5,NULL),
+('2024-08-12 16:48:20',95,2,2,NULL),
+('2024-08-12 16:50:11',96,1,1,NULL),
+('2024-08-12 16:50:35',97,1,4,2),
+('2024-08-12 16:50:35',98,1,5,NULL),
+('2024-08-12 16:50:35',99,1,2,NULL),
+('2024-08-12 16:53:06',100,2,1,NULL),
+('2024-08-12 16:53:18',101,2,4,1),
+('2024-08-12 16:53:29',102,2,4,2),
+('2024-08-12 16:53:29',103,2,5,NULL),
+('2024-08-12 16:53:29',104,2,2,NULL),
+('2024-08-12 16:53:40',105,1,1,NULL),
+('2024-08-12 16:53:40',106,1,5,NULL),
+('2024-08-12 16:53:40',107,1,2,NULL),
+('2024-08-12 16:53:56',108,1,1,NULL),
+('2024-08-12 17:59:03',109,1,5,NULL),
+('2024-08-12 17:59:03',110,1,2,NULL),
+('2024-08-12 17:59:45',111,1,1,NULL);
 /*!40000 ALTER TABLE `activityLog` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `applicants`
+--
+
+DROP TABLE IF EXISTS `applicants`;
+/*!50503 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `applicants` (
+  `applicantId` int unsigned NOT NULL AUTO_INCREMENT COMMENT 'Autocreated',
+  `applicantName` varchar(50) NOT NULL COMMENT 'Autocreated',
+  PRIMARY KEY (`applicantId`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4;
+/*!50503 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `applicants`
+--
+
+LOCK TABLES `applicants` WRITE;
+/*!40000 ALTER TABLE `applicants` DISABLE KEYS */;
+INSERT INTO `applicants` VALUES
+(1,'applicant #1'),
+(2,'applicant #2');
+/*!40000 ALTER TABLE `applicants` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -138,7 +223,7 @@ CREATE TABLE `deployments` (
   `deploymentCommitAuthor` varchar(255) DEFAULT NULL,
   `deploymentCommitSha` varchar(256) NOT NULL,
   PRIMARY KEY (`deploymentId`)
-) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=32 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -165,7 +250,19 @@ INSERT INTO `deployments` VALUES
 (16,'2024-08-12 00:38:18','2024-08-12 10:06:54','Refactor exercise v','henno.taht@gmail.com','f3b2e5c'),
 (17,'2024-08-09 17:37:19','2024-08-12 10:41:54','As an applicant I c','Violetta Zakorzhevskaya','d09c2f9'),
 (18,'2024-08-12 11:00:15','2024-08-12 11:04:17','Pre-test puppeteer','Violetta Zakorzhevskaya','50e2f78'),
-(19,'2024-08-12 12:02:25','2024-08-12 12:26:32','Allow from all IP a','henno.taht@gmail.com','165427d');
+(19,'2024-08-12 12:02:25','2024-08-12 12:26:32','Allow from all IP a','henno.taht@gmail.com','165427d'),
+(20,'2024-08-12 13:12:54','2024-08-12 13:14:11','As an applicant I c','Violetta Zakorzhevskaya','0379b64'),
+(21,'2024-08-12 14:05:52','2024-08-12 14:09:31','Rename eksamikomisj','henno.taht@gmail.com','9ea53cf'),
+(22,'2024-08-12 14:10:31','2024-08-12 14:15:45','Update \"Alusta uut ','henno.taht@gmail.com','63fdbcf'),
+(23,'2024-08-12 14:20:25','2024-08-12 14:23:23','Add Admin button','Violetta Zakorzhevskaya','1d21143'),
+(24,'2024-08-12 14:27:51','2024-08-12 14:28:12','Add admin_button.ph','Violetta Zakorzhevskaya','7d44b7d'),
+(25,'2024-08-12 14:59:41','2024-08-12 15:06:07','Move Admin button c','henno.taht@gmail.com','b41f80d'),
+(26,'2024-08-12 16:22:26','2024-08-12 16:23:01','Add userTimeTotal','Violetta Zakorzhevskaya','574003a'),
+(27,'2024-08-12 16:52:39','2024-08-12 16:53:02','Fix \"Alusta uut ses','henno.taht@gmail.com','1ea157a'),
+(28,'2024-08-12 17:14:08','2024-08-12 17:50:08','Add Ranking','Violetta Zakorzhevskaya','6e0c581'),
+(29,'2024-08-12 17:51:29','2024-08-12 17:55:40','Remove ranking','henno.taht@gmail.com','219029e'),
+(30,'2024-08-12 17:56:19','2024-08-12 17:56:51','Add ranking to admi','Violetta Zakorzhevskaya','680ecb6'),
+(31,'2024-08-12 17:58:37','2024-08-12 17:58:58','Fix admin btn','henno.taht@gmail.com','bd1f7b6');
 /*!40000 ALTER TABLE `deployments` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -219,8 +316,8 @@ CREATE TABLE `settings` (
 LOCK TABLES `settings` WRITE;
 /*!40000 ALTER TABLE `settings` DISABLE KEYS */;
 INSERT INTO `settings` VALUES
-('projectVersion','165427d'),
-('translationUpdateLastRun','2024-08-12 12:26:32');
+('projectVersion','bd1f7b6'),
+('translationUpdateLastRun','2024-08-12 17:58:58');
 /*!40000 ALTER TABLE `settings` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -370,7 +467,7 @@ CREATE TABLE `translations` (
   `TranslationSource` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`translationId`),
   UNIQUE KEY `translations_translationPhrase_uindex` (`translationPhrase`)
-) ENGINE=InnoDB AUTO_INCREMENT=38 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=39 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -389,10 +486,6 @@ INSERT INTO `translations` VALUES
 (7,'Server returned an error. Please try again later','existsInCode',NULL),
 (8,'Module Name','existsInCode',NULL),
 (9,'Access denied','existsInCode',NULL),
-(10,'Users','existsInCode',NULL),
-(11,'Logs','existsInCode',NULL),
-(12,'Halo','existsInCode',NULL),
-(13,'Translations','existsInCode',NULL),
 (14,'Logout','existsInCode',NULL),
 (15,'Error','existsInCode',NULL),
 (16,'Unknown error!','existsInCode',NULL),
@@ -415,7 +508,8 @@ INSERT INTO `translations` VALUES
 (33,'Select language','existsInCode',NULL),
 (34,'Google translates < 5000 chars at a time','existsInCode',NULL),
 (35,'Select language first','existsInCode',NULL),
-(36,'Are you really sure you want to remove the language %%% and destroy its translations?','existsInCode',NULL);
+(36,'Are you really sure you want to remove the language %%% and destroy its translations?','existsInCode',NULL),
+(38,'Applicant Name','existsInCode',NULL);
 /*!40000 ALTER TABLE `translations` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -443,7 +537,9 @@ CREATE TABLE `userDoneExercises` (
 LOCK TABLES `userDoneExercises` WRITE;
 /*!40000 ALTER TABLE `userDoneExercises` DISABLE KEYS */;
 INSERT INTO `userDoneExercises` VALUES
-(1,1);
+(2,1),
+(1,2),
+(2,2);
 /*!40000 ALTER TABLE `userDoneExercises` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -459,11 +555,12 @@ CREATE TABLE `users` (
   `userName` varchar(191) NOT NULL,
   `userPersonalCode` varchar(191) NOT NULL,
   `userIsAdmin` tinyint NOT NULL DEFAULT 0,
-  `userPassword` varchar(191) NOT NULL,
+  `userPassword` varchar(191) NOT NULL DEFAULT '',
   `userDeleted` tinyint unsigned NOT NULL DEFAULT 0,
   `userTimeUpAt` datetime DEFAULT NULL,
+  `userTimeTotal` time DEFAULT NULL,
   PRIMARY KEY (`userId`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=47 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -473,8 +570,52 @@ CREATE TABLE `users` (
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
 INSERT INTO `users` VALUES
-(1,'Kati Maasikas','41111111115',1,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,'2024-08-12 13:51:39'),
-(2,'Mati Vaarikas','31111111114',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,'2024-08-12 14:03:32');
+(1,'Kati Maasikas','41111111115',1,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,'05:07:24'),
+(2,'Mati Vaarikas','31111111114',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,'2024-08-12 17:00:13','00:13:16'),
+(3,'Genor Kasak','50204305710',0,'',0,NULL,NULL),
+(4,'Sten Elisson','38512232743',0,'',0,NULL,NULL),
+(5,'Alicia Jemets','49912300211',0,'',0,NULL,NULL),
+(6,'Kristo Kaljurand','38102020218',0,'',0,NULL,NULL),
+(7,'Tanel Maasen','50411110878',0,'',0,NULL,NULL),
+(8,'Klen Kert Korjus','50204237010',0,'',0,NULL,NULL),
+(9,'Aleks Kudrin','39904086018',0,'',0,NULL,NULL),
+(10,'Ove Kukemelk','39111210259',0,'',0,NULL,NULL),
+(11,'Annabell Lohvart','49507204943',0,'',0,NULL,NULL),
+(12,'Nele Metsar','49608012712',0,'',0,NULL,NULL),
+(13,'Olga Morgunova','60205205230',0,'',0,NULL,NULL),
+(14,'Joonas Mägi','38302146021',0,'',0,NULL,NULL),
+(15,'Markus Mäll','50210212714',0,'',0,NULL,NULL),
+(16,'Bert Põder','38710155767',0,'',0,NULL,NULL),
+(17,'Erik Mikussaar','39610044919',0,'',0,NULL,NULL),
+(18,'Kärt Semm','49302104917',0,'',0,NULL,NULL),
+(19,'Koit Värat','39207104225',0,'',0,NULL,NULL),
+(20,'Sigmar Treumann','39204292780',0,'',0,NULL,NULL),
+(21,'Katrin Vaarask','49106082823',0,'',0,NULL,NULL),
+(22,'Gert Ast','50803114916',0,'',0,NULL,NULL),
+(23,'Joel-Martin Riive','50205176029',0,'',0,NULL,NULL),
+(24,'Andre Park','37005315727',0,'',0,NULL,NULL),
+(25,'Riho Sepp','39306210242',0,'',0,NULL,NULL),
+(26,'Rasmus Aug','39409070845',0,'',0,NULL,NULL),
+(27,'Liilian Lind','60709232817',0,'',0,NULL,NULL),
+(28,'Gristel Aste','49201056533',0,'',0,NULL,NULL),
+(29,'Indrek Sihver','50804046037',0,'',0,NULL,NULL),
+(30,'Oleksandr Ovsiienko','50811250030',0,'',0,NULL,NULL),
+(31,'Carl-Richard Pukk','50204016031',0,'',0,NULL,NULL),
+(32,'Kaspar Loks','39104212765',0,'',0,NULL,NULL),
+(33,'Eero Vallistu','39709126012',0,'',0,NULL,NULL),
+(34,'Kuldar Joel Künnapas','50507024218',0,'',0,NULL,NULL),
+(35,'Anastasija Hatkevitš','60804217070',0,'',0,NULL,NULL),
+(36,'Arina Aleksandrova','60810012215',0,'',0,NULL,NULL),
+(37,'Sander Prii','39310282738',0,'',0,NULL,NULL),
+(38,'Efe Marko Güldere','50409020827',0,'',0,NULL,NULL),
+(39,'Björn Johanson','50411280867',0,'',0,NULL,NULL),
+(40,'Marleen Rivimets','49705275211',0,'',0,NULL,NULL),
+(41,'Frank Tiisler','39611286010',0,'',0,NULL,NULL),
+(42,'Brigita Kasemets','49910074220',0,'',0,NULL,NULL),
+(43,'Olga Orlova','48801213712',0,'',0,NULL,NULL),
+(44,'Timo Lempu','39203110022',0,'',0,NULL,NULL),
+(45,'Sander Tuisk','39212032012',0,'',0,NULL,NULL),
+(46,'Andreas Kirs','38703072751',0,'',0,NULL,NULL);
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -487,4 +628,4 @@ UNLOCK TABLES;
 /*!50503 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-08-12 13:03:47
+-- Dump completed on 2024-08-12 18:01:48

@@ -4,13 +4,13 @@
     <p>Lahendatud ülesandeid: <span class="highlight">2</span></p>
 </div>
 
-<p>Täname teid osalemise eest! Palun andke vastuvõtukomisjonile teada, et olete katse sooritanud.</p>
+<p>Täname teid osalemise eest! Kui olete vestluse ja fotoboksi külastuse läbi teinud, olete tänaseks vaba!</p>
 <p>Edu!</p>
 <div class="button-container">
-    <button class="btn btn-success">Alusta uut sessiooni</button>
+    <button class="btn btn-success" id="btnNewSession">Alusta uut sessiooni</button>
 </div>
 <script>
-    document.querySelector('.button').addEventListener('click', () => {
+    document.querySelector('#btnNewSession').addEventListener('click', () => {
         window.location.href = '';
     });
 </script>

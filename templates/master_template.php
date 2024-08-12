@@ -33,6 +33,9 @@
 
 <div class="container" id="container">
     <?php
+    if ($auth->userIsAdmin) {
+        require 'templates/partials/admin_button.php';
+    }
     /** @var string $controller set in Application::__construct() */
     /** @var string $action set in Application::__construct() */
     if (!file_exists("views/$controller/{$controller}_$action.php")) {

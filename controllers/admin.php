@@ -80,7 +80,7 @@ class admin extends Controller
 
     function index()
     {
-        header('Location: ' . BASE_URL . 'admin/users');
+        header('Location: ' . BASE_URL . 'applicants');
         exit();
     }
 

@@ -6,52 +6,52 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="">
+    <link rel="shortcut icon" href="assets/ico/favicon.png">
 
     <title><?= PROJECT_NAME ?></title>
 
-    <!-- Fomantic UI CSS -->
-    <link href="node_modules/fomantic-ui-css/semantic.min.css?<?= COMMIT_HASH ?>" rel="stylesheet">
-
     <!-- Site core CSS -->
-    <link href="assets/css/main.css?<?=COMMIT_HASH?>" rel="stylesheet">
-
-    <style>
-        body {
-            padding-top: 70px;
-        }
-    </style>
-    <?php include 'templates/partials/favicon.php'?>
+    <link href="assets/css/main.css?<?= COMMIT_HASH ?>" rel="stylesheet">
 
     <!-- jQuery -->
-    <script src="node_modules/jquery/dist/jquery.min.js?<?=COMMIT_HASH?>"></script>
+    <script src="node_modules/jquery/dist/jquery.min.js?<?= COMMIT_HASH ?>"></script>
+
+    <!-- Bootstrap core CSS -->
+    <script src="node_modules/bootstrap/dist/js/bootstrap.min.js?<?= COMMIT_HASH ?>"></script>
+    <link href="node_modules/bootstrap/dist/css/bootstrap.min.css?<?= COMMIT_HASH ?>" rel="stylesheet">
+    <link rel="stylesheet" href="node_modules/bootstrap-icons/font/bootstrap-icons.css?<?= COMMIT_HASH ?>">
+
+    <!-- Fav and touch icons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="manifest" href="site.webmanifest">
+</head>
 
 <body>
-<!-- Fomantic UI Menu -->
-<div class="ui fixed inverted menu">
-    <a class="header item" href="#">
-        <?= PROJECT_NAME ?>
-    </a>
-    <div class="right menu">
-        <a class="item <?= $action == 'users' ? 'active' : '' ?>" href="admin/users"><?= __('Users') ?></a>
-        <a class="item <?= $action == 'logs' ? 'active' : '' ?>" href="admin/logs"><?= __('Logs') ?></a>
-        <a class="item <?= $controller == 'halo' ? 'active' : '' ?>" href="halo"><?= __('Halo') ?></a>
-        <a class="item <?= $action == 'translations' ? 'active' : '' ?>" href="admin/translations"><?= __('Translations') ?></a>
-    </div>
-    <?php require 'templates/partials/main_menu_right_side.php' ?>
-</div>
+<script src="assets/js/main.js?<?= COMMIT_HASH ?>"></script>
 
-<div class="ui container">
-    <!-- Main content -->
-    <?php if (!file_exists("views/$controller/{$controller}_$action.php")) error_out('The view <i>views/' . $controller . '/' . $controller . '_' . $action . '.php</i> does not exist. Create that file.'); ?>
-    <?php @require "views/$controller/{$controller}_$action.php"; ?>
+<div class="container" id="container">
+    <nav class="nav nav-pills flex-column flex-sm-row" style="margin-bottom: 4em">
+        <a class="flex-sm-fill text-sm-center nav-link active" aria-current="page" href="#">Kandidaadid</a>
+        <a class="flex-sm-fill text-sm-center nav-link" href="admin/exercises">Ülesanded</a>
+        <a class="flex-sm-fill text-sm-center nav-link" href="admin/exercises">Ranking</a>
+        <a class="flex-sm-fill text-sm-center nav-link" href="admin/admins">Administraatorid</a>
+    </nav>
+    <?php
+    /** @var string $controller set in Application::__construct() */
+    /** @var string $action set in Application::__construct() */
+    if (!file_exists("views/$controller/{$controller}_$action.php")) {
+        error_out('The view <i>views/' . $controller . '/' . $controller . '_' . $action . '.php</i> does not exist. Create that file.');
+    }
+    @require "views/$controller/{$controller}_$action.php";
+    ?>
 </div>
 
 <?php require 'templates/partials/error_modal.php'; ?>
 
-<!-- Fomantic UI core JavaScript -->
-<script src="node_modules/fomantic-ui-css/semantic.min.js?<?= COMMIT_HASH ?>"></script>
-<script src="assets/js/main.js?<?= COMMIT_HASH ?>"></script>
-</body>
 
+</body>
 </html>
+
 <?php require 'system/error_translations.php' ?>

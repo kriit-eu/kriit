@@ -8,6 +8,11 @@ class exercises extends Controller
 
     function __construct($app)
     {
+        // Redirect to /login if user is not logged in
+        if (empty($_SESSION['userId'])) {
+            $this->redirect('/');
+        }
+
         $userTimeUpAt = Db::getOne("SELECT userTimeUpAt FROM users WHERE userId={$app->auth->userId}");
         $this->timeLeft = ($app->auth->userIsAdmin === 1 || $userTimeUpAt === null) ? null : strtotime($userTimeUpAt) - time();
     }
@@ -31,6 +36,15 @@ class exercises extends Controller
         if ($allSolved) {
             // create activity that all exercises are solved
             Activity::create(ACTIVITY_ALL_SOLVED, $this->auth->userId);
+            $startTimer = Db::getOne("
+                SELECT activityLogTimestamp
+                FROM activityLog
+                WHERE userId = ?
+                AND activityId = 3
+                ORDER BY activityLogTimestamp DESC
+                LIMIT 1", [$this->auth->userId]);
+            $spentTimeFormatted = gmdate('H:i:s', time() - strtotime($startTimer));
+            Db::update('users', ['userTimeTotal' => $spentTimeFormatted], 'userId = ?', [$this->auth->userId]);
             $this->redirect('exercises/congratulations');
         }
     }
@@ -54,8 +68,6 @@ class exercises extends Controller
         $this->exercise = Db::getFirst("
             SELECT * FROM exercises
             WHERE exerciseId = ?", [$this->getId()]);
-
-
     }
 
     function timeup()
