@@ -208,14 +208,13 @@ class Application
 
     private function handle_routing()
     {
-        // admin/exercises/save
-        if ($this->controller == 'admin' && $this->action == 'exercises' && isset($this->params[0]) && $this->params[0] == 'save') {
-            $this->action = 'saveExercise';
-        }
-
-        // admin/exercises/delete
-        if ($this->controller == 'admin' && $this->action == 'exercises' && isset($this->params[0]) && $this->params[0] == 'delete') {
-            $this->action = 'deleteExercise';
+        if ($this->controller == 'admin' && $this->action == 'exercises') {
+            $actionMap = [
+                'edit' => 'editExercise',
+                'delete' => 'deleteExercise',
+                'create' => 'createExercise'
+            ];
+            $this->action = $actionMap[$this->params[0] ?? ''] ?? $this->action;
         }
 
         // Allow shorter URLs (users/view/3 becomes users/3)

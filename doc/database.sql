@@ -3,7 +3,7 @@
 --
 -- Host: 127.0.0.1    Database: sisseastumine
 -- ------------------------------------------------------
--- Server version	10.7.8-MariaDB-1:10.7.8+maria~ubu2004-log
+-- Server version	10.11.8-MariaDB
 
 /*!50503 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!50503 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -253,7 +253,9 @@ CREATE TABLE `deployments` (
   `deploymentCommitAuthor` varchar(255) DEFAULT NULL,
   `deploymentCommitSha` varchar(256) NOT NULL,
   PRIMARY KEY (`deploymentId`)
-) ENGINE=InnoDB AUTO_INCREMENT=34 DEFAULT CHARSET=utf8mb4;
+) ENGINE = InnoDB
+  AUTO_INCREMENT = 35
+  DEFAULT CHARSET = utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -294,7 +296,8 @@ INSERT INTO `deployments` VALUES
 (30,'2024-08-12 17:56:19','2024-08-12 17:56:51','Add ranking to admi','Violetta Zakorzhevskaya','680ecb6'),
 (31,'2024-08-12 17:58:37','2024-08-12 17:58:58','Fix admin btn','henno.taht@gmail.com','bd1f7b6'),
 (32,'2024-08-12 18:07:42','2024-08-12 19:44:04','As admin I can see ','Violetta Zakorzhevskaya','d3999f1'),
-(33,'2024-08-12 20:14:54','2024-08-12 20:19:39','Add exercises in da','Violetta Zakorzhevskaya','adbb34a');
+(33, '2024-08-12 20:14:54', '2024-08-12 20:19:39', 'Add exercises in da', 'Violetta Zakorzhevskaya', 'adbb34a'),
+(34, '2024-08-13 02:09:58', '2024-08-13 02:10:11', 'AAs admin I can add', 'henno.taht@gmail.com', '423a407');
 /*!40000 ALTER TABLE `deployments` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -375,9 +378,8 @@ CREATE TABLE `settings` (
 
 LOCK TABLES `settings` WRITE;
 /*!40000 ALTER TABLE `settings` DISABLE KEYS */;
-INSERT INTO `settings` VALUES
-('projectVersion','adbb34a'),
-('translationUpdateLastRun','2024-08-12 20:19:39');
+INSERT INTO `settings` VALUES ('projectVersion', '423a407'),
+                              ('translationUpdateLastRun', '2024-08-13 02:10:11');
 /*!40000 ALTER TABLE `settings` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -595,38 +597,6 @@ CREATE TABLE `userDoneExercises` (
 
 LOCK TABLES `userDoneExercises` WRITE;
 /*!40000 ALTER TABLE `userDoneExercises` DISABLE KEYS */;
-INSERT INTO `userDoneExercises` VALUES
-(2,1),
-(1,2),
-(2,2),
-(1,3),
-(1,4),
-(1,5),
-(1,6),
-(1,7),
-(1,8),
-(1,9),
-(1,10),
-(1,11),
-(1,12),
-(1,13),
-(1,14),
-(1,15),
-(1,16),
-(1,17),
-(1,18),
-(1,19),
-(1,20),
-(1,21),
-(1,22),
-(1,23),
-(1,24),
-(1,25),
-(1,26),
-(1,27),
-(1,28),
-(1,29),
-(1,30);
 /*!40000 ALTER TABLE `userDoneExercises` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -656,9 +626,10 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES
-(1,'Kati Maasikas','41111111115',1,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,'05:07:24'),
-(2,'Mati Vaarikas','31111111114',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,'2024-08-12 17:00:13','00:13:16'),
+INSERT INTO `users` VALUES (1, 'Kati Maasikas', '41111111115', 1,
+                            '$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm', 0, NULL, NULL),
+                           (2, 'Mati Vaarikas', '31111111114', 0,
+                            '$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm', 0, NULL, NULL),
 (3,'Genor Kasak','50204305710',0,'',0,NULL,NULL),
 (4,'Sten Elisson','38512232743',0,'',0,NULL,NULL),
 (5,'Alicia Jemets','49912300211',0,'',0,NULL,NULL),
@@ -715,4 +686,4 @@ UNLOCK TABLES;
 /*!50503 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-08-12 23:31:32
+-- Dump completed on 2024-08-13  2:14:00

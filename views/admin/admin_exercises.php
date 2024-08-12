@@ -2,7 +2,14 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
 
 <div class="row custom-container">
-    <h1>Ülesanded</h1>
+    <div class="row align-items-center">
+        <div class="col">
+            <h1>Ülesanded</h1>
+        </div>
+        <div class="col-auto">
+            <button id="add-new-exercise" class="btn btn-success">Lisa uus ülesanne</button>
+        </div>
+    </div>
     <div class="exercises-container">
         <?php foreach ($exercises as $exercise): ?>
             <section class="exercise-card">
@@ -63,32 +70,100 @@
 
 
     document.addEventListener('DOMContentLoaded', function () {
+
         const editorInitialCodes = {};
         const editorValidationFunctions = {};
         const editorInstructions = {};
         const titleChanged = {}; // Track changes to the title
 
         <?php foreach ($exercises as $exercise): ?>
-        {
-            let exerciseId = '<?= $exercise['exerciseId'] ?>';
+        initializeExercise(
+            '<?= $exercise['exerciseId'] ?>',
+            `<?= addcslashes(trim($exercise['exerciseInstructions']), "`\"'\\") ?>`,
+            `<?= addcslashes(trim($exercise['exerciseInitialCode']), "`\"'\\") ?>`,
+            `<?= addcslashes(trim($exercise['exerciseValidationFunction']), "`\"'\\") ?>`);
+        <?php endforeach; ?>
 
-            <?php
-            $instructions = addcslashes(trim($exercise['exerciseInstructions']), "`\"'\\");
-            $initialCode = addcslashes(trim($exercise['exerciseInitialCode']), "`\"'\\");
-            $validationFunction = addcslashes(trim($exercise['exerciseValidationFunction']), "`\"'\\");
-            ?>
+        document.getElementById('add-new-exercise').addEventListener('click', function () {
+            const newExerciseId = 'new-' + Date.now();
+            const newExerciseHTML = `
+            <section class="exercise-card" id="exercise-card-${newExerciseId}">
+                <header>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text" id="basic-addon1">New</span>
+                        <input type="text" id="exercise-name-${newExerciseId}" class="form-control"
+                               aria-label="name" aria-describedby="exercise-name"
+                               value=""
+                               placeholder="Enter exercise name">
+                    </div>
+                </header>
+                <div class="exercise-body">
+                    <!-- Instructions Section: Editor and Preview Side-by-Side -->
+                    <div class="editor-preview-container horizontal-layout">
+                        <div class="editor-container half-width">
+                            <div id="editor-instructions-${newExerciseId}" class="ace-editor"></div>
+                        </div>
+                        <div class="preview-container">
+                            <iframe id="preview-instructions-${newExerciseId}" class="preview-iframe"></iframe>
+                        </div>
+                    </div>
+                    <!-- Code Section: Editor and Preview Side-by-Side -->
+                    <div class="editor-preview-container horizontal-layout">
+                        <div class="editor-container half-width">
+                            <div id="editor-initial-code-${newExerciseId}" class="ace-editor"></div>
+                        </div>
+                        <div class="preview-container">
+                            <iframe id="preview-${newExerciseId}" class="preview-iframe"></iframe>
+                        </div>
+                    </div>
+                    <!-- Validation Function Section: Full Width -->
+                    <div class="editor-container full-width">
+                        <div id="editor-validation-function-${newExerciseId}" class="ace-editor"></div>
+                    </div>
+                </div>
+                <footer class="exercise-footer">
+                    <a href="#" class="text-danger delete-exercise" data-id="${newExerciseId}">
+                        <i class="bi bi-trash-fill"></i>
+                    </a>
+                    <button class="btn btn-primary save-button" data-id="${newExerciseId}">Save</button>
+                </footer>
+            </section>
+        `;
+
+            const exercisesContainer = document.querySelector('.exercises-container');
+            exercisesContainer.insertAdjacentHTML('beforeend', newExerciseHTML);
+            initializeExercise(newExerciseId, '', '', '');
+
+            const newExerciseElement = document.getElementById('exercise-card-' + newExerciseId);
+
+            // Scroll to the new exercise card
+            newExerciseElement.scrollIntoView({behavior: 'smooth'});
+
+            // Add highlight effect
+            newExerciseElement.classList.add('new-card-highlight');
+
+            // Remove the highlight after a delay
+            setTimeout(() => {
+                newExerciseElement.classList.remove('new-card-highlight');
+            }, 4000);
+        });
+
+        function initializeExercise(exerciseId, instructions, initialCode, validationFunction) {
+            // Use default validation function if it's not provided
+            const defaultValidationFunction = `function validate(){\n    return false;\n}`;
+            validationFunction = validationFunction || defaultValidationFunction;
 
             // Initialize the instructions editor with content
             editorInstructions[exerciseId] = ace.edit("editor-instructions-" + exerciseId);
-            initializeAceEditor(editorInstructions[exerciseId], 'html', `<?= $instructions ?>`, 'preview-instructions-' + exerciseId);
+            initializeAceEditor(editorInstructions[exerciseId], 'html', instructions, 'preview-instructions-' + exerciseId);
 
             // Initialize the initial code editor with content
             editorInitialCodes[exerciseId] = ace.edit("editor-initial-code-" + exerciseId);
-            initializeAceEditor(editorInitialCodes[exerciseId], 'html', `<?= $initialCode ?>`, 'preview-' + exerciseId);
+            initializeAceEditor(editorInitialCodes[exerciseId], 'html', initialCode, 'preview-' + exerciseId);
 
             // Initialize the validation function editor with content
             editorValidationFunctions[exerciseId] = ace.edit("editor-validation-function-" + exerciseId);
-            initializeAceEditor(editorValidationFunctions[exerciseId], 'javascript', `<?= $validationFunction ?>`);
+            initializeAceEditor(editorValidationFunctions[exerciseId], 'javascript', validationFunction);
 
             // Track changes for the title
             titleChanged[exerciseId] = false;
@@ -110,19 +185,17 @@
             document.querySelector('.save-button[data-id="' + exerciseId + '"]').addEventListener('click', function () {
                 saveContent(exerciseId, editorInstructions[exerciseId], editorInitialCodes[exerciseId], editorValidationFunctions[exerciseId], titleChanged);
             });
-        }
-        <?php endforeach; ?>
 
-        document.querySelectorAll('.delete-exercise').forEach(function (deleteLink) {
-            deleteLink.addEventListener('click', function (event) {
+            document.querySelector('.delete-exercise[data-id="' + exerciseId + '"]').addEventListener('click', function (event) {
                 event.preventDefault();
                 const exerciseId = this.getAttribute('data-id');
                 if (confirm('Oled kindel, et soovid kustutada ülesande ' + exerciseId + '?')) {
                     ajaxDeleteExercise(exerciseId, this.closest('.exercise-card'));
                 }
             });
-        });
+        }
     });
+
 
     function ajaxDeleteExercise(exerciseId, exerciseCard) {
         ajax('admin/exercises/delete', {id: exerciseId}, function (res) {
@@ -326,29 +399,31 @@
 
     // Function to save content via AJAX
     function saveContent(exerciseId, instructionsEditor, initialCodeEditor, validationFunctionEditor, titleChanged) {
-        const data = {id: exerciseId};
+        const isNewExercise = exerciseId.startsWith('new-');
+        const data = {
+            id: isNewExercise ? null : exerciseId
+        };
+        const url = `admin/exercises/${isNewExercise ? 'create' : 'edit'}`;
 
-        // Include the exercise title only if it has been changed
-        if (titleChanged[exerciseId]) {
-            const titleElement = document.getElementById('exercise-name-' + exerciseId);
-            if (titleElement.value.trim() !== '') {
-                data.exercise_name = titleElement.value.trim();
-            }
-        }
-
-        // Only include fields that were changed
-        if (instructionsEditor.changed()) {
-            data.instructions = instructionsEditor.getValue();
-        }
-        if (initialCodeEditor.changed()) {
-            data.initial_code = initialCodeEditor.getValue();
-        }
-        if (validationFunctionEditor.changed()) {
-            data.validation_function = validationFunctionEditor.getValue();
+        const titleElement = document.getElementById('exercise-name-' + exerciseId);
+        if (titleChanged[exerciseId] && titleElement?.value.trim()) {
+            data.exercise_name = titleElement.value.trim();
         }
 
-        ajax('admin/exercises/save', data, function (res) {
+        if (instructionsEditor.changed()) data.instructions = instructionsEditor.getValue();
+        if (initialCodeEditor.changed()) data.initial_code = initialCodeEditor.getValue();
+        if (validationFunctionEditor.changed()) data.validation_function = validationFunctionEditor.getValue();
+
+        ajax(url, data, function (res) {
             if (res.status === 200) {
+                if (isNewExercise) {
+                    const newId = res.data.id;
+                    const exerciseCard = document.getElementById('exercise-card-' + exerciseId);
+                    exerciseCard.querySelector('.input-group-text').textContent = newId;
+                    exerciseCard.id = 'exercise-card-' + newId;
+                    updateEditorIds(exerciseId, newId);
+                    exerciseId = newId; // Update scope
+                }
                 indicateSuccess(instructionsEditor, initialCodeEditor, validationFunctionEditor, exerciseId, titleChanged);
             } else {
                 alert('Failed to save. Please try again.');
@@ -358,9 +433,10 @@
             console.log(res);
         });
     }
-
     // Function to indicate successful save
     function indicateSuccess(instructionsEditor, initialCodeEditor, validationFunctionEditor, exerciseId, titleChanged) {
+        const saveButton = document.querySelector('.save-button[data-id="' + exerciseId + '"]');
+
         if (instructionsEditor.changed()) {
             clearChangeIndicator(instructionsEditor);
             instructionsEditor.changed = () => false;  // Reset the changed status
@@ -377,8 +453,19 @@
         // Clear title change indicator if the title was changed
         if (titleChanged[exerciseId]) {
             const titleElement = document.getElementById('exercise-name-' + exerciseId);
-            titleElement.classList.remove('editor-changed');
+            titleElement.classList.remove('editor-changed'); // Remove the red border
             titleChanged[exerciseId] = false; // Reset title changed status
+        }
+
+        // Disable the save button after a successful save
+        if (saveButton) {
+            saveButton.disabled = true;
+        }
+
+        // Safely check for the new exercise element
+        const newExerciseElement = document.getElementById('exercise-card-' + exerciseId);
+        if (newExerciseElement) {
+            newExerciseElement.classList.remove('new-card-highlight');
         }
     }
 
@@ -386,6 +473,23 @@
     function clearChangeIndicator(editor) {
         editor.container.classList.remove('editor-changed');
     }
+
+    function updateEditorIds(oldId, newId) {
+        const exerciseCard = document.getElementById('exercise-card-' + newId);
+        exerciseCard.querySelectorAll('.ace-editor').forEach((editorContainer) => {
+            editorContainer.id = editorContainer.id.replace(oldId, newId);
+        });
+        exerciseCard.querySelectorAll('.preview-iframe').forEach((iframe) => {
+            iframe.id = iframe.id.replace(oldId, newId);
+        });
+        const nameInput = exerciseCard.querySelector('input.form-control');
+        nameInput.id = nameInput.id.replace(oldId, newId);
+        const saveButton = exerciseCard.querySelector('.save-button');
+        saveButton.dataset.id = newId;
+        const deleteLink = exerciseCard.querySelector('.delete-exercise');
+        deleteLink.dataset.id = newId;
+    }
+
 </script>
 
 
@@ -536,6 +640,20 @@
     .validation-passed {
         border: 2px solid green !important;
     }
+
+    .new-card-highlight {
+        animation: highlightAnimation 4s ease;
+    }
+
+    @keyframes highlightAnimation {
+        from {
+            background-color: #ffffcc; /* Highlight color */
+        }
+        to {
+            background-color: transparent;
+        }
+    }
+
 </style>
 
 

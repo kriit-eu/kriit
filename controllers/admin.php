@@ -173,7 +173,7 @@ class admin extends Controller
         $this->exercises = Db::getAll("SELECT * FROM exercises");
     }
 
-    function AJAX_saveExercise()
+    function AJAX_editExercise()
     {
         $exerciseId = $_POST['id'];
 
@@ -209,6 +209,28 @@ class admin extends Controller
         Db::delete('exercises', 'exerciseId = ?', [$_POST['id']]);
 
         stop(200);
+    }
+
+    function AJAX_createExercise()
+    {
+        // Ensure that the exercise name is provided
+        if (empty($_POST['exercise_name'])) {
+            stop(400, 'Exercise name is required.');
+        }
+
+        // Collect the data for insertion
+        $data = [
+            'exerciseName' => $_POST['exercise_name'],
+            'exerciseInstructions' => isset($_POST['instructions']) ? $_POST['instructions'] : '',
+            'exerciseInitialCode' => isset($_POST['initial_code']) ? $_POST['initial_code'] : '',
+            'exerciseValidationFunction' => isset($_POST['validation_function']) ? $_POST['validation_function'] : '',
+        ];
+
+        // Insert the new exercise
+        $exerciseId = Db::insert('exercises', $data);
+
+        // Return the new exercise ID to the frontend
+        stop(200, ['id' => $exerciseId]);
     }
 
 }
