@@ -58,7 +58,7 @@ CREATE TABLE `activityLog` (
   `activityId` int unsigned NOT NULL COMMENT 'Autocreated',
   `id` int unsigned DEFAULT NULL,
   PRIMARY KEY (`activityLogId`)
-) ENGINE=InnoDB AUTO_INCREMENT=112 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=115 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -178,7 +178,10 @@ INSERT INTO `activityLog` VALUES
 ('2024-08-12 16:53:56',108,1,1,NULL),
 ('2024-08-12 17:59:03',109,1,5,NULL),
 ('2024-08-12 17:59:03',110,1,2,NULL),
-('2024-08-12 17:59:45',111,1,1,NULL);
+('2024-08-12 17:59:45',111,1,1,NULL),
+('2024-08-12 20:04:34',112,1,4,3),
+('2024-08-12 20:09:16',113,1,4,4),
+('2024-08-12 20:13:45',114,1,4,5);
 /*!40000 ALTER TABLE `activityLog` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -223,7 +226,7 @@ CREATE TABLE `deployments` (
   `deploymentCommitAuthor` varchar(255) DEFAULT NULL,
   `deploymentCommitSha` varchar(256) NOT NULL,
   PRIMARY KEY (`deploymentId`)
-) ENGINE=InnoDB AUTO_INCREMENT=32 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=33 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -262,7 +265,8 @@ INSERT INTO `deployments` VALUES
 (28,'2024-08-12 17:14:08','2024-08-12 17:50:08','Add Ranking','Violetta Zakorzhevskaya','6e0c581'),
 (29,'2024-08-12 17:51:29','2024-08-12 17:55:40','Remove ranking','henno.taht@gmail.com','219029e'),
 (30,'2024-08-12 17:56:19','2024-08-12 17:56:51','Add ranking to admi','Violetta Zakorzhevskaya','680ecb6'),
-(31,'2024-08-12 17:58:37','2024-08-12 17:58:58','Fix admin btn','henno.taht@gmail.com','bd1f7b6');
+(31,'2024-08-12 17:58:37','2024-08-12 17:58:58','Fix admin btn','henno.taht@gmail.com','bd1f7b6'),
+(32,'2024-08-12 18:07:42','2024-08-12 19:44:04','As admin I can see ','Violetta Zakorzhevskaya','d3999f1');
 /*!40000 ALTER TABLE `deployments` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -280,7 +284,7 @@ CREATE TABLE `exercises` (
   `exerciseInitialCode` text,
   `exerciseValidationFunction` text,
   PRIMARY KEY (`exerciseId`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -291,7 +295,10 @@ LOCK TABLES `exercises` WRITE;
 /*!40000 ALTER TABLE `exercises` DISABLE KEYS */;
 INSERT INTO `exercises` VALUES
 (1,'Muuda lehe taustavärv punaseks','<ol>\n    <li>Muuda kõrvalasuva koodiredaktoriga lehe taustavärv punaseks.</li>\n    <li>Veendu, et parempoolsel eelvaatepaneelil oleks lehe taust punane.</li>\n    <li>Kui taustavärv on punane, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>\n','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 1</title>\n    <style>body {background-color: #999999}</style>\n</head>\n<body>\n    <h1>Hello world!</h1>\n</body>\n</html>','function validate() {\n    return window.getComputedStyle(document.body).backgroundColor === \'rgb(255, 0, 0)\';\n}'),
-(2,'Lisa lehele nupp','<ol>\n    <li>Lisa kõrvalasuva koodiredaktoriga lehele üks nupp</li>\n    <li>Veendu, et parempoolsel eelvaatepaneelil oleks lehel vähemalt üks nupp.</li>\n    <li>Kui nupp on olemas, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>','!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Button Check</title>\n</head>\n<body>\n    <h1>Button Check</h1>\n    <p>Some text</p>\n</body>\n</html>','function validate() {\n    return document.getElementsByTagName(\'button\').length > 0;\n}\n');
+(2,'Lisa lehele nupp','<ol>\n    <li>Lisa kõrvalasuva koodiredaktoriga lehele üks nupp</li>\n    <li>Veendu, et parempoolsel eelvaatepaneelil oleks lehel vähemalt üks nupp.</li>\n    <li>Kui nupp on olemas, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>','<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Button Check</title>\n</head>\n<body>\n    <h1>Button Check</h1>\n    <p>Some text</p>\n</body>\n</html>','function validate() {\n    return document.getElementsByTagName(\'button\').length > 0;\n}\n'),
+(3,'Muuda lehe fondi','<ol>\n    <li>Muuda kõrvalasuva koodiredaktoriga lehe fonti kasutades Arial\'i fondi.</li>\n    <li>Veendu, et parempoolsel eelvaatepaneelil oleks kogu leht Arial fondiga.</li>\n    <li>Kui font on Arial, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 3</title>\n    <style>body {font-family: sans-serif;}</style>\n</head>\n<body>\n    <h1>Tere maailm!</h1>\n    <p>See on lihtne HTML leht.</p>\n</body>\n</html>\n','function validate() {\n    return window.getComputedStyle(document.body).fontFamily.includes(\'Arial\');\n}\n'),
+(4,'Muuda pildi laiust','<ol>\n    <li>Muuda pildi laiust 200 piksliks.</li>\n    <li>Veendu, et pildi laius oleks 200 pikslit.</li>\n    <li>Kui pildi laius on 200 pikslit, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 4</title>\n</head>\n<body>\n    <img src=\"https://via.placeholder.com/150\" alt=\"Näidispilt\">\n</body>\n</html>\n','function validate() {\n    return document.querySelector(\'img\').width === 200;\n}'),
+(5,'Märgista tekstkast kohustuslikuks','<ol>\n    <li>Märgista lisatud tekstkast kohustuslikuks.</li>\n    <li>Veendu, et tekstikastil oleks atribuut \"required\".</li>\n    <li>Kui tekstikast on kohustuslik, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 6</title>\n</head>\n<body>\n    <input type=\"text\">\n</body>\n</html>\n','function validate() {\n    return document.querySelector(\'input\').required;\n}');
 /*!40000 ALTER TABLE `exercises` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -316,8 +323,8 @@ CREATE TABLE `settings` (
 LOCK TABLES `settings` WRITE;
 /*!40000 ALTER TABLE `settings` DISABLE KEYS */;
 INSERT INTO `settings` VALUES
-('projectVersion','bd1f7b6'),
-('translationUpdateLastRun','2024-08-12 17:58:58');
+('projectVersion','d3999f1'),
+('translationUpdateLastRun','2024-08-12 19:44:04');
 /*!40000 ALTER TABLE `settings` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -508,8 +515,7 @@ INSERT INTO `translations` VALUES
 (33,'Select language','existsInCode',NULL),
 (34,'Google translates < 5000 chars at a time','existsInCode',NULL),
 (35,'Select language first','existsInCode',NULL),
-(36,'Are you really sure you want to remove the language %%% and destroy its translations?','existsInCode',NULL),
-(38,'Applicant Name','existsInCode',NULL);
+(36,'Are you really sure you want to remove the language %%% and destroy its translations?','existsInCode',NULL);
 /*!40000 ALTER TABLE `translations` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -539,7 +545,10 @@ LOCK TABLES `userDoneExercises` WRITE;
 INSERT INTO `userDoneExercises` VALUES
 (2,1),
 (1,2),
-(2,2);
+(2,2),
+(1,3),
+(1,4),
+(1,5);
 /*!40000 ALTER TABLE `userDoneExercises` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -628,4 +637,4 @@ UNLOCK TABLES;
 /*!50503 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-08-12 18:01:48
+-- Dump completed on 2024-08-12 20:14:29
