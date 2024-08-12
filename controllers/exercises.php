@@ -134,6 +134,7 @@ class exercises extends Controller
                 // Create activity
                 Activity::create(ACTIVITY_SOLVED_EXERCISE, $userId, $exerciseId);
                 $response = ['result' => 'success', 'message' => 'Ülesanne on lahendatud.'];
+                $this->cleanupTempFile($tempFilePath);
             } else {
                 $response = ['result' => 'fail', 'message' => 'Teie lahendus ei läbinud valideerimist. Palun proovige uuesti.'];
             }
@@ -141,7 +142,6 @@ class exercises extends Controller
             $response = ['result' => 'error', 'message' => $e->getMessage()];
         }
 
-        $this->cleanupTempFile($tempFilePath);
         stop(200, $response);
     }
 

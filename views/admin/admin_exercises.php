@@ -638,7 +638,7 @@
     }
 
     .validation-passed {
-        border: 2px solid green !important;
+        background-color: #0c4a1a;
     }
 
     .new-card-highlight {
