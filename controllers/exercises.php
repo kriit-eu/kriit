@@ -23,6 +23,16 @@ class exercises extends Controller
             LEFT JOIN userDoneExercises
                 ON exercises.exerciseId = userDoneExercises.exerciseId
                 AND userDoneExercises.userId = ?", [$this->auth->userId]);
+
+        $allSolved = array_reduce($this->exercises, function ($carry, $exercise) {
+            return $carry && $exercise['isSolved'] === 1;
+        }, true);
+
+        if ($allSolved) {
+            // create activity that all exercises are solved
+            Activity::create(ACTIVITY_ALL_SOLVED, $this->auth->userId);
+            $this->redirect('exercises/congratulations');
+        }
     }
 
     private function redirectIfTimeExpiredOrNotStarted(): void
@@ -44,6 +54,8 @@ class exercises extends Controller
         $this->exercise = Db::getFirst("
             SELECT * FROM exercises
             WHERE exerciseId = ?", [$this->getId()]);
+
+
     }
 
     function timeup()
@@ -52,6 +64,14 @@ class exercises extends Controller
         if ($this->timeLeft === null || $this->timeLeft > 0) {
             $this->redirect('exercises');
         }
+
+    }
+
+    function congratulations()
+    {
+        $userId = $_SESSION['userId'];
+        session_destroy();
+        Activity::create(ACTIVITY_LOGOUT, $userId);
     }
 
     function start()

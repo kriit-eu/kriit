@@ -1,9 +1,9 @@
-/*!999999\- enable the sandbox mode */
--- MariaDB dump 10.19-11.4.2-MariaDB, for osx10.19 (arm64)
+/*!999999\- enable the sandbox mode */ 
+-- MariaDB dump 10.19  Distrib 10.11.8-MariaDB, for osx10.19 (arm64)
 --
 -- Host: 127.0.0.1    Database: sisseastumine
 -- ------------------------------------------------------
--- Server version	11.4.2-MariaDB
+-- Server version	10.7.8-MariaDB-1:10.7.8+maria~ubu2004-log
 
 /*!50503 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!50503 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -14,7 +14,7 @@
 /*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
 /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
 /*!50503 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
-/*M!100616 SET @OLD_NOTE_VERBOSITY=@@NOTE_VERBOSITY, NOTE_VERBOSITY=0 */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
 -- Table structure for table `activities`
@@ -58,9 +58,7 @@ CREATE TABLE `activityLog` (
   `activityId` int unsigned NOT NULL COMMENT 'Autocreated',
   `id` int unsigned DEFAULT NULL,
   PRIMARY KEY (`activityLogId`)
-) ENGINE = InnoDB
-  AUTO_INCREMENT = 24
-  DEFAULT CHARSET = utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=53 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -69,29 +67,59 @@ CREATE TABLE `activityLog` (
 
 LOCK TABLES `activityLog` WRITE;
 /*!40000 ALTER TABLE `activityLog` DISABLE KEYS */;
-INSERT INTO `activityLog` VALUES ('2024-08-08 10:05:55', 1, 1, 1, NULL),
-                                 ('2024-08-09 12:43:27', 2, 1, 2, NULL),
-                                 ('2024-08-09 12:43:42', 3, 1, 1, NULL),
-                                 ('2024-08-09 17:15:37', 4, 1, 2, NULL),
-                                 ('2024-08-09 17:15:46', 5, 1, 1, NULL),
-                                 ('2024-08-09 17:16:26', 6, 1, 3, NULL),
-                                 ('2024-08-09 17:29:10', 7, 1, 2, NULL),
-                                 ('2024-08-09 17:29:20', 8, 1, 1, NULL),
-                                 ('2024-08-09 17:35:37', 9, 1, 2, NULL),
-                                 ('2024-08-09 17:35:53', 10, 1, 1, NULL),
-                                 ('2024-08-09 17:36:30', 11, 1, 2, NULL),
-                                 ('2024-08-09 17:36:35', 12, 1, 1, NULL),
-                                 ('2024-08-09 17:36:38', 13, 1, 3, NULL),
-                                 ('2024-08-09 17:36:49', 14, 1, 2, NULL),
-                                 ('2024-08-09 17:36:56', 15, 1, 1, NULL),
-                                 ('2024-08-11 22:18:52', 16, 1, 1, NULL),
-                                 ('2024-08-11 22:18:55', 17, 1, 3, NULL),
-                                 ('2024-08-11 22:50:51', 18, 1, 2, NULL),
-                                 ('2024-08-11 22:50:56', 19, 1, 1, NULL),
-                                 ('2024-08-11 23:19:14', 20, 1, 2, NULL),
-                                 ('2024-08-11 23:19:22', 21, 1, 1, NULL),
-                                 ('2024-08-11 23:19:30', 22, 1, 3, NULL),
-                                 ('2024-08-12 00:00:52', 23, 1, 4, 1);
+INSERT INTO `activityLog` VALUES
+('2024-08-08 10:05:55',1,1,1,NULL),
+('2024-08-09 12:43:27',2,1,2,NULL),
+('2024-08-09 12:43:42',3,1,1,NULL),
+('2024-08-09 17:15:37',4,1,2,NULL),
+('2024-08-09 17:15:46',5,1,1,NULL),
+('2024-08-09 17:16:26',6,1,3,NULL),
+('2024-08-09 17:29:10',7,1,2,NULL),
+('2024-08-09 17:29:20',8,1,1,NULL),
+('2024-08-09 17:35:37',9,1,2,NULL),
+('2024-08-09 17:35:53',10,1,1,NULL),
+('2024-08-09 17:36:30',11,1,2,NULL),
+('2024-08-09 17:36:35',12,1,1,NULL),
+('2024-08-09 17:36:38',13,1,3,NULL),
+('2024-08-09 17:36:49',14,1,2,NULL),
+('2024-08-09 17:36:56',15,1,1,NULL),
+('2024-08-11 22:18:52',16,1,1,NULL),
+('2024-08-11 22:18:55',17,1,3,NULL),
+('2024-08-11 22:50:51',18,1,2,NULL),
+('2024-08-11 22:50:56',19,1,1,NULL),
+('2024-08-11 23:19:14',20,1,2,NULL),
+('2024-08-11 23:19:22',21,1,1,NULL),
+('2024-08-11 23:19:30',22,1,3,NULL),
+('2024-08-12 00:00:52',23,1,4,1),
+('2024-08-12 10:29:26',24,1,1,NULL),
+('2024-08-12 10:29:31',25,1,3,NULL),
+('2024-08-12 10:31:31',26,1,4,1),
+('2024-08-12 10:46:05',27,1,4,1),
+('2024-08-12 10:47:01',28,1,4,1),
+('2024-08-12 11:41:33',29,1,2,NULL),
+('2024-08-12 11:41:43',30,1,1,NULL),
+('2024-08-12 11:41:45',31,1,3,NULL),
+('2024-08-12 12:27:11',32,1,4,2),
+('2024-08-12 12:27:20',33,1,4,1),
+('2024-08-12 12:34:17',34,1,2,NULL),
+('2024-08-12 12:34:37',35,1,1,NULL),
+('2024-08-12 12:34:49',36,1,4,2),
+('2024-08-12 12:51:39',37,1,3,NULL),
+('2024-08-12 12:51:53',38,1,4,2),
+('2024-08-12 12:54:09',39,1,2,NULL),
+('2024-08-12 12:54:24',40,1,1,NULL),
+('2024-08-12 12:54:33',41,1,2,NULL),
+('2024-08-12 12:54:39',42,1,1,NULL),
+('2024-08-12 12:54:49',43,1,2,NULL),
+('2024-08-12 12:54:53',44,1,1,NULL),
+('2024-08-12 12:55:02',45,1,2,NULL),
+('2024-08-12 12:55:07',46,1,1,NULL),
+('2024-08-12 12:55:32',47,1,2,NULL),
+('2024-08-12 12:55:54',48,1,1,NULL),
+('2024-08-12 12:56:30',49,1,4,2),
+('2024-08-12 12:59:20',50,1,2,NULL),
+('2024-08-12 13:03:27',51,2,1,NULL),
+('2024-08-12 13:03:32',52,2,3,NULL);
 /*!40000 ALTER TABLE `activityLog` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -110,9 +138,7 @@ CREATE TABLE `deployments` (
   `deploymentCommitAuthor` varchar(255) DEFAULT NULL,
   `deploymentCommitSha` varchar(256) NOT NULL,
   PRIMARY KEY (`deploymentId`)
-) ENGINE = InnoDB
-  AUTO_INCREMENT = 16
-  DEFAULT CHARSET = utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -134,8 +160,12 @@ INSERT INTO `deployments` VALUES
 (11,'2024-08-07 15:40:08','2024-08-09 17:15:37','As an applicant I c','Violetta Zakorzhevskaya','91f457d'),
 (12,'2024-08-09 17:28:34','2024-08-09 17:28:48','As an applicant I c','Violetta Zakorzhevskaya','f1f18d1'),
 (13,'2024-08-09 17:37:19','2024-08-09 17:44:50','As an applicant I c','Violetta Zakorzhevskaya','d09c2f9'),
-(14, '2024-08-09 18:06:01', '2024-08-09 18:06:35', 'Initial', 'Violetta Zakorzhevskaya', 'df34b11'),
-(15, '2024-08-10 21:05:41', '2024-08-11 22:17:34', 'Refactor exercises ', 'henno.taht@gmail.com', '25f246e');
+(14,'2024-08-09 18:06:01','2024-08-09 18:06:35','Initial','Violetta Zakorzhevskaya','df34b11'),
+(15,'2024-08-10 21:05:41','2024-08-11 22:17:34','Refactor exercises ','henno.taht@gmail.com','25f246e'),
+(16,'2024-08-12 00:38:18','2024-08-12 10:06:54','Refactor exercise v','henno.taht@gmail.com','f3b2e5c'),
+(17,'2024-08-09 17:37:19','2024-08-12 10:41:54','As an applicant I c','Violetta Zakorzhevskaya','d09c2f9'),
+(18,'2024-08-12 11:00:15','2024-08-12 11:04:17','Pre-test puppeteer','Violetta Zakorzhevskaya','50e2f78'),
+(19,'2024-08-12 12:02:25','2024-08-12 12:26:32','Allow from all IP a','henno.taht@gmail.com','165427d');
 /*!40000 ALTER TABLE `deployments` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -162,11 +192,9 @@ CREATE TABLE `exercises` (
 
 LOCK TABLES `exercises` WRITE;
 /*!40000 ALTER TABLE `exercises` DISABLE KEYS */;
-INSERT INTO `exercises` VALUES (1, 'Muuda lehe taustavärv punaseks',
-                                '<ol>\n    <li>Muuda kõrvalasuva koodiredaktoriga lehe taustavärv punaseks.</li>\n    <li>Veendu, et parempoolsel eelvaatepaneelil oleks lehe taust punane.</li>\n    <li>Kui taustavärv on punane, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>\n',
-                                '<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 1</title>\n    <style>body {background-color: #999999}</style>\n</head>\n<body>\n    <h1>Hello world!</h1>\n</body>\n</html>',
-                                'function validate() {\n    return window.getComputedStyle(document.body).backgroundColor === \'rgb(255, 0, 0)\';\n}'),
-                               (2, 'exercise #2', NULL, NULL, NULL);
+INSERT INTO `exercises` VALUES
+(1,'Muuda lehe taustavärv punaseks','<ol>\n    <li>Muuda kõrvalasuva koodiredaktoriga lehe taustavärv punaseks.</li>\n    <li>Veendu, et parempoolsel eelvaatepaneelil oleks lehe taust punane.</li>\n    <li>Kui taustavärv on punane, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>\n','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 1</title>\n    <style>body {background-color: #999999}</style>\n</head>\n<body>\n    <h1>Hello world!</h1>\n</body>\n</html>','function validate() {\n    return window.getComputedStyle(document.body).backgroundColor === \'rgb(255, 0, 0)\';\n}'),
+(2,'Lisa lehele nupp','<ol>\n    <li>Lisa kõrvalasuva koodiredaktoriga lehele üks nupp</li>\n    <li>Veendu, et parempoolsel eelvaatepaneelil oleks lehel vähemalt üks nupp.</li>\n    <li>Kui nupp on olemas, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>','!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Button Check</title>\n</head>\n<body>\n    <h1>Button Check</h1>\n    <p>Some text</p>\n</body>\n</html>','function validate() {\n    return document.getElementsByTagName(\'button\').length > 0;\n}\n');
 /*!40000 ALTER TABLE `exercises` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -190,8 +218,9 @@ CREATE TABLE `settings` (
 
 LOCK TABLES `settings` WRITE;
 /*!40000 ALTER TABLE `settings` DISABLE KEYS */;
-INSERT INTO `settings` VALUES ('projectVersion', '25f246e'),
-                              ('translationUpdateLastRun', '2024-08-11 22:17:34');
+INSERT INTO `settings` VALUES
+('projectVersion','165427d'),
+('translationUpdateLastRun','2024-08-12 12:26:32');
 /*!40000 ALTER TABLE `settings` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -395,18 +424,16 @@ UNLOCK TABLES;
 --
 
 DROP TABLE IF EXISTS `userDoneExercises`;
-/*!50503 SET @saved_cs_client = @@character_set_client */;
+/*!50503 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `userDoneExercises`
-(
-    `userId`     int unsigned NOT NULL,
-    `exerciseId` int unsigned NOT NULL,
-    PRIMARY KEY (`exerciseId`, `userId`),
-    KEY `userId` (`userId`),
-    CONSTRAINT `userdoneexercises_ibfk_1` FOREIGN KEY (`exerciseId`) REFERENCES `exercises` (`exerciseId`),
-    CONSTRAINT `userdoneexercises_ibfk_2` FOREIGN KEY (`userId`) REFERENCES `users` (`userId`)
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4;
+CREATE TABLE `userDoneExercises` (
+  `userId` int unsigned NOT NULL,
+  `exerciseId` int unsigned NOT NULL,
+  PRIMARY KEY (`exerciseId`,`userId`),
+  KEY `userId` (`userId`),
+  CONSTRAINT `userdoneexercises_ibfk_1` FOREIGN KEY (`exerciseId`) REFERENCES `exercises` (`exerciseId`),
+  CONSTRAINT `userdoneexercises_ibfk_2` FOREIGN KEY (`userId`) REFERENCES `users` (`userId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -414,10 +441,10 @@ CREATE TABLE `userDoneExercises`
 --
 
 LOCK TABLES `userDoneExercises` WRITE;
-/*!40000 ALTER TABLE `userDoneExercises`
-    DISABLE KEYS */;
-/*!40000 ALTER TABLE `userDoneExercises`
-    ENABLE KEYS */;
+/*!40000 ALTER TABLE `userDoneExercises` DISABLE KEYS */;
+INSERT INTO `userDoneExercises` VALUES
+(1,1);
+/*!40000 ALTER TABLE `userDoneExercises` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -436,7 +463,7 @@ CREATE TABLE `users` (
   `userDeleted` tinyint unsigned NOT NULL DEFAULT 0,
   `userTimeUpAt` datetime DEFAULT NULL,
   PRIMARY KEY (`userId`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -445,8 +472,9 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (1, 'Demo User', '41111111115', 0,
-                            '$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm', 0, NULL);
+INSERT INTO `users` VALUES
+(1,'Kati Maasikas','41111111115',1,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,'2024-08-12 13:51:39'),
+(2,'Mati Vaarikas','31111111114',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,'2024-08-12 14:03:32');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -457,6 +485,6 @@ UNLOCK TABLES;
 /*!50503 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!50503 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!50503 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-/*M!100616 SET NOTE_VERBOSITY=@OLD_NOTE_VERBOSITY */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-08-12  0:01:45
+-- Dump completed on 2024-08-12 13:03:47
