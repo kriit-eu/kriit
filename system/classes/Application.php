@@ -152,9 +152,9 @@ class Application
         }
 
         // If language is set to a non-existing one but there's at least one existing language, switch to that language
-        if(!in_array($_SESSION['language'], $supported_languages)) {
-            if(isset($supported_languages[0])){
-                $_SESSION['language']=$supported_languages[0];
+        if (!in_array($_SESSION['language'], $supported_languages)) {
+            if (isset($supported_languages[0])) {
+                $_SESSION['language'] = $supported_languages[0];
             }
         }
 

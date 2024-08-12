@@ -50,4 +50,10 @@ class Controller
         header("Location: $base_url$url");
         exit();
     }
+
+    function setActive($page)
+    {
+        list($controller, $action) = explode('/', $page);
+        return $controller === $this->controller && $action === $this->action ? 'active' : '';
+    }
 }

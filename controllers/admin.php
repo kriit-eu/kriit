@@ -168,4 +168,10 @@ class admin extends Controller
 
     }
 
+    function exercises()
+    {
+        $this->exercises = Db::getAll("SELECT * FROM exercises");
+    }
+
+
 }

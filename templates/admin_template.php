@@ -33,10 +33,12 @@
 
 <div class="container" id="container">
     <nav class="nav nav-pills flex-column flex-sm-row" style="margin-bottom: 4em">
-        <a class="flex-sm-fill text-sm-center nav-link active" aria-current="page" href="#">Kandidaadid</a>
-        <a class="flex-sm-fill text-sm-center nav-link" href="admin/exercises">Ülesanded</a>
-        <a class="flex-sm-fill text-sm-center nav-link" href="admin/exercises">Ranking</a>
-        <a class="flex-sm-fill text-sm-center nav-link" href="admin/admins">Administraatorid</a>
+        <a class="flex-sm-fill text-sm-center nav-link <?= $this->setActive('applicants/index') ?>"
+           aria-current="applicants" href="applicants">Kandidaadid</a>
+        <a class="flex-sm-fill text-sm-center nav-link <?= $this->setActive('admin/exercises') ?>"
+           href="admin/exercises">Ülesanded</a>
+        <a class="flex-sm-fill text-sm-center nav-link <?= $this->setActive('admin/ranking') ?>" href="admin/ranking">Ranking</a>
+        <a class="flex-sm-fill text-sm-center nav-link <?= $this->setActive('admin/users') ?>" href="admin/users">Administraatorid</a>
     </nav>
     <?php
     /** @var string $controller set in Application::__construct() */
