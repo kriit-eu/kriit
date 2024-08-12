@@ -7,7 +7,7 @@
 <p>Täname teid osalemise eest! Palun andke vastuvõtukomisjonile teada, et olete katse sooritanud.</p>
 <p>Edu!</p>
 <div class="button-container">
-    <button class="button">Alusta uut sessiooni</button>
+    <button class="btn btn-success">Alusta uut sessiooni</button>
 </div>
 <script>
     document.querySelector('.button').addEventListener('click', () => {
