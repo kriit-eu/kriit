@@ -197,5 +197,18 @@ class admin extends Controller
         stop(200);
     }
 
+    function AJAX_deleteExercise()
+    {
+        if (empty($_POST['id']) || !is_numeric($_POST['id'])) {
+            stop(400, 'Invalid exercise id');
+        }
+
+        // First delete all done exercises for this exercise
+        Db::delete('userDoneExercises', 'exerciseId = ?', [$_POST['id']]);
+
+        Db::delete('exercises', 'exerciseId = ?', [$_POST['id']]);
+
+        stop(200);
+    }
 
 }

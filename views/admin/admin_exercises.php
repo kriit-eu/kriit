@@ -45,6 +45,9 @@
                 </div>
 
                 <footer class="exercise-footer">
+                    <a href="#" class="text-danger delete-exercise" data-id="<?= $exercise['exerciseId'] ?>">
+                        <i class="bi bi-trash-fill"></i>
+                    </a>
                     <button class="btn btn-primary save-button" data-id="<?= $exercise['exerciseId'] ?>">Save</button>
                 </footer>
             </section>
@@ -109,7 +112,30 @@
             });
         }
         <?php endforeach; ?>
+
+        document.querySelectorAll('.delete-exercise').forEach(function (deleteLink) {
+            deleteLink.addEventListener('click', function (event) {
+                event.preventDefault();
+                const exerciseId = this.getAttribute('data-id');
+                if (confirm('Oled kindel, et soovid kustutada ülesande ' + exerciseId + '?')) {
+                    ajaxDeleteExercise(exerciseId, this.closest('.exercise-card'));
+                }
+            });
+        });
     });
+
+    function ajaxDeleteExercise(exerciseId, exerciseCard) {
+        ajax('admin/exercises/delete', {id: exerciseId}, function (res) {
+            if (res.status === 200) {
+                exerciseCard.remove();
+            } else {
+                alert('Failed to delete. Please try again.');
+            }
+        }, function (res) {
+            alert('An error occurred. Please try again.');
+            console.log(res);
+        });
+    }
 
     // Function to initialize an Ace editor
     function initializeAceEditor(editor, mode, content, previewFrameId = null) {
@@ -449,6 +475,15 @@
         border: none;
     }
 
+    /* Save Button and Trashcan Styling */
+    .exercise-footer {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        margin-top: 20px;
+        gap: 10px; /* Space between the save button and trash icon */
+    }
+
     .save-button {
         padding: 6px 12px;
         background-color: #007bff; /* Bootstrap primary button color */
@@ -469,11 +504,13 @@
         font-size: 1.2em;
     }
 
+    /* Ensure Save Button and Trashcan are aligned correctly */
     .exercise-footer {
         display: flex;
         justify-content: flex-end;
         align-items: center;
         margin-top: 20px;
+        gap: 10px; /* Space between the save button and trash icon */
     }
 
     /* Style for editors or fields that have changed */

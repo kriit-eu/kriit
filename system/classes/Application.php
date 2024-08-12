@@ -213,6 +213,11 @@ class Application
             $this->action = 'saveExercise';
         }
 
+        // admin/exercises/delete
+        if ($this->controller == 'admin' && $this->action == 'exercises' && isset($this->params[0]) && $this->params[0] == 'delete') {
+            $this->action = 'deleteExercise';
+        }
+
         // Allow shorter URLs (users/view/3 becomes users/3)
         if (is_numeric($this->action)) {
 
