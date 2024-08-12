@@ -4,7 +4,7 @@
 class Activity
 {
 
-    public static function create($activityId, $userId = 0)
+    public static function create($activityId, $userId = 0, $id = null)
     {
         // Use the currently logged-in user's ID when not supplied
         $userId = $userId ? $userId : $_SESSION['userId'];
@@ -13,7 +13,8 @@ class Activity
         Db::insert('activityLog', [
             'userId' => $userId,
             'activityId' => $activityId,
-            'activityLogTimestamp' => date('Y-m-d H:i:s')
+            'activityLogTimestamp' => date('Y-m-d H:i:s'),
+            'id' => $id
         ]);
     }
 

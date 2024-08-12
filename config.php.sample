@@ -34,4 +34,7 @@ const DEFAULT_LANGUAGE = 'en';
 // List of allowed IP addresses for applicants
 const ALLOWED_IP_ADDRESSES = ['127.0.0.1', '::1'];
 
+// Node location
+const NODE_EXE = '/Users/henno/.nvm/versions/node/v20.12.1/bin/node';
+
 const SENTRY_DSN = '';

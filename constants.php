@@ -16,6 +16,7 @@ const ENV_PRODUCTION = 1;
 const ACTIVITY_LOGIN = 1;
 const ACTIVITY_LOGOUT = 2;
 const ACTIVITY_START_TIMER = 3;
+const ACTIVITY_SOLVED_EXERCISE = 4;
 const IS_ID = 1;
 const IS_INT = 2;
 const IS_0OR1 = 3;

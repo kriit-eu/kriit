@@ -1,8 +1,9 @@
 <?php namespace App;
 
+use Exception;
+
 class exercises extends Controller
 {
-
     public $auth;
 
     function __construct($app)
@@ -14,7 +15,27 @@ class exercises extends Controller
     function index()
     {
         $this->redirectIfTimeExpiredOrNotStarted();
-        $this->exercises = Db::getAll("SELECT * FROM exercises JOIN exerciseStatuses USING(exerciseStatusId)");
+        $this->exercises = Db::getAll("
+            SELECT
+                exercises.*,
+                IF(userDoneExercises.userId IS NOT NULL, 1, 0) AS isSolved
+            FROM exercises
+            LEFT JOIN userDoneExercises
+                ON exercises.exerciseId = userDoneExercises.exerciseId
+                AND userDoneExercises.userId = ?", [$this->auth->userId]);
+    }
+
+    private function redirectIfTimeExpiredOrNotStarted(): void
+    {
+        // Redirect to /intro if user is not admin and timer is not started
+        if ($this->auth->userIsAdmin !== 1 && $this->auth->userTimeUpAt === null) {
+            $this->redirect('intro');
+        }
+
+        // Redirect to /exercises/timeup if time is up
+        if ($this->auth->userIsAdmin !== 1 && $this->timeLeft <= 0) {
+            $this->redirect('exercises/timeup');
+        }
     }
 
     function view()
@@ -22,7 +43,6 @@ class exercises extends Controller
         $this->redirectIfTimeExpiredOrNotStarted();
         $this->exercise = Db::getFirst("
             SELECT * FROM exercises
-            JOIN exerciseStatuses USING(exerciseStatusId)
             WHERE exerciseId = ?", [$this->getId()]);
     }
 
@@ -42,16 +62,82 @@ class exercises extends Controller
         stop(200);
     }
 
-    private function redirectIfTimeExpiredOrNotStarted(): void
+    function AJAX_validate()
     {
-        // Redirect to /intro if user is not admin and timer is not started
-        if ($this->auth->userIsAdmin !== 1 && $this->auth->userTimeUpAt === null) {
-            $this->redirect('intro');
+        $exerciseId = $this->getId();
+        $answer = $_POST['answer'];
+        $userId = $this->auth->userId;
+        $timestamp = time();
+
+        $nodeScriptDir = __DIR__ . "/../.node_scripts";
+
+        if (!is_dir($nodeScriptDir)) {
+            mkdir($nodeScriptDir, 0755, true);
         }
 
-        // Redirect to /exercises/timeup if time is up
-        if ($this->auth->userIsAdmin !== 1 && $this->timeLeft <= 0) {
-            $this->redirect('exercises/timeup');
+        $tempFilePath = "{$nodeScriptDir}/tempValidation_{$userId}_{$exerciseId}_{$timestamp}.js";
+
+        $exerciseValidationFunction = Db::getOne("SELECT exerciseValidationFunction FROM exercises WHERE exerciseId = ?", [$exerciseId]);
+        $escapedAnswer = json_encode($answer);
+
+        $validationScript = "
+    const jsdom = require('jsdom');
+    const { JSDOM } = jsdom;
+
+    const dom = new JSDOM({$escapedAnswer});
+    const window = dom.window;
+    const document = window.document;
+
+    {$exerciseValidationFunction}
+
+    console.log(validate());
+    ";
+
+        try {
+            $this->writeValidationScript($tempFilePath, $validationScript);
+            $output = $this->executeNodeScript($tempFilePath);
+
+            if (isset($output[0]) && $output[0] === 'true') {
+                Db::insert('userDoneExercises', ['userId' => $userId, 'exerciseId' => $exerciseId]);
+                // Create activity
+                Activity::create(ACTIVITY_SOLVED_EXERCISE, $userId, $exerciseId);
+                $response = ['result' => 'success', 'message' => 'Ülesanne on lahendatud.'];
+            } else {
+                $response = ['result' => 'fail', 'message' => 'Teie lahendus ei läbinud valideerimist. Palun proovige uuesti.'];
+            }
+        } catch (Exception $e) {
+            $response = ['result' => 'error', 'message' => $e->getMessage()];
+        }
+
+        $this->cleanupTempFile($tempFilePath);
+        stop(200, $response);
+    }
+
+    private function writeValidationScript($filePath, $scriptContent)
+    {
+        if (file_put_contents($filePath, $scriptContent) === false) {
+            throw new Exception("Failed to write validation script to {$filePath}");
+        }
+    }
+
+    private function executeNodeScript($filePath)
+    {
+        exec(NODE_EXE . " {$filePath} 2>&1", $output, $return);
+        if ($return !== 0) {
+            throw new Exception("Node.js script execution failed: " . implode("\n", $output));
+        }
+
+        return $output;
+    }
+
+    private function cleanupTempFile($filePath)
+    {
+        try {
+            if (file_exists($filePath) && !unlink($filePath)) {
+                throw new Exception("Failed to delete temporary file {$filePath}");
+            }
+        } catch (Exception $e) {
+            throw new Exception("An error occurred while deleting the temporary file: " . $e->getMessage());
         }
     }
 }

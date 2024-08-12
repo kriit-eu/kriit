@@ -1,9 +1,9 @@
-/*!999999\- enable the sandbox mode */ 
--- MariaDB dump 10.19  Distrib 10.11.8-MariaDB, for osx10.19 (arm64)
+/*!999999\- enable the sandbox mode */
+-- MariaDB dump 10.19-11.4.2-MariaDB, for osx10.19 (arm64)
 --
 -- Host: 127.0.0.1    Database: sisseastumine
 -- ------------------------------------------------------
--- Server version	10.7.8-MariaDB-1:10.7.8+maria~ubu2004-log
+-- Server version	11.4.2-MariaDB
 
 /*!50503 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!50503 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -14,7 +14,7 @@
 /*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
 /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
 /*!50503 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
-/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+/*M!100616 SET @OLD_NOTE_VERBOSITY=@@NOTE_VERBOSITY, NOTE_VERBOSITY=0 */;
 
 --
 -- Table structure for table `activities`
@@ -56,8 +56,11 @@ CREATE TABLE `activityLog` (
   `activityLogId` int unsigned NOT NULL AUTO_INCREMENT COMMENT 'Autocreated',
   `userId` int unsigned NOT NULL,
   `activityId` int unsigned NOT NULL COMMENT 'Autocreated',
+  `id` int unsigned DEFAULT NULL,
   PRIMARY KEY (`activityLogId`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4;
+) ENGINE = InnoDB
+  AUTO_INCREMENT = 24
+  DEFAULT CHARSET = utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -66,13 +69,29 @@ CREATE TABLE `activityLog` (
 
 LOCK TABLES `activityLog` WRITE;
 /*!40000 ALTER TABLE `activityLog` DISABLE KEYS */;
-INSERT INTO `activityLog` VALUES
-('2024-08-08 10:05:55',1,1,1),
-('2024-08-09 12:43:27',2,1,2),
-('2024-08-09 12:43:42',3,1,1),
-('2024-08-09 17:15:37',4,1,2),
-('2024-08-09 17:15:46',5,1,1),
-('2024-08-09 17:16:26',6,1,3);
+INSERT INTO `activityLog` VALUES ('2024-08-08 10:05:55', 1, 1, 1, NULL),
+                                 ('2024-08-09 12:43:27', 2, 1, 2, NULL),
+                                 ('2024-08-09 12:43:42', 3, 1, 1, NULL),
+                                 ('2024-08-09 17:15:37', 4, 1, 2, NULL),
+                                 ('2024-08-09 17:15:46', 5, 1, 1, NULL),
+                                 ('2024-08-09 17:16:26', 6, 1, 3, NULL),
+                                 ('2024-08-09 17:29:10', 7, 1, 2, NULL),
+                                 ('2024-08-09 17:29:20', 8, 1, 1, NULL),
+                                 ('2024-08-09 17:35:37', 9, 1, 2, NULL),
+                                 ('2024-08-09 17:35:53', 10, 1, 1, NULL),
+                                 ('2024-08-09 17:36:30', 11, 1, 2, NULL),
+                                 ('2024-08-09 17:36:35', 12, 1, 1, NULL),
+                                 ('2024-08-09 17:36:38', 13, 1, 3, NULL),
+                                 ('2024-08-09 17:36:49', 14, 1, 2, NULL),
+                                 ('2024-08-09 17:36:56', 15, 1, 1, NULL),
+                                 ('2024-08-11 22:18:52', 16, 1, 1, NULL),
+                                 ('2024-08-11 22:18:55', 17, 1, 3, NULL),
+                                 ('2024-08-11 22:50:51', 18, 1, 2, NULL),
+                                 ('2024-08-11 22:50:56', 19, 1, 1, NULL),
+                                 ('2024-08-11 23:19:14', 20, 1, 2, NULL),
+                                 ('2024-08-11 23:19:22', 21, 1, 1, NULL),
+                                 ('2024-08-11 23:19:30', 22, 1, 3, NULL),
+                                 ('2024-08-12 00:00:52', 23, 1, 4, 1);
 /*!40000 ALTER TABLE `activityLog` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -91,7 +110,9 @@ CREATE TABLE `deployments` (
   `deploymentCommitAuthor` varchar(255) DEFAULT NULL,
   `deploymentCommitSha` varchar(256) NOT NULL,
   PRIMARY KEY (`deploymentId`)
-) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4;
+) ENGINE = InnoDB
+  AUTO_INCREMENT = 16
+  DEFAULT CHARSET = utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -110,34 +131,12 @@ INSERT INTO `deployments` VALUES
 (8,'2024-08-09 13:03:28','2024-08-09 13:14:32','As an applicant I c','Violetta Zakorzhevskaya','76eb006'),
 (9,'2024-08-09 14:59:43','2024-08-09 15:03:56','Refactor timer func','henno.taht@gmail.com','4a8aaa8'),
 (10,'2024-08-09 15:11:52','2024-08-09 15:13:38','Enhance time-up log','henno.taht@gmail.com','10f8d03'),
-(11,'2024-08-07 15:40:08','2024-08-09 17:15:37','As an applicant I c','Violetta Zakorzhevskaya','91f457d');
+(11,'2024-08-07 15:40:08','2024-08-09 17:15:37','As an applicant I c','Violetta Zakorzhevskaya','91f457d'),
+(12,'2024-08-09 17:28:34','2024-08-09 17:28:48','As an applicant I c','Violetta Zakorzhevskaya','f1f18d1'),
+(13,'2024-08-09 17:37:19','2024-08-09 17:44:50','As an applicant I c','Violetta Zakorzhevskaya','d09c2f9'),
+(14, '2024-08-09 18:06:01', '2024-08-09 18:06:35', 'Initial', 'Violetta Zakorzhevskaya', 'df34b11'),
+(15, '2024-08-10 21:05:41', '2024-08-11 22:17:34', 'Refactor exercises ', 'henno.taht@gmail.com', '25f246e');
 /*!40000 ALTER TABLE `deployments` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `exerciseStatuses`
---
-
-DROP TABLE IF EXISTS `exerciseStatuses`;
-/*!50503 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `exerciseStatuses` (
-  `exerciseStatusId` tinyint unsigned NOT NULL AUTO_INCREMENT,
-  `exerciseStatusName` varchar(50) NOT NULL,
-  PRIMARY KEY (`exerciseStatusId`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4;
-/*!50503 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `exerciseStatuses`
---
-
-LOCK TABLES `exerciseStatuses` WRITE;
-/*!40000 ALTER TABLE `exerciseStatuses` DISABLE KEYS */;
-INSERT INTO `exerciseStatuses` VALUES
-(1,'Lahendamata'),
-(2,'Lahendatud');
-/*!40000 ALTER TABLE `exerciseStatuses` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -150,7 +149,9 @@ DROP TABLE IF EXISTS `exercises`;
 CREATE TABLE `exercises` (
   `exerciseId` int unsigned NOT NULL AUTO_INCREMENT COMMENT 'Autocreated',
   `exerciseName` varchar(50) NOT NULL COMMENT 'Autocreated',
-  `exerciseStatusId` tinyint unsigned DEFAULT 0,
+  `exerciseInstructions` text,
+  `exerciseInitialCode` text,
+  `exerciseValidationFunction` text,
   PRIMARY KEY (`exerciseId`)
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
@@ -161,9 +162,11 @@ CREATE TABLE `exercises` (
 
 LOCK TABLES `exercises` WRITE;
 /*!40000 ALTER TABLE `exercises` DISABLE KEYS */;
-INSERT INTO `exercises` VALUES
-(1,'exercise #1',1),
-(2,'exercise #2',2);
+INSERT INTO `exercises` VALUES (1, 'Muuda lehe taustavärv punaseks',
+                                '<ol>\n    <li>Muuda kõrvalasuva koodiredaktoriga lehe taustavärv punaseks.</li>\n    <li>Veendu, et parempoolsel eelvaatepaneelil oleks lehe taust punane.</li>\n    <li>Kui taustavärv on punane, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>\n',
+                                '<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 1</title>\n    <style>body {background-color: #999999}</style>\n</head>\n<body>\n    <h1>Hello world!</h1>\n</body>\n</html>',
+                                'function validate() {\n    return window.getComputedStyle(document.body).backgroundColor === \'rgb(255, 0, 0)\';\n}'),
+                               (2, 'exercise #2', NULL, NULL, NULL);
 /*!40000 ALTER TABLE `exercises` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -187,9 +190,8 @@ CREATE TABLE `settings` (
 
 LOCK TABLES `settings` WRITE;
 /*!40000 ALTER TABLE `settings` DISABLE KEYS */;
-INSERT INTO `settings` VALUES
-('projectVersion','91f457d'),
-('translationUpdateLastRun','2024-08-09 17:15:37');
+INSERT INTO `settings` VALUES ('projectVersion', '25f246e'),
+                              ('translationUpdateLastRun', '2024-08-11 22:17:34');
 /*!40000 ALTER TABLE `settings` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -389,6 +391,36 @@ INSERT INTO `translations` VALUES
 UNLOCK TABLES;
 
 --
+-- Table structure for table `userDoneExercises`
+--
+
+DROP TABLE IF EXISTS `userDoneExercises`;
+/*!50503 SET @saved_cs_client = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `userDoneExercises`
+(
+    `userId`     int unsigned NOT NULL,
+    `exerciseId` int unsigned NOT NULL,
+    PRIMARY KEY (`exerciseId`, `userId`),
+    KEY `userId` (`userId`),
+    CONSTRAINT `userdoneexercises_ibfk_1` FOREIGN KEY (`exerciseId`) REFERENCES `exercises` (`exerciseId`),
+    CONSTRAINT `userdoneexercises_ibfk_2` FOREIGN KEY (`userId`) REFERENCES `users` (`userId`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4;
+/*!50503 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `userDoneExercises`
+--
+
+LOCK TABLES `userDoneExercises` WRITE;
+/*!40000 ALTER TABLE `userDoneExercises`
+    DISABLE KEYS */;
+/*!40000 ALTER TABLE `userDoneExercises`
+    ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `users`
 --
 
@@ -402,7 +434,7 @@ CREATE TABLE `users` (
   `userIsAdmin` tinyint NOT NULL DEFAULT 0,
   `userPassword` varchar(191) NOT NULL,
   `userDeleted` tinyint unsigned NOT NULL DEFAULT 0,
-  `userTimeUpAt` datetime,
+  `userTimeUpAt` datetime DEFAULT NULL,
   PRIMARY KEY (`userId`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
@@ -413,8 +445,8 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES
-(1,'Demo User','41111111115',1,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,'2024-08-09 18:16:26');
+INSERT INTO `users` VALUES (1, 'Demo User', '41111111115', 0,
+                            '$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm', 0, NULL);
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -425,6 +457,6 @@ UNLOCK TABLES;
 /*!50503 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!50503 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!50503 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+/*M!100616 SET NOTE_VERBOSITY=@OLD_NOTE_VERBOSITY */;
 
--- Dump completed on 2024-08-09 17:19:33
+-- Dump completed on 2024-08-12  0:01:45

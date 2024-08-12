@@ -46,7 +46,11 @@ class Db
     private function debugQuery($query, $params)
     {
         foreach ($params as $param) {
-            $query = preg_replace('/\?/', "'{$this->conn->real_escape_string($param)}'", $query, 1);
+            if ($param === null) {
+                $query = preg_replace('/\?/', 'NULL', $query, 1);
+            } else {
+                $query = preg_replace('/\?/', "'{$this->conn->real_escape_string($param)}'", $query, 1);
+            }
         }
 
         // If this query already exists in the debug log, update its count
@@ -148,15 +152,24 @@ class Db
         $types = self::getTypeString($params);
         $debugQuery = $this->debugQuery($query, $params);
 
-        // Replace ? with NULL for null values and adjust types and params
+        // Adjust query for NULL values
         $newParams = [];
         $newTypes = '';
+        $placeholderIndex = 0;
+
         for ($i = 0, $len = strlen($types); $i < $len; ++$i) {
-            if ($types[$i] === 's' && $params[$i] === NULL) {
-                $query = preg_replace('/\?/', 'NULL', $query, 1);
+            if ($params[$i] === NULL) {
+                // Locate the correct placeholder
+                $placeholderIndex = strpos($query, '?', $placeholderIndex);
+                if ($placeholderIndex !== false) {
+                    // Replace the specific placeholder with NULL
+                    $query = substr_replace($query, 'NULL', $placeholderIndex, 1);
+                    $placeholderIndex += 4; // Move past the inserted 'NULL'
+                }
             } else {
                 $newParams[] = $params[$i];
                 $newTypes .= $types[$i];
+                $placeholderIndex = strpos($query, '?', $placeholderIndex) + 1;
             }
         }
 
@@ -164,7 +177,9 @@ class Db
         $stmt = $this->conn->prepare($query);
 
         // Bind params if there are any
-        $newTypes && $stmt->bind_param($newTypes, ...$newParams);
+        if ($newTypes) {
+            $stmt->bind_param($newTypes, ...$newParams);
+        }
 
         // Start timer
         $startTime = microtime(true);
