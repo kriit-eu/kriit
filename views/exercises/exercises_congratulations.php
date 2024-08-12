@@ -4,7 +4,7 @@
     <p>Lahendatud ülesandeid: <span class="highlight">2</span></p>
 </div>
 
-<p>Täname teid osalemise eest! Palun andke eksamikomisjonile teada, et olete katse sooritanud.</p>
+<p>Täname teid osalemise eest! Palun andke vastuvõtukomisjonile teada, et olete katse sooritanud.</p>
 <p>Edu!</p>
 <div class="button-container">
     <button class="button">Alusta uut sessiooni</button>
