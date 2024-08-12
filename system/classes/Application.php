@@ -208,7 +208,10 @@ class Application
 
     private function handle_routing()
     {
-        //TODO: write here your own code if you want to manipulate controller, action
+        // admin/exercises/save
+        if ($this->controller == 'admin' && $this->action == 'exercises' && isset($this->params[0]) && $this->params[0] == 'save') {
+            $this->action = 'saveExercise';
+        }
 
         // Allow shorter URLs (users/view/3 becomes users/3)
         if (is_numeric($this->action)) {

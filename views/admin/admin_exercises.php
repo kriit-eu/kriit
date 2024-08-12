@@ -45,7 +45,7 @@
                 </div>
 
                 <footer class="exercise-footer">
-
+                    <button class="btn btn-primary save-button" data-id="<?= $exercise['exerciseId'] ?>">Save</button>
                 </footer>
             </section>
         <?php endforeach; ?>
@@ -63,7 +63,7 @@
         const editorInitialCodes = {};
         const editorValidationFunctions = {};
         const editorInstructions = {};
-
+        const titleChanged = {}; // Track changes to the title
 
         <?php foreach ($exercises as $exercise): ?>
         {
@@ -87,9 +87,26 @@
             editorValidationFunctions[exerciseId] = ace.edit("editor-validation-function-" + exerciseId);
             initializeAceEditor(editorValidationFunctions[exerciseId], 'javascript', `<?= $validationFunction ?>`);
 
+            // Track changes for the title
+            titleChanged[exerciseId] = false;
+            document.getElementById('exercise-name-' + exerciseId).addEventListener('input', function () {
+                if (!titleChanged[exerciseId]) {
+                    titleChanged[exerciseId] = true;
+                    this.classList.add('editor-changed');
+                    enableSaveButton(this.closest('.exercise-card').querySelector('.save-button'));
+                }
+            });
+
             // Track validation on the initial code editor, passing the correct previewFrameId
             trackValidation(editorInitialCodes[exerciseId], editorValidationFunctions[exerciseId], 'preview-' + exerciseId);
 
+            // Disable the save button initially
+            document.querySelector('.save-button[data-id="' + exerciseId + '"]').disabled = true;
+
+            // Attach event listener to save button
+            document.querySelector('.save-button[data-id="' + exerciseId + '"]').addEventListener('click', function () {
+                saveContent(exerciseId, editorInstructions[exerciseId], editorInitialCodes[exerciseId], editorValidationFunctions[exerciseId], titleChanged);
+            });
         }
         <?php endforeach; ?>
     });
@@ -111,6 +128,8 @@
         // Adjust initial height based on content (with a minimum of 3 rows)
         adjustEditorHeight(editor, 3);
 
+        // Track changes in the editor to show red border
+        trackChanges(editor);
 
         // Render the preview if previewFrameId is provided
         if (previewFrameId) {
@@ -195,6 +214,21 @@
         });
     }
 
+    // Function to track changes in the editor and apply the red border
+    function trackChanges(editor) {
+        let changed = false;
+        editor.getSession().on('change', function () {
+            if (!changed) {
+                changed = true;
+                editor.container.classList.add('editor-changed');
+                enableSaveButton(editor.container.closest('.exercise-card').querySelector('.save-button'));
+            }
+        });
+        editor.changed = function () {
+            return changed;
+        };
+    }
+
     // Function to adjust the editor height based on the number of visual lines
     function adjustEditorHeight(editor, minLines) {
         const session = editor.getSession();
@@ -259,6 +293,73 @@
         }
     }
 
+    // Function to enable the save button
+    function enableSaveButton(button) {
+        button.disabled = false;
+    }
+
+    // Function to save content via AJAX
+    function saveContent(exerciseId, instructionsEditor, initialCodeEditor, validationFunctionEditor, titleChanged) {
+        const data = {id: exerciseId};
+
+        // Include the exercise title only if it has been changed
+        if (titleChanged[exerciseId]) {
+            const titleElement = document.getElementById('exercise-name-' + exerciseId);
+            if (titleElement.value.trim() !== '') {
+                data.exercise_name = titleElement.value.trim();
+            }
+        }
+
+        // Only include fields that were changed
+        if (instructionsEditor.changed()) {
+            data.instructions = instructionsEditor.getValue();
+        }
+        if (initialCodeEditor.changed()) {
+            data.initial_code = initialCodeEditor.getValue();
+        }
+        if (validationFunctionEditor.changed()) {
+            data.validation_function = validationFunctionEditor.getValue();
+        }
+
+        ajax('admin/exercises/save', data, function (res) {
+            if (res.status === 200) {
+                indicateSuccess(instructionsEditor, initialCodeEditor, validationFunctionEditor, exerciseId, titleChanged);
+            } else {
+                alert('Failed to save. Please try again.');
+            }
+        }, function (res) {
+            alert('An error occurred. Please try again.');
+            console.log(res);
+        });
+    }
+
+    // Function to indicate successful save
+    function indicateSuccess(instructionsEditor, initialCodeEditor, validationFunctionEditor, exerciseId, titleChanged) {
+        if (instructionsEditor.changed()) {
+            clearChangeIndicator(instructionsEditor);
+            instructionsEditor.changed = () => false;  // Reset the changed status
+        }
+        if (initialCodeEditor.changed()) {
+            clearChangeIndicator(initialCodeEditor);
+            initialCodeEditor.changed = () => false;
+        }
+        if (validationFunctionEditor.changed()) {
+            clearChangeIndicator(validationFunctionEditor);
+            validationFunctionEditor.changed = () => false;
+        }
+
+        // Clear title change indicator if the title was changed
+        if (titleChanged[exerciseId]) {
+            const titleElement = document.getElementById('exercise-name-' + exerciseId);
+            titleElement.classList.remove('editor-changed');
+            titleChanged[exerciseId] = false; // Reset title changed status
+        }
+    }
+
+    // Function to clear the red border after a successful save
+    function clearChangeIndicator(editor) {
+        editor.container.classList.remove('editor-changed');
+    }
 </script>
 
 
@@ -348,11 +449,19 @@
         border: none;
     }
 
-    .exercise-footer {
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        margin-top: 20px;
+    .save-button {
+        padding: 6px 12px;
+        background-color: #007bff; /* Bootstrap primary button color */
+        color: #fff; /* Text color */
+        border: 1px solid #007bff; /* Border color */
+        border-radius: 4px; /* Border radius */
+        font-size: 14px; /* Font size */
+        cursor: pointer; /* Pointer cursor on hover */
+        transition: background-color 0.3s ease; /* Smooth hover transition */
+    }
+
+    .save-button:hover {
+        background-color: #0056b3; /* Darker blue on hover */
     }
 
     .text-danger {
@@ -360,6 +469,17 @@
         font-size: 1.2em;
     }
 
+    .exercise-footer {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        margin-top: 20px;
+    }
+
+    /* Style for editors or fields that have changed */
+    .editor-changed {
+        border: 2px solid red !important; /* Draw a red border */
+    }
 
     #container {
         max-width: 100%; /* Override Bootstrap's container width */
@@ -377,7 +497,7 @@
     }
 
     .validation-passed {
-        background-color: #1d702f !important; /* Dark green background color */
+        border: 2px solid green !important;
     }
 </style>
 

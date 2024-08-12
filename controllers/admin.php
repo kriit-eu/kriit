@@ -173,5 +173,29 @@ class admin extends Controller
         $this->exercises = Db::getAll("SELECT * FROM exercises");
     }
 
+    function AJAX_saveExercise()
+    {
+        $exerciseId = $_POST['id'];
+
+        // Update only the fields that are present in the request
+        if (isset($_POST['exercise_name'])) {
+            Db::update('exercises', ['exerciseName' => $_POST['exercise_name']], 'exerciseId = ?', [$exerciseId]);
+        }
+
+        if (isset($_POST['instructions'])) {
+            Db::update('exercises', ['exerciseInstructions' => $_POST['instructions']], 'exerciseId = ?', [$exerciseId]);
+        }
+
+        if (isset($_POST['initial_code'])) {
+            Db::update('exercises', ['exerciseInitialCode' => $_POST['initial_code']], 'exerciseId = ?', [$exerciseId]);
+        }
+
+        if (isset($_POST['validation_function'])) {
+            Db::update('exercises', ['exerciseValidationFunction' => $_POST['validation_function']], 'exerciseId = ?', [$exerciseId]);
+        }
+
+        stop(200);
+    }
+
 
 }
