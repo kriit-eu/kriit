@@ -23,4 +23,14 @@ class intro extends Controller
             $this->redirect('exercises/timeup');
         }
     }
+
+    function htmlCourse()
+    {
+
+    }
+
+    function cssCourse()
+    {
+
+    }
 }

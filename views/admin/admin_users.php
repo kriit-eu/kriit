@@ -1,158 +1,177 @@
-<script src="https://use.fontawesome.com/d37013578f.js"></script>
-<style>
-    #btn-add {
-        height: 38px;
-        width: 100%;
-    }
-
-    /* Remove margin-left: 0 from form when in mobile mode */
-    @media (max-width: 767px) {
-        #new-user-form {
-            margin-left: auto;
-        }
-    }
-
-    @media only screen and (max-width: 767.98px) {
-        body .ui:not(.segment):not(.grid) .ui.stackable.grid, body > .ui.stackable.grid {
-            margin-left: -15px !important;  /* Or whatever value you need */
-            margin-right: -15px !important;  /* Or whatever value you need */
-        }
-    }
-</style>
-
-<form class="ui form" id="new-user-form">
-    <div class="ui stackable four column grid">
-        <div class="column">
-            <div class="fluid input">
-                <label for="userName"><?= __('Name') ?></label>
-                <input type="text" name="userName" id="userName" placeholder="John Doe">
-            </div>
-        </div>
-        <div class="column">
-            <div class="fluid input">
-                <label for="userEmail"><?= __('Email') ?></label>
-                <input type="text" name="userEmail" id="userEmail" placeholder="john@example.com">
-            </div>
-        </div>
-        <div class="column">
-            <div class="fluid input">
-                <label for="userPassword"><?= __('Password') ?></label>
-                <input type="password" name="userPassword" id="userPassword" placeholder="Secret">
-            </div>
-        </div>
-        <div class="column bottom aligned">
-            <button class="ui green button" id="btn-add" type="button">Add</button>
-        </div>
+<div class="row">
+    <h1>Administraatorid</h1>
+    <div class="col text-end mb-3">
+        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addUserModal"
+                data-context="admin">
+            Lisa uus administraator
+        </button>
     </div>
-</form>
-
-<?php if (!empty($users)): ?>
-    <table class="ui celled table unstackable table-users">
-        <thead>
-        <tr>
-            <?php foreach ($users[0] as $field => $value): ?>
-                <th><?= __(substr($field, 4)) ?></th>
-            <?php endforeach ?>
-            <th></th>
-        </tr>
-        </thead>
-        <tbody>
-        <?php foreach ($users as $user): ?>
-            <tr data-userid="<?= $user['userId'] ?>">
-                <?php foreach ($user as $field => $value): ?>
-                    <td><?= $value ?></td>
-                <?php endforeach ?>
-                <td>
-                    <a class="edit" data-toggle="modal" data-target=".modal"
-                       href="users/edit/<?= $user['userId'] ?>"><i class="fa fa-pencil-square-o"></i></a>&nbsp;
-                    <a class="delete" href="users/delete/<?= $user['userId'] ?>"><i
-                                class="fa fa-trash-o"></i></a>
-                </td>
+    <div class="table-responsive">
+        <table class="table table-striped table-bordered">
+            <thead>
+            <tr>
+                <th>Nimi</th>
+                <th>Isikukood</th>
+                <th>Esm. sisselogimine</th>
+                <th>Tegevused</th>
             </tr>
-        <?php endforeach ?>
-        </tbody>
-    </table>
-<?php endif ?>
+            </thead>
+            <tbody>
+            <?php foreach ($users as $user): ?>
+                <tr>
+                    <td><?= $user['userName'] ?></td>
+                    <td><?= $user['userPersonalCode'] ?></td>
+                    <td><?= $user['userFirstLogin'] ?></td>
+                    <td>
+                        <a href="#" class="text-warning edit-user" data-id="<?= $user['userId'] ?>"
+                           data-name="<?= $user['userName'] ?>" data-personalcode="<?= $user['userPersonalCode'] ?>"
+                           data-context="edit">
+                            <i class="bi bi-pencil-fill"></i>
+                        </a>&nbsp;
 
-<div class="ui modal">
-    <i class="close icon"></i>
-    <div class="header">
-        <?= __('Edit user') ?>
-    </div>
-    <div class="content">
-        <form id="edit-user-form" class="ui form">
-            <input type="hidden" name="userId"/>
-            <div class="field">
-                <label for="userName"><?= __('Name') ?></label>
-                <input type="text" name="userName" id="userName" placeholder="<?= __("User's new name") ?>">
-            </div>
-            <div class="field">
-                <label for="userEmail"><?= __('Email') ?></label>
-                <input type="email" name="userEmail" id="userEmail" placeholder="<?= __("User's new email") ?>">
-            </div>
-            <div class="field">
-                <label for="userPassword"><?= __('Password') ?></label>
-                <input type="password" name="userPassword" id="userPassword"
-                       placeholder="<?= __("User's new password (leave empty for unchanged)") ?>">
-            </div>
-            <div class="field">
-                <label for="userIsAdmin"><?= __('Admin') ?></label>
-                <input type="text" name="userIsAdmin" id="userIsAdmin"
-                       placeholder="<?= __("Set to 1 if user must be admin") ?>">
-            </div>
-        </form>
-    </div>
-    <div class="actions">
-        <button class="ui primary button btn-save"><?= __('Save changes') ?></button>
-        <button class="ui secondary button btn-close"><?= __('Close') ?></button>
+                        <a href="#" class="text-danger delete-user" data-id="<?= $user['userId'] ?>">
+                            <i class="bi bi-trash-fill"></i>
+                        </a>&nbsp;
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
     </div>
 </div>
 
+<div class="modal fade" id="addUserModal" tabindex="-1" role="dialog" aria-labelledby="addUserModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addUserModalLabel">Lisa uus administraator</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addUserForm" method="post">
+                    <input type="hidden" id="userId" name="userId">
+                    <div class="mb-3">
+                        <label for="userName" class="form-label">Nimi</label>
+                        <input type="text" name="userName" class="form-control" id="userName"
+                               aria-describedby="userNameHelp" required>
+                        <div id="userNameHelp" class="form-text">Sisesta administraatori nimi</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="userPersonalCode" class="form-label">Isikukood</label>
+                        <input type="text" name="userPersonalCode" class="form-control" id="userPersonalCode"
+                               aria-describedby="userPersonalCodeHelp" data-context="admin" required>
+                        <div id="userPersonalCodeHelp" class="form-text">Sisesta administraatori isikukood</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="userPassword" class="form-label">Parool</label>
+                        <input type="password" name="userPassword" class="form-control" id="userPassword"
+                               aria-describedby="userPasswordHelp" required>
+                        <div id="userPasswordHelp" class="form-text">Sisesta administraatori parool</div>
+                    </div>
+                    <button type="submit" id="submitUser" class="btn btn-primary">Lisa uus</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
+    $(document).ready(function () {
+        const $userNameInput = $("#userName");
+        const $userPersonalCodeInput = $("#userPersonalCode");
+        const $userPasswordInput = $("#userPassword");
+        const $submitButton = $("#submitUser");
+        const $modalTitle = $("#addUserModalLabel");
+        const $userIdInput = $("#userId");
+        const $userNameHelp = $("#userNameHelp");
+        const $userPersonalCodeHelp = $("#userPersonalCodeHelp");
 
-    // Add User
-    $('#btn-add').click(function () {
-        ajax('admin/addUser', $('#new-user-form').serialize(), RELOAD)
-    });
+        function setContext(context) {
+            if (context === "edit") {
+                $modalTitle.text('Muuda administraatori andmed');
+                $submitButton.text('Salvesta muudatused');
+                $userPasswordInput.removeAttr('required');
+            } else if (context === "admin") {
+                $modalTitle.text('Lisa uus administraator');
+                $submitButton.text('Lisa uus');
+                $userPasswordInput.attr('required', 'required');
+            }
+        }
 
-    // Edit User
-    $('.edit').click(function (e) {
-        e.preventDefault(); // Prevent from navigating away from the page
+        $('.edit-user').on('click', function (e) {
+            e.preventDefault();
 
-        let userId = $(this).closest('tr').data('userid'); // Get selected user's ID
+            const context = $(this).data('context');
+            setContext(context);
 
-        $('#edit-user-form [name="userId"]').val(userId); // Store selected user's ID into the form for the back-end
+            const userId = $(this).data('id');
+            const userName = $(this).data('name');
+            const userPersonalCode = $(this).data('personalcode');
 
-        $('#edit-user-form [name="userPassword"]').val(''); // Clear password from previous value
+            $userIdInput.val(userId);
+            $userNameInput.val(userName);
+            $userPersonalCodeInput.val(userPersonalCode);
 
-        ajax('admin/getUser', {userId}, function (res) { // Get selected user's data from the database
-            Object.keys(res.data).forEach(function (field) { // Fill modal fields with data from the database
-                $(`#edit-user-form [name="${field}"]`).val(res.data[field]);
+            $('#addUserModal').modal('show');
+        });
+
+        $('[data-bs-toggle="modal"]').on('click', function () {
+            const context = $(this).data('context');
+            setContext(context);
+
+            $userIdInput.val('');
+            $userNameInput.val('');
+            $userPersonalCodeInput.val('');
+            $userPasswordInput.val('');
+            $userNameHelp.text('Sisesta administraatori nimi').removeClass('text-danger');
+            $userPersonalCodeHelp.text('Sisesta administraatori isikukood').removeClass('text-danger');
+        });
+
+        $('.delete-user').on('click', function (e) {
+            e.preventDefault();
+
+            const userId = $(this).data('id');
+
+            if (confirm('Oled kindel, et soovid selle administraatori kustutada?')) {
+                const url = 'admin/AJAX_deleteUser';
+                const data = {userId: userId};
+
+                ajax(url, data, function (response) {
+                    alert('Administraator edukalt kustutatud!');
+                    location.reload();
+                }, function (error) {
+                    alert('Viga: ' + error);
+                });
+            }
+        });
+
+        $('#addUserForm').on('submit', function (e) {
+            e.preventDefault();
+
+            const data = $(this).serialize();
+            let url;
+
+            if ($userIdInput.val()) {
+                url = 'admin/editUser';
+            } else {
+                url = 'admin/addUser';
+            }
+
+            ajax(url, data, function (response) {
+                alert('Andmed edukalt salvestatud!');
+                $('#addUserModal').modal('hide');
+                location.reload();
+            }, function (error) {
+                alert('Viga: ' + error);
             });
+        });
 
-            $('.ui.modal').modal('show'); // Open the modal manually using Semantic UI's modal component
+        $('#addUserModal').on('hidden.bs.modal', function () {
+            $userIdInput.val('');
+            $userNameInput.val('');
+            $userPersonalCodeInput.val('');
+            $userPasswordInput.val('');
         });
     });
-
-    // Delete User
-    $('.delete').click(function (e) {
-        e.preventDefault(); // Prevent from navigating away from the page
-
-        if (confirm('<?=__('Are you sure?');?>')) { // Send delete command to the server, if the user confirms
-            ajax('admin/deleteUser', {
-                userId: $(this).closest('tr').data('userid')
-            }, RELOAD);
-        }
-    });
-
-    // Save Changes in the Modal
-    $('.btn-save').click(function () {
-        ajax('admin/editUser', $('#edit-user-form').serialize(), RELOAD); // Send modal contents to the back-end and reload the page
-    });
-    // This ensures the close button will close the modal
-    $(document).on('click', '.ui.secondary.button', function () {
-        $('.ui.modal').modal('hide');
-    });
-
 </script>

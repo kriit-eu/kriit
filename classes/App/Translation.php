@@ -376,6 +376,11 @@ class Translation
 
         foreach ($dynamicTranslations as $dynamicTranslation) {
 
+            // Check if 'translationSource' exists
+            if (!isset($dynamicTranslation['translationSource'])) {
+                continue;
+            }
+
             // Skip iteration if translation_source is not in required format
             if (substr_count($dynamicTranslation['translationSource'], '.') != 1) {
                 continue;
@@ -402,6 +407,7 @@ class Translation
             }
         }
     }
+
 
     public static function isValidLanguageCode($languageCode): bool
     {

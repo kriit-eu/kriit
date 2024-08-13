@@ -84,9 +84,46 @@ class admin extends Controller
         exit();
     }
 
+    function ranking()
+    {
+        $this->users = Db::getAll("
+            SELECT
+                u.*,
+                COUNT(userDoneExercises.exerciseId) AS userExercisesDone,
+                MIN(a.activityLogTimestamp) AS userFirstLogin,
+                ROW_NUMBER() OVER (ORDER BY u.userTimeTotal DESC, COUNT(userDoneExercises.exerciseId) DESC) AS userRank
+            FROM
+                users u
+            LEFT JOIN
+                activityLog a ON u.userId = a.userId AND a.activityId = 1
+            LEFT JOIN
+                userDoneExercises ON u.userId = userDoneExercises.userId
+            WHERE
+                u.userIsAdmin = 0
+            GROUP BY
+                u.userId
+            ORDER BY
+                userRank ASC
+        ");
+
+    }
+
     function users()
     {
-        $this->users = User::get(null, 'userId DESC');
+        $this->users = Db::getAll("
+            SELECT
+                u.*,
+                MIN(a.activityLogTimestamp) AS userFirstLogin
+            FROM
+                users u
+            LEFT JOIN
+                activityLog a
+                ON u.userId = a.userId
+                AND a.activityId = 1
+            WHERE
+                u.userIsAdmin = 1
+            GROUP BY
+                u.userId");
     }
 
     function logs()
@@ -94,13 +131,68 @@ class admin extends Controller
         $this->log = Activity::logs();
     }
 
+    function validatePersonalCode($personalCode)
+    {
+        // Регулярное выражение для проверки формата isikukood
+        $pattern = '/^[1-6]\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{4}$/';
+
+        // Проверка соответствия регулярному выражению
+        if (!preg_match($pattern, $personalCode)) {
+            return false; // Не соответствует формату
+        }
+
+        // Проверка контрольного числа
+        $multipliers1 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 1];
+        $multipliers2 = [3, 4, 5, 6, 7, 8, 9, 1, 2, 3];
+        $sum = 0;
+
+        // Первая попытка проверки
+        for ($i = 0; $i < 10; $i++) {
+            $sum += intval($personalCode[$i]) * $multipliers1[$i];
+        }
+
+        $mod = $sum % 11;
+
+        // Если модуль 10, делаем вторую проверку
+        if ($mod === 10) {
+            $sum = 0;
+            for ($i = 0; $i < 10; $i++) {
+                $sum += intval($personalCode[$i]) * $multipliers2[$i];
+            }
+
+            $mod = $sum % 11;
+
+            if ($mod === 10) {
+                $mod = 0; // Если снова 10, контрольное число должно быть 0
+            }
+        }
+
+        // Проверка последнего символа isikukood
+        return $mod === intval($personalCode[10]);
+    }
+
+
     function AJAX_addUser()
     {
         if (empty($_POST['userName'])) {
-            stop(400, __('Invalid username'));
+            stop(400, 'Nimi ei saa olla tühi');
         }
         if (empty($_POST['userPassword'])) {
-            stop(400, __('Invalid password'));
+            stop(400, 'Parool ei saa olla tühi');
+        }
+
+        if (empty($_POST['userPersonalCode'])) {
+            stop(400, "Isikukood on kohustuslik");
+        }
+
+        $userPersonalCode = $_POST['userPersonalCode'];
+
+        if (!$this->validatePersonalCode($userPersonalCode)) {
+            stop(400, "Isikukood ei vasta nõuetele");
+        }
+
+        if (User::get(["userPersonalCode = '$userPersonalCode'"])) {
+            stop(409, "Administraator selle isikukoodiga on juba olemas");
         }
 
         $userName = addslashes($_POST['userName']);
@@ -108,15 +200,66 @@ class admin extends Controller
             stop(409, __('User already exists'));
         }
 
-        User::register($_POST['userName'], $_POST['userEmail'], $_POST['userPassword']);
+        $data = [
+            'userName' => $_POST['userName'],
+            'userPersonalCode' => $_POST['userPersonalCode'],
+            'userPassword' => password_hash($_POST['userPassword'], PASSWORD_DEFAULT),
+            'userIsAdmin' => 1
+        ];
 
-        stop(200);
+        $userId = Db::insert('users', $data);
+        stop(200, ['userId' => $userId]);
+    }
+
+    function AJAX_addApplicant()
+    {
+        if (empty($_POST['userName'])) {
+            stop(400, "Nimi on kohustuslik");
+        }
+        if (empty($_POST['userPersonalCode'])) {
+            stop(400, "Isikukood on kohustuslik");
+        }
+
+        $userPersonalCode = $_POST['userPersonalCode'];
+
+        if (!$this->validatePersonalCode($userPersonalCode)) {
+            stop(400, "Isikukood ei vasta nõuetele");
+        }
+
+        if (User::get(["userPersonalCode = '$userPersonalCode'"])) {
+            stop(409, "Kandidaat selle isikukoodiga on juba olemas");
+        }
+
+        $data = [
+            'userName' => $_POST['userName'],
+            'userPersonalCode' => $_POST['userPersonalCode']
+        ];
+
+        $userId = Db::insert('users', $data);
+
+        stop(200, ['userId' => $userId]);
     }
 
     function AJAX_editUser()
     {
         if (empty($_POST['userId']) || !is_numeric($_POST['userId'])) {
             stop(400, 'Invalid' . ' userId');
+        }
+
+        if (empty($_POST['userPersonalCode'])) {
+            stop(400, "Isikukood on kohustuslik");
+        }
+
+        $userId = $_POST['userId'];
+        $userPersonalCode = $_POST['userPersonalCode'];
+
+        if (!$this->validatePersonalCode($userPersonalCode)) {
+            stop(400, "Isikukood ei vasta nõuetele");
+        }
+
+        $existingUser = User::get(["userPersonalCode = '$userPersonalCode'"]);
+        if ($existingUser && isset($existingUser['userId']) && $existingUser['userId'] != $userId) {
+            stop(409, "Administraator selle isikukoodiga on juba olemas");
         }
 
         // Remove empty password from $_POST or hash it
@@ -126,11 +269,38 @@ class admin extends Controller
             $_POST['userPassword'] = password_hash($_POST['userPassword'], PASSWORD_DEFAULT);
         }
 
-        User::edit($_POST['userId'], $_POST);
-
+        User::edit($userId, $_POST);
 
         stop(200);
     }
+
+    function AJAX_editApplicant()
+    {
+        if (empty($_POST['userId']) || !is_numeric($_POST['userId'])) {
+            stop(400, 'Invalid' . ' userId');
+        }
+
+        if (empty($_POST['userPersonalCode'])) {
+            stop(400, "Isikukood on kohustuslik");
+        }
+
+        $userId = $_POST['userId'];
+        $userPersonalCode = $_POST['userPersonalCode'];
+
+        if (!$this->validatePersonalCode($userPersonalCode)) {
+            stop(400, "Isikukood ei vasta nõuetele");
+        }
+
+        $existingUser = User::get(["userPersonalCode = '$userPersonalCode'"]);
+        if ($existingUser && isset($existingUser['userId']) && $existingUser['userId'] != $userId) {
+            stop(409, "Kandidaat selle isikukoodiga on juba olemas");
+        }
+
+        User::edit($userId, $_POST);
+
+        stop(200);
+    }
+
 
     function AJAX_deleteUser()
     {

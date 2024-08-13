@@ -61,6 +61,7 @@ class exercises extends Controller
         $this->exercise = Db::getFirst("
             SELECT * FROM exercises
             WHERE exerciseId = ?", [$this->getId()]);
+        Activity::create(ACTIVITY_START_EXERCISE, $this->auth->userId, $this->getId());
     }
 
     function timeup()

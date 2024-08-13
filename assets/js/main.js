@@ -12,15 +12,26 @@ $(document).ready(function () {
 
     $userPersonalCodeInput.on("input", function () {
         userPersonalCodeValue = $userPersonalCodeInput.val();
+
+        // Определяем контекст (например, по атрибуту data-context на input)
+        const context = $userPersonalCodeInput.data('context') || 'default';
+
         if (userPersonalCodeValue.length > 11) {
-            $userPersonalCodeHelp.text("Isikukood ei vasta mustrile").addClass("text-danger");
+            $userPersonalCodeHelp.text("Isikukood ei vasta mustrile").addClass("text-danger").removeClass("text-success");
             $passwordField.hide();
             $submitButton.prop("disabled", true);
         } else if (userPersonalCodeValue.length === 11) {
             if (userPersonalCodePattern.test(userPersonalCodeValue) && validateControlNumber(userPersonalCodeValue)) {
                 ajax("users/check", {userPersonalCode: userPersonalCodeValue}, function (response) {
                     if (!response || !response.data || !response.data.user) {
-                        return $userPersonalCodeHelp.text("Selle isikukoodiga isik ei ole registreeritud.").addClass("text-danger");
+                        // Изменяем цвет текста на зеленый для контекста "admin" или "applicant"
+                        if (context === 'applicant' || context === 'admin') {
+                            return $userPersonalCodeHelp.text("Selle isikukoodiga isik ei ole registreeritud.")
+                                .addClass("text-success").removeClass("text-danger");
+                        } else {
+                            return $userPersonalCodeHelp.text("Selle isikukoodiga isik ei ole registreeritud.")
+                                .addClass("text-danger").removeClass("text-success");
+                        }
                     }
                     if (response.data.user.userIsAdmin) {
                         return $passwordField.show();
@@ -28,12 +39,16 @@ $(document).ready(function () {
                     $submitButton.prop("disabled", false);
                 });
             } else {
-                $userPersonalCodeHelp.text("Isikukood ei vasta mustrile").addClass("text-danger");
+                $userPersonalCodeHelp.text("Isikukood ei vasta mustrile")
+                    .addClass("text-danger").removeClass("text-success");
                 $passwordField.hide();
                 $submitButton.prop("disabled", true);
             }
         } else {
-            $userPersonalCodeHelp.text("Sisesta enda isikukood").removeClass("text-danger");
+            // Устанавливаем текст в зависимости от контекста
+            const defaultText = context === 'admin' ? "Sisesta administraatori isikukood" :
+                (context === 'applicant' ? "Sisesta kandidaadi isikukood" : "Sisesta enda isikukood");
+            $userPersonalCodeHelp.text(defaultText).removeClass("text-danger text-success");
             $passwordField.hide();
             $submitButton.prop("disabled", true);
         }
@@ -41,12 +56,13 @@ $(document).ready(function () {
 
     $passwordInput.on("input", () => {
         if ($passwordInput.val()) {
-            $submitButton.prop("disabled", false)
+            $submitButton.prop("disabled", false);
         } else {
-            $submitButton.prop("disabled", true)
+            $submitButton.prop("disabled", true);
         }
-    })
+    });
 });
+
 
 function tryToParseJSON(jsonString) {
     try {
