@@ -204,7 +204,7 @@
         toimimise ja brauseris õigesti kuvamise jaoks. Siin on mõned olulised elemendid <code>&lt;head></code>-is:</p>
     <ul>
         <li><code>&lt;meta charset="UTF-8"&gt;</code>: Määrab sümbolite komplekti, milliseid tähemärke ja
-            muid sümboleid on võimalik lehel kasutada. Vanasti kasutati erinevates keeltetes lehtede jaoks erinevaid
+            muid sümboleid on võimalik lehel kasutada. Vanasti kasutati erinevates keeltes lehtede jaoks erinevaid
             sümbolikogumikke, näiteks eestikeelsetel lehtedel kasutati <a
                     href="https://en.wikipedia.org/wiki/ISO/IEC_8859-15#Codepage_layout">ISO 8859-15</a>
             tähemärgistikku (sisaldab umbes 256 erinevat sümbolit, sealhulgas kõiki eesti keele jaoks vajalikke
