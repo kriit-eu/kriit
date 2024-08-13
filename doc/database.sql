@@ -58,7 +58,7 @@ CREATE TABLE `activityLog` (
   `activityId` int unsigned NOT NULL COMMENT 'Autocreated',
   `id` int unsigned DEFAULT NULL,
   PRIMARY KEY (`activityLogId`)
-) ENGINE=InnoDB AUTO_INCREMENT=142 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=153 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -67,148 +67,6 @@ CREATE TABLE `activityLog` (
 
 LOCK TABLES `activityLog` WRITE;
 /*!40000 ALTER TABLE `activityLog` DISABLE KEYS */;
-INSERT INTO `activityLog` VALUES
-('2024-08-08 10:05:55',1,1,1,NULL),
-('2024-08-09 12:43:27',2,1,2,NULL),
-('2024-08-09 12:43:42',3,1,1,NULL),
-('2024-08-09 17:15:37',4,1,2,NULL),
-('2024-08-09 17:15:46',5,1,1,NULL),
-('2024-08-09 17:16:26',6,1,3,NULL),
-('2024-08-09 17:29:10',7,1,2,NULL),
-('2024-08-09 17:29:20',8,1,1,NULL),
-('2024-08-09 17:35:37',9,1,2,NULL),
-('2024-08-09 17:35:53',10,1,1,NULL),
-('2024-08-09 17:36:30',11,1,2,NULL),
-('2024-08-09 17:36:35',12,1,1,NULL),
-('2024-08-09 17:36:38',13,1,3,NULL),
-('2024-08-09 17:36:49',14,1,2,NULL),
-('2024-08-09 17:36:56',15,1,1,NULL),
-('2024-08-11 22:18:52',16,1,1,NULL),
-('2024-08-11 22:18:55',17,1,3,NULL),
-('2024-08-11 22:50:51',18,1,2,NULL),
-('2024-08-11 22:50:56',19,1,1,NULL),
-('2024-08-11 23:19:14',20,1,2,NULL),
-('2024-08-11 23:19:22',21,1,1,NULL),
-('2024-08-11 23:19:30',22,1,3,NULL),
-('2024-08-12 00:00:52',23,1,4,1),
-('2024-08-12 10:29:26',24,1,1,NULL),
-('2024-08-12 10:29:31',25,1,3,NULL),
-('2024-08-12 10:31:31',26,1,4,1),
-('2024-08-12 10:46:05',27,1,4,1),
-('2024-08-12 10:47:01',28,1,4,1),
-('2024-08-12 11:41:33',29,1,2,NULL),
-('2024-08-12 11:41:43',30,1,1,NULL),
-('2024-08-12 11:41:45',31,1,3,NULL),
-('2024-08-12 12:27:11',32,1,4,2),
-('2024-08-12 12:27:20',33,1,4,1),
-('2024-08-12 12:34:17',34,1,2,NULL),
-('2024-08-12 12:34:37',35,1,1,NULL),
-('2024-08-12 12:34:49',36,1,4,2),
-('2024-08-12 12:51:39',37,1,3,NULL),
-('2024-08-12 12:51:53',38,1,4,2),
-('2024-08-12 12:54:09',39,1,2,NULL),
-('2024-08-12 12:54:24',40,1,1,NULL),
-('2024-08-12 12:54:33',41,1,2,NULL),
-('2024-08-12 12:54:39',42,1,1,NULL),
-('2024-08-12 12:54:49',43,1,2,NULL),
-('2024-08-12 12:54:53',44,1,1,NULL),
-('2024-08-12 12:55:02',45,1,2,NULL),
-('2024-08-12 12:55:07',46,1,1,NULL),
-('2024-08-12 12:55:32',47,1,2,NULL),
-('2024-08-12 12:55:54',48,1,1,NULL),
-('2024-08-12 12:56:30',49,1,4,2),
-('2024-08-12 12:59:20',50,1,2,NULL),
-('2024-08-12 13:03:27',51,2,1,NULL),
-('2024-08-12 13:03:32',52,2,3,NULL),
-('2024-08-12 13:04:18',53,2,4,1),
-('2024-08-12 13:04:33',54,2,4,2),
-('2024-08-12 13:05:12',55,2,2,NULL),
-('2024-08-12 13:09:24',56,2,1,NULL),
-('2024-08-12 13:09:39',57,2,4,2),
-('2024-08-12 13:09:39',58,2,5,NULL),
-('2024-08-12 13:09:39',59,2,2,NULL),
-('2024-08-12 13:10:44',60,2,1,NULL),
-('2024-08-12 13:10:44',61,2,5,NULL),
-('2024-08-12 13:10:44',62,2,2,NULL),
-('2024-08-12 13:14:20',63,1,1,NULL),
-('2024-08-12 13:53:09',64,1,2,NULL),
-('2024-08-12 13:53:18',65,1,1,NULL),
-('2024-08-12 13:56:55',66,1,2,NULL),
-('2024-08-12 13:57:06',67,1,1,NULL),
-('2024-08-12 16:07:59',68,1,2,NULL),
-('2024-08-12 16:08:34',69,2,1,NULL),
-('2024-08-12 16:08:37',70,2,3,NULL),
-('2024-08-12 16:09:00',71,2,4,2),
-('2024-08-12 16:09:00',72,2,5,NULL),
-('2024-08-12 16:09:01',73,2,2,NULL),
-('2024-08-12 16:15:12',74,2,1,NULL),
-('2024-08-12 16:15:28',75,2,4,2),
-('2024-08-12 16:15:28',76,2,5,NULL),
-('2024-08-12 16:15:28',77,2,2,NULL),
-('2024-08-12 16:19:23',78,2,1,NULL),
-('2024-08-12 16:19:23',79,2,5,NULL),
-('2024-08-12 16:19:23',80,2,2,NULL),
-('2024-08-12 16:21:12',81,1,1,NULL),
-('2024-08-12 16:39:22',82,1,2,NULL),
-('2024-08-12 16:39:55',83,2,1,NULL),
-('2024-08-12 16:40:13',84,2,3,NULL),
-('2024-08-12 16:40:26',85,2,4,1),
-('2024-08-12 16:40:26',86,2,5,NULL),
-('2024-08-12 16:40:26',87,2,2,NULL),
-('2024-08-12 16:40:42',88,1,1,NULL),
-('2024-08-12 16:47:59',89,1,2,NULL),
-('2024-08-12 16:48:06',90,2,1,NULL),
-('2024-08-12 16:48:06',91,2,5,NULL),
-('2024-08-12 16:48:06',92,2,2,NULL),
-('2024-08-12 16:48:20',93,2,1,NULL),
-('2024-08-12 16:48:20',94,2,5,NULL),
-('2024-08-12 16:48:20',95,2,2,NULL),
-('2024-08-12 16:50:11',96,1,1,NULL),
-('2024-08-12 16:50:35',97,1,4,2),
-('2024-08-12 16:50:35',98,1,5,NULL),
-('2024-08-12 16:50:35',99,1,2,NULL),
-('2024-08-12 16:53:06',100,2,1,NULL),
-('2024-08-12 16:53:18',101,2,4,1),
-('2024-08-12 16:53:29',102,2,4,2),
-('2024-08-12 16:53:29',103,2,5,NULL),
-('2024-08-12 16:53:29',104,2,2,NULL),
-('2024-08-12 16:53:40',105,1,1,NULL),
-('2024-08-12 16:53:40',106,1,5,NULL),
-('2024-08-12 16:53:40',107,1,2,NULL),
-('2024-08-12 16:53:56',108,1,1,NULL),
-('2024-08-12 17:59:03',109,1,5,NULL),
-('2024-08-12 17:59:03',110,1,2,NULL),
-('2024-08-12 17:59:45',111,1,1,NULL),
-('2024-08-12 20:04:34',112,1,4,3),
-('2024-08-12 20:09:16',113,1,4,4),
-('2024-08-12 20:13:45',114,1,4,5),
-('2024-08-12 20:27:31',115,1,4,6),
-('2024-08-12 20:28:25',116,1,4,6),
-('2024-08-12 20:30:58',117,1,4,7),
-('2024-08-12 20:33:50',118,1,4,8),
-('2024-08-12 20:38:51',119,1,4,9),
-('2024-08-12 20:42:23',120,1,4,10),
-('2024-08-12 20:47:41',121,1,4,11),
-('2024-08-12 20:51:19',122,1,4,11),
-('2024-08-12 20:56:40',123,1,4,12),
-('2024-08-12 21:08:12',124,1,4,13),
-('2024-08-12 21:12:57',125,1,4,14),
-('2024-08-12 21:22:00',126,1,4,15),
-('2024-08-12 21:27:56',127,1,4,16),
-('2024-08-12 21:33:30',128,1,4,17),
-('2024-08-12 21:53:16',129,1,4,18),
-('2024-08-12 22:03:34',130,1,4,19),
-('2024-08-12 22:06:11',131,1,4,20),
-('2024-08-12 22:13:34',132,1,4,21),
-('2024-08-12 22:17:45',133,1,4,22),
-('2024-08-12 22:32:37',134,1,4,23),
-('2024-08-12 22:37:00',135,1,4,24),
-('2024-08-12 22:46:42',136,1,4,25),
-('2024-08-12 22:49:29',137,1,4,26),
-('2024-08-12 22:55:44',138,1,4,27),
-('2024-08-12 23:01:12',139,1,4,28),
-('2024-08-12 23:10:22',140,1,4,29),
-('2024-08-12 23:29:30',141,1,4,30);
 /*!40000 ALTER TABLE `activityLog` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -253,7 +111,7 @@ CREATE TABLE `deployments` (
   `deploymentCommitAuthor` varchar(255) DEFAULT NULL,
   `deploymentCommitSha` varchar(256) NOT NULL,
   PRIMARY KEY (`deploymentId`)
-) ENGINE=InnoDB AUTO_INCREMENT=37 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=41 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -297,7 +155,11 @@ INSERT INTO `deployments` VALUES
 (33,'2024-08-12 20:14:54','2024-08-12 20:19:39','Add exercises in da','Violetta Zakorzhevskaya','adbb34a'),
 (34,'2024-08-13 02:09:58','2024-08-13 02:10:11','AAs admin I can add','henno.taht@gmail.com','423a407'),
 (35,'2024-08-13 02:14:06','2024-08-13 02:16:03','AAs admin I can add','henno.taht@gmail.com','4d8785d'),
-(36,'2024-08-13 02:48:15','2024-08-13 02:53:39','Retain js files tha','henno.taht@gmail.com','0f41851');
+(36,'2024-08-13 02:48:15','2024-08-13 02:53:39','Retain js files tha','henno.taht@gmail.com','0f41851'),
+(37,'2024-08-13 03:48:00','2024-08-13 04:18:46','Fix Alusta uut sess','henno.taht@gmail.com','a8207fd'),
+(38,'2024-08-13 04:23:10','2024-08-13 04:32:31','Fix button names','henno.taht@gmail.com','3c9e75e'),
+(39,'2024-08-13 04:37:36','2024-08-13 04:37:56','Clean up temp files','henno.taht@gmail.com','9f2022a'),
+(40,'2024-08-13 04:43:57','2024-08-13 04:44:00','Add Ülesandeid col','henno.taht@gmail.com','6669f89');
 /*!40000 ALTER TABLE `deployments` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -325,23 +187,23 @@ CREATE TABLE `exercises` (
 LOCK TABLES `exercises` WRITE;
 /*!40000 ALTER TABLE `exercises` DISABLE KEYS */;
 INSERT INTO `exercises` VALUES
-(1,'Muuda lehe taustavärv punaseks','<ol>\n    <li>Muuda kõrvalasuva koodiredaktoriga keha elemendi taustavärv punaseks.</li>\n    <li>Veendu, et parempoolsel eelvaatepaneelil oleks lehe taust punane.</li>\n    <li>Kui taustavärv on punane, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 1</title>\n    <style>body {background-color: blue}</style>\n</head>\n<body>\n    <h1>Hello world!</h1>\n</body>\n</html>','function validate() {\n    return window.getComputedStyle(document.body).backgroundColor === \'rgb(255, 0, 0)\';\n}'),
-(2,'Lisa lehele nupp','<ol>\n    <li>Lisa kõrvalasuva koodiredaktoriga lehele üks nupp</li>\n    <li>Veendu, et parempoolsel eelvaatepaneelil oleks lehel vähemalt üks nupp.</li>\n    <li>Kui nupp on olemas, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>','<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Ülesanne 2</title>\n</head>\n<body>\n    <h1>Button Check</h1>\n    <p>Some text</p>\n</body>\n</html>','function validate() {\n    return document.getElementsByTagName(\'button\').length > 0;\n}\n'),
-(3,'Muuda lehe fonti','<ol>\n    <li>Muuda kõrvalasuva koodiredaktoriga lehe fonti kasutades Arial fonti.</li>\n    <li>Veendu, et parempoolsel eelvaatepaneelil oleks kogu leht Arial fondiga.</li>\n    <li>Kui font on Arial, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 3</title>\n    <style>body {font-family: sans-serif;}</style>\n</head>\n<body>\n    <h1>Tere maailm!</h1>\n    <p>See on lihtne HTML leht.</p>\n</body>\n</html>\n','function validate() {\n    return window.getComputedStyle(document.body).fontFamily.toLowerCase().includes(\'arial\'.toLowerCase());\n}'),
-(4,'Muuda pildi laiust','<ol>\n    <li>Muuda pildi laiust 200 piksliks.</li>\n    <li>Veendu, et pildi laius oleks 200 pikslit.</li>\n    <li>Kui pildi laius on 200 pikslit, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 4</title>\n</head>\n<body>\n    <img src=\"https://via.placeholder.com/150\" alt=\"Näidispilt\">\n</body>\n</html>\n','function validate() {\n    return document.querySelector(\'img\').width === 200;\n}'),
+(1,'Muuda lehe taustavärv punaseks','<ol>\n    <li>Muuda kõrvalasuva koodiredaktoriga kehaelemendi taustavärv punaseks.</li>\n    <li>Veendu, et parempoolsel eelvaatepaneelil oleks lehe taust punane.</li>\n    <li>Kui taustavärv on punane, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 1</title>\n    <style>body {background-color: blue}</style>\n</head>\n<body>\n    <h1>Hello world!</h1>\n</body>\n</html>','function validate() {\n    return window.getComputedStyle(document.body).backgroundColor === \'rgb(255, 0, 0)\';\n}'),
+(2,'Lisa lehele nupp','<ol>\n    <li>Lisa kõrvalasuva koodiredaktoriga lehele üks nupp kasutades &lt;button> elementi.</li>\n    <li>Veendu, et parempoolsel eelvaatepaneelil oleks lehel vähemalt üks nupp.</li>\n    <li>Kui nupp on olemas, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>','<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Ülesanne 2</title>\n</head>\n<body>\n    <h1>Button Check</h1>\n    <p>Some text</p>\n</body>\n</html>','function validate() {\n    return document.getElementsByTagName(\'button\').length > 0;\n}\n'),
+(3,'Muuda lehe fonti','<ol>\n    <li>Muuda kõrvalasuva koodiredaktoriga lehe font Arialiks.</li>\n    <li>Veendu, et parempoolsel eelvaatepaneelil oleks kogu leht Arial fondiga.</li>\n    <li>Kui font on Arial, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 3</title>\n    <style>body {font-family: sans-serif;}</style>\n</head>\n<body>\n    <h1>Tere maailm!</h1>\n    <p>See on lihtne HTML leht.</p>\n</body>\n</html>\n','function validate() {\n    return window.getComputedStyle(document.body).fontFamily.toLowerCase().includes(\'arial\'.toLowerCase());\n}'),
+(4,'Muuda pildi laiust','<ol>\n    <li>Muuda pildi laiuseks 200 pikslit.</li>\n    <li>Veendu, et pildi laius oleks 200 pikslit.</li>\n    <li>Kui pildi laius on 200 pikslit, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 4</title>\n</head>\n<body>\n    <img src=\"https://via.placeholder.com/150\" alt=\"Näidispilt\">\n</body>\n</html>\n','function validate() {\n    return document.querySelector(\'img\').width === 200;\n}'),
 (5,'Märgista tekstkast kohustuslikuks','<ol>\n    <li>Märgista lisatud tekstkast kohustuslikuks.</li>\n    <li>Veendu, et tekstikastil oleks atribuut \"required\".</li>\n    <li>Kui tekstikast on kohustuslik, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 5</title>\n</head>\n<body>\n    <input type=\"text\">\n</body>\n</html>\n','function validate() {\n    return document.querySelector(\'input\').required;\n}'),
 (6,'Lisa lehele form e-maili väliga','<ol>\n    <li>Lisa lehele vorm ja sisesta sinna e-maili väli.</li>\n    <li>Veendu, et vormil oleks e-maili sisestamise väli.</li>\n    <li>Kui e-maili väli on lisatud, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 6</title>\n</head>\n<body>\n    <!-- Lisa vorm siia -->\n</body>\n</html>\n','function validate() {\n    return !!document.querySelector(\'form\') && !!document.querySelector(\'input[type=\"email\"]\');\n}'),
 (7,'Muuda tekste positsiooni','<ol>\n    <li>Muuda lehe tekst keskel joondatuks (kasuta `text-align: center`).</li>\n    <li>Veendu, et kogu lehe tekst oleks keskel joondatud.</li>\n    <li>Kui tekst on keskel, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 7</title>\n    <style>body {text-align: left;}</style>\n</head>\n<body>\n    <h1>Tere maailm!</h1>\n    <p>See on lihtne HTML leht.</p>\n</body>\n</html>\n','function validate() {\n    return window.getComputedStyle(document.body).textAlign === \'center\';\n}\n'),
-(8,'Lisa pilt lehele','<ol>\n    <li>Lisa lehele pilt kasutades pildi URL-i.</li>\n    <li>Veendu, et pilt oleks õigesti lehele lisatud.</li>\n    <li>Kui pilt on lisatud, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 8</title>\n</head>\n<body>\n    <!-- Lisa pilt siia -->\n</body>\n</html>\n','function validate() {\n    return document.querySelector(\'img\') !== null;\n}\n'),
-(9,'Lisa märkeruut ja märgista valituks','<ol>\n    <li>Lisa vormile märkeruut ja märgista see vaikimisi valituks.</li>\n    <li>Veendu, et märkeruut oleks vaikimisi valitud.</li>\n    <li>Kui märkeruut on õigesti seadistatud, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>\n','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 9</title>\n</head>\n<body>\n    <!-- Lisa märkeruut siia -->\n</body>\n</html>\n','function validate() {\n    return document.querySelector(\'input[type=\"checkbox\"]\').checked;\n}\n'),
+(8,'Lisa pilt lehele','<ol>\n    <li>Lisa lehele pilt, otsides selleks URL-i Internetist.</li>\n    <li>Veendu, et pilt oleks õigesti lehele lisatud.</li>\n    <li>Kui pilt on lisatud, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 8</title>\n</head>\n<body>\n    <!-- Lisa pilt siia -->\n</body>\n</html>\n','function validate() {\n    return document.querySelector(\'img\') !== null;\n}\n'),
+(9,'Lisa märkeruut ja märgista valituks','<ol>\n    <li>Lisa vormile märkeruut (linnuke) ja märgista see vaikimisi valituks.</li>\n    <li>Veendu, et märkeruut oleks vaikimisi valitud.</li>\n    <li>Kui märkeruut on õigesti seadistatud, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 9</title>\n</head>\n<body>\n    <!-- Lisa märkeruut siia -->\n</body>\n</html>\n','function validate() {\n    return document.querySelector(\'input[type=\"checkbox\"]\').checked;\n}\n'),
 (10,'Lisa div \'konteiner\' klassiga','<ol>\n    <li>Lisa lehele `div` element ja anna sellele klass \"konteiner\".</li>\n    <li>Veendu, et `div` elemendil oleks klass \"konteiner\".</li>\n    <li>Kui klass on õigesti lisatud, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 21</title>\n</head>\n<body>\n    <!-- Lisa div siia -->\n</body>\n</html>\n','function validate() {\n    return document.querySelector(\'div.konteiner\') !== null;\n}\n'),
-(11,'Lisa raadio nuppud ','<ol>\n    <li>Lisa lehele raadio nupp koos väärtusega \"Jah\" ja \"Ei\".</li>\n    <li>Veendu, et raadio nupud oleksid lisatud ja töötaksid.</li>\n    <li>Kui raadio nupud on lisatud, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 11</title>\n</head>\n<body>\n    <!-- Lisa raadio nupud siia -->\n</body>\n</html>\n','function validate() {\n    const radios = document.querySelectorAll(\'input[type=\"radio\"]\');\n    if (radios.length !== 2) {\n        return false;\n    }\n    const values = Array.from(radios).map(radio => radio.value);\n    return values.includes(\"Jah\") && values.includes(\"Ei\");\n}'),
+(11,'Lisa raadio nuppud ','<ol>\n    <li>Lisa lehele raadionupp koos väärtusega \"Jah\" ja \"Ei\".</li>\n    <li>Veendu, et raadionupud oleksid lisatud ja töötaksid.</li>\n    <li>Kui raadionupud on lisatud, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 11</title>\n</head>\n<body>\n    <!-- Lisa raadio nupud siia -->\n</body>\n</html>\n','function validate() {\n    const radios = document.querySelectorAll(\'input[type=\"radio\"]\');\n    if (radios.length !== 2) {\n        return false;\n    }\n    const values = Array.from(radios).map(radio => radio.value);\n    return values.includes(\"Jah\") && values.includes(\"Ei\");\n}'),
 (12,'Lisa rippmenüü lehele','<ol>\n    <li>Lisa vormile rippmenüü valikuvõimalustega \"Päev\", \"Kuu\" ja \"Aasta\".</li>\n    <li>Veendu, et rippmenüü oleks lisatud ja töötaks.</li>\n    <li>Kui rippmenüü on õigesti lisatud, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 12</title>\n</head>\n<body>\n    <!-- Lisa rippmenüü siia -->\n</body>\n</html>\n','function validate() {\n    const options = document.querySelectorAll(\'option\');\n    if (options.length !== 3) {\n        return false;\n    }\n    const values = Array.from(options).map(option => option.value);\n    return values.includes(\"Päev\") && values.includes(\"Kuu\") && values.includes(\"Aasta\");\n}\n'),
 (13,'Piira sisendi pikkus','<ol>\n    <li>Lisa lehele tekstikast ja piira sisendi pikkus maksimaalselt 10 tähemärgini.</li>\n    <li>Veendu, et sisendi pikkus oleks piiratud.</li>\n    <li>Kui piirang on õigesti rakendatud, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 13</title>\n</head>\n<body>\n    <input type=\"text\">\n</body>\n</html>\n','function validate() {\n    return document.querySelector(\'input\').maxLength === 10;\n}'),
 (14,'Lisa tabel lehele','<ol>\n    <li>Lisa lehele tabel, kus on 2 rida ja 2 veergu.</li>\n    <li>Veendu, et tabel oleks õigesti lisatud ja selles oleks 2x2 lahtrit.</li>\n    <li>Kui tabel on õigesti lisatud, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 14</title>\n</head>\n<body>\n    <!-- Lisa tabel siia -->\n</body>\n</html>\n','function validate() {\n    const rows = document.querySelectorAll(\'table tr\');\n    const cells = document.querySelectorAll(\'table td\');\n    return rows.length === 2 && cells.length === 4;\n}\n'),
-(15,'Lisa korrektne label sisestusväli jaoks','<ol>\n    <li>Lisa korrektne label, mis on seotud nime sisestusväljaga. Kasuta selleks `for` atribuuti label-is.</li>\n    <li>Veendu, et label oleks korrektselt seotud nime sisestusväljaga.</li>\n    <li>Kui label ja sisestusväli on õigesti seotud, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 15</title>\n</head>\n<body>\n    <!-- Lisa label siia -->\n    \n    <input type=\"text\" id=\"name\" name=\"name\">\n</body>\n</html>\n','function validate() {\n    const label = document.querySelector(\'label\');\n    const input = document.querySelector(\'input[type=\"text\"]\');\n    return label && input && label.getAttribute(\'for\') === input.id;\n}\n'),
-(16,'Lisa nummerdamata loend lehele','<ol>\n    <li>Loo HTML-is nummerdamata loend (\'ul\' tag), mis sisaldab kolme eset: \"Punane\", \"Roheline\", \"Sinine\".</li>\n    <li>Veendu, et parempoolsel eelvaatepaneelil oleks loend õigesti kuvatud.</li>\n    <li>Kui loend on õigesti loodud, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne: 16</title>\n</head>\n<body>\n    <!-- Lisa loend siia -->\n</body>\n</html>\n','function validate() {\n    const listItems = document.querySelectorAll(\'ul li\');\n    const expectedItems = [\'Punane\', \'Roheline\', \'Sinine\'];\n    const itemTexts = Array.from(listItems).map(item => item.textContent.trim());\n    return listItems.length === 3 && expectedItems.every(item => itemTexts.includes(item));\n}\n'),
-(17,'Muuda lingi tekst suureks täheks','<ol>\n    <li>Muuda lingi tekst \"Kliki siin\" suureks täheks (kasuta text-transform).</li>\n    <li>Veendu, et lingi tekst oleks suurtähtedega.</li>\n    <li>Kui lingi tekst on suurtähtedega, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 17</title>\n    <style>a {text-transform: none;}</style>\n</head>\n<body>\n    <a href=\"#\">Kliki siin</a>\n</body>\n</html>\n\n','function validate() {\n    return window.getComputedStyle(document.querySelector(\'a\')).textTransform === \'uppercase\';\n}\n'),
+(15,'Lisa korrektne label sisestusväli jaoks','<ol>\n    <li>Lisa korrektne silt element (label), mis on seotud nime sisestusväljaga. Kasuta selleks `for` atribuuti.</li>\n    <li>Veendu, et silt oleks korrektselt seotud nime sisestusväljaga.</li>\n    <li>Kui silt ja sisestusväli on õigesti seotud, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 15</title>\n</head>\n<body>\n    <!-- Lisa label siia -->\n    \n    <input type=\"text\" id=\"name\" name=\"name\">\n</body>\n</html>\n','function validate() {\n    const label = document.querySelector(\'label\');\n    const input = document.querySelector(\'input[type=\"text\"]\');\n    return label && input && label.getAttribute(\'for\') === input.id;\n}\n'),
+(16,'Lisa nummerdamata loend lehele','<ol>\n    <li>Loo HTML-is nummerdamata loend (\'ul\' märgend), mis sisaldab kolme eset: \"Punane\", \"Roheline\", \"Sinine\".</li>\n    <li>Veendu, et parempoolsel eelvaatepaneelil oleks loend õigesti kuvatud.</li>\n    <li>Kui loend on õigesti loodud, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne: 16</title>\n</head>\n<body>\n    <!-- Lisa loend siia -->\n</body>\n</html>\n','function validate() {\n    const listItems = document.querySelectorAll(\'ul li\');\n    const expectedItems = [\'Punane\', \'Roheline\', \'Sinine\'];\n    const itemTexts = Array.from(listItems).map(item => item.textContent.trim());\n    return listItems.length === 3 && expectedItems.every(item => itemTexts.includes(item));\n}\n'),
+(17,'Muuda lingi tekst suureks täheks','<ol>\n    <li>Muuda lingi tekst \"Kliki siin\" suurteks tähtedeks kasutades text-transformi.</li>\n    <li>Veendu, et lingi tekst oleks suurtähtedega.</li>\n    <li>Kui lingi tekst on suurtähtedega, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 17</title>\n    <style>a {text-transform: none;}</style>\n</head>\n<body>\n    <a href=\"#\">Kliki siin</a>\n</body>\n</html>\n\n','function validate() {\n    return window.getComputedStyle(document.querySelector(\'a\')).textTransform === \'uppercase\';\n}\n'),
 (18,'Muuda tekstiala laius','<ol>\n    <li>Muuda tekstiala laius 300 piksliks.</li>\n    <li>Veendu, et tekstiala laius oleks 300 pikslit.</li>\n    <li>Kui tekstiala laius on 300 pikslit, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 18</title>\n    <style>\n       /* Lisa CSS siin */\n       \n    </style>\n</head>\n<body>\n    <textarea></textarea>\n</body>\n</html>\n','function validate() {\n    const computedWidth = window.getComputedStyle(document.querySelector(\'textarea\')).width;\n    return computedWidth === \'300px\';\n}\n'),
 (19,'Muuda fondi värv \"highlight\" klassi jaoks','<ol>\n    <li>Muuda lehel olevate elementide, millel on klass \"highlight\", fondi värv punaseks.</li>\n    <li>Veendu, et parempoolsel eelvaatepaneelil oleksid kõik elemendid, millel on klass \"highlight\", punase fondi värviga.</li>\n    <li>Kui fondi värv on õigesti muudetud, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne: 19</title>\n    <style>\n        /* Lisa CSS siin */\n    </style>\n</head>\n<body>\n    <p class=\"highlight\">See tekst peab olema punane.</p>\n    <p>See tekst jääb mustaks.</p>\n    <span class=\"highlight\">Ka see tekst peab olema punane.</span>\n    <div class=\"highlight\">Punane tekst div sees.</div>\n</body>\n</html>\n','function validate() {\n    const highlightedElements = document.querySelectorAll(\'.highlight\');\n    return Array.from(highlightedElements).every(el => window.getComputedStyle(el).color === \'rgb(255, 0, 0)\');\n}'),
 (20,'Muuda kastile (div element) ümarad nurgad','<ol>\n    <li>Lisa lehel olevale kastile (div element) ümarad nurgad, kasutades CSS-i omadust `border-radius`. Määra `border-radius` väärtuseks 15 pikslit.</li>\n    <li>Veendu, et parempoolsel eelvaatepaneelil oleks kastil ümarad nurgad.</li>\n    <li>Kui kasti nurgad on õigesti ümaraks tehtud, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne: 20</title>\n    <style>\n        /* Lisa CSS siin */\n        div.box {\n            width: 100px;\n            height: 100px;\n            background-color: lightblue;\n        }\n    </style>\n</head>\n<body>\n    <div class=\"box\"></div>\n</body>\n</html>\n','function validate() {\n    const box = document.querySelector(\'.box\');\n    const borderRadius = window.getComputedStyle(box).borderRadius;\n    return borderRadius === \'15px\';\n}'),
@@ -379,8 +241,8 @@ CREATE TABLE `settings` (
 LOCK TABLES `settings` WRITE;
 /*!40000 ALTER TABLE `settings` DISABLE KEYS */;
 INSERT INTO `settings` VALUES
-('projectVersion','0f41851'),
-('translationUpdateLastRun','2024-08-13 02:53:39');
+('projectVersion','6669f89'),
+('translationUpdateLastRun','2024-08-13 04:44:01');
 /*!40000 ALTER TABLE `settings` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -686,4 +548,4 @@ UNLOCK TABLES;
 /*!50503 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-08-13  3:18:54
+-- Dump completed on 2024-08-13  4:58:02
