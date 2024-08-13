@@ -83,6 +83,11 @@ class exercises extends Controller
     function congratulations()
     {
         $userId = $_SESSION['userId'];
+        // Get solved exercises count
+        $this->solvedExercisesCount = Db::getOne("
+        SELECT COUNT(*) FROM userDoneExercises WHERE userId = ?", [$userId]);
+
+
         session_destroy();
         Activity::create(ACTIVITY_LOGOUT, $userId);
     }
