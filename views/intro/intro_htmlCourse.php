@@ -215,7 +215,7 @@
             erinevate keelte tähemärke (üks bait on 8 bitti ehk kaheksa 0 või 1 reas, mille erinevad kombinatsioonid
             võimaldavad kuvada 256 erinevat sümbolit, mis on piisav ühe või mõne keele tähemärkide kuvamiseks, kuid
             mitte kõigi maailma keelte tähemärkide kuvamiseks (kreeka, vietnami, heebrea, korea, hiina, jaapani, vene,
-            ukraina jne tähestikud sisaldavad kõik omi sümboelid), aga kui kasutada ühe tähemärgi kodeerimiseks kahte
+            ukraina jne tähestikud sisaldavad kõik omi sümboleid), aga kui kasutada ühe tähemärgi kodeerimiseks kahte
             või kolme baiti, siis saab kuvada kõigi maailma keelte tähemärke).
         </li>
         <li><code>&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;</code>: Tagab, et leht
