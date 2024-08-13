@@ -230,15 +230,52 @@
 
     function validateSolution() {
         const exerciseId = <?= json_encode($exercise['exerciseId']) ?>;
-        ajax(`exercises/validate/${exerciseId}`, {answer: editor.getValue()},
-            function (res) {
-                if (res.data.result === 'success') {
-                    window.location.href = 'exercises';
+        const userCode = editor.getValue();
+
+        // Get the validation function code from the PHP backend
+        let validationCode = `<?= addslashes($exercise['exerciseValidationFunction']) ?>`;
+
+        // Create an iframe to safely execute the user's code
+        const validationIframe = document.createElement('iframe');
+        document.body.appendChild(validationIframe);
+
+        validationIframe.style.display = 'none'; // Hide the iframe
+        validationIframe.onload = function() {
+            try {
+                // Inject the validation function code as a string into the iframe's context
+                validationIframe.contentWindow.eval(validationCode);
+
+                // Call the validate function and store the result
+                const validationResult = validationIframe.contentWindow.validate();
+                console.log(validationResult);
+
+                if (validationResult) {
+                    // If validation is successful, notify the backend
+                    ajax(`exercises/markAsSolved/${exerciseId}`, {answer: userCode},
+                        function (res) {
+                            if (res.status === 200) {
+                                window.location.href = 'exercises';
+                            } else {
+                                alert('Tekkis viga serveriga suhtlemisel.');
+                            }
+                        }
+                    );
                 } else {
-                    alert(res.data.message);
+                    alert('Teie lahendus ei läbinud valideerimist. Palun proovige uuesti.');
                 }
+            } catch (error) {
+                alert('Valideerimine ebaõnnestus. Palun proovige uuesti.');
+            } finally {
+                // Remove the iframe after validation
+                document.body.removeChild(validationIframe);
             }
-        );
+        };
+
+        // Inject the user's code into the iframe
+        const validationDoc = validationIframe.contentDocument || validationIframe.contentWindow.document;
+        validationDoc.open();
+        validationDoc.write(userCode);
+        validationDoc.close();
     }
 
     // Initialize things when the DOM is fully loaded
@@ -250,16 +287,12 @@
         const validationSection = document.querySelector('.validation-code-section');
         const footerHeight = 60;  // Height of the footer
 
-        // Check if the user is an admin
-        const isAdmin = <?= $auth->userIsAdmin === 1 ? 'true' : 'false' ?>;
 
-        // If the user is admin, show the validation drawer by default
-        if (isAdmin) {
-            const validationHeight = validationSection.scrollHeight; // Get the height of the validation content
-            footerContainer.style.height = `${footerHeight + validationHeight}px`;
-            footerContainer.classList.add('active');
-            validationSection.style.visibility = 'visible';
-        }
+        const validationHeight = validationSection.scrollHeight; // Get the height of the validation content
+        footerContainer.style.height = `${footerHeight + validationHeight}px`;
+        footerContainer.classList.add('active');
+        validationSection.style.visibility = 'visible';
+
 
         // Toggle the drawer on timer click
         document.querySelector('.timer').addEventListener('click', function () {
@@ -276,12 +309,6 @@
                 validationSection.style.visibility = 'visible';
             }
         });
-    });
-
-    // Reinitialize editor when tab is shown (for small screens)
-    const editorTab = document.getElementById('editor-tab');
-    editorTab.addEventListener('shown.bs.tab', function (e) {
-        initEditor();
     });
 
     // Reinitialize editor when window is resized

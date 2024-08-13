@@ -27,7 +27,8 @@ class exercises extends Controller
             FROM exercises
             LEFT JOIN userDoneExercises
                 ON exercises.exerciseId = userDoneExercises.exerciseId
-                AND userDoneExercises.userId = ?", [$this->auth->userId]);
+                AND userDoneExercises.userId = ?
+            ORDER BY exerciseId", [$this->auth->userId]);
 
         $allSolved = array_reduce($this->exercises, function ($carry, $exercise) {
             return $carry && $exercise['isSolved'] === 1;
@@ -171,5 +172,27 @@ class exercises extends Controller
         } catch (Exception $e) {
             throw new Exception("An error occurred while deleting the temporary file: " . $e->getMessage());
         }
+    }
+
+    function AJAX_markAsSolved()
+    {
+        $exerciseId = $this->getId();
+        $userId = $this->auth->userId;
+
+        try {
+            Db::insert('userDoneExercises', ['userId' => $userId, 'exerciseId' => $exerciseId]);
+            // Create activity
+            Activity::create(ACTIVITY_SOLVED_EXERCISE, $userId, $exerciseId);
+        } catch (  Exception $e) {
+            // Check if the error is due to duplicate entry
+            if ($e->getCode() !== 1062) {
+                throw $e;
+            }
+
+            Activity::create(ACTIVITY_SOLVED_AGAIN_THE_SAME_EXERCISE, $userId, $exerciseId);
+        }
+
+
+        stop(200);
     }
 }
