@@ -20,12 +20,12 @@
 
                         if (seconds <= 0) {
                             clearInterval(timerInterval);
-                            window.location.href = 'exercises/timeup';
+                            window.location.href = 'exercises';
                         }
                         seconds--;
                     }, 1000);
                 } else {
-                    window.location.href = 'exercises/timeup';
+                    window.location.href = 'exercises';
                 }
             } catch (error) {
                 console.error("Error initializing timer:", error);

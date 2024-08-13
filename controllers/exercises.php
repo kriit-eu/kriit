@@ -37,15 +37,7 @@ class exercises extends Controller
         if ($allSolved) {
             // create activity that all exercises are solved
             Activity::create(ACTIVITY_ALL_SOLVED, $this->auth->userId);
-            $startTimer = Db::getOne("
-                SELECT activityLogTimestamp
-                FROM activityLog
-                WHERE userId = ?
-                AND activityId = 3
-                ORDER BY activityLogTimestamp DESC
-                LIMIT 1", [$this->auth->userId]);
-            $spentTimeFormatted = gmdate('H:i:s', time() - strtotime($startTimer));
-            Db::update('users', ['userTimeTotal' => $spentTimeFormatted], 'userId = ?', [$this->auth->userId]);
+            $this->calculateAndUpdateTotalTimeSpent($this->auth->userId);
             $this->redirect('exercises/congratulations');
         }
     }
@@ -77,6 +69,14 @@ class exercises extends Controller
         if ($this->timeLeft === null || $this->timeLeft > 0) {
             $this->redirect('exercises');
         }
+
+        // Record activity
+        Activity::create(ACTIVITY_TIME_UP, $this->auth->userId);
+
+        $this->calculateAndUpdateTotalTimeSpent($this->auth->userId);
+
+        $userId = $_SESSION['userId'];
+        session_destroy();
 
     }
 
@@ -194,5 +194,22 @@ class exercises extends Controller
 
 
         stop(200);
+    }
+
+    private function calculateAndUpdateTotalTimeSpent($userId): void
+    {
+        // Calculate total time spent
+        $startTimer = Db::getOne("
+        SELECT activityLogTimestamp
+        FROM activityLog
+        WHERE userId = ?
+        AND activityId = ?
+        ORDER BY activityLogTimestamp DESC
+        LIMIT 1", [$userId, ACTIVITY_START_TIMER]);
+
+        $spentTimeFormatted = gmdate('H:i:s', time() - strtotime($startTimer));
+
+        // Update user's total time spent
+        Db::update('users', ['userTimeTotal' => $spentTimeFormatted], 'userId = ?', [$userId]);
     }
 }
