@@ -129,13 +129,13 @@ class exercises extends Controller
         try {
             $this->writeValidationScript($tempFilePath, $validationScript);
             $output = $this->executeNodeScript($tempFilePath);
+            $this->cleanupTempFile($tempFilePath);
 
             if (isset($output[0]) && $output[0] === 'true') {
                 Db::insert('userDoneExercises', ['userId' => $userId, 'exerciseId' => $exerciseId]);
                 // Create activity
                 Activity::create(ACTIVITY_SOLVED_EXERCISE, $userId, $exerciseId);
                 $response = ['result' => 'success', 'message' => 'Ülesanne on lahendatud.'];
-                $this->cleanupTempFile($tempFilePath);
             } else {
                 $response = ['result' => 'fail', 'message' => 'Teie lahendus ei läbinud valideerimist. Palun proovige uuesti.'];
             }
@@ -183,7 +183,7 @@ class exercises extends Controller
             Db::insert('userDoneExercises', ['userId' => $userId, 'exerciseId' => $exerciseId]);
             // Create activity
             Activity::create(ACTIVITY_SOLVED_EXERCISE, $userId, $exerciseId);
-        } catch (  Exception $e) {
+        } catch (Exception $e) {
             // Check if the error is due to duplicate entry
             if ($e->getCode() !== 1062) {
                 throw $e;
