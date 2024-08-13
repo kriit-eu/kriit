@@ -273,7 +273,7 @@
     </div>
 
     <p>Pilte saab HTML dokumenti lisada <code>&lt;img&gt;</code> märgisega. See on selle poolest eriline, et tal pole
-        lõpumärgendit:</p>
+        lõpumärgendit. Alt atribuudi väärtust kuvatakse siis, kui pilt pole määratud asukohast kättesaadav.</p>
     <div class="example-container">
         <div class="code">
             <pre><code class="language-html">&lt;img src="pilt.jpg" alt="Pildi kirjeldus"&gt;</code></pre>
