@@ -17,5 +17,10 @@ class intro extends Controller
         if ($this->timeLeft > 0 || $this->auth->userIsAdmin === 1) {
             $this->redirect('exercises');
         }
+
+        // Redirect to /timeup if time is up
+        if ($this->timeLeft !== null && $this->timeLeft <= 0) {
+            $this->redirect('exercises/timeup');
+        }
     }
 }
