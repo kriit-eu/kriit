@@ -126,7 +126,7 @@
         {
             title: "3. Muuda Ääriste Välimust",
             description: "Proovi muuta kasti ääriseid ja tausta, kasutades CSS-i. Näed, kuidas väikeste muudatustega saad muuta kasti välimust.",
-            cssContent: `div {\n    border: 2px solid black;\n    border-radius: 8px;\n    padding: 20px;\n    background-color: yellow;\n    box-shadow: 5px 5px 10px #888888;\n}\ndiv:hover {\n    text-decoration: underline;\n}`,
+            cssContent: `div {\n    border: 2px solid black;\n    border-radius: 8px;\n    padding: 20px;\n    background-color: yellow;\n    margin:10px;\n    box-shadow: 5px 5px 10px #888888;\n}\ndiv:hover {\n    text-decoration: underline;\n}`,
             htmlContent: `<div>Näidiskast</div>`
         }
     ];
