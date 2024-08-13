@@ -164,7 +164,8 @@
 </section>
 <section>
     <h2>1. Elementaarne HTML Dokument</h2>
-    <p>HTML dokument koosneb mitmest olulisest osast. Vaatame neid lähemalt:</p>
+    <p>HTML dokument koosneb mitmest olulisest osast. Vaatame neid lähemalt (värvid on lisatud parema loetavuse
+        huvides):</p>
     <div class="example-container">
         <div class="code">
             <pre><code class="language-html">&lt;!DOCTYPE html&gt;

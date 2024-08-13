@@ -53,11 +53,11 @@
 
 
 <h2>Mis on CSS?</h2>
-<p>CSS ehk Cascading Style Sheets on vahend, millega saab muuta veebilehtede välimust. See aitab meil otsustada,
+<p>CSS ehk Cascading Style Sheets on vahend, millega saab muuta veebilehtede välimust. See võimaldab meil kontrollida,
     millised värvid, fondid ja paigutus on veebilehel, et see näeks välja just selline, nagu me soovime.</p>
 
 <h2>Kuidas CSS töötab?</h2>
-<p>CSS koosneb reeglitest, mis ütlevad veebilehele, kuidas erinevaid elemente (näiteks teksti või pilte) kuvada. Iga
+<p>CSS koosneb reeglitest, mis ütlevad brauserile, kuidas erinevaid elemente (näiteks teksti või pilte) kuvada. Iga
     reegel koosneb kahest osast:</p>
 
 <ul>
@@ -82,7 +82,8 @@
     <li><code>font-size: 24px;</code> määrab, et nende pealkirjade suurus on 24 pikslit.</li>
 </ul>
 
-<p>CSS-iga saad muuta palju erinevaid asju veebilehe välimuse kohta, nagu taustavärvi, teksti asukohta ja palju
+<p>CSS-iga saad muuta palju erinevaid asju veebilehe välimuse kohta, nagu taustavärvi, teksti või elementide asukohta ja
+    palju
     muud.</p>
 
 <div class="box"> Kui sul on konkreetne eesmärk, mida soovid saavutada, sisesta Google'i otsingusse see koos märksõnaga
