@@ -107,7 +107,7 @@
         kui pealkirjaks on <i>Tere</i>, siis HTML kood selle pealkirjana kuvamiseks on
         <code>&lt;h1&gt;Tere&lt;/h1&gt;</code>.
 
-        Brauser kuvab <code>&lt;h1&gt;</code> ja <code>&lt;/h1&gt;</code> vahel oleva teksti väga suurelt (vaata
+        Brauser kuvab <code>&lt;h1&gt;</code> ja <code>&lt;/h1&gt;</code> vahel oleva teksti väga suurelt (vaata allpool
         järgmist peatükki, et seda näha),
         <code>&lt;h2&gt;</code> ja <code>&lt;/h2&gt;</code> märgendite vahel oleva teksti veidi väiksemalt jne.
 
@@ -204,13 +204,18 @@
     <ul>
         <li><code>&lt;meta charset="UTF-8"&gt;</code>: Määrab sümbolite komplekti, milliseid tähemärke ja
             muid sümboleid on võimalik lehel kasutada. Vanasti kasutati erinevates keeltetes lehtede jaoks erinevaid
-            sümbolikogumikke, näiteks eestikeelsetel lehteled kasutati <a
+            sümbolikogumikke, näiteks eestikeelsetel lehtedel kasutati <a
                     href="https://en.wikipedia.org/wiki/ISO/IEC_8859-15#Codepage_layout">ISO 8859-15</a>
-            tähemärgistikku, kuid tänapäeval on kasutusel universaalne UTF-8 tähemärgistus, mis toetab korraga kõiki
+            tähemärgistikku (sisaldab umbes 256 erinevat sümbolit, sealhulgas kõiki eesti keele jaoks vajalikke
+            täpitähti), kuid tänapäeval on kasutusel universaalne UTF-8 tähemärgistik, mis toetab korraga kõiki
             maailma
             keeli: inglise tähestiku tähed on kodeeritud ühe baidiga, muude keelte tähed kahe või kolme baidiga, mis
-            teeb selle tähemärgistuse väga efektiivseks ja universaalseks, võimaldades veebilehel samaaegselt kuvada
-            erinevate keelte tähemärke.
+            teeb selle tähemärgistiku väga efektiivseks ja universaalseks, võimaldades veebilehel samaaegselt kuvada
+            erinevate keelte tähemärke (üks bait on 8 bitti ehk kaheksa 0 või 1 reas, mille erinevad kombinatsioonid
+            võimaldavad kuvada 256 erinevat sümbolit, mis on piisav ühe või mõne keele tähemärkide kuvamiseks, kuid
+            mitte kõigi maailma keelte tähemärkide kuvamiseks (kreeka, vietnami, heebrea, korea, hiina, jaapani, vene,
+            ukraina jne tähestikud sisaldavad kõik omi sümboelid), aga kui kasutada ühe tähemärgi kodeerimiseks kahte
+            või kolme baiti, siis saab kuvada kõigi maailma keelte tähemärke).
         </li>
         <li><code>&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;</code>: Tagab, et leht
             oleks responsiivne (kohandub automaatselt erinevatele ekraanisuurustele).
