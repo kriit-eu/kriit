@@ -8,7 +8,7 @@
     <button class="btn btn-success">Alusta uut sessiooni</button>
 </div>
 <script>
-    document.querySelector('.button').addEventListener('click', () => {
+    document.querySelector('.btn-success').addEventListener('click', () => {
         window.location.href = 'logout';
     });
 </script>
