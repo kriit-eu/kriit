@@ -35,8 +35,8 @@
 <h5>Soovitused:</h5>
 <ul>
     <li>
-        Kuna pingerida kujuneb kõige kiiremate lahendajate põhjal, kui jääd mõne ülesande juures kinni ja
-        tunned, et mõtted hakkavad ammenduma, ära lase ajal kuluda, vaid proovi vahepeal teist ülesannet – vaheldus
+        Kuna pingerida kujuneb kõige kiiremate lahendajate põhjal, kui jääte mõne ülesande juures kinni ja
+        tunnete, et mõtted hakkavad ammenduma, ärge lase ajal kuluda, vaid proovige vahepeal teist ülesannet – vaheldus
         võimaldab uutel ideedel tekkida.
     </li>
     <li>NB! Need ülesanded eeldavad HTML ja CSS algtaseme teadmisi. Kui te pole HTML-i või CSS-iga varem kokku puutunud,
