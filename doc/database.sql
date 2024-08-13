@@ -253,9 +253,7 @@ CREATE TABLE `deployments` (
   `deploymentCommitAuthor` varchar(255) DEFAULT NULL,
   `deploymentCommitSha` varchar(256) NOT NULL,
   PRIMARY KEY (`deploymentId`)
-) ENGINE = InnoDB
-  AUTO_INCREMENT = 35
-  DEFAULT CHARSET = utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=37 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -296,8 +294,10 @@ INSERT INTO `deployments` VALUES
 (30,'2024-08-12 17:56:19','2024-08-12 17:56:51','Add ranking to admi','Violetta Zakorzhevskaya','680ecb6'),
 (31,'2024-08-12 17:58:37','2024-08-12 17:58:58','Fix admin btn','henno.taht@gmail.com','bd1f7b6'),
 (32,'2024-08-12 18:07:42','2024-08-12 19:44:04','As admin I can see ','Violetta Zakorzhevskaya','d3999f1'),
-(33, '2024-08-12 20:14:54', '2024-08-12 20:19:39', 'Add exercises in da', 'Violetta Zakorzhevskaya', 'adbb34a'),
-(34, '2024-08-13 02:09:58', '2024-08-13 02:10:11', 'AAs admin I can add', 'henno.taht@gmail.com', '423a407');
+(33,'2024-08-12 20:14:54','2024-08-12 20:19:39','Add exercises in da','Violetta Zakorzhevskaya','adbb34a'),
+(34,'2024-08-13 02:09:58','2024-08-13 02:10:11','AAs admin I can add','henno.taht@gmail.com','423a407'),
+(35,'2024-08-13 02:14:06','2024-08-13 02:16:03','AAs admin I can add','henno.taht@gmail.com','4d8785d'),
+(36,'2024-08-13 02:48:15','2024-08-13 02:53:39','Retain js files tha','henno.taht@gmail.com','0f41851');
 /*!40000 ALTER TABLE `deployments` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -325,9 +325,9 @@ CREATE TABLE `exercises` (
 LOCK TABLES `exercises` WRITE;
 /*!40000 ALTER TABLE `exercises` DISABLE KEYS */;
 INSERT INTO `exercises` VALUES
-(1,'Muuda lehe taustavärv punaseks','<ol>\n    <li>Muuda kõrvalasuva koodiredaktoriga lehe taustavärv punaseks.</li>\n    <li>Veendu, et parempoolsel eelvaatepaneelil oleks lehe taust punane.</li>\n    <li>Kui taustavärv on punane, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>\n','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 1</title>\n    <style>body {background-color: #999999}</style>\n</head>\n<body>\n    <h1>Hello world!</h1>\n</body>\n</html>','function validate() {\n    return window.getComputedStyle(document.body).backgroundColor === \'rgb(255, 0, 0)\';\n}'),
+(1,'Muuda lehe taustavärv punaseks','<ol>\n    <li>Muuda kõrvalasuva koodiredaktoriga keha elemendi taustavärv punaseks.</li>\n    <li>Veendu, et parempoolsel eelvaatepaneelil oleks lehe taust punane.</li>\n    <li>Kui taustavärv on punane, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 1</title>\n    <style>body {background-color: blue}</style>\n</head>\n<body>\n    <h1>Hello world!</h1>\n</body>\n</html>','function validate() {\n    return window.getComputedStyle(document.body).backgroundColor === \'rgb(255, 0, 0)\';\n}'),
 (2,'Lisa lehele nupp','<ol>\n    <li>Lisa kõrvalasuva koodiredaktoriga lehele üks nupp</li>\n    <li>Veendu, et parempoolsel eelvaatepaneelil oleks lehel vähemalt üks nupp.</li>\n    <li>Kui nupp on olemas, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>','<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Ülesanne 2</title>\n</head>\n<body>\n    <h1>Button Check</h1>\n    <p>Some text</p>\n</body>\n</html>','function validate() {\n    return document.getElementsByTagName(\'button\').length > 0;\n}\n'),
-(3,'Muuda lehe fondi','<ol>\n    <li>Muuda kõrvalasuva koodiredaktoriga lehe fonti kasutades Arial\'i fondi.</li>\n    <li>Veendu, et parempoolsel eelvaatepaneelil oleks kogu leht Arial fondiga.</li>\n    <li>Kui font on Arial, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 3</title>\n    <style>body {font-family: sans-serif;}</style>\n</head>\n<body>\n    <h1>Tere maailm!</h1>\n    <p>See on lihtne HTML leht.</p>\n</body>\n</html>\n','function validate() {\n    return window.getComputedStyle(document.body).fontFamily.includes(\'Arial\');\n}\n'),
+(3,'Muuda lehe fonti','<ol>\n    <li>Muuda kõrvalasuva koodiredaktoriga lehe fonti kasutades Arial fonti.</li>\n    <li>Veendu, et parempoolsel eelvaatepaneelil oleks kogu leht Arial fondiga.</li>\n    <li>Kui font on Arial, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 3</title>\n    <style>body {font-family: sans-serif;}</style>\n</head>\n<body>\n    <h1>Tere maailm!</h1>\n    <p>See on lihtne HTML leht.</p>\n</body>\n</html>\n','function validate() {\n    return window.getComputedStyle(document.body).fontFamily.toLowerCase().includes(\'arial\'.toLowerCase());\n}'),
 (4,'Muuda pildi laiust','<ol>\n    <li>Muuda pildi laiust 200 piksliks.</li>\n    <li>Veendu, et pildi laius oleks 200 pikslit.</li>\n    <li>Kui pildi laius on 200 pikslit, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 4</title>\n</head>\n<body>\n    <img src=\"https://via.placeholder.com/150\" alt=\"Näidispilt\">\n</body>\n</html>\n','function validate() {\n    return document.querySelector(\'img\').width === 200;\n}'),
 (5,'Märgista tekstkast kohustuslikuks','<ol>\n    <li>Märgista lisatud tekstkast kohustuslikuks.</li>\n    <li>Veendu, et tekstikastil oleks atribuut \"required\".</li>\n    <li>Kui tekstikast on kohustuslik, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 5</title>\n</head>\n<body>\n    <input type=\"text\">\n</body>\n</html>\n','function validate() {\n    return document.querySelector(\'input\').required;\n}'),
 (6,'Lisa lehele form e-maili väliga','<ol>\n    <li>Lisa lehele vorm ja sisesta sinna e-maili väli.</li>\n    <li>Veendu, et vormil oleks e-maili sisestamise väli.</li>\n    <li>Kui e-maili väli on lisatud, klõpsa nuppu \"Kontrolli lahendust\".</li>\n</ol>\n<p>Kui jääd hätta, otsi abi internetist, kuid ära suhtle ega kasuta tehisaru.</p>','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 6</title>\n</head>\n<body>\n    <!-- Lisa vorm siia -->\n</body>\n</html>\n','function validate() {\n    return !!document.querySelector(\'form\') && !!document.querySelector(\'input[type=\"email\"]\');\n}'),
@@ -378,8 +378,9 @@ CREATE TABLE `settings` (
 
 LOCK TABLES `settings` WRITE;
 /*!40000 ALTER TABLE `settings` DISABLE KEYS */;
-INSERT INTO `settings` VALUES ('projectVersion', '423a407'),
-                              ('translationUpdateLastRun', '2024-08-13 02:10:11');
+INSERT INTO `settings` VALUES
+('projectVersion','0f41851'),
+('translationUpdateLastRun','2024-08-13 02:53:39');
 /*!40000 ALTER TABLE `settings` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -626,10 +627,9 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (1, 'Kati Maasikas', '41111111115', 1,
-                            '$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm', 0, NULL, NULL),
-                           (2, 'Mati Vaarikas', '31111111114', 0,
-                            '$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm', 0, NULL, NULL),
+INSERT INTO `users` VALUES
+(1,'Kati Maasikas','41111111115',1,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL),
+(2,'Mati Vaarikas','31111111114',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL),
 (3,'Genor Kasak','50204305710',0,'',0,NULL,NULL),
 (4,'Sten Elisson','38512232743',0,'',0,NULL,NULL),
 (5,'Alicia Jemets','49912300211',0,'',0,NULL,NULL),
@@ -686,4 +686,4 @@ UNLOCK TABLES;
 /*!50503 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-08-13  2:14:00
+-- Dump completed on 2024-08-13  3:18:54
