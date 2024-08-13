@@ -7,6 +7,7 @@
                 <th>Nimi</th>
                 <th>Isikukood</th>
                 <th>Esm. sisselogimine</th>
+                <th>Alustamise aeg</th>
                 <th>Ajakulu</th>
                 <th>Ülesandeid</th>
                 <th>Tegevused</th>
@@ -18,6 +19,7 @@
                     <td><?= $user['userName'] ?></td>
                     <td><?= $user['userPersonalCode'] ?></td>
                     <td><?= $user['userFirstLogin'] ?></td>
+                    <td><?= $user['userStartTimer'] ?></td>
                     <td><?= $user['userTimeTotal'] ?></td>
                     <td><?= $user['userExercisesDone'] === 0 ? '' : $user['userExercisesDone'] ?></td>
                     <td>
