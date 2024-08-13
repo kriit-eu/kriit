@@ -52,10 +52,10 @@
                 </div>
 
                 <footer class="exercise-footer">
-                    <a href="#" class="text-danger delete-exercise" data-id="<?= $exercise['exerciseId'] ?>">
-                        <i class="bi bi-trash-fill"></i>
+                    <a href="#" class="btn btn-danger delete-exercise" data-id="<?= $exercise['exerciseId'] ?>">
+                        Kustuta
                     </a>
-                    <button class="btn btn-primary save-button" data-id="<?= $exercise['exerciseId'] ?>">Save</button>
+                    <button class="btn btn-primary save-button" data-id="<?= $exercise['exerciseId'] ?>">Salvesta</button>
                 </footer>
             </section>
         <?php endforeach; ?>
@@ -122,10 +122,10 @@
                     </div>
                 </div>
                 <footer class="exercise-footer">
-                    <a href="#" class="text-danger delete-exercise" data-id="${newExerciseId}">
-                        <i class="bi bi-trash-fill"></i>
+                    <a href="#" class="btn btn-danger delete-exercise" data-id="${newExerciseId}">
+                        Kustuta
                     </a>
-                    <button class="btn btn-primary save-button" data-id="${newExerciseId}">Save</button>
+                    <button class="btn btn-primary save-button" data-id="${newExerciseId}">Salvesta</button>
                 </footer>
             </section>
         `;
