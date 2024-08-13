@@ -18,15 +18,17 @@
 <br>
 <table class="table table table-nonfluid table-bordered table-hover pria-log bordered">
     <tr>
-        <th><?= __('Time') ?></th>
-        <th><?= __('User') ?></th>
-        <th><?= __('Activity') ?></th>
+        <th>Aeg</th>
+        <th>Kasutaja</th>
+        <th>Tegevus</th>
+        <th>Ülesanne</th>
     </tr>
     <?php foreach ($log as $row): ?>
         <tr class="<?=$row['activityName']?>">
             <td><?=$row['activityLogTimestamp']?></td>
-            <td><?=$row['name']?></td>
+            <td><?=$row['userName']?></td>
             <td><?=__($row['activityDescription'], "activities.activityDescription")?></td>
+            <td><a href="exercises/<?=$row['id']?>"><?=$row['id']?></a></td>
         </tr>
     <?php endforeach ?>
 </table>
