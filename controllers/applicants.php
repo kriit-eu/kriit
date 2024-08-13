@@ -9,6 +9,7 @@ class applicants extends Controller
         $this->users = Db::getAll("
             SELECT
                 u.*,
+                COUNT(userDoneExercises.exerciseId) AS userExercisesDone,
                 MIN(a.activityLogTimestamp) AS userFirstLogin
             FROM
                 users u
@@ -16,6 +17,7 @@ class applicants extends Controller
                 activityLog a
                 ON u.userId = a.userId
                 AND a.activityId = 1
+            LEFT JOIN userDoneExercises ON u.userId = userDoneExercises.userId
             WHERE
                 u.userIsAdmin = 0
             GROUP BY
