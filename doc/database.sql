@@ -3,7 +3,7 @@
 --
 -- Host: 127.0.0.1    Database: sisseastumine
 -- ------------------------------------------------------
--- Server version	10.11.8-MariaDB
+-- Server version	10.7.8-MariaDB-1:10.7.8+maria~ubu2004-log
 
 /*!50503 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!50503 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -28,7 +28,7 @@ CREATE TABLE `activities` (
   `activityName` varchar(50) NOT NULL COMMENT 'Autocreated',
   `activityDescription` varchar(191) NOT NULL,
   PRIMARY KEY (`activityId`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -40,7 +40,12 @@ LOCK TABLES `activities` WRITE;
 INSERT INTO `activities` VALUES
 (1,'login','logged in'),
 (2,'logout','logged out'),
-(3,'startTime','user has started the timer');
+(3,'startTime','user has started the timer'),
+(4,'solvedExercise','user has solved exercise'),
+(5,'allSolved','user has solved all exercises'),
+(6,'solvedAgainTheSameExercise','user has solved th same exercise'),
+(7,'timeUp','user\'s time is up'),
+(8,'startExercise','user has started the exercise');
 /*!40000 ALTER TABLE `activities` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -58,7 +63,7 @@ CREATE TABLE `activityLog` (
   `activityId` int unsigned NOT NULL COMMENT 'Autocreated',
   `id` int unsigned DEFAULT NULL,
   PRIMARY KEY (`activityLogId`)
-) ENGINE=InnoDB AUTO_INCREMENT=153 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=163 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -67,6 +72,17 @@ CREATE TABLE `activityLog` (
 
 LOCK TABLES `activityLog` WRITE;
 /*!40000 ALTER TABLE `activityLog` DISABLE KEYS */;
+INSERT INTO `activityLog` VALUES
+('2024-08-14 10:06:09',153,1,2,NULL),
+('2024-08-14 10:06:20',154,2,1,NULL),
+('2024-08-14 10:06:25',155,2,3,NULL),
+('2024-08-14 10:06:25',156,2,8,1),
+('2024-08-14 10:06:36',157,2,4,1),
+('2024-08-14 10:06:38',158,2,8,2),
+('2024-08-14 10:06:48',159,2,4,2),
+('2024-08-14 10:06:54',160,2,2,NULL),
+('2024-08-14 10:07:05',161,1,1,NULL),
+('2024-08-14 10:15:14',162,1,8,2);
 /*!40000 ALTER TABLE `activityLog` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -111,7 +127,7 @@ CREATE TABLE `deployments` (
   `deploymentCommitAuthor` varchar(255) DEFAULT NULL,
   `deploymentCommitSha` varchar(256) NOT NULL,
   PRIMARY KEY (`deploymentId`)
-) ENGINE=InnoDB AUTO_INCREMENT=41 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=42 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -159,7 +175,8 @@ INSERT INTO `deployments` VALUES
 (37,'2024-08-13 03:48:00','2024-08-13 04:18:46','Fix Alusta uut sess','henno.taht@gmail.com','a8207fd'),
 (38,'2024-08-13 04:23:10','2024-08-13 04:32:31','Fix button names','henno.taht@gmail.com','3c9e75e'),
 (39,'2024-08-13 04:37:36','2024-08-13 04:37:56','Clean up temp files','henno.taht@gmail.com','9f2022a'),
-(40,'2024-08-13 04:43:57','2024-08-13 04:44:00','Add Ülesandeid col','henno.taht@gmail.com','6669f89');
+(40,'2024-08-13 04:43:57','2024-08-13 04:44:00','Add Ülesandeid col','henno.taht@gmail.com','6669f89'),
+(41,'2024-08-14 00:31:13','2024-08-14 10:00:45','Add margin to CSS e','henno.taht@gmail.com','eff608b');
 /*!40000 ALTER TABLE `deployments` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -241,8 +258,8 @@ CREATE TABLE `settings` (
 LOCK TABLES `settings` WRITE;
 /*!40000 ALTER TABLE `settings` DISABLE KEYS */;
 INSERT INTO `settings` VALUES
-('projectVersion','6669f89'),
-('translationUpdateLastRun','2024-08-13 04:44:01');
+('projectVersion','eff608b'),
+('translationUpdateLastRun','2024-08-14 10:00:45');
 /*!40000 ALTER TABLE `settings` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -402,8 +419,6 @@ CREATE TABLE `translations` (
 LOCK TABLES `translations` WRITE;
 /*!40000 ALTER TABLE `translations` DISABLE KEYS */;
 INSERT INTO `translations` VALUES
-(1,'Invalid username','existsInCode',NULL),
-(2,'Invalid password','existsInCode',NULL),
 (3,'User already exists','existsInCode',NULL),
 (4,'You cannot delete yourself','existsInCode',NULL),
 (5,'Server returned response in an unexpected format','existsInCode',NULL),
@@ -414,18 +429,6 @@ INSERT INTO `translations` VALUES
 (14,'Logout','existsInCode',NULL),
 (15,'Error','existsInCode',NULL),
 (16,'Unknown error!','existsInCode',NULL),
-(17,'Time','existsInCode',NULL),
-(18,'User','existsInCode',NULL),
-(19,'Activity','existsInCode',NULL),
-(20,'Name','existsInCode',NULL),
-(21,'Email','existsInCode',NULL),
-(22,'Password','existsInCode',NULL),
-(23,'Edit user','existsInCode',NULL),
-(24,'Admin','existsInCode',NULL),
-(25,'Set to 1 if user must be admin','existsInCode',NULL),
-(26,'Save changes','existsInCode',NULL),
-(27,'Close','existsInCode',NULL),
-(28,'Are you sure?','existsInCode',NULL),
 (29,'Phrase','existsInCode',NULL),
 (30,'Untranslated','existsInCode',NULL),
 (31,'Search','existsInCode',NULL),
@@ -460,6 +463,9 @@ CREATE TABLE `userDoneExercises` (
 
 LOCK TABLES `userDoneExercises` WRITE;
 /*!40000 ALTER TABLE `userDoneExercises` DISABLE KEYS */;
+INSERT INTO `userDoneExercises` VALUES
+(2,1),
+(2,2);
 /*!40000 ALTER TABLE `userDoneExercises` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -491,7 +497,7 @@ LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
 INSERT INTO `users` VALUES
 (1,'Kati Maasikas','41111111115',1,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL),
-(2,'Mati Vaarikas','31111111114',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL),
+(2,'Mati Vaarikasii','31111111114',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,'2024-08-14 10:26:25',NULL),
 (3,'Genor Kasak','50204305710',0,'',0,NULL,NULL),
 (4,'Sten Elisson','38512232743',0,'',0,NULL,NULL),
 (5,'Alicia Jemets','49912300211',0,'',0,NULL,NULL),
@@ -548,4 +554,4 @@ UNLOCK TABLES;
 /*!50503 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-08-13  4:58:02
+-- Dump completed on 2024-08-14 10:16:17
