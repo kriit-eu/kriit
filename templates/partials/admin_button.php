@@ -1,5 +1,5 @@
 <div class="d-flex justify-content-end">
-    <button type="button" class="btn btn-warning" onclick="redirectToApplicants()">Admin</button>
+    <button type="button" class="btn btn-warning admin-btn" onclick="redirectToApplicants()">Admin</button>
 </div>
 
 <script>
@@ -10,9 +10,9 @@
 
 <style>
     .admin-btn {
-        position: fixed;
+        position: absolute;
         top: 10px;
-        left: 10px;
+        right: 10px;
         z-index: 1000;
     }
 </style>
