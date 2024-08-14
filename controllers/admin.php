@@ -89,9 +89,17 @@ class admin extends Controller
         $this->users = Db::getAll("
             SELECT
                 u.*,
-                COUNT(userDoneExercises.exerciseId) AS userExercisesDone,
+                COUNT(DISTINCT userDoneExercises.exerciseId) AS userExercisesDone,
                 MIN(a.activityLogTimestamp) AS userFirstLogin,
-                ROW_NUMBER() OVER (ORDER BY u.userTimeTotal DESC, COUNT(userDoneExercises.exerciseId) DESC) AS userRank
+                ROW_NUMBER() OVER (
+                    ORDER BY
+                        COUNT(DISTINCT userDoneExercises.exerciseId) DESC,
+                        CASE
+                            WHEN u.userTimeTotal IS NOT NULL THEN 0
+                            ELSE 1
+                        END ASC,  -- пользователи с отсутствующим userTimeTotal будут ниже
+                        u.userTimeTotal ASC
+                ) AS userRank
             FROM
                 users u
             LEFT JOIN
@@ -103,9 +111,8 @@ class admin extends Controller
             GROUP BY
                 u.userId
             ORDER BY
-                userRank ASC
+                userRank ASC;
         ");
-
     }
 
     function users()

@@ -65,6 +65,11 @@ class Auth
             $this->show_login(['Tundmatu isik']);
         }
 
+        // Show login again if user has already completed the exercises
+        if ($user['userTimeUpAt'] !== null && strtotime($user['userTimeUpAt']) < time()) {
+            $this->show_login(['Katsed on juba sooritatud!']);
+        }
+
         // Show login again if user is admin and password is wrong
         if ($user['userIsAdmin'] && !password_verify($_POST['userPassword'], $user['userPassword'])) {
             $this->show_login(['Vale parool']);
