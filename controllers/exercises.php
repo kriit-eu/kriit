@@ -58,6 +58,16 @@ class exercises extends Controller
     function view()
     {
         $this->redirectIfTimeExpiredOrNotStarted();
+
+        $doneExercise = Db::getOne("
+            SELECT * FROM userDoneExercises
+            WHERE userId = ?
+            AND exerciseId = ?", [$this->auth->userId, $this->getId()]);
+
+        if ($doneExercise !== null) {
+            $this->redirect('exercises');
+        }
+
         $this->exercise = Db::getFirst("
             SELECT * FROM exercises
             WHERE exerciseId = ?", [$this->getId()]);

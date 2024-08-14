@@ -86,34 +86,48 @@ class admin extends Controller
 
     function ranking()
     {
-        $this->users = Db::getAll("
-            SELECT
-                u.*,
-                COUNT(DISTINCT userDoneExercises.exerciseId) AS userExercisesDone,
-                MIN(a.activityLogTimestamp) AS userFirstLogin,
-                ROW_NUMBER() OVER (
-                    ORDER BY
-                        COUNT(DISTINCT userDoneExercises.exerciseId) DESC,
-                        CASE
-                            WHEN u.userTimeTotal IS NOT NULL THEN 0
-                            ELSE 1
-                        END ASC,  -- пользователи с отсутствующим userTimeTotal будут ниже
-                        u.userTimeTotal ASC
-                ) AS userRank
-            FROM
-                users u
-            LEFT JOIN
-                activityLog a ON u.userId = a.userId AND a.activityId = 1
-            LEFT JOIN
-                userDoneExercises ON u.userId = userDoneExercises.userId
-            WHERE
-                u.userIsAdmin = 0
-            GROUP BY
-                u.userId
-            ORDER BY
-                userRank ASC;
-        ");
+        // Fetch all users
+        $allUsers = Db::getAll("
+        SELECT
+            u.*,
+            COUNT(DISTINCT userDoneExercises.exerciseId) AS userExercisesDone,
+            MIN(a.activityLogTimestamp) AS userFirstLogin,
+            ROW_NUMBER() OVER (
+                ORDER BY
+                    COUNT(DISTINCT userDoneExercises.exerciseId) DESC,
+                    CASE
+                        WHEN u.userTimeTotal IS NOT NULL THEN 0
+                        ELSE 1
+                    END ASC,
+                    u.userTimeTotal ASC
+            ) AS userRank
+        FROM
+            users u
+        LEFT JOIN
+            activityLog a ON u.userId = a.userId AND a.activityId = 1
+        LEFT JOIN
+            userDoneExercises ON u.userId = userDoneExercises.userId
+        WHERE
+            u.userIsAdmin = 0
+        GROUP BY
+            u.userId
+        ORDER BY
+            userRank ASC;
+    ");
+
+        // Filter users who have completed at least one task and are not admins
+        $this->filteredUsers = array_filter($allUsers, function ($user) {
+            return $user['userExercisesDone'] > 0;
+        });
+
+        $this->users = $allUsers;  // Keep all users for ranking display
+
+        // Calculate the average number of solved tasks among filtered users
+        $totalSolvedTasks = array_sum(array_column($this->filteredUsers, 'userExercisesDone'));
+        $userCount = count($this->filteredUsers);
+        $this->averageExercisesDone = $userCount > 0 ? $totalSolvedTasks / $userCount : 0;
     }
+
 
     function users()
     {
