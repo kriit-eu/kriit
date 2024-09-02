@@ -3,7 +3,10 @@ $activityLinks = [
         ACTIVITY_SOLVED_EXERCISE => 'exercises',
         ACTIVITY_SOLVED_AGAIN_THE_SAME_EXERCISE => 'exercises',
         ACTIVITY_START_EXERCISE => 'exercises',
-        ACTIVITY_CREATE_GROUP => 'groups'
+        ACTIVITY_CREATE_GROUP => 'groups',
+        ACTIVITY_CREATE_SUBJECT => 'subjects',
+        ACTIVITY_CREATE_ASSIGNMENT => 'assignments',
+        ACTIVITY_UPDATE_ASSIGNMENT => 'assignments',
 ];
 ?>
 

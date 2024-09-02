@@ -28,7 +28,7 @@ CREATE TABLE `activities` (
   `activityName` varchar(50) NOT NULL COMMENT 'Autocreated',
   `activityDescription` varchar(191) NOT NULL,
   PRIMARY KEY (`activityId`)
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -46,7 +46,9 @@ INSERT INTO `activities` VALUES
 (6,'solvedAgainTheSameExercise','user has solved th same exercise'),
 (7,'timeUp','user\'s time is up'),
 (8,'startExercise','user has started the exercise'),
-(9,'createGroup','created group');
+(9,'createGroup','created group'),
+(10,'createAssignment','created assignment'),
+(11,'updateAssignment','updated assignment');
 /*!40000 ALTER TABLE `activities` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -77,6 +79,26 @@ LOCK TABLES `activityLog` WRITE;
 /*!40000 ALTER TABLE `activityLog` DISABLE KEYS */;
 /*!40000 ALTER TABLE `activityLog` ENABLE KEYS */;
 UNLOCK TABLES;
+
+--
+-- Table structure for table `assignments`
+--
+
+DROP TABLE IF EXISTS `assignments`;
+/*!50503 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `assignments` (
+  `assignmentId` int unsigned NOT NULL AUTO_INCREMENT COMMENT 'Autocreated',
+  `assignmentName` varchar(50) NOT NULL COMMENT 'Autocreated',
+  `assignmentInstructions` text NOT NULL COMMENT 'Autocreated',
+  `subjectId` int unsigned NOT NULL,
+  `tahvelJournalEntryId` int unsigned DEFAULT NULL,
+  `assignmentDueAt` date DEFAULT NULL,
+  PRIMARY KEY (`assignmentId`),
+  KEY `assignments_subjectId_fk` (`subjectId`),
+  CONSTRAINT `assignments_subjectId_fk` FOREIGN KEY (`subjectId`) REFERENCES `subjects` (`subjectId`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
+/*!50503 SET character_set_client = @saved_cs_client */;
 
 --
 -- Table structure for table `deployments`
@@ -338,6 +360,22 @@ INSERT INTO `settings` VALUES ('projectVersion', '84b9b5f'),
                               ('translationUpdateLastRun', '2024-08-14 14:29:55');
 /*!40000 ALTER TABLE `settings` ENABLE KEYS */;
 UNLOCK TABLES;
+
+--
+-- Table structure for table `subjects`
+--
+
+DROP TABLE IF EXISTS `subjects`;
+/*!50503 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `subjects` (
+  `subjectId` int unsigned NOT NULL AUTO_INCREMENT COMMENT 'Autocreated',
+  `subjectName` varchar(50) NOT NULL COMMENT 'Autocreated',
+  `tahvelSubjectId` int unsigned DEFAULT NULL,
+  `groupId` int unsigned NOT NULL,
+  PRIMARY KEY (`subjectId`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
+/*!50503 SET character_set_client = @saved_cs_client */;
 
 --
 -- Table structure for table `translationLanguages`
@@ -636,4 +674,4 @@ UNLOCK TABLES;
 /*!50503 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-09-02 14:59:39
+-- Dump completed on 2024-09-02 16:58:17
