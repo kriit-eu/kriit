@@ -12,6 +12,7 @@ class Application
     public $params = null;
     public $action = 'index';
     public $controller = DEFAULT_CONTROLLER;
+    public bool $api = false;
 
     function __construct()
     {
@@ -31,6 +32,7 @@ class Application
 
         $this->set_language();
         $this->process_uri();
+        $this->parse_json_request_pody();
         $this->update_settings();
         $this->handle_routing();
         $this->auth = new Auth();
@@ -38,14 +40,22 @@ class Application
         // Instantiate controller
         $controller_fqn = '\App\\' . $this->controller;
 
-        if (!file_exists("controllers/$this->controller.php")) {
-            error_out("<b>Error:</b> File <i>controllers/{$this->controller}.php</i> does not exist.", 404);
+        if ($this->api) {
+            $controller_fqn = '\App\api\\' . $this->controller;
+            if (!file_exists("controllers/api/$this->controller.php")) {
+                error_out("<b>Error:</b> File <i>controllers/api/{$this->controller}.php</i> does not exist.", 404);
+            }
+        } else {
+            if (!file_exists("controllers/$this->controller.php")) {
+                error_out("<b>Error:</b> File <i>controllers/{$this->controller}.php</i> does not exist.", 404);
+            }
         }
-        require "controllers/$this->controller.php";
+
+        require $this->api ? "controllers/api/$this->controller.php" : "controllers/$this->controller.php";
 
         if (!class_exists($controller_fqn, 1)) {
             error_out("<b>Error:</b>
-				File  <i>controllers/{$this->controller}.php</i> exists but class <i>{$this->controller}</i> does not. You probably copied the file but forgot to rename the class in the copy.",
+				File  <i>controllers/(api/){$this->controller}.php</i> exists but class <i>{$this->controller}</i> does not. You probably copied the file but forgot to rename the class in the copy.",
                 500);
         }
         $controller = new $controller_fqn($this);
@@ -217,6 +227,21 @@ class Application
             $this->action = $actionMap[$this->params[0] ?? ''] ?? $this->action;
         }
 
+        if ($this->controller == 'api') {
+
+            // Overwrite controller to actual controller
+            $this->controller = $this->action;
+
+            // Overwrite action to params[0]
+            $this->action = $this->params[0] ?? 'index';
+
+            // Remove params[0] from params array
+            array_shift($this->params);
+
+            $this->api = true;
+
+        }
+
         // Allow shorter URLs (users/view/3 becomes users/3)
         if (is_numeric($this->action)) {
 
@@ -286,5 +311,11 @@ class Application
 
     }
 
+    private function parse_json_request_pody()
+    {
+        if (Request::isJson()) {
+            $_POST = json_decode(file_get_contents('php://input'), true);
+        }
+    }
 
 }

@@ -5,8 +5,8 @@
  */
 
 // Project constants
-const PROJECT_NAME = 'sisseastumine';
-const PROJECT_SESSION_ID = 'SESSID_SISSEASTUMINE'; // For separating sessions of multiple Halo projects running on same server
+const PROJECT_NAME = 'Kriit';
+const PROJECT_SESSION_ID = 'SESSID_KRIIT'; // For separating sessions of multiple Halo projects running on same server
 const DEFAULT_CONTROLLER = 'intro';
 const DEVELOPER_EMAIL = 'henno@diarainfra.com'; // Where to send errors
 const FORCE_HTTPS = false; // Force HTTPS connections
@@ -21,6 +21,7 @@ const ACTIVITY_ALL_SOLVED = 5;
 const ACTIVITY_SOLVED_AGAIN_THE_SAME_EXERCISE = 6;
 const ACTIVITY_TIME_UP = 7;
 const ACTIVITY_START_EXERCISE = 8;
+const ACTIVITY_CREATE_GROUP = 9;
 const IS_ID = 1;
 const IS_INT = 2;
 const IS_0OR1 = 3;

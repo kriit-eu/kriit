@@ -1,15 +1,27 @@
+<?php
+$activityLinks = [
+        ACTIVITY_SOLVED_EXERCISE => 'exercises',
+        ACTIVITY_SOLVED_AGAIN_THE_SAME_EXERCISE => 'exercises',
+        ACTIVITY_START_EXERCISE => 'exercises',
+        ACTIVITY_CREATE_GROUP => 'groups'
+];
+?>
+
 <style>
     .pause, .leave {
         background-color: pink;
     }
-    .play, .timeupdate{
+
+    .play, .timeupdate {
         background-color: lightgreen;
     }
+
     body > div.container > a:not(.active) {
         background-color: white !important;
         color: black !important;
         border: 0;
     }
+
     body > div.container > a.active {
 
     }
@@ -22,14 +34,20 @@
             <th>Aeg</th>
             <th>Kasutaja</th>
             <th>Tegevus</th>
-            <th>Ülesanne</th>
+            <th>Üksus</th>
         </tr>
         <?php foreach ($log as $row): ?>
             <tr class="<?= $row['activityName'] ?>">
                 <td><?= $row['activityLogTimestamp'] ?></td>
                 <td><?= $row['userName'] ?></td>
                 <td><?= __($row['activityDescription'], "activities.activityDescription") ?></td>
-                <td><a href="exercises/<?= $row['id'] ?>"><?= $row['id'] ?></a></td>
+                <td>
+                    <?php if (isset($activityLinks[$row['activityId']])): ?>
+                        <a href="<?= $activityLinks[$row['activityId']] ?>/<?= $row['id'] ?>"><?= $row['id'] ?></a>
+                    <?php else: ?>
+                        <?= $row['id'] ?>
+                    <?php endif; ?>
+                </td>
             </tr>
         <?php endforeach ?>
     </table>

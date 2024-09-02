@@ -18,10 +18,6 @@
 
     }
 
-    * {
-        background-color: red
-    }
-
     #success-message, #error-message {
         display: none;
     }

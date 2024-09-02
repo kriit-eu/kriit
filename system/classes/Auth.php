@@ -13,6 +13,17 @@ class Auth
 
     function __construct()
     {
+
+        if (str_starts_with($_SERVER['REQUEST_URI'], '/api/')) {
+            if (!isset($_SERVER['HTTP_AUTHORIZATION'])) {
+                stop(400, 'No API key provided');
+            }
+            if ($_SERVER['HTTP_AUTHORIZATION'] !== 'Bearer ' . TAHVEL_API_KEY) {
+                stop(401, 'Unauthorized');
+            }
+            $_SESSION['userId'] = 1;
+        }
+
         if (isset($_SESSION['userId'])) {
             $this->logged_in = TRUE;
             $user = Db::getFirst("SELECT *

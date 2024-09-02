@@ -28,7 +28,7 @@ CREATE TABLE `activities` (
   `activityName` varchar(50) NOT NULL COMMENT 'Autocreated',
   `activityDescription` varchar(191) NOT NULL,
   PRIMARY KEY (`activityId`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -45,7 +45,8 @@ INSERT INTO `activities` VALUES
 (5,'allSolved','user has solved all exercises'),
 (6,'solvedAgainTheSameExercise','user has solved th same exercise'),
 (7,'timeUp','user\'s time is up'),
-(8,'startExercise','user has started the exercise');
+(8,'startExercise','user has started the exercise'),
+(9,'createGroup','created group');
 /*!40000 ALTER TABLE `activities` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -297,6 +298,21 @@ INSERT INTO `exercises` VALUES (1, 'Muuda lehe taustavärv punaseks',
                                 'function validate() {\n    const box = document.querySelector(\'.box\');\n    const boxWidth = window.getComputedStyle(box).width;\n    const boxHeight = window.getComputedStyle(box).height;\n\n    return boxWidth === \'200px\' && boxHeight === \'150px\';\n}\n');
 /*!40000 ALTER TABLE `exercises` ENABLE KEYS */;
 UNLOCK TABLES;
+
+--
+-- Table structure for table `groups`
+--
+
+DROP TABLE IF EXISTS `groups`;
+/*!50503 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `groups` (
+  `groupId` int unsigned NOT NULL AUTO_INCREMENT COMMENT 'Autocreated',
+  `groupName` varchar(50) NOT NULL COMMENT 'Autocreated',
+  PRIMARY KEY (`groupId`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4;
+/*!50503 SET character_set_client = @saved_cs_client */;
+
 
 --
 -- Table structure for table `settings`
@@ -620,4 +636,4 @@ UNLOCK TABLES;
 /*!50503 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-08-14 15:47:20
+-- Dump completed on 2024-09-02 14:59:39

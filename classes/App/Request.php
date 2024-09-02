@@ -20,4 +20,9 @@ class Request
     {
         return php_sapi_name() === 'cli';
     }
+
+    public static function isJson()
+    {
+        return isset($_SERVER['CONTENT_TYPE']) && str_contains($_SERVER['CONTENT_TYPE'], 'application/json');
+    }
 }
