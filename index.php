@@ -1,6 +1,14 @@
 <?php namespace App;
 
+use function header;
+
 try {
+    header("Access-Control-Allow-Origin: *");
+    header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+    header("Access-Control-Allow-Headers: Content-Type, Authorization");
+    if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+        exit(0);
+    }
 
     require 'system/functions.php';
     require 'constants.php';
@@ -33,7 +41,7 @@ try {
 
     if (ENV == ENV_PRODUCTION) {
         handleProductionError($e);
-    }else{
+    } else {
         Db::displayError($e);
     }
 
@@ -49,4 +57,3 @@ try {
 
     throw $e;
 }
-

@@ -18,10 +18,15 @@ class Auth
             if (!isset($_SERVER['HTTP_AUTHORIZATION'])) {
                 stop(400, 'No API key provided');
             }
-            if ($_SERVER['HTTP_AUTHORIZATION'] !== 'Bearer ' . TAHVEL_API_KEY) {
+
+            $api_key = substr($_SERVER['HTTP_AUTHORIZATION'], 7);
+            $user = Db::getFirst("SELECT * FROM users WHERE userApiKey = ?", [$api_key]);
+
+            if (empty($user) || $user['userApiKey'] !== $api_key) {
                 stop(401, 'Unauthorized');
             }
-            $_SESSION['userId'] = 1;
+
+            $_SESSION['userId'] = $user['userId'];
         }
 
         if (isset($_SESSION['userId'])) {

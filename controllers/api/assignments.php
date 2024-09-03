@@ -47,21 +47,6 @@ class assignments extends Controller
             }
         }
 
-        //Check if assignment exists with given tahvelJournalEntryId
-        $assignment = Db::getFirst("SELECT * FROM assignments WHERE tahvelJournalEntryId = ?", [$_POST['tahvelJournalEntryId']]);
-        if ($assignment) {
-            // Overwrite assignment existing data
-            $data = [
-                'assignmentDueAt' => $_POST['assignmentDueAt'],
-                'assignmentInstructions' => $_POST['assignmentInstructions'],
-            ];
-
-            Db::update('assignments', $data, "assignmentId=$assignment[assignmentId]");
-            Activity::create(ACTIVITY_UPDATE_ASSIGNMENT, $this->auth->userId, $assignment['assignmentId']);
-
-            stop(200, $assignment['assignmentId']);
-        }
-
         // Construct parameterized query to check if group exists based on either groupId or groupName which ever is provided
         $field = !empty($_POST['groupId']) ? 'groupId' : 'groupName';
         $groupId = Db::getOne("SELECT groupId FROM groups WHERE $field = ?", [$_POST[$field]]);
@@ -83,9 +68,37 @@ class assignments extends Controller
             if ($field === 'subjectId') {
                 stop(400,"Invalid subjectId provided");
             } else {
-                $subjectId = Db::insert('subjects', ['subjectName' => $_POST['subjectName'], 'tahvelSubjectId' => $_POST['tahvelSubjectId'], 'groupId' => $groupId]);
+                $subjectId = Db::insert('subjects', ['subjectName' => $_POST['subjectName'], 'tahvelSubjectId' => $_POST['tahvelSubjectId'], 'groupId' => $groupId, 'teacherId' => $this->auth->userId]);
                 Activity::create(ACTIVITY_CREATE_SUBJECT, $this->auth->userId, $subjectId);
             }
+        }else{
+            $subject = Db::getFirst("SELECT * FROM subjects WHERE subjectId = ?", [$subjectId]);
+            if ($subject['teacherId'] !== $this->auth->userId) {
+                $otherTeacher = Db::getFirst("SELECT * FROM users WHERE userId = ?", [$subject['teacherId']]);
+                stop(403, 'Subject belongs to ' . $otherTeacher['userName']);
+            }
+        }
+
+        //Check if assignment exists with given tahvelJournalEntryId
+        $assignment = Db::getFirst("SELECT * FROM assignments WHERE tahvelJournalEntryId = ?", [$_POST['tahvelJournalEntryId']]);
+        if ($assignment) {
+            // Overwrite assignment existing data
+            $data = [
+                'assignmentDueAt' => $_POST['assignmentDueAt'],
+                'assignmentInstructions' => $_POST['assignmentInstructions'],
+            ];
+
+            //Prevent other teachers from updating assignments using groups teacherId
+            $group = Db::getFirst("SELECT * FROM groups WHERE groupId = ?", [$groupId]);
+            if ($group['teacherId'] !== $this->auth->userId) {
+                $otherTeacher = Db::getFirst("SELECT * FROM users WHERE userId = ?", [$group['teacherId']]);
+                stop(403, 'Assignment belongs to a subject given by ' . $otherTeacher['userName']);
+            }
+
+            Db::update('assignments', $data, "assignmentId=$assignment[assignmentId]");
+            Activity::create(ACTIVITY_UPDATE_ASSIGNMENT, $this->auth->userId, $assignment['assignmentId']);
+
+            stop(200, $assignment['assignmentId']);
         }
 
         // Create assignment

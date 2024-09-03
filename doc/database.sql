@@ -373,8 +373,13 @@ CREATE TABLE `subjects` (
   `subjectName` varchar(50) NOT NULL COMMENT 'Autocreated',
   `tahvelSubjectId` int unsigned DEFAULT NULL,
   `groupId` int unsigned NOT NULL,
-  PRIMARY KEY (`subjectId`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
+  `teacherId` int unsigned NOT NULL,
+  PRIMARY KEY (`subjectId`),
+  KEY `subjects_groups_groupId_fk` (`groupId`),
+  KEY `subjects_users_userId_fk` (`teacherId`),
+  CONSTRAINT `subjects_groups_groupId_fk` FOREIGN KEY (`groupId`) REFERENCES `groups` (`groupId`),
+  CONSTRAINT `subjects_users_userId_fk` FOREIGN KEY (`teacherId`) REFERENCES `users` (`userId`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -603,6 +608,7 @@ CREATE TABLE `users` (
   `userDeleted` tinyint unsigned NOT NULL DEFAULT 0,
   `userTimeUpAt` datetime DEFAULT NULL,
   `userTimeTotal` time DEFAULT NULL,
+  `userApiKey` varchar(32) DEFAULT NULL,
   PRIMARY KEY (`userId`)
 ) ENGINE = InnoDB
   AUTO_INCREMENT = 49
@@ -616,52 +622,8 @@ CREATE TABLE `users` (
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
 INSERT INTO `users` VALUES
-(1,'Kati Maasikas','41111111115',1,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL),
-(2, 'Mati Vaarikas', '31111111114', 0, '$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm', 0, NULL, NULL),
-(3,'Genor Kasak','50204305710',0,'',0,NULL,NULL),
-(4,'Sten Elisson','38512232743',0,'',0,NULL,NULL),
-(5,'Alicia Jemets','49912300211',0,'',0,NULL,NULL),
-(6,'Kristo Kaljurand','38102020218',0,'',0,NULL,NULL),
-(7,'Tanel Maasen','50411110878',0,'',0,NULL,NULL),
-(8,'Klen Kert Korjus','50204237010',0,'',0,NULL,NULL),
-(9,'Aleks Kudrin','39904086018',0,'',0,NULL,NULL),
-(10,'Ove Kukemelk','39111210259',0,'',0,NULL,NULL),
-(11,'Annabell Lohvart','49507204943',0,'',0,NULL,NULL),
-(12,'Nele Metsar','49608012712',0,'',0,NULL,NULL),
-(13,'Olga Morgunova','60205205230',0,'',0,NULL,NULL),
-(14,'Joonas Mägi','38302146021',0,'',0,NULL,NULL),
-(15,'Markus Mäll','50210212714',0,'',0,NULL,NULL),
-(16,'Bert Põder','38710155767',0,'',0,NULL,NULL),
-(17,'Erik Mikussaar','39610044919',0,'',0,NULL,NULL),
-(18,'Kärt Semm','49302104917',0,'',0,NULL,NULL),
-(19,'Koit Värat','39207104225',0,'',0,NULL,NULL),
-(20,'Sigmar Treumann','39204292780',0,'',0,NULL,NULL),
-(21,'Katrin Vaarask','49106082823',0,'',0,NULL,NULL),
-(22,'Gert Ast','50803114916',0,'',0,NULL,NULL),
-(23,'Joel-Martin Riive','50205176029',0,'',0,NULL,NULL),
-(24,'Andre Park','37005315727',0,'',0,NULL,NULL),
-(25,'Riho Sepp','39306210242',0,'',0,NULL,NULL),
-(26,'Rasmus Aug','39409070845',0,'',0,NULL,NULL),
-(27,'Liilian Lind','60709232817',0,'',0,NULL,NULL),
-(28,'Gristel Aste','49201056533',0,'',0,NULL,NULL),
-(29,'Indrek Sihver','50804046037',0,'',0,NULL,NULL),
-(30,'Oleksandr Ovsiienko','50811250030',0,'',0,NULL,NULL),
-(31,'Carl-Richard Pukk','50204016031',0,'',0,NULL,NULL),
-(32,'Kaspar Loks','39104212765',0,'',0,NULL,NULL),
-(33,'Eero Vallistu','39709126012',0,'',0,NULL,NULL),
-(34,'Kuldar Joel Künnapas','50507024218',0,'',0,NULL,NULL),
-(35,'Anastasija Hatkevitš','60804217070',0,'',0,NULL,NULL),
-(36,'Arina Aleksandrova','60810012215',0,'',0,NULL,NULL),
-(37,'Sander Prii','39310282738',0,'',0,NULL,NULL),
-(38,'Efe Marko Güldere','50409020827',0,'',0,NULL,NULL),
-(39,'Björn Johanson','50411280867',0,'',0,NULL,NULL),
-(40,'Marleen Rivimets','49705275211',0,'',0,NULL,NULL),
-(41,'Frank Tiisler','39611286010',0,'',0,NULL,NULL),
-(42,'Brigita Kasemets','49910074220',0,'',0,NULL,NULL),
-(43,'Olga Orlova','48801213712',0,'',0,NULL,NULL),
-(44,'Timo Lempu','39203110022',0,'',0,NULL,NULL),
-(45,'Sander Tuisk','39212032012',0,'',0,NULL,NULL),
-(46,'Andreas Kirs','38703072751',0,'',0,NULL,NULL);
+(1,'Kati Maasikas','41111111115',1,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo'),
+(2,'Mati Vaarikas','31111111114',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo2');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -674,4 +636,4 @@ UNLOCK TABLES;
 /*!50503 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-09-02 16:58:17
+-- Dump completed on 2024-09-02 18:27:05
