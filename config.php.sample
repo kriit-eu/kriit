@@ -6,7 +6,7 @@ const ENV = 'ENV_DEVELOPMENT';
 const DATABASE_HOSTNAME = 'mysql';
 const DATABASE_USERNAME = 'root';
 const DATABASE_PASSWORD = '';
-const DATABASE_DATABASE = 'sisseastumine';
+const DATABASE_DATABASE = 'kriit';
 
 //Mail
 const SMTP_AUTH_PASSWORD = '';
@@ -14,14 +14,14 @@ const SMTP_AUTH_USERNAME = '';
 const SMTP_AUTH = false;
 const SMTP_DEBUG = 0;
 const SMTP_ENCRYPTION = 'none';
-const SMTP_FROM = PROJECT_NAME . '@example.com';
+const SMTP_FROM =  'kriit@kriit.eu';
 const SMTP_HOST = 'mailhog';
 const SMTP_PORT = 1025; // 1025 - Mailhog, 25 - live
 const SMTP_USE_SENDMAIL = false; // Send mail via system sendmail command or directly via SMTP
 const SMTP_DKIM_ENABLED = false;
-const SMTP_DKIM_DOMAIN = 'example.com';
+const SMTP_DKIM_DOMAIN = 'kriit.eu';
 const SMTP_DKIM_PRIVATE_KEY = '.certs/dkim_private_key.pem';
-const SMTP_DKIM_SELECTOR = 'example';
+const SMTP_DKIM_SELECTOR = 'kriit';
 const SMTP_DKIM_PASSPHRASE = '';
 const SMTP_DKIM_IDENTITY = SMTP_FROM;
 
