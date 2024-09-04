@@ -1,6 +1,19 @@
 # Sisseastumiskatsete rakendus
 
-Käesolev rakendus on loodud kutsekooli IT erialade sisseastumiskatsete läbiviimiseks.
+Käesolev rakendus on loodud kutsekooli IT erialade sisseastumiskatsete läbiviimiseks ja iseseisvate tööde haldamiseks.
+
+# Funktsionaalsus
+
+- Administraator saab lisada kandidaate ja nende isikukoodi alusel kandidaatidele katseid määrata.
+- Administraator saab lisada katseülesandeid.
+- Kandidaadid saavad isikukoodi alusel sisse logida ja katseid lahendada.
+- Administraator saab vaadata kandidaatide tulemusi ja pingerida kandidaate.
+- Administraator saab vaadata kandidaatide poolt lahendatud katseid.
+- Administraator saab vaadata sündmuslogisid.
+- Õpetajad saavad Tahvlisse lisatud ülesandeid automaatselt ka Kriiti lisada, et saada keskne ülevaade, kes mis ülesande on (mitte)esitanud ja võimaldada ülesandeid hõlpsasti tagasi lükata või hinnata (nõuab [Õpetaja assistent](http://kriit.eu/opetaja-assistent) Chrome'i laiendust ja õpetajale API võtme genereerimist administraatori poolt)
+- Õpilased saavad ülesannetele lahendusi ja nende parandusi esitada.
+- Õpetajad saavad esitatud ülesannete kohta teavitusi.
+- 
 
 ## Eeldused
 

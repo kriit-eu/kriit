@@ -5,8 +5,10 @@ class intro extends Controller
 
     function index()
     {
+        $this->redirectAdminsToAdminPage();
+        $this->redirectTeachersToSubjectsPage();
+        $this->redirectStudentsToSubjectsPage();
         $this->skipIntroIfTimerStartedOrAdmin();
-        $this->users = Db::getAll("SELECT * FROM users");
     }
 
     public function skipIntroIfTimerStartedOrAdmin(): void
@@ -32,5 +34,26 @@ class intro extends Controller
     function cssCourse()
     {
 
+    }
+
+    private function redirectAdminsToAdminPage()
+    {
+        if ($this->auth->userIsAdmin === 1) {
+            $this->redirect('admin/index');
+        }
+    }
+
+    private function redirectTeachersToSubjectsPage()
+    {
+        if ($this->auth->userIsTeacher === 1) {
+            $this->redirect('subjects');
+        }
+    }
+
+    private function redirectStudentsToSubjectsPage()
+    {
+        if ($this->auth->groupId && $this->auth->userIsAdmin !== 1) {
+            $this->redirect('subjects');
+        }
     }
 }

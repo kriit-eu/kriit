@@ -1,7 +1,6 @@
-/*!999999\- enable the sandbox mode */
 -- MariaDB dump 10.19  Distrib 10.11.8-MariaDB, for osx10.19 (arm64)
 --
--- Host: 127.0.0.1    Database: sisseastumine
+-- Host: 127.0.0.1    Database: kriit
 -- ------------------------------------------------------
 -- Server version	10.7.8-MariaDB-1:10.7.8+maria~ubu2004-log
 
@@ -166,11 +165,11 @@ INSERT INTO `deployments` VALUES
 (38,'2024-08-13 04:23:10','2024-08-13 04:32:31','Fix button names','henno.taht@gmail.com','3c9e75e'),
 (39,'2024-08-13 04:37:36','2024-08-13 04:37:56','Clean up temp files','henno.taht@gmail.com','9f2022a'),
 (40,'2024-08-13 04:43:57','2024-08-13 04:44:00','Add Ülesandeid col','henno.taht@gmail.com','6669f89'),
-(41, '2024-08-14 00:31:13', '2024-08-14 10:00:45', 'Add margin to CSS e', 'henno.taht@gmail.com', 'eff608b'),
-(42, '2024-08-13 23:26:29', '2024-08-14 10:17:41', 'Update HTML and CSS', 'henno.taht@gmail.com', 'e6f02a9'),
-(43, '2024-08-14 10:44:59', '2024-08-14 10:46:08', 'Fix Admin button po', 'henno.taht@gmail.com', '3837864'),
-(44, '2024-08-14 10:51:02', '2024-08-14 10:51:30', 'Optimize query for ', 'Violetta Zakorzhevskaya', '44b01e8'),
-(45, '2024-08-14 12:00:50', '2024-08-14 12:15:03', 'Refine user ranking', 'Violetta Zakorzhevskaya', '5441b81'),
+(41,'2024-08-14 00:31:13','2024-08-14 10:00:45','Add margin to CSS e','henno.taht@gmail.com','eff608b'),
+(42,'2024-08-13 23:26:29','2024-08-14 10:17:41','Update HTML and CSS','henno.taht@gmail.com','e6f02a9'),
+(43,'2024-08-14 10:44:59','2024-08-14 10:46:08','Fix Admin button po','henno.taht@gmail.com','3837864'),
+(44,'2024-08-14 10:51:02','2024-08-14 10:51:30','Optimize query for ','Violetta Zakorzhevskaya','44b01e8'),
+(45,'2024-08-14 12:00:50','2024-08-14 12:15:03','Refine user ranking','Violetta Zakorzhevskaya','5441b81'),
 (46, '2024-08-14 14:11:35', '2024-08-14 14:29:55', 'Enhance the user ra', 'Violetta Zakorzhevskaya', '84b9b5f');
 /*!40000 ALTER TABLE `deployments` ENABLE KEYS */;
 UNLOCK TABLES;
@@ -557,12 +556,12 @@ INSERT INTO `translations` VALUES
 (33,'Select language','existsInCode',NULL),
 (34,'Google translates < 5000 chars at a time','existsInCode',NULL),
 (35,'Select language first','existsInCode',NULL),
-(36, 'Are you really sure you want to remove the language %%% and destroy its translations?', 'existsInCode', NULL),
-(39, 'user has started the exercise', 'dynamic', 'activities.activityDescription'),
-(40, 'logged in', 'dynamic', 'activities.activityDescription'),
-(41, 'logged out', 'dynamic', 'activities.activityDescription'),
-(42, 'user has solved exercise', 'dynamic', 'activities.activityDescription'),
-(43, 'user has started the timer', 'dynamic', 'activities.activityDescription');
+(36,'Are you really sure you want to remove the language %%% and destroy its translations?','existsInCode',NULL),
+(39,'user has started the exercise','dynamic','activities.activityDescription'),
+(40,'logged in','dynamic','activities.activityDescription'),
+(41,'logged out','dynamic','activities.activityDescription'),
+(42,'user has solved exercise','dynamic','activities.activityDescription'),
+(43,'user has started the timer','dynamic','activities.activityDescription');
 /*!40000 ALTER TABLE `translations` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -609,10 +608,11 @@ CREATE TABLE `users` (
   `userTimeUpAt` datetime DEFAULT NULL,
   `userTimeTotal` time DEFAULT NULL,
   `userApiKey` varchar(32) DEFAULT NULL,
-  PRIMARY KEY (`userId`)
-) ENGINE = InnoDB
-  AUTO_INCREMENT = 49
-  DEFAULT CHARSET = utf8mb4;
+  `groupId` int unsigned DEFAULT NULL,
+  PRIMARY KEY (`userId`),
+  KEY `users_groups_groupId_fk` (`groupId`),
+  CONSTRAINT `users_groups_groupId_fk` FOREIGN KEY (`groupId`) REFERENCES `groups` (`groupId`)
+) ENGINE=InnoDB AUTO_INCREMENT=49 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -622,8 +622,8 @@ CREATE TABLE `users` (
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
 INSERT INTO `users` VALUES
-(1,'Kati Maasikas','41111111115',1,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo'),
-(2,'Mati Vaarikas','31111111114',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo2');
+(1,'Kati Maasikas','41111111115',1,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo',NULL),
+(2,'Mati Vaarikas','31111111114',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo2',NULL);
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -636,4 +636,4 @@ UNLOCK TABLES;
 /*!50503 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-09-02 18:27:05
+-- Dump completed on 2024-09-04 18:18:44

@@ -5,6 +5,7 @@ use Exception;
 class exercises extends Controller
 {
     public $auth;
+    public $template = 'applicant';
 
     function __construct($app)
     {
