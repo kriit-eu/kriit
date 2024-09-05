@@ -73,7 +73,8 @@ class subjects extends Controller
                 $groups[$groupName]['students'][$studentId] = [
                     'userName' => $studentName,
                     'subjectId' => $subjectId,
-                    'status' => $assignmentStatusName
+                    'status' => $assignmentStatusName,
+                    'userId' => $studentId
                 ];
             }
 
@@ -96,7 +97,7 @@ class subjects extends Controller
                     ];
                 }
 
-                $groups[$groupName]['subjects'][$subjectId]['assignments'][$assignmentId]['assignmentStatuses'][] = [
+                $groups[$groupName]['subjects'][$subjectId]['assignments'][$assignmentId]['assignmentStatuses'][$studentId] = [
                     'userId' => $studentId,
                     'assignmentStatusName' => $assignmentStatusName,
                     'grade' => $grade

@@ -62,24 +62,9 @@ $isTeacher = !$auth->userIsAdmin && $auth->userIsTeacher;
 
                                 <?php foreach ($group['students'] as $student): ?>
                                     <td>
-                                        <?php
-                                        $statusFound = false;
-                                        if (!empty($assignment['assignmentStatuses'])) {
-                                            foreach ($assignment['assignmentStatuses'] as $status) {
-                                                if ($status['userId'] == $student['subjectId']) {
-                                                    echo $status['assignmentStatusName'];
-                                                    if (isset($status['grade'])) {
-                                                        echo " (Hinne: " . $status['grade'] . ")";
-                                                    }
-                                                    $statusFound = true;
-                                                    break;
-                                                }
-                                            }
-                                        }
-                                        if (!$statusFound) {
-                                            echo "N/A";
-                                        }
-                                        ?>
+                                        <?php if (isset($assignment['assignmentStatuses'][$student['userId']])): ?>
+                                            <?= $assignment['assignmentStatuses'][$student['userId']]['grade'] ?>
+                                        <?php endif; ?>
                                     </td>
                                 <?php endforeach; ?>
                             </tr>
