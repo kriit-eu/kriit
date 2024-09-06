@@ -6,9 +6,12 @@ class subjects extends Controller
 
     function index()
     {
+        $this->isStudent = $this->auth->groupId && !$this->auth->userIsAdmin && !$this->auth->userIsTeacher;
+        $this->isTeacher = !$this->auth->userIsAdmin && $this->auth->userIsTeacher;
+
         $conditions = [
-            "subjects.teacherId = {$this->auth->userId}",
-            $this->auth->groupId ? "subjects.groupId = {$this->auth->groupId}" : null,
+            "s.teacherId = {$this->auth->userId}",
+            $this->auth->groupId ? "s.groupId = {$this->auth->groupId}" : null,
             $this->auth->userIsAdmin ? 'true' : null
         ];
 
@@ -44,7 +47,7 @@ class subjects extends Controller
         LEFT JOIN
             assignmentStatuses ast ON ua.assignmentStatusId = ast.assignmentStatusId
         WHERE
-            s.teacherId = ? OR ? = 1", [$this->auth->userId, $this->auth->userIsAdmin]);
+           {$whereClause}");
 
         $groups = [];
 
@@ -60,6 +63,12 @@ class subjects extends Controller
             $assignmentDueAt = $row['assignmentDueAt'];
             $assignmentStatusName = $row['assignmentStatusName'];
             $grade = $row['userGrade'];
+
+            if ($this->isStudent) {
+                if ($studentId !== $this->auth->userId) {
+                    continue;
+                }
+            }
 
             if (!isset($groups[$groupName])) {
                 $groups[$groupName] = [
