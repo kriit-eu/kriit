@@ -47,7 +47,13 @@ class subjects extends Controller
         LEFT JOIN
             assignmentStatuses ast ON ua.assignmentStatusId = ast.assignmentStatusId
         WHERE
-           {$whereClause}");
+           {$whereClause}
+            ORDER BY
+            g.groupName,
+            u.userName,
+            s.subjectName,
+            a.assignmentDueAt");
+
 
         $groups = [];
 

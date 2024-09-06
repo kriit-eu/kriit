@@ -1,3 +1,4 @@
+/*!999999\- enable the sandbox mode */
 -- MariaDB dump 10.19  Distrib 10.11.8-MariaDB, for osx10.19 (arm64)
 --
 -- Host: 127.0.0.1    Database: kriit
@@ -311,7 +312,7 @@ CREATE TABLE `groups` (
   `groupId` int unsigned NOT NULL AUTO_INCREMENT COMMENT 'Autocreated',
   `groupName` varchar(50) NOT NULL COMMENT 'Autocreated',
   PRIMARY KEY (`groupId`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -321,7 +322,9 @@ CREATE TABLE `groups` (
 LOCK TABLES `groups` WRITE;
 /*!40000 ALTER TABLE `groups` DISABLE KEYS */;
 INSERT INTO `groups` VALUES
-(6,'TAK24');
+(6,'TAK24'),
+(7,'TAK25'),
+(8,'TAK22');
 /*!40000 ALTER TABLE `groups` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -369,7 +372,7 @@ CREATE TABLE `subjects` (
   KEY `subjects_users_userId_fk` (`teacherId`),
   CONSTRAINT `subjects_groups_groupId_fk` FOREIGN KEY (`groupId`) REFERENCES `groups` (`groupId`),
   CONSTRAINT `subjects_users_userId_fk` FOREIGN KEY (`teacherId`) REFERENCES `users` (`userId`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -380,7 +383,10 @@ LOCK TABLES `subjects` WRITE;
 /*!40000 ALTER TABLE `subjects` DISABLE KEYS */;
 INSERT INTO `subjects` VALUES
 (3,'Programeerimine',1232131,6,1),
-(4,'Andmebassi alused',2323223,6,1);
+(4,'Andmebassi alused',2323223,6,1),
+(5,'Java',NULL,6,49),
+(7,'Andmebassi alused',2323224,7,1),
+(8,'Programmeerimismustrid',301579,8,1);
 /*!40000 ALTER TABLE `subjects` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -594,8 +600,15 @@ CREATE TABLE `userAssignments` (
 LOCK TABLES `userAssignments` WRITE;
 /*!40000 ALTER TABLE `userAssignments` DISABLE KEYS */;
 INSERT INTO `userAssignments` VALUES
-(1,2,2,NULL),
-(2,2,1,NULL);
+(1,2,2,''),
+(2,2,3,''),
+(3,2,4,NULL),
+(4,2,5,NULL),
+(5,2,6,NULL),
+(6,50,3,NULL),
+(7,50,7,'3'),
+(8,2,7,'MA'),
+(9,2,8,NULL);
 /*!40000 ALTER TABLE `userAssignments` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -644,10 +657,11 @@ CREATE TABLE `users` (
   `userApiKey` varchar(32) DEFAULT NULL,
   `groupId` int unsigned DEFAULT NULL,
   `userIsTeacher` tinyint DEFAULT 0,
+  `userEmail` varchar(191) DEFAULT NULL,
   PRIMARY KEY (`userId`),
   KEY `users_groups_groupId_fk` (`groupId`),
   CONSTRAINT `users_groups_groupId_fk` FOREIGN KEY (`groupId`) REFERENCES `groups` (`groupId`)
-) ENGINE=InnoDB AUTO_INCREMENT=50 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=138 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -657,9 +671,18 @@ CREATE TABLE `users` (
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
 INSERT INTO `users` VALUES
-(1,'Kati Maasikas','41111111115',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo',NULL,1),
-(2,'Mati Vaarikas','31111111114',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo2',6,0),
-(49,'Karl Mets','21111111113',1,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo3',NULL,0);
+(1,'Kati Maasikas','41111111115',1,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo',NULL,1,NULL),
+(2,'Mati Vaarikas','31111111114',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo2',6,0,NULL),
+(49,'Karl Mets','11111111112',1,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo3',NULL,0,NULL),
+(50,'Anna Maria Puu','21111111113',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo4',8,0,NULL),
+(130,'Lfclyp Üpxtpwj','94932250494',0,'',0,NULL,NULL,NULL,8,0,'fff@asdfg.bb'),
+(131,'Okuüjü Xdnmnh','94932250519',0,'',0,NULL,NULL,NULL,8,0,'fff@asdfg.bb'),
+(132,'Qiõsp Akiu','94932214723',0,'',0,NULL,NULL,NULL,8,0,'fff@asdfg.bb'),
+(133,'Wxtketfk Ftkef','94932222295',0,'',0,NULL,NULL,NULL,8,0,'fff@asdfg.bb'),
+(134,'Nöõmü Hvgfüe','94932250360',0,'',0,NULL,NULL,NULL,8,0,'fff@asdfg.bb'),
+(135,'Xüpxn Lifbut','94932250345',0,'',0,NULL,NULL,NULL,8,0,'fff@asdfg.bb'),
+(136,'Kõtqiv Nüfhvdik','94932250474',0,'',0,NULL,NULL,NULL,8,0,'fff@asdfg.bb'),
+(137,'Ööbüb Ushxj','94932245772',0,'',0,NULL,NULL,NULL,8,0,'fff@asdfg.bb');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -672,4 +695,4 @@ UNLOCK TABLES;
 /*!50503 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-09-05 18:02:52
+-- Dump completed on 2024-09-06 17:42:46

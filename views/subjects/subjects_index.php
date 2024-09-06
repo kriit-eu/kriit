@@ -77,8 +77,9 @@ $statusClassMap = [
 
                     <?php if (!$isStudent): ?>
                         <?php foreach ($group['students'] as $student): ?>
-                            <th data-bs-toggle="tooltip"
-                                title="<?= $student['userName'] ?>"><?= $student['userName'][0] . $student['userName'][strrpos($student['userName'], ' ') + 1] ?></th>
+                            <th data-bs-toggle="tooltip" title="<?= $student['userName'] ?>">
+                                <?= mb_substr($student['userName'], 0, 1) . mb_substr($student['userName'], mb_strrpos($student['userName'], ' ') + 1, 1) ?>
+                            </th>
                         <?php endforeach; ?>
                     <?php endif; ?>
                 </tr>

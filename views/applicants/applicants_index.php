@@ -11,6 +11,7 @@
             <tr>
                 <th>Nimi</th>
                 <th>Isikukood</th>
+                <th>Email</th>
                 <th>Esm. sisselogimine</th>
                 <th>Alustamise aeg</th>
                 <th>Ajakulu</th>
@@ -23,6 +24,7 @@
                 <tr data-href="applicants/<?= $user['userId'] ?>">
                     <td><?= $user['userName'] ?></td>
                     <td><?= $user['userPersonalCode'] ?></td>
+                    <td><?= $user['userEmail'] ?? '' ?></td>
                     <td><?= $user['userFirstLogin'] ?></td>
                     <td><?= $user['userStartTimer'] ?></td>
                     <td><?= $user['userTimeTotal'] ?></td>
