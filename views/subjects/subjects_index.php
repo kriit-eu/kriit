@@ -1,13 +1,7 @@
 <?php
 $statusClassMap = [
-        'Ootab alustamist' => 'awaiting-start',
-        'Töös' => 'in-progress',
-        'Ootab esitamist' => 'awaiting-submission',
-        'Ootab ülevaatamist' => 'awaiting-review',
-        'Vajab parandamist' => 'needs-revision',
-        'Ootab uuesti ülevaatamist' => 'awaiting-re-review',
-        'Hinnatud' => 'graded',
-        'Tähtaeg möödas' => 'deadline-missed'
+        'Esitamata' => $isStudent ? 'yellow-cell' : '',
+        'Ülevaatamata' => $this->auth->userIsTeacher ? 'red-cell' : '',
 ];
 
 ?>
@@ -17,45 +11,18 @@ $statusClassMap = [
         background-color: #f2f2f2;
     }
 
-    .bad-grade {
+    .red-cell {
         background-color: rgb(255, 180, 176) !important;
     }
 
-    .awaiting-start {
-        background-color: #f0f0f0 !important;
-    }
-
-    .in-progress {
+    .yellow-cell {
         background-color: #fff8b3 !important;
-    }
-
-    .awaiting-submission {
-        background-color: #cce5ff !important;
-    }
-
-    .awaiting-review {
-        background-color: #c9f1fd !important;
-    }
-
-    .needs-revision {
-        background-color: #ffcccc !important;
-    }
-
-    .awaiting-re-review {
-        background-color: #ffe6cc !important;
-    }
-
-    .graded {
-        background-color: #d4edda !important;
-    }
-
-    .deadline-missed {
-        background-color: #f5c6cb !important;
     }
 
     .text-center {
         text-align: center;
     }
+
 </style>
 
 <div class="row">
@@ -72,7 +39,6 @@ $statusClassMap = [
                     <?php if ($isStudent): ?>
                         <th>Staatus / Hinne</th>
                     <?php else: ?>
-                        <th>Tegevused</th>
                     <?php endif; ?>
 
                     <?php if (!$isStudent): ?>
@@ -90,14 +56,6 @@ $statusClassMap = [
                         <td><b><?= $subject['subjectName'] ?></b></td>
                         <?php if ($auth->userIsAdmin || $isStudent): ?>
                             <td><b><?= $subject['teacherName'] ?></b></td>
-                        <?php endif; ?>
-
-                        <?php if (!$isStudent): ?>
-                            <td>
-                                <a href="grades/<?= $subject['subjectId'] ?>">Hinded</a>
-                            </td>
-                        <?php else: ?>
-                            <td colspan="<?= (count($group['students']) + 1) ?>"></td>
                         <?php endif; ?>
                     </tr>
 
@@ -120,28 +78,50 @@ $statusClassMap = [
 
                                 $formattedDueDate = $dueDate->format('d.m.y');
                                 ?>
-                                <td colspan="<?= ($auth->userIsAdmin || $isStudent) ? 2 : 1 ?>"
-                                    style="padding-left: 20px;">
-                                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span
-                                            class="<?= $badgeClass ?>"><?= $formattedDueDate ?></span> <a
-                                            href="assignments/<?= $assignment['assignmentId'] ?>"><?= $assignment['assignmentName'] ?></a>
+                                <td colspan="<?= ($auth->userIsAdmin || $isStudent) ? 2 : 1 ?>">
+                                    <span class="badge <?= $badgeClass ?>"
+                                          data-days-remaining="<?= $daysRemaining ?>"
+                                          data-is-student="<?= $isStudent ? 'true' : 'false' ?>">
+                                        <?= $formattedDueDate ?>
+                                    </span>
+                                    <a href="assignments/<?= $assignment['assignmentId'] ?>"><?= $assignment['assignmentName'] ?></a>
                                 </td>
 
-                                <?php if (!$isStudent): ?>
-                                    <td></td>
-                                <?php endif; ?>
 
                                 <?php foreach ($group['students'] as $student): ?>
                                     <?php
                                     $status = $assignment['assignmentStatuses'][$student['userId']]['assignmentStatusName'] ?? '';
+                                    $class = $statusClassMap[$status] ?? '';
+
                                     $grade = $assignment['assignmentStatuses'][$student['userId']]['grade'] ?? '';
-                                    $class = ($grade == '2' || $grade == 'MA') ? 'bad-grade' : ($statusClassMap[$status] ?? '');
+                                    if ($daysRemaining < 0) {
+                                        $class = (($isStudent && $status == 'Esitamata') || ($isStudent && ($grade == 'MA' || (is_numeric($grade) && intval($grade) < 3))) || ($isTeacher && $status !== 'Hinnatud')) ? 'red-cell' : '';
+                                    } else {
+                                        $class = ($grade == 'MA' || (is_numeric($grade) && intval($grade) < 3)) ? 'red-cell' : ($statusClassMap[$status] ?? '');
+                                    }
+
+                                    $linkText = '';
+                                    $actionLink = '';
+                                    if ($status == 'Esitamata') {
+                                        $linkText =  $isStudent ? 'Esita' : 'Hinda';
+
+                                    } elseif ($status == 'Ülevaatamata') {
+                                        $linkText = $isStudent ? 'Muuda' : 'Hinda';
+                                    } elseif ($status == 'Hinnatud' && ($grade == 'MA' || (is_numeric($grade) && intval($grade) < 3))) {
+                                        $linkText = $isStudent? 'Esita uuesti': 'Muuda hinnet';
+                                    }
+                                    $tooltipText = $isStudent ? $linkText : ($status ? "($status) $linkText" : 'Ootab alustamist');
                                     ?>
-                                    <td class="<?= $class ?> text-center" <?= !$isStudent || $class == 'bad-grade' ? 'data-bs-toggle="tooltip" title="' . $status . '"' : '' ?>>
+                                    <td class="<?= $class ?> text-center"  data-bs-toggle="tooltip" title="<?=$tooltipText ?>"
+                                        data-grade="<?= is_numeric($grade) ? intval($grade) : '' ?>"
+                                        data-is-student="<?= $isStudent ? 'true' : 'false' ?>"
+                                        data-url="assignments/<?= $assignment['assignmentId'] ?>"
+                                    >
                                         <?= $isStudent ? ($grade ?: $status ?: 'Ootab alustamist') : ($grade ?: '') ?>
                                     </td>
                                 <?php endforeach; ?>
                             </tr>
+
                         <?php endforeach; ?>
                     <?php endif; ?>
                 <?php endforeach; ?>
@@ -155,5 +135,35 @@ $statusClassMap = [
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('td[data-url]').forEach(function (cell) {
+            cell.style.cursor = 'pointer';
+            cell.addEventListener('click', function () {
+                const url = cell.getAttribute('data-url');
+                if (url) {
+                    window.location.href = url;
+                }
+            });
+        });
+    });
+
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('td[data-grade]').forEach(function (studentCell) {
+            const grade = parseInt(studentCell.getAttribute('data-grade'), 10);
+            const isStudent = studentCell.getAttribute('data-is-student') === 'true';
+
+            if (isStudent && !isNaN(grade) && grade >= 3) {
+                const badgeElement = studentCell.closest('tr').querySelector('span[data-days-remaining]');
+                const daysRemaining = parseInt(badgeElement.getAttribute('data-days-remaining'), 10);
+
+                if (daysRemaining < 0) {
+                    badgeElement.className = 'badge bg-light text-dark';
+                }
+            }
+        });
     });
 </script>
