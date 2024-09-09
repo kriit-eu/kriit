@@ -128,6 +128,20 @@ class admin extends Controller
         $this->averageExercisesDone = $userCount > 0 ? $totalSolvedTasks / $userCount : 0;
     }
 
+    function groups()
+    {
+        $this->groups = Db::getAll("
+            SELECT
+                groups.groupId,
+                groups.groupName,
+                COUNT(subjects.subjectId) subjectCount
+            FROM groups
+            LEFT JOIN subjects
+                ON groups.groupId = subjects.groupId
+            GROUP BY groups.groupId, groups.groupName
+            ORDER BY groups.groupName");
+    }
+
 
     function users()
     {
