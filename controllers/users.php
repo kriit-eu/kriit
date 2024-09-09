@@ -14,11 +14,17 @@ class users extends Controller
     {
         validate($_POST['userPersonalCode']);
         $userPersonalCode = $_POST['userPersonalCode'];
-        stop(200, [
-            'user' => Db::getFirst("SELECT userIsAdmin, userIsTeacher
-                           FROM users
-                           WHERE users.userPersonalCode = ?
-                           AND userDeleted = 0", [$userPersonalCode])
+        $user = Db::getFirst("SELECT userIsAdmin, userIsTeacher, groupId, userPassword
+                          FROM users
+                          WHERE users.userPersonalCode = ?
+                          AND userDeleted = 0", [$userPersonalCode]);
+        stop(200, empty($user) ? ['User not found'] : [
+            'user' => [
+                'groupId' => $user['groupId'],
+                'userIsAdmin' => $user['userIsAdmin'],
+                'userIsTeacher' => $user['userIsTeacher'],
+                'isPasswordSet' => !empty($user['userPassword'])
+            ]
         ]);
     }
 
