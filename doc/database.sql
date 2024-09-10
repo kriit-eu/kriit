@@ -1,4 +1,4 @@
-/*!999999\- enable the sandbox mode */
+/*!999999\- enable the sandbox mode */ 
 -- MariaDB dump 10.19  Distrib 10.11.8-MariaDB, for osx10.19 (arm64)
 --
 -- Host: 127.0.0.1    Database: kriit
@@ -113,7 +113,6 @@ DROP TABLE IF EXISTS `assignmentStatuses`;
 CREATE TABLE `assignmentStatuses` (
   `assignmentStatusId` tinyint unsigned NOT NULL AUTO_INCREMENT,
   `statusName` varchar(50) DEFAULT NULL,
-  `assignmentStatusDescription` varchar(191) DEFAULT NULL,
   PRIMARY KEY (`assignmentStatusId`)
 ) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
@@ -125,14 +124,9 @@ CREATE TABLE `assignmentStatuses` (
 LOCK TABLES `assignmentStatuses` WRITE;
 /*!40000 ALTER TABLE `assignmentStatuses` DISABLE KEYS */;
 INSERT INTO `assignmentStatuses` VALUES
-(1,'Ootab alustamist','Ülesanne ei ole veel alustatud.'),
-(2,'Töös','Ülesande kallal on alustatud tööd, kuid see pole veel lõpetatud.'),
-(3,'Ootab esitamist','Ülesanne on lõpetatud ja valmis esitamiseks.'),
-(4,'Ootab ülevaatamist','Ülesanne on esitatud ja ootab õpetaja ülevaatamist.'),
-(5,'Vajab parandamist','Ülesanne on üle vaadatud ja nõuab muudatusi või parandusi.'),
-(6,'Ootab uuesti ülevaatamist','Muudatused on tehtud vastavalt tagasisidele ja ülesanne on valmis uuesti hindamiseks.'),
-(7,'Hinnatud','Ülesanne on hinnatud ja sellele on antud hinne.'),
-(8,'Tähtaeg möödas','Ülesande tähtaeg on möödas, kuid see ei ole veel lõpetatud või esitatud.');
+(1,'Esitamata'),
+(2,'Ülevaatamata'),
+(3,'Hinnatud');
 /*!40000 ALTER TABLE `assignmentStatuses` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -185,7 +179,7 @@ CREATE TABLE `deployments` (
   `deploymentCommitAuthor` varchar(255) DEFAULT NULL,
   `deploymentCommitSha` varchar(256) NOT NULL,
   PRIMARY KEY (`deploymentId`)
-) ENGINE=InnoDB AUTO_INCREMENT=48 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=49 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -240,7 +234,8 @@ INSERT INTO `deployments` VALUES
 (44,'2024-08-14 10:51:02','2024-08-14 10:51:30','Optimize query for ','Violetta Zakorzhevskaya','44b01e8'),
 (45,'2024-08-14 12:00:50','2024-08-14 12:15:03','Refine user ranking','Violetta Zakorzhevskaya','5441b81'),
 (46,'2024-08-14 14:11:35','2024-08-14 14:29:55','Enhance the user ra','Violetta Zakorzhevskaya','84b9b5f'),
-(47,'2024-09-04 20:52:05','2024-09-05 10:04:12','As a teacher and st','Urmas Muldmaa','aacf96f');
+(47,'2024-09-04 20:52:05','2024-09-05 10:04:12','As a teacher and st','Urmas Muldmaa','aacf96f'),
+(48,'2024-09-09 17:06:50','2024-09-10 10:13:58','Refaktoreeritud ain','Violetta Zakorzhevskaya','cb6efcc');
 /*!40000 ALTER TABLE `deployments` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -349,8 +344,8 @@ CREATE TABLE `settings` (
 LOCK TABLES `settings` WRITE;
 /*!40000 ALTER TABLE `settings` DISABLE KEYS */;
 INSERT INTO `settings` VALUES
-('projectVersion','aacf96f'),
-('translationUpdateLastRun','2024-09-05 10:04:12');
+('projectVersion','cb6efcc'),
+('translationUpdateLastRun','2024-09-10 10:13:58');
 /*!40000 ALTER TABLE `settings` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -600,15 +595,15 @@ CREATE TABLE `userAssignments` (
 LOCK TABLES `userAssignments` WRITE;
 /*!40000 ALTER TABLE `userAssignments` DISABLE KEYS */;
 INSERT INTO `userAssignments` VALUES
-(1,2,2,''),
-(2,2,3,''),
-(3,2,4,NULL),
-(4,2,5,NULL),
-(5,2,6,NULL),
-(6,50,3,NULL),
-(7,50,7,'3'),
-(8,2,7,'MA'),
-(9,2,8,NULL);
+(1,2,1,''),
+(2,2,2,''),
+(3,2,3,NULL),
+(4,2,1,NULL),
+(5,2,1,NULL),
+(6,50,2,NULL),
+(7,50,2,'3'),
+(8,2,3,'MA'),
+(9,2,1,NULL);
 /*!40000 ALTER TABLE `userAssignments` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -695,4 +690,4 @@ UNLOCK TABLES;
 /*!50503 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-09-06 17:42:46
+-- Dump completed on 2024-09-10 10:18:12
