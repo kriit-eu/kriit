@@ -1,11 +1,3 @@
-<?php
-$statusClassMap = [
-        'Esitamata' => $isStudent ? 'yellow-cell' : '',
-        'Ülevaatamata' => $this->auth->userIsTeacher ? 'red-cell' : '',
-];
-
-?>
-
 <style>
     #subject-table th {
         background-color: #f2f2f2;
@@ -22,7 +14,6 @@ $statusClassMap = [
     .text-center {
         text-align: center;
     }
-
 </style>
 
 <div class="row">
@@ -33,18 +24,11 @@ $statusClassMap = [
                 <thead>
                 <tr>
                     <th>Aine</th>
-                    <?php if ($auth->userIsAdmin || $isStudent): ?>
-                        <th>Õpetaja</th>
-                    <?php endif; ?>
-                    <?php if ($isStudent): ?>
-                        <th>Staatus / Hinne</th>
-                    <?php else: ?>
-                    <?php endif; ?>
-
+                    <?= $isStudent ? "<th>Staatus / Hinne</th>" : "" ?>
                     <?php if (!$isStudent): ?>
-                        <?php foreach ($group['students'] as $student): ?>
-                            <th data-bs-toggle="tooltip" title="<?= $student['userName'] ?>">
-                                <?= mb_substr($student['userName'], 0, 1) . mb_substr($student['userName'], mb_strrpos($student['userName'], ' ') + 1, 1) ?>
+                        <?php foreach ($group['students'] as $s): ?>
+                            <th data-bs-toggle="tooltip" title="<?= $s['userName'] ?>">
+                                <?= $s['initials'] ?>
                             </th>
                         <?php endforeach; ?>
                     <?php endif; ?>
@@ -53,75 +37,35 @@ $statusClassMap = [
                 <tbody>
                 <?php foreach ($group['subjects'] as $subject): ?>
                     <tr data-href="subjects/<?= $subject['subjectId'] ?>">
-                        <td><b><?= $subject['subjectName'] ?></b></td>
-                        <?php if ($auth->userIsAdmin || $isStudent): ?>
-                            <td><b><?= $subject['teacherName'] ?></b></td>
-                        <?php endif; ?>
+                        <td>
+                            <b><?= $subject['subjectName'] ?></b>
+                        </td>
+                        <td colspan="<?= count($group['students']) + 1 ?>" class="text-end">
+                            <b><?= $subject['teacherName'] ?></b>
+                        </td>
                     </tr>
-
                     <?php if (!empty($subject['assignments'])): ?>
-                        <?php foreach ($subject['assignments'] as $assignment): ?>
+                        <?php foreach ($subject['assignments'] as $a): ?>
                             <tr>
-                                <?php
-                                $dueDate = new DateTime($assignment['assignmentDueAt']);
-                                $now = new DateTime();
-                                $interval = $now->diff($dueDate);
-                                $daysRemaining = (int)$interval->format('%r%a');
-
-                                if ($daysRemaining > 3) {
-                                    $badgeClass = 'badge bg-light text-dark';
-                                } elseif ($daysRemaining >= 0) {
-                                    $badgeClass = 'badge bg-warning text-dark';
-                                } else {
-                                    $badgeClass = 'badge bg-danger';
-                                }
-
-                                $formattedDueDate = $dueDate->format('d.m.y');
-                                ?>
-                                <td colspan="<?= ($auth->userIsAdmin || $isStudent) ? 2 : 1 ?>">
-                                    <span class="badge <?= $badgeClass ?>"
-                                          data-days-remaining="<?= $daysRemaining ?>"
-                                          data-is-student="<?= $isStudent ? 'true' : 'false' ?>">
-                                        <?= $formattedDueDate ?>
-                                    </span>
-                                    <a href="assignments/<?= $assignment['assignmentId'] ?>"><?= $assignment['assignmentName'] ?></a>
+                                <td colspan="1">
+                                    <span class="badge <?= $a['badgeClass'] ?>"
+                                          data-days-remaining="<?= $a['daysRemaining'] ?>"
+                                          data-is-student="<?= json_encode($isStudent) ?>">
+                        <?= (new DateTime($a['assignmentDueAt']))->format('d.m.y') ?></span>
+                                    <a href="assignments/<?= $a['assignmentId'] ?>"><?= $a['assignmentName'] ?></a>
                                 </td>
-
-
-                                <?php foreach ($group['students'] as $student): ?>
-                                    <?php
-                                    $status = $assignment['assignmentStatuses'][$student['userId']]['assignmentStatusName'] ?? '';
-                                    $class = $statusClassMap[$status] ?? '';
-
-                                    $grade = $assignment['assignmentStatuses'][$student['userId']]['grade'] ?? '';
-                                    if ($daysRemaining < 0) {
-                                        $class = (($isStudent && $status == 'Esitamata') || ($isStudent && ($grade == 'MA' || (is_numeric($grade) && intval($grade) < 3))) || ($isTeacher && $status !== 'Hinnatud')) ? 'red-cell' : '';
-                                    } else {
-                                        $class = ($grade == 'MA' || (is_numeric($grade) && intval($grade) < 3)) ? 'red-cell' : ($statusClassMap[$status] ?? '');
-                                    }
-
-                                    $linkText = '';
-                                    $actionLink = '';
-                                    if ($status == 'Esitamata') {
-                                        $linkText =  $isStudent ? 'Esita' : 'Hinda';
-
-                                    } elseif ($status == 'Ülevaatamata') {
-                                        $linkText = $isStudent ? 'Muuda' : 'Hinda';
-                                    } elseif ($status == 'Hinnatud' && ($grade == 'MA' || (is_numeric($grade) && intval($grade) < 3))) {
-                                        $linkText = $isStudent? 'Esita uuesti': 'Muuda hinnet';
-                                    }
-                                    $tooltipText = $isStudent ? $linkText : ($status ? "($status) $linkText" : 'Ootab alustamist');
-                                    ?>
-                                    <td class="<?= $class ?> text-center"  data-bs-toggle="tooltip" title="<?=$tooltipText ?>"
-                                        data-grade="<?= is_numeric($grade) ? intval($grade) : '' ?>"
-                                        data-is-student="<?= $isStudent ? 'true' : 'false' ?>"
-                                        data-url="assignments/<?= $assignment['assignmentId'] ?>"
-                                    >
-                                        <?= $isStudent ? ($grade ?: $status ?: 'Ootab alustamist') : ($grade ?: '') ?>
+                                <?php foreach ($group['students'] as $s): ?>
+                                    <?php $status = $a['assignmentStatuses'][$s['userId']]; ?>
+                                    <td class="<?= $status['class'] ?> text-center"
+                                        data-bs-toggle="tooltip"
+                                        title="<?= $status['tooltipText'] ?>"
+                                        data-grade="<?= is_numeric($status['grade']) ? intval($status['grade']) : '' ?>"
+                                        data-is-student="<?= json_encode($isStudent) ?>"
+                                        data-url="assignments/<?= $a['assignmentId'] ?>">
+                                        <?= $isStudent ? ($status['grade'] ?: $status['assignmentStatusName']) : $status['grade'] ?>
                                     </td>
                                 <?php endforeach; ?>
                             </tr>
-
                         <?php endforeach; ?>
                     <?php endif; ?>
                 <?php endforeach; ?>
@@ -132,29 +76,24 @@ $statusClassMap = [
 </div>
 
 <script>
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
-    });
-
-
     document.addEventListener('DOMContentLoaded', function () {
-        document.querySelectorAll('td[data-url]').forEach(function (cell) {
+        // Initialize tooltips
+        [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            .map(el => new bootstrap.Tooltip(el));
+
+        // Add click event to cells with data-url
+        document.querySelectorAll('td[data-url]').forEach(cell => {
             cell.style.cursor = 'pointer';
-            cell.addEventListener('click', function () {
+            cell.addEventListener('click', () => {
                 const url = cell.getAttribute('data-url');
-                if (url) {
-                    window.location.href = url;
-                }
+                if (url) window.location.href = url;
             });
         });
-    });
 
-
-    document.addEventListener('DOMContentLoaded', function () {
-        document.querySelectorAll('td[data-grade]').forEach(function (studentCell) {
+        // Update badge class for student cells with passing grades
+        document.querySelectorAll('td[data-grade]').forEach(studentCell => {
             const grade = parseInt(studentCell.getAttribute('data-grade'), 10);
-            const isStudent = studentCell.getAttribute('data-is-student') === 'true';
+            const isStudent = JSON.parse(studentCell.getAttribute('data-is-student'));
 
             if (isStudent && !isNaN(grade) && grade >= 3) {
                 const badgeElement = studentCell.closest('tr').querySelector('span[data-days-remaining]');
