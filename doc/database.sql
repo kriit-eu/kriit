@@ -1,3 +1,4 @@
+/*!999999\- enable the sandbox mode */ 
 -- MariaDB dump 10.19  Distrib 10.11.8-MariaDB, for osx10.19 (arm64)
 --
 -- Host: 127.0.0.1    Database: kriit
@@ -65,7 +66,7 @@ CREATE TABLE `activityLog` (
   `activityId` int unsigned NOT NULL COMMENT 'Autocreated',
   `id` int unsigned DEFAULT NULL,
   PRIMARY KEY (`activityLogId`)
-) ENGINE=InnoDB AUTO_INCREMENT=329 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=347 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -74,7 +75,53 @@ CREATE TABLE `activityLog` (
 
 LOCK TABLES `activityLog` WRITE;
 /*!40000 ALTER TABLE `activityLog` DISABLE KEYS */;
+INSERT INTO `activityLog` VALUES
+('2024-09-10 15:17:35',329,2,2,NULL),
+('2024-09-10 15:17:39',330,2,1,NULL),
+('2024-09-10 15:22:05',331,2,2,NULL),
+('2024-09-10 15:22:08',332,2,1,NULL),
+('2024-09-10 15:24:55',333,2,2,NULL),
+('2024-09-10 15:25:01',334,1,1,NULL),
+('2024-09-10 15:34:37',335,1,2,NULL),
+('2024-09-10 15:34:43',336,2,1,NULL),
+('2024-09-10 15:37:20',337,2,2,NULL),
+('2024-09-10 15:37:24',338,1,1,NULL),
+('2024-09-10 17:23:24',339,1,2,NULL),
+('2024-09-10 17:23:27',340,2,1,NULL),
+('2024-09-10 17:30:14',341,2,2,NULL),
+('2024-09-10 17:30:22',342,1,1,NULL),
+('2024-09-10 17:31:59',343,1,2,NULL),
+('2024-09-10 17:32:08',344,2,1,NULL),
+('2024-09-10 17:33:34',345,2,2,NULL),
+('2024-09-10 17:33:40',346,1,1,NULL);
 /*!40000 ALTER TABLE `activityLog` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `assignmentStatuses`
+--
+
+DROP TABLE IF EXISTS `assignmentStatuses`;
+/*!50503 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `assignmentStatuses` (
+  `assignmentStatusId` tinyint unsigned NOT NULL AUTO_INCREMENT,
+  `statusName` varchar(50) DEFAULT NULL,
+  PRIMARY KEY (`assignmentStatusId`)
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4;
+/*!50503 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `assignmentStatuses`
+--
+
+LOCK TABLES `assignmentStatuses` WRITE;
+/*!40000 ALTER TABLE `assignmentStatuses` DISABLE KEYS */;
+INSERT INTO `assignmentStatuses` VALUES
+(1,'Esitamata'),
+(2,'Ülevaatamata'),
+(3,'Hinnatud');
+/*!40000 ALTER TABLE `assignmentStatuses` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -94,7 +141,7 @@ CREATE TABLE `assignments` (
   PRIMARY KEY (`assignmentId`),
   KEY `assignments_subjectId_fk` (`subjectId`),
   CONSTRAINT `assignments_subjectId_fk` FOREIGN KEY (`subjectId`) REFERENCES `subjects` (`subjectId`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -103,6 +150,11 @@ CREATE TABLE `assignments` (
 
 LOCK TABLES `assignments` WRITE;
 /*!40000 ALTER TABLE `assignments` DISABLE KEYS */;
+INSERT INTO `assignments` VALUES
+(1,'Trips Traps Trull ','1. Kirjutage kood, mis loeb mitu korda esineb number (mitte sõne) 3 \n   $numbers listis ja väljastab tulemuse kujul \"found it <mitu korda> times\".\n   Ärge kasutage olemasolevaid funktsioone vaid kirjutage kood ise (for tsükkel).\n\n2. Kirjutage funktsioon isInList($list, $elementToBeFound), mis ütleb kas \n   listis on selline element või mitte.\n\n   isInList([1, 2, 3], 2) tagastab true;\n   isInList([1, 2, 3], 4) tagastab false;\n\n   NB! Kui Php-st printida väär väärtus (false), siis ei ole väljundist midagi näha.\n\n   print(false);     // tulemust pole välundist näha\n   var_dump(false);  // trükitakse bool(false)\n   \n   a) Ärge kasutage olemasolevaid funktsioone vaid kirjutage kood ise (for tsükkel).\n\n   b) Kasutage funktsiooni array_filter(). Kasuks võib tulla ka funktsioon count($array),\n      mis ütleb sisendlisti pikkuse.\n',3,1231312,'2024-09-24'),
+(2,'Trull Traps Trips','Luua Css file',3,1232131,'2024-09-30'),
+(3,'Andmebaas loomine','Luua uut \'students\' andmebaas ',4,3424324,'2024-09-07'),
+(4,'Andmebaas kustutamine','Kustuta \'students\' andmebaas',4,2313321,'2024-09-14');
 /*!40000 ALTER TABLE `assignments` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -120,7 +172,7 @@ CREATE TABLE `criteria` (
   PRIMARY KEY (`criterionId`),
   KEY `criteria_assignments_assignmentId_fk` (`assignmentId`),
   CONSTRAINT `criteria_assignments_assignmentId_fk` FOREIGN KEY (`assignmentId`) REFERENCES `assignments` (`assignmentId`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -129,6 +181,9 @@ CREATE TABLE `criteria` (
 
 LOCK TABLES `criteria` WRITE;
 /*!40000 ALTER TABLE `criteria` DISABLE KEYS */;
+INSERT INTO `criteria` VALUES
+(1,'Typescript kasutamine',1),
+(2,'Loetavus',1);
 /*!40000 ALTER TABLE `criteria` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -147,9 +202,7 @@ CREATE TABLE `deployments` (
   `deploymentCommitAuthor` varchar(255) DEFAULT NULL,
   `deploymentCommitSha` varchar(256) NOT NULL,
   PRIMARY KEY (`deploymentId`)
-) ENGINE = InnoDB
-  AUTO_INCREMENT = 47
-  DEFAULT CHARSET = utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=48 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -203,7 +256,8 @@ INSERT INTO `deployments` VALUES
 (43,'2024-08-14 10:44:59','2024-08-14 10:46:08','Fix Admin button po','henno.taht@gmail.com','3837864'),
 (44,'2024-08-14 10:51:02','2024-08-14 10:51:30','Optimize query for ','Violetta Zakorzhevskaya','44b01e8'),
 (45,'2024-08-14 12:00:50','2024-08-14 12:15:03','Refine user ranking','Violetta Zakorzhevskaya','5441b81'),
-(46, '2024-08-14 14:11:35', '2024-08-14 14:29:55', 'Enhance the user ra', 'Violetta Zakorzhevskaya', '84b9b5f');
+(46,'2024-08-14 14:11:35','2024-08-14 14:29:55','Enhance the user ra','Violetta Zakorzhevskaya','84b9b5f'),
+(47,'2024-09-09 18:06:08','2024-09-10 14:06:56','Lisatud uued tabeli','Violetta Zakorzhevskaya','c17899d');
 /*!40000 ALTER TABLE `deployments` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -275,7 +329,7 @@ CREATE TABLE `groups` (
   `groupId` int unsigned NOT NULL AUTO_INCREMENT COMMENT 'Autocreated',
   `groupName` varchar(50) NOT NULL COMMENT 'Autocreated',
   PRIMARY KEY (`groupId`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -284,6 +338,10 @@ CREATE TABLE `groups` (
 
 LOCK TABLES `groups` WRITE;
 /*!40000 ALTER TABLE `groups` DISABLE KEYS */;
+INSERT INTO `groups` VALUES
+(6,'TAK24'),
+(7,'TAK25'),
+(8,'TAK22');
 /*!40000 ALTER TABLE `groups` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -299,12 +357,13 @@ CREATE TABLE `messages` (
   `content` text,
   `assignmentId` int unsigned NOT NULL,
   `userId` int unsigned NOT NULL,
+  `CreatedAt` datetime NOT NULL,
   PRIMARY KEY (`messageId`),
   KEY `messages_assignments_assignmentId_fk` (`assignmentId`),
   KEY `messages_users_userId_fk` (`userId`),
   CONSTRAINT `messages_assignments_assignmentId_fk` FOREIGN KEY (`assignmentId`) REFERENCES `assignments` (`assignmentId`),
   CONSTRAINT `messages_users_userId_fk` FOREIGN KEY (`userId`) REFERENCES `users` (`userId`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -313,6 +372,9 @@ CREATE TABLE `messages` (
 
 LOCK TABLES `messages` WRITE;
 /*!40000 ALTER TABLE `messages` DISABLE KEYS */;
+INSERT INTO `messages` VALUES
+(1,'Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. ',1,1,'2024-09-10 15:21:53'),
+(2,'sdadsadsada',1,2,'2024-09-10 16:07:38');
 /*!40000 ALTER TABLE `messages` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -336,8 +398,9 @@ CREATE TABLE `settings` (
 
 LOCK TABLES `settings` WRITE;
 /*!40000 ALTER TABLE `settings` DISABLE KEYS */;
-INSERT INTO `settings` VALUES ('projectVersion', '84b9b5f'),
-                              ('translationUpdateLastRun', '2024-08-14 14:29:55');
+INSERT INTO `settings` VALUES
+('projectVersion','c17899d'),
+('translationUpdateLastRun','2024-09-10 14:06:56');
 /*!40000 ALTER TABLE `settings` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -359,7 +422,7 @@ CREATE TABLE `subjects` (
   KEY `subjects_users_userId_fk` (`teacherId`),
   CONSTRAINT `subjects_groups_groupId_fk` FOREIGN KEY (`groupId`) REFERENCES `groups` (`groupId`),
   CONSTRAINT `subjects_users_userId_fk` FOREIGN KEY (`teacherId`) REFERENCES `users` (`userId`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -368,6 +431,12 @@ CREATE TABLE `subjects` (
 
 LOCK TABLES `subjects` WRITE;
 /*!40000 ALTER TABLE `subjects` DISABLE KEYS */;
+INSERT INTO `subjects` VALUES
+(3,'Programeerimine',1232131,6,1),
+(4,'Andmebassi alused',2323223,6,1),
+(5,'Java',NULL,6,49),
+(7,'Andmebassi alused',2323224,7,1),
+(8,'Programmeerimismustrid',301579,8,1);
 /*!40000 ALTER TABLE `subjects` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -554,6 +623,43 @@ INSERT INTO `translations` VALUES
 UNLOCK TABLES;
 
 --
+-- Table structure for table `userAssignments`
+--
+
+DROP TABLE IF EXISTS `userAssignments`;
+/*!50503 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `userAssignments` (
+  `assignmentId` int unsigned NOT NULL,
+  `userId` int unsigned NOT NULL,
+  `assignmentStatusId` tinyint unsigned NOT NULL,
+  `userGrade` varchar(191) DEFAULT NULL,
+  PRIMARY KEY (`assignmentId`,`userId`),
+  KEY `userAssignments_users_userId_fk` (`userId`),
+  KEY `userAssignments_assignmentStatuses_assignmentStatusId_fk` (`assignmentStatusId`),
+  CONSTRAINT `userAssignments_assignmentStatuses_assignmentStatusId_fk` FOREIGN KEY (`assignmentStatusId`) REFERENCES `assignmentStatuses` (`assignmentStatusId`),
+  CONSTRAINT `userAssignments_assignments_assignmentId_fk` FOREIGN KEY (`assignmentId`) REFERENCES `assignments` (`assignmentId`),
+  CONSTRAINT `userAssignments_users_userId_fk` FOREIGN KEY (`userId`) REFERENCES `users` (`userId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+/*!50503 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `userAssignments`
+--
+
+LOCK TABLES `userAssignments` WRITE;
+/*!40000 ALTER TABLE `userAssignments` DISABLE KEYS */;
+INSERT INTO `userAssignments` VALUES
+(1,2,2,NULL),
+(1,50,3,NULL),
+(2,2,2,NULL),
+(2,50,2,'3'),
+(3,2,3,'2'),
+(4,2,1,NULL);
+/*!40000 ALTER TABLE `userAssignments` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `userDoneCriteria`
 --
 
@@ -623,10 +729,12 @@ CREATE TABLE `users` (
   `userTimeTotal` time DEFAULT NULL,
   `userApiKey` varchar(32) DEFAULT NULL,
   `groupId` int unsigned DEFAULT NULL,
+  `userIsTeacher` tinyint DEFAULT 0,
+  `userEmail` varchar(191) DEFAULT NULL,
   PRIMARY KEY (`userId`),
   KEY `users_groups_groupId_fk` (`groupId`),
   CONSTRAINT `users_groups_groupId_fk` FOREIGN KEY (`groupId`) REFERENCES `groups` (`groupId`)
-) ENGINE=InnoDB AUTO_INCREMENT=49 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=138 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -636,8 +744,18 @@ CREATE TABLE `users` (
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
 INSERT INTO `users` VALUES
-(1,'Kati Maasikas','41111111115',1,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo',NULL),
-(2,'Mati Vaarikas','31111111114',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo2',NULL);
+(1,'Kati Maasikas','41111111115',1,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo',NULL,1,NULL),
+(2,'Mati Vaarikas','31111111114',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo2',6,0,NULL),
+(49,'Karl Mets','11111111112',1,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo3',NULL,0,NULL),
+(50,'Anna Maria Puu','21111111113',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo4',6,0,NULL),
+(130,'Lfclyp Üpxtpwj','94932250494',0,'',0,NULL,NULL,NULL,6,0,'fff@asdfg.bb'),
+(131,'Okuüjü Xdnmnh','94932250519',0,'',0,NULL,NULL,NULL,6,0,'fff@asdfg.bb'),
+(132,'Qiõsp Akiu','94932214723',0,'',0,NULL,NULL,NULL,6,0,'fff@asdfg.bb'),
+(133,'Wxtketfk Ftkef','94932222295',0,'',0,NULL,NULL,NULL,6,0,'fff@asdfg.bb'),
+(134,'Nöõmü Hvgfüe','94932250360',0,'',0,NULL,NULL,NULL,6,0,'fff@asdfg.bb'),
+(135,'Xüpxn Lifbut','94932250345',0,'',0,NULL,NULL,NULL,6,0,'fff@asdfg.bb'),
+(136,'Kõtqiv Nüfhvdik','94932250474',0,'',0,NULL,NULL,NULL,6,0,'fff@asdfg.bb'),
+(137,'Ööbüb Ushxj','94932245772',0,'',0,NULL,NULL,NULL,6,0,'fff@asdfg.bb');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -650,4 +768,4 @@ UNLOCK TABLES;
 /*!50503 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-09-09 17:55:31
+-- Dump completed on 2024-09-10 18:01:25
