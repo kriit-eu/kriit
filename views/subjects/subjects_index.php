@@ -68,6 +68,9 @@
                             </tr>
                         <?php endforeach; ?>
                     <?php endif; ?>
+                    <tr>
+                        <td colspan="<?= $isStudent ? 2 : count($group['students']) + 2 ?>">&nbsp;</td>
+                    </tr>
                 <?php endforeach; ?>
                 </tbody>
             </table>
@@ -94,14 +97,11 @@
         document.querySelectorAll('td[data-grade]').forEach(studentCell => {
             const grade = parseInt(studentCell.getAttribute('data-grade'), 10);
             const isStudent = JSON.parse(studentCell.getAttribute('data-is-student'));
-
-            if (isStudent && !isNaN(grade) && grade >= 3) {
-                const badgeElement = studentCell.closest('tr').querySelector('span[data-days-remaining]');
-                const daysRemaining = parseInt(badgeElement.getAttribute('data-days-remaining'), 10);
-
-                if (daysRemaining < 0) {
-                    badgeElement.className = 'badge bg-light text-dark';
-                }
+            const badgeElement = studentCell.closest('tr').querySelector('span[data-days-remaining]');
+            if (isStudent && !isNaN(grade) &&
+                grade >= 3 &&
+                badgeElement.className !== 'badge bg-light text-dark') {
+                badgeElement.className = 'badge bg-light text-dark';
             }
         });
     });

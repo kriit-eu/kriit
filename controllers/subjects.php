@@ -39,7 +39,7 @@ class subjects extends Controller
         // Define status class mapping
         $statusClassMap = [
             'Esitamata' => $this->isStudent ? 'yellow-cell' : '',
-            'Ülevaatamata' => $this->isTeacher ? 'red-cell' : '',
+            'Ülevaatamata' => $this->auth->userIsTeacher? 'red-cell' : '',
         ];
 
         // Process each row of data
@@ -93,14 +93,14 @@ class subjects extends Controller
                         'assignmentId' => $assignmentId,
                         'assignmentName' => $row['assignmentName'],
                         'assignmentDueAt' => $row['assignmentDueAt'],
-                        'badgeClass' => $daysRemaining > 3 ? 'badge bg-light text-dark' :
+                        'badgeClass' => $daysRemaining >= 3 ? 'badge bg-light text-dark' :
                             ($daysRemaining >= 0 ? 'badge bg-warning text-dark' : 'badge bg-danger'),
                         'daysRemaining' => $daysRemaining,
                         'assignmentStatuses' => []
                     ];
                 }
 
-                $statusName = $row['assignmentStatusName'] ?? 'Ootab alustamist';
+                $statusName = $row['assignmentStatusName'] ?? 'Esitamata';
                 $grade = $row['userGrade'] ?? '';
                 $isLowGrade = $grade == 'MA' || (is_numeric($grade) && intval($grade) < 3);
 
@@ -119,7 +119,7 @@ class subjects extends Controller
                     default => ''
                 };
 
-                $tooltipText = $this->isStudent ? $linkText : ($statusName ? "($statusName) $linkText" : 'Ootab alustamist');
+                $tooltipText = $this->isStudent ? $linkText : ($statusName ? "($statusName) $linkText" : 'Esitamata');
 
                 // Add or update assignment status
                 $groups[$groupName]['subjects'][$subjectId]['assignments'][$assignmentId]['assignmentStatuses'][$studentId] = [

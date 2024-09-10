@@ -1,4 +1,3 @@
-/*!999999\- enable the sandbox mode */ 
 -- MariaDB dump 10.19  Distrib 10.11.8-MariaDB, for osx10.19 (arm64)
 --
 -- Host: 127.0.0.1    Database: kriit
@@ -66,7 +65,7 @@ CREATE TABLE `activityLog` (
   `activityId` int unsigned NOT NULL COMMENT 'Autocreated',
   `id` int unsigned DEFAULT NULL,
   PRIMARY KEY (`activityLogId`)
-) ENGINE=InnoDB AUTO_INCREMENT=353 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=329 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -75,31 +74,6 @@ CREATE TABLE `activityLog` (
 
 LOCK TABLES `activityLog` WRITE;
 /*!40000 ALTER TABLE `activityLog` DISABLE KEYS */;
-INSERT INTO `activityLog` VALUES
-('2024-09-05 11:17:18',329,1,2,NULL),
-('2024-09-05 11:18:07',330,2,1,NULL),
-('2024-09-05 11:25:51',331,2,2,NULL),
-('2024-09-05 11:25:54',332,2,1,NULL),
-('2024-09-05 11:26:33',333,2,2,NULL),
-('2024-09-05 11:26:36',334,1,1,NULL),
-('2024-09-05 11:29:01',335,1,2,NULL),
-('2024-09-05 11:29:09',336,1,1,NULL),
-('2024-09-05 11:36:48',337,1,2,NULL),
-('2024-09-05 11:37:14',338,2,1,NULL),
-('2024-09-05 13:31:07',339,2,2,NULL),
-('2024-09-05 13:31:11',340,1,1,NULL),
-('2024-09-05 13:33:25',341,1,2,NULL),
-('2024-09-05 13:33:29',342,2,1,NULL),
-('2024-09-05 13:50:11',343,2,2,NULL),
-('2024-09-05 13:50:16',344,1,1,NULL),
-('2024-09-05 17:45:03',345,1,2,NULL),
-('2024-09-05 17:46:45',346,49,1,NULL),
-('2024-09-05 17:47:08',347,49,2,NULL),
-('2024-09-05 17:48:02',348,49,1,NULL),
-('2024-09-05 17:49:31',349,49,2,NULL),
-('2024-09-05 17:49:35',350,1,1,NULL),
-('2024-09-05 17:52:32',351,1,2,NULL),
-('2024-09-05 17:52:37',352,49,1,NULL);
 /*!40000 ALTER TABLE `activityLog` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -160,7 +134,7 @@ INSERT INTO `assignments` VALUES
 (1,'Trips Traps Trull ','Luua Html file',3,1231312,'2024-09-24'),
 (2,'Trull Traps Trips','Luua Css file',3,1232131,'2024-09-30'),
 (3,'Andmebaas loomine','Luua uut \'students\' andmebaas ',4,3424324,'2024-09-07'),
-(4,'Andmebaas kustutamine','Kustuta \'students\' andmebaas',4,2313321,'2024-09-14');
+(4,'Andmebaas kustutamine','Kustuta \'students\' andmebaas',4,2313321,'2024-09-13');
 /*!40000 ALTER TABLE `assignments` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -179,7 +153,7 @@ CREATE TABLE `deployments` (
   `deploymentCommitAuthor` varchar(255) DEFAULT NULL,
   `deploymentCommitSha` varchar(256) NOT NULL,
   PRIMARY KEY (`deploymentId`)
-) ENGINE=InnoDB AUTO_INCREMENT=49 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=47 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -233,9 +207,7 @@ INSERT INTO `deployments` VALUES
 (43,'2024-08-14 10:44:59','2024-08-14 10:46:08','Fix Admin button po','henno.taht@gmail.com','3837864'),
 (44,'2024-08-14 10:51:02','2024-08-14 10:51:30','Optimize query for ','Violetta Zakorzhevskaya','44b01e8'),
 (45,'2024-08-14 12:00:50','2024-08-14 12:15:03','Refine user ranking','Violetta Zakorzhevskaya','5441b81'),
-(46,'2024-08-14 14:11:35','2024-08-14 14:29:55','Enhance the user ra','Violetta Zakorzhevskaya','84b9b5f'),
-(47,'2024-09-04 20:52:05','2024-09-05 10:04:12','As a teacher and st','Urmas Muldmaa','aacf96f'),
-(48,'2024-09-09 17:06:50','2024-09-10 10:13:58','Refaktoreeritud ain','Violetta Zakorzhevskaya','cb6efcc');
+(46,'2024-08-14 14:11:35','2024-08-14 14:29:55','Enhance the user ra','Violetta Zakorzhevskaya','84b9b5f');
 /*!40000 ALTER TABLE `deployments` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -344,8 +316,8 @@ CREATE TABLE `settings` (
 LOCK TABLES `settings` WRITE;
 /*!40000 ALTER TABLE `settings` DISABLE KEYS */;
 INSERT INTO `settings` VALUES
-('projectVersion','cb6efcc'),
-('translationUpdateLastRun','2024-09-10 10:13:58');
+('projectVersion','84b9b5f'),
+('translationUpdateLastRun','2024-08-14 14:29:55');
 /*!40000 ALTER TABLE `settings` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -579,6 +551,7 @@ CREATE TABLE `userAssignments` (
   `userId` int unsigned NOT NULL,
   `assignmentStatusId` tinyint unsigned NOT NULL,
   `userGrade` varchar(191) DEFAULT NULL,
+  `assignmentUrl` text,
   PRIMARY KEY (`assignmentId`,`userId`),
   KEY `userAssignments_users_userId_fk` (`userId`),
   KEY `userAssignments_assignmentStatuses_assignmentStatusId_fk` (`assignmentStatusId`),
@@ -595,17 +568,77 @@ CREATE TABLE `userAssignments` (
 LOCK TABLES `userAssignments` WRITE;
 /*!40000 ALTER TABLE `userAssignments` DISABLE KEYS */;
 INSERT INTO `userAssignments` VALUES
-(1,2,1,''),
-(2,2,2,''),
-(3,2,3,NULL),
-(4,2,1,NULL),
-(5,2,1,NULL),
-(6,50,2,NULL),
-(7,50,2,'3'),
-(8,2,3,'MA'),
-(9,2,1,NULL);
+(1,2,2,NULL,NULL),
+(1,50,2,NULL,NULL),
+(2,2,2,NULL,NULL),
+(2,50,2,NULL,NULL),
+(3,2,3,'4',NULL),
+(3,50,3,'4',NULL),
+(4,2,3,'4\n',NULL);
 /*!40000 ALTER TABLE `userAssignments` ENABLE KEYS */;
 UNLOCK TABLES;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'IGNORE_SPACE,STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`%`*/ /*!50003 TRIGGER before_userAssignments_insert
+    BEFORE INSERT ON kriit.userAssignments
+    FOR EACH ROW
+BEGIN
+    DECLARE hinnatudStatusId TINYINT;
+
+
+    SELECT assignmentStatusId INTO hinnatudStatusId
+    FROM kriit.assignmentStatuses
+    WHERE statusName = 'Hinnatud' LIMIT 1;
+
+
+    IF NEW.assignmentStatusId = hinnatudStatusId AND NEW.userGrade IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Error: Cannot set status to "Hinnatud" without a grade.';
+    END IF;
+END */;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'IGNORE_SPACE,STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`%`*/ /*!50003 TRIGGER before_userAssignments_update
+    BEFORE UPDATE ON kriit.userAssignments
+    FOR EACH ROW
+BEGIN
+    DECLARE hinnatudStatusId TINYINT;
+
+
+    SELECT assignmentStatusId INTO hinnatudStatusId
+    FROM kriit.assignmentStatuses
+    WHERE statusName = 'Hinnatud' LIMIT 1;
+
+
+    IF NEW.assignmentStatusId = hinnatudStatusId AND NEW.userGrade IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Error: Cannot set status to "Hinnatud" without a grade.';
+    END IF;
+END */;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 
 --
 -- Table structure for table `userDoneExercises`
@@ -690,4 +723,4 @@ UNLOCK TABLES;
 /*!50503 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-09-10 10:18:12
+-- Dump completed on 2024-09-10 13:23:23
