@@ -1,4 +1,4 @@
-/*!999999\- enable the sandbox mode */ 
+/*!999999\- enable the sandbox mode */
 -- MariaDB dump 10.19  Distrib 10.11.8-MariaDB, for osx10.19 (arm64)
 --
 -- Host: 127.0.0.1    Database: kriit
@@ -634,6 +634,8 @@ CREATE TABLE `userAssignments` (
   `userId` int unsigned NOT NULL,
   `assignmentStatusId` tinyint unsigned NOT NULL,
   `userGrade` varchar(191) DEFAULT NULL,
+  `solutionLink` text,
+  `comment` text,
   PRIMARY KEY (`assignmentId`,`userId`),
   KEY `userAssignments_users_userId_fk` (`userId`),
   KEY `userAssignments_assignmentStatuses_assignmentStatusId_fk` (`assignmentStatusId`),
@@ -650,12 +652,12 @@ CREATE TABLE `userAssignments` (
 LOCK TABLES `userAssignments` WRITE;
 /*!40000 ALTER TABLE `userAssignments` DISABLE KEYS */;
 INSERT INTO `userAssignments` VALUES
-(1,2,2,NULL),
-(1,50,3,NULL),
-(2,2,2,NULL),
-(2,50,2,'3'),
-(3,2,3,'2'),
-(4,2,1,NULL);
+(1,2,3,'MA','https://bitbucket.org/taltech-vizako/test/src/main/.gitignore','sdadsa'),
+(1,50,1,NULL,NULL,NULL),
+(2,2,2,NULL,NULL,NULL),
+(2,50,2,'3',NULL,NULL),
+(3,2,3,'2',NULL,NULL),
+(4,2,1,NULL,NULL,NULL);
 /*!40000 ALTER TABLE `userAssignments` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -682,6 +684,9 @@ CREATE TABLE `userDoneCriteria` (
 
 LOCK TABLES `userDoneCriteria` WRITE;
 /*!40000 ALTER TABLE `userDoneCriteria` DISABLE KEYS */;
+INSERT INTO `userDoneCriteria` VALUES
+(1,2),
+(2,2);
 /*!40000 ALTER TABLE `userDoneCriteria` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -768,4 +773,4 @@ UNLOCK TABLES;
 /*!50503 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-09-10 18:01:25
+-- Dump completed on 2024-09-11 17:46:42
