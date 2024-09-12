@@ -15,7 +15,7 @@ class users extends Controller
         validate($_POST['userPersonalCode']);
         $userPersonalCode = $_POST['userPersonalCode'];
         stop(200, [
-            'user' => Db::getFirst("SELECT userIsAdmin
+            'user' => Db::getFirst("SELECT userIsAdmin, userIsTeacher
                            FROM users
                            WHERE users.userPersonalCode = ?
                            AND userDeleted = 0", [$userPersonalCode])

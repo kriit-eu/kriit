@@ -33,7 +33,7 @@ $(document).ready(function () {
                                 .addClass("text-danger").removeClass("text-success");
                         }
                     }
-                    if (response.data.user.userIsAdmin) {
+                    if (response.data.user.userIsAdmin || response.data.user.userIsTeacher) {
                         return $passwordField.show();
                     }
                     $submitButton.prop("disabled", false);
