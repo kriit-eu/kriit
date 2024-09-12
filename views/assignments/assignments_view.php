@@ -77,7 +77,9 @@
 
         <?php if ($isStudent): ?>
             <div class="d-flex justify-content-end mt-3">
-                <button class="btn btn-primary" onclick="openStudentModal(true, <?= $this->auth->userId ?>)">Esita
+                <button class="btn btn-primary"
+                        onclick="openStudentModal(true, <?= $this->auth->userId ?>)" <?= $assignment['students'][$this->auth->userId]['isDisabledStudentActionButton'] ?>>
+                    <?= $assignment['students'][$this->auth->userId]['studentActionButtonName'] ?>
                 </button>
             </div>
         <?php else: ?>
@@ -92,27 +94,31 @@
     <div class="p-3 mb-5 mt-5 border rounded bg-light" style="width: 30%;">
         <h5 class="mb-3">Kriteeriumid</h5>
         <form id="studentCriteriaForm">
-            <?php foreach ($assignment['criteria'] as $criterion): ?>
-                <?php
-                $isCompleted = true;
-                $studentId = $this->auth->userId;
+            <div id="requiredCriteria">
+                <?php foreach ($assignment['criteria'] as $criterion): ?>
+                    <?php
+                    $isCompleted = true;
+                    $studentId = $this->auth->userId;
 
-                if ($isStudent && isset($assignment['students'][$studentId]['userDoneCriteria'][$criterion['criteriaId']])) {
-                    $isCompleted = $assignment['students'][$studentId]['userDoneCriteria'][$criterion['criteriaId']]['completed'];
-                }
-                ?>
-                <div class="form-check">
-                    <input class="form-check-input" id="criterion_<?= $criterion['criteriaId'] ?>" type="checkbox"
-                           name="criteria[<?= $criterion['criteriaId'] ?>]"
-                           value="1" <?= $isCompleted ? 'checked' : '' ?>
-                            <?= $isStudent ? '' : 'disabled' ?>>
-                    <label class="form-check-label" for="criterion_<?= $criterion['criteriaId'] ?>">
-                        <?= $criterion['criteriaName'] ?>
-                    </label>
-                </div>
-            <?php endforeach; ?>
+                    if ($isStudent && isset($assignment['students'][$studentId]['userDoneCriteria'][$criterion['criteriaId']])) {
+                        $isCompleted = $assignment['students'][$studentId]['userDoneCriteria'][$criterion['criteriaId']]['completed'];
+                    }
+                    ?>
+                    <div class="form-check">
+                        <input class="form-check-input" id="criterion_<?= $criterion['criteriaId'] ?>" type="checkbox"
+                               name="criteria[<?= $criterion['criteriaId'] ?>]"
+                               value="1" <?= $isCompleted ? 'checked' : '' ?>
+                                <?= $isStudent ? '' : 'disabled' ?>>
+                        <label class="form-check-label" for="criterion_<?= $criterion['criteriaId'] ?>">
+                            <?= $criterion['criteriaName'] ?>
+                        </label>
+                    </div>
+                <?php endforeach; ?>
+            </div>
             <?php if ($isStudent): ?>
-                <button type="button" class="btn btn-primary mt-3" onclick="saveStudentCriteria()">Salvesta</button>
+                <button type="button" class="btn btn-primary mt-3" onclick="saveStudentCriteria()" hidden="hidden">
+                    Salvesta
+                </button>
             <?php endif; ?>
         </form>
     </div>
@@ -128,7 +134,8 @@
                     <div class="mb-3">
                         <label for="solutionLink" class="form-label fw-bold">Lahenduse link</label>
                         <div id="solutionInputContainer">
-                            <input type="text" id="solutionInput" class="form-control" placeholder="Sisesta link siia...">
+                            <input type="text" id="solutionInput" class="form-control"
+                                   placeholder="Sisesta link siia...">
                             <small id="solutionInputFeedback"></small>
                         </div>
 
@@ -182,7 +189,9 @@
 
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" id="submitButton">Salvesta muudatused</button>
+                    <button type="button" class="btn btn-primary" id="submitButton">
+                        Salvesta muudatused
+                    </button>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tühista</button>
                 </div>
             </div>
@@ -209,9 +218,14 @@
             <thead>
             <tr>
                 <?php foreach ($assignment['students'] as $s): ?>
-                    <th data-bs-toggle="tooltip" title="<?= $s['studentName'] ?>">
+                    <th class="text-center" data-bs-toggle="tooltip" title="<?= $s['studentName'] ?>">
                         <?= $s['initials'] ?>
                     </th>
+                    <?php if ($isStudent): ?>
+                        <th class="text-center">
+                            Kommentaar
+                        </th>
+                    <?php endif; ?>
                 <?php endforeach; ?>
             </tr>
             </thead>
@@ -230,6 +244,11 @@
                             <span style="font-size: 8px"><?= $s['userDoneCriteriaCount'] ?>/<?= count($assignment['criteria']) ?></span>
                         <?php endif; ?>
                     </td>
+                <?php if ($isStudent): ?>
+                    <td class="text-center">
+                       <?= $s['comment'] ?>
+                    </td>
+                <?php endif; ?>
                 <?php endforeach; ?>
             </tr>
             </tbody>
@@ -306,8 +325,8 @@
 
                 criteriaContainer.innerHTML += `
     <div class="form-check">
-        <input class="form-check-input" type="checkbox" id="criteria_${criteriaId}" ${isCompleted ? 'checked' : ''}>
-        <label class="form-check-label" for="criteria_${criteriaId}">
+        <input class="form-check-input" type="checkbox" id="criterion_${criteriaId}" ${isCompleted ? 'checked' : ''}>
+        <label class="form-check-label" for="criterion_${criteriaId}">
             ${criterion.criteriaName}
         </label>
     </div>
@@ -355,7 +374,6 @@
         const submitButton = document.getElementById('submitButton');
         const criteriaContainer = document.getElementById('checkboxesContainer');
         const student = assignment.students[studentId];
-
         currentStudentId = studentId;
 
         if (student.grade) {
@@ -369,7 +387,7 @@
         if (student.comment) {
             document.getElementById('studentComment').value = student.comment;
         } else {
-            document.getElementById('studentComment').value = ''; // Очищаем поле комментария
+            document.getElementById('studentComment').value = '';
         }
 
         if (isStudent) {
@@ -377,10 +395,10 @@
             gradeSection.style.display = 'none'; // Hide the grade section for students
             commentSection.style.display = 'none'; // Hide the comment section for students
             solutionInputContainer.style.display = 'block'; // Show the input for students to enter a link
-            submitButton.textContent = 'Esita';
+            submitButton.textContent = student.solutionLink === null ? 'Esita' : 'Muuda';
             submitButton.disabled = true; // Initially disable the "Esita" button
 
-            document.getElementById('checkboxesContainer').addEventListener('change', function(event) {
+            document.getElementById('checkboxesContainer').addEventListener('change', function (event) {
                 if (event.target && event.target.type === 'checkbox') {
                     updateSubmitButtonState();
                 }
@@ -423,9 +441,8 @@
                     .every(cb => cb.checked);
 
                 solutionInputFeedback.textContent = '';
-                submitButton.disabled = !(allChecked && isValid );
+                submitButton.disabled = !(allChecked && isValid && student.isDisabledStudentActionButton === '');
             }
-
 
 
         } else {
@@ -439,7 +456,11 @@
         }
 
         if (student.solutionLink) {
-            solutionLinkContainer.innerHTML = `<a href="${student.solutionLink}" id="solutionLink" target="_blank" rel="noopener noreferrer">${student.solutionLink}</a>`;
+            solutionLinkContainer.innerHTML = `
+            <?php if ($isStudent): ?>
+                <p class="pt-2 mb-0">Juba esitatud lahendus:</p>
+            <?php endif?>
+            <a href="${student.solutionLink}" id="solutionLink" target="_blank" rel="noopener noreferrer">${student.solutionLink}</a>`;
         } else {
             solutionLinkContainer.innerHTML = 'Link puudub';  // Display plain text if no link
         }
@@ -452,8 +473,8 @@
 
             criteriaContainer.innerHTML += `
             <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="criteria_${criteriaId}" ${isCompleted ? 'checked' : ''}>
-                <label class="form-check-label" for="criteria_${criteriaId}">
+                <input class="form-check-input" type="checkbox" id="criterion_${criteriaId}" ${isCompleted ? 'checked' : ''}>
+                <label class="form-check-label" for="criterion_${criteriaId}">
                     ${criterion.criteriaName}
                 </label>
             </div>
@@ -517,20 +538,40 @@
         }
     });
 
+    document.getElementById('requiredCriteria').addEventListener('change', function (event) {
+            if (event.target && event.target.type === 'checkbox' && assignment.students[<?=$this->auth->userId?>].isDisabledStudentActionButton === '') {
+                document.querySelector('#studentCriteriaForm .btn-primary').hidden = false;
+            }
+        }
+    );
+
+
     document.addEventListener('DOMContentLoaded', function () {
         [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
             .map(el => new bootstrap.Tooltip(el));
     });
 
     function saveStudentCriteria() {
-        const formData = new FormData(document.getElementById('studentCriteriaForm'));
-
+        const criteria = getCriteriaList('#studentCriteriaForm input[type="checkbox"]');
+        console.log(criteria);
+        ajax(`assignments/saveStudentCriteria`, {
+                studentId: <?= $this->auth->userId ?>,
+                criteria: criteria,
+            },
+            function (res) {
+                if (res.status === 200) {
+                    location.reload();
+                } else {
+                    alert('Tekkis viga serveriga suhtlemisel.');
+                }
+            }
+        );
     }
 
-    function getCriteriaList() {
+    function getCriteriaList(selector = '#criteriaContainer input[type="checkbox"]') {
         const criteria = {};
-        document.querySelectorAll('#criteriaContainer input[type="checkbox"]').forEach(cb => {
-            criteria[parseInt(cb.id.replace('criteria_', ''))] = cb.checked;
+        document.querySelectorAll(selector).forEach(cb => {
+            criteria[parseInt(cb.id.replace('criterion_', ''))] = cb.checked;
         });
         return criteria;
     }

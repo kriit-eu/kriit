@@ -77,7 +77,7 @@ class assignments extends Controller
                 $assignment['students'][$studentId] = [
                     'studentId' => $studentId,
                     'studentName' => $row['studentName'],
-                    'grade' => $row['userGrade'],
+                    'grade' => !empty($row['userGrade']) ? trim($row['userGrade']) : '',
                     'assignmentStatusName' => $row['assignmentStatusName'] ?? 'Esitamata',
                     'initials' => mb_substr($row['studentName'], 0, 1) . mb_substr($row['studentName'], mb_strrpos($row['studentName'], ' ') + 1, 1),
                     'solutionLink' => $row['solutionLink'],
@@ -85,7 +85,8 @@ class assignments extends Controller
                     'userDoneCriteria' => [],
                     'userDoneCriteriaCount' => 0,
                     'class' => '',
-                    'tooltipText' => ''
+                    'tooltipText' => '',
+                    'studentActionButtonName' => $row['solutionLink'] === null ? 'Esita' : 'Muuda',
                 ];
             }
 
@@ -100,14 +101,15 @@ class assignments extends Controller
                 $assignment['students'][$studentId]['userDoneCriteriaCount']++;
             }
 
-
-            // Add tooltip and class logic for students
             $statusName = $row['assignmentStatusName'] ?? 'Esitamata';
-            $grade = $row['userGrade'] ?? '';
+            $grade = !empty($row['userGrade']) ? trim($row['userGrade']) : '';
             $isLowGrade = $grade == 'MA' || (is_numeric($grade) && intval($grade) < 3);
-            $daysRemaining = (int)(new \DateTime())->diff(new \DateTime($row['assignmentDueAt']))->format('%r%a');
+            $isGraded = !$isLowGrade;
+            $isEvaluated = isset($row['assignmentStatusName']) && $row['assignmentStatusName'] === 'Hinnatud';
 
-            // Determine the CSS class for the assignment status
+            $assignment['students'][$studentId]['isDisabledStudentActionButton'] = ($isEvaluated && $isGraded) ? 'disabled' : '';
+
+            $daysRemaining = (int)(new \DateTime())->diff(new \DateTime($row['assignmentDueAt']))->format('%r%a');
             $class = $daysRemaining < 0 ?
                 (($this->isStudent && $statusName == 'Esitamata') ||
                 ($this->isStudent && $isLowGrade) ||
@@ -116,7 +118,6 @@ class assignments extends Controller
 
             $tooltipText = $statusName ?? 'Esitamata';
 
-            // Add class and tooltip text to the student
             $assignment['students'][$studentId]['class'] = $class;
             $assignment['students'][$studentId]['tooltipText'] = $tooltipText;
         }
@@ -188,23 +189,40 @@ class assignments extends Controller
         stop(200, 'Grade saved');
     }
 
-    function ajax_saveStudentSolutionLink(){
+    function ajax_saveStudentSolutionLink()
+    {
 
         $this->auth->userIsAdmin || $this->auth->userId == $_POST['studentId'] || stop(403, 'Permission denied');
         $assignmentId = $_POST['assignmentId'];
         $studentId = $_POST['studentId'];
         $solutionLink = $_POST['solutionLink'];
         $criteria = $_POST['criteria'];
-
-        foreach ($criteria as $criterionId => $completed) {
-            $existCriterion = Db::getOne('SELECT criterionId FROM userDoneCriteria WHERE userId = ? AND criterionId = ?', [$studentId, $criterionId]);
-            if (!$existCriterion) {
-                Db::insert('userDoneCriteria', ['userId' => $studentId, 'criterionId' => $criterionId]);
-            }
-        }
+        $this->saveCriteria($studentId, $criteria);
 
         Db::update('userAssignments', ['solutionLink' => $solutionLink], 'userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
 
         stop(200, 'Solution link saved');
+    }
+
+    function ajax_saveStudentCriteria()
+    {
+        $this->auth->userIsAdmin || $this->auth->userId == $_POST['studentId'] || stop(403, 'Permission denied');
+        $studentId = $_POST['studentId'];
+        $criteria = $_POST['criteria'];
+        $this->saveCriteria($studentId, $criteria);
+
+        stop(200, 'Criteria saved');
+    }
+
+    private function saveCriteria($studentId, $criteria)
+    {
+        foreach ($criteria as $criterionId => $completed) {
+            $existCriterion = Db::getOne('SELECT criterionId FROM userDoneCriteria WHERE userId = ? AND criterionId = ?', [$studentId, $criterionId]);
+            if (!$existCriterion && $completed === 'true') {
+                Db::insert('userDoneCriteria', ['userId' => $studentId, 'criterionId' => $criterionId]);
+            } elseif ($existCriterion && $completed === 'false') {
+                Db::delete('userDoneCriteria', 'userId = ? AND criterionId = ?', [$studentId, $criterionId]);
+            }
+        }
     }
 }
