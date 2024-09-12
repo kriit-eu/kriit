@@ -151,7 +151,7 @@ CREATE TABLE `assignments` (
 LOCK TABLES `assignments` WRITE;
 /*!40000 ALTER TABLE `assignments` DISABLE KEYS */;
 INSERT INTO `assignments` VALUES
-(1,'Trips Traps Trull ','1. Kirjutage kood, mis loeb mitu korda esineb number (mitte sõne) 3 \n   $numbers listis ja väljastab tulemuse kujul \"found it <mitu korda> times\".\n   Ärge kasutage olemasolevaid funktsioone vaid kirjutage kood ise (for tsükkel).\n\n2. Kirjutage funktsioon isInList($list, $elementToBeFound), mis ütleb kas \n   listis on selline element või mitte.\n\n   isInList([1, 2, 3], 2) tagastab true;\n   isInList([1, 2, 3], 4) tagastab false;\n\n   NB! Kui Php-st printida väär väärtus (false), siis ei ole väljundist midagi näha.\n\n   print(false);     // tulemust pole välundist näha\n   var_dump(false);  // trükitakse bool(false)\n   \n   a) Ärge kasutage olemasolevaid funktsioone vaid kirjutage kood ise (for tsükkel).\n\n   b) Kasutage funktsiooni array_filter(). Kasuks võib tulla ka funktsioon count($array),\n      mis ütleb sisendlisti pikkuse.\n',3,1231312,'2024-09-24'),
+(1,'Trips Traps Trueeee','1. Kirjutage kood, mis loeb mitu korda esineb number (mitte sõne) 3 \n   $numbers listis ja väljastab tulemuse kujul \"found it <mitu korda> times\".\n   Ärge kasutage olemasolevaid funktsioone vaid kirjutage kood ise (for tsükkel).\nsdfdsfsdfjdsifsdhufusyhfeuyfwufgewfu\n',3,1231312,'2024-09-29'),
 (2,'Trull Traps Trips','Luua Css file',3,1232131,'2024-09-30'),
 (3,'Andmebaas loomine','Luua uut \'students\' andmebaas ',4,3424324,'2024-09-07'),
 (4,'Andmebaas kustutamine','Kustuta \'students\' andmebaas',4,2313321,'2024-09-14');
@@ -182,7 +182,7 @@ CREATE TABLE `criteria` (
 LOCK TABLES `criteria` WRITE;
 /*!40000 ALTER TABLE `criteria` DISABLE KEYS */;
 INSERT INTO `criteria` VALUES
-(1,'Typescript kasutamine',1),
+(1,'Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo liguldpellentesque eu, pretium quis, sem.',1),
 (2,'Loetavus',1);
 /*!40000 ALTER TABLE `criteria` ENABLE KEYS */;
 UNLOCK TABLES;
@@ -358,12 +358,13 @@ CREATE TABLE `messages` (
   `assignmentId` int unsigned NOT NULL,
   `userId` int unsigned NOT NULL,
   `CreatedAt` datetime NOT NULL,
+  `isNotification` tinyint DEFAULT 0,
   PRIMARY KEY (`messageId`),
   KEY `messages_assignments_assignmentId_fk` (`assignmentId`),
   KEY `messages_users_userId_fk` (`userId`),
   CONSTRAINT `messages_assignments_assignmentId_fk` FOREIGN KEY (`assignmentId`) REFERENCES `assignments` (`assignmentId`),
   CONSTRAINT `messages_users_userId_fk` FOREIGN KEY (`userId`) REFERENCES `users` (`userId`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=31 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -373,8 +374,13 @@ CREATE TABLE `messages` (
 LOCK TABLES `messages` WRITE;
 /*!40000 ALTER TABLE `messages` DISABLE KEYS */;
 INSERT INTO `messages` VALUES
-(1,'Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. ',1,1,'2024-09-10 15:21:53'),
-(2,'sdadsadsada',1,2,'2024-09-10 16:07:38');
+(1,'Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. ',1,1,'2024-09-10 15:21:53',NULL),
+(2,'sdadsadsada',1,2,'2024-09-10 16:07:38',NULL),
+(4,'Kati Maasikas eemaldas õpilaselt Mati Vaarikas kriteeriumi Loetavus.',1,1,'2024-09-12 15:25:53',1),
+(5,'Kati Maasikas lisas õpilasele Mati Vaarikas tagasisideks: \'jgdzjhdgsjugds\'',1,1,'2024-09-12 15:34:14',1),
+(6,'Kati Maasikas muutis õpilase Mati Vaarikas hinnet: MA -> 5',1,1,'2024-09-12 15:34:14',1),
+(13,'dffsdsf',1,2,'2024-09-12 16:23:49',0),
+(14,'dfsdfdsfsd',1,1,'2024-09-12 16:37:00',0);
 /*!40000 ALTER TABLE `messages` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -634,7 +640,7 @@ CREATE TABLE `userAssignments` (
   `userId` int unsigned NOT NULL,
   `assignmentStatusId` tinyint unsigned NOT NULL,
   `userGrade` varchar(191) DEFAULT NULL,
-  `solutionLink` text,
+  `solutionUrl` text,
   `comment` text,
   PRIMARY KEY (`assignmentId`,`userId`),
   KEY `userAssignments_users_userId_fk` (`userId`),
@@ -773,4 +779,4 @@ UNLOCK TABLES;
 /*!50503 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-09-11 17:46:42
+-- Dump completed on 2024-09-12 17:51:20

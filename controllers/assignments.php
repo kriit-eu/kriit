@@ -20,7 +20,7 @@ class assignments extends Controller
                 a.assignmentId, a.assignmentName, a.assignmentInstructions, a.assignmentDueAt,
                 c.criterionId, c.criterionName,
                 u.userId AS studentId, u.userName AS studentName, u.groupId,
-                ua.userGrade, ua.assignmentStatusId, ua.solutionLink, ua.comment,
+                ua.userGrade, ua.assignmentStatusId, ua.solutionUrl, ua.comment,
                 ast.statusName AS assignmentStatusName,
                 udc.criterionId AS userDoneCriterionId,
                 subj.teacherId AS teacherId,
@@ -80,13 +80,13 @@ class assignments extends Controller
                     'grade' => !empty($row['userGrade']) ? trim($row['userGrade']) : '',
                     'assignmentStatusName' => $row['assignmentStatusName'] ?? 'Esitamata',
                     'initials' => mb_substr($row['studentName'], 0, 1) . mb_substr($row['studentName'], mb_strrpos($row['studentName'], ' ') + 1, 1),
-                    'solutionLink' => $row['solutionLink'],
+                    'solutionUrl' => $row['solutionUrl'],
                     'comment' => $row['comment'],
                     'userDoneCriteria' => [],
                     'userDoneCriteriaCount' => 0,
                     'class' => '',
                     'tooltipText' => '',
-                    'studentActionButtonName' => $row['solutionLink'] === null ? 'Esita' : 'Muuda',
+                    'studentActionButtonName' => $row['solutionUrl'] === null ? 'Esita' : 'Muuda',
                 ];
             }
 
@@ -125,7 +125,7 @@ class assignments extends Controller
         // Separate query for fetching messages
         $messages = Db::getAll("
             SELECT
-                m.messageId, m.content AS messageContent, m.userId AS messageUserId, mu.userName AS messageUserName, m.CreatedAt
+                m.messageId, m.content AS messageContent, m.userId AS messageUserId, mu.userName AS messageUserName, m.CreatedAt, m.isNotification
             FROM messages m
             LEFT JOIN users mu ON mu.userId = m.userId
             WHERE m.assignmentId = ?
@@ -139,7 +139,8 @@ class assignments extends Controller
                 'content' => $message['messageContent'],
                 'userId' => $message['messageUserId'],
                 'userName' => $message['messageUserName'],
-                'createdAt' => $this->formatMessageDate($message['CreatedAt'])
+                'createdAt' => $this->formatMessageDate($message['CreatedAt']),
+                'isNotification' => $message['isNotification']
             ];
         }
 
@@ -163,25 +164,42 @@ class assignments extends Controller
         $this->auth->userIsAdmin || $this->auth->userId == $_POST['teacherId'] || stop(403, 'Permission denied');
         $assignmentId = $_POST['assignmentId'];
         $studentId = $_POST['studentId'];
-        $grade = $_POST['grade'];
-        $criteria = $_POST['criteria'];
-        $comment = $_POST['comment'];
-
-        // Check if the grade is valid
-        if (!in_array($grade, ['1', '2', '3', '4', '5', 'A', 'MA'])) {
+        $grade = $_POST['grade'] ?? null;
+        $criteria = $_POST['criteria'] ?? [];
+        $comment = $_POST['comment'] ?? '';
+        $existAssignment = Db::getFirst('SELECT * FROM userAssignments WHERE userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
+        if ($grade !== null && !in_array($grade, ['1', '2', '3', '4', '5', 'A', 'MA'])) {
             stop(400, 'Invalid grade');
         }
 
-        $falseCriteria = array_keys(array_filter($criteria, function ($value) {
-            return $value === 'false';
-        }));
+        if (count($criteria) !== 0){
 
-        if (count($falseCriteria) > 0) {
-            $grade = 'MA';
+            $falseCriteria = array_keys(array_filter($criteria, function ($value) {
+                return $value === 'false';
+            }));
+
+            if (count($falseCriteria) > 0) {
+                $grade = 'MA';
+            }
+
+            foreach ($falseCriteria as $criterionId) {
+                $criterionName = Db::getOne('SELECT criterionName FROM criteria WHERE criterionId = ?', [$criterionId]);
+                $message = "$_POST[teacherName] eemaldas õpilaselt $_POST[studentName] kriteeriumi $criterionName.";
+                Db::delete('userDoneCriteria', 'userId = ? AND criterionId = ?', [$studentId, $criterionId]);
+                $this->saveMessage($assignmentId, $_POST['teacherId'], $message);
+            }
+        }
+        if ($existAssignment['comment'] !== $comment && $comment !== '') {
+            $message = "$_POST[teacherName] lisas õpilasele $_POST[studentName] tagasisideks: '$comment'";
+            $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
         }
 
-        foreach ($falseCriteria as $criterionId) {
-            Db::delete('userDoneCriteria', 'userId = ? AND criterionId = ?', [$studentId, $criterionId]);
+        if (!$existAssignment['userGrade']) {
+            $message = "$_POST[teacherName] lisas õpilasele $_POST[studentName] hindeks: $grade";
+            $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
+        }elseif ($existAssignment['userGrade'] !== $grade) {
+            $message = "$_POST[teacherName] muutis õpilase $_POST[studentName] hinnet: $existAssignment[userGrade] -> $grade";
+            $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
         }
 
         Db::update('userAssignments', ['userGrade' => $grade, 'assignmentStatusId' => 3, 'comment' => $comment], 'userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
@@ -189,19 +207,24 @@ class assignments extends Controller
         stop(200, 'Grade saved');
     }
 
-    function ajax_saveStudentSolutionLink()
+    function ajax_saveStudentSolutionUrl()
     {
-
-        $this->auth->userIsAdmin || $this->auth->userId == $_POST['studentId'] || stop(403, 'Permission denied');
+        $this->auth->userIsAdmin || $this->auth->userId == intval($_POST['studentId']) || stop(403, 'Permission denied');
         $assignmentId = $_POST['assignmentId'];
         $studentId = $_POST['studentId'];
-        $solutionLink = $_POST['solutionLink'];
+        $solutionUrl = $_POST['solutionUrl'];
         $criteria = $_POST['criteria'];
+
+        $isSaveAllowed = $this->checkStudentSavePermission($studentId, $_POST['assignmentId']);
+        if (!$isSaveAllowed) {
+            stop(403, 'Save not allowed');
+        }
+
         $this->saveCriteria($studentId, $criteria);
 
-        Db::update('userAssignments', ['solutionLink' => $solutionLink], 'userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
+        Db::update('userAssignments', ['solutionUrl' => $solutionUrl], 'userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
 
-        stop(200, 'Solution link saved');
+        stop(200, 'Solution url saved');
     }
 
     function ajax_saveStudentCriteria()
@@ -209,9 +232,71 @@ class assignments extends Controller
         $this->auth->userIsAdmin || $this->auth->userId == $_POST['studentId'] || stop(403, 'Permission denied');
         $studentId = $_POST['studentId'];
         $criteria = $_POST['criteria'];
+
+        $isSaveAllowed = $this->checkStudentSavePermission($studentId, $_POST['assignmentId']);
+        if (!$isSaveAllowed) {
+            stop(403, 'Save not allowed');
+        }
+
         $this->saveCriteria($studentId, $criteria);
 
         stop(200, 'Criteria saved');
+    }
+
+    function ajax_saveMessage()
+    {
+        $this->auth->userIsAdmin || $this->auth->userId == $_POST['userId'] || stop(403, 'Permission denied');
+        $assignmentId = $_POST['assignmentId'];
+        $userId = $_POST['userId'];
+        $content = $_POST['content'];
+
+        $this->saveMessage($assignmentId, $userId, $content);
+
+        stop(200, 'Message saved');
+    }
+
+    function ajax_editAssignment()
+    {
+        $this->auth->userIsAdmin || $this->auth->userId == $_POST['teacherId'] || stop(403, 'Permission denied');
+        $assignmentId = $_POST['assignmentId'];
+        $assignmentName = $_POST['assignmentName'];
+        $assignmentInstructions = $_POST['assignmentInstructions'];
+        $assignmentDueAt = $_POST['assignmentDueAt'];
+
+        $existAssignment = Db::getFirst('SELECT * FROM assignments WHERE assignmentId = ?', [$assignmentId]);
+
+        if ($existAssignment['assignmentName'] !== $assignmentName) {
+            $message = "$_POST[teacherName] muutis ülesande nimeks '$assignmentName'.";
+            $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
+        }
+        if ($existAssignment['assignmentInstructions'] !== $assignmentInstructions) {
+            $message = "$_POST[teacherName] muutis ülesande juhendiks '$assignmentInstructions'.";
+            $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
+        }
+
+        if ($existAssignment['assignmentDueAt'] !== $assignmentDueAt) {
+            $date = date('d.m.Y', strtotime($assignmentDueAt));
+            $message = "$_POST[teacherName] muutis ülesande tähtajaks '$date'.";
+            $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
+        }
+
+        Db::update('assignments', ['assignmentName' => $assignmentName, 'assignmentInstructions' => $assignmentInstructions, 'assignmentDueAt' => $assignmentDueAt], 'assignmentId = ?', [$assignmentId]);
+
+        stop(200, 'Assignment edited');
+    }
+
+    function ajax_removeCriterion()
+    {
+        $this->auth->userIsAdmin || $this->auth->userId == $_POST['teacherId'] || stop(403, 'Permission denied');
+        $assignmentId = $_POST['assignmentId'];
+        $criterionId = $_POST['criterionId'];
+
+        $criterionName = Db::getOne('SELECT criterionName FROM criteria WHERE criterionId = ?', [$criterionId]);
+        $message = "$_POST[teacherName] eemaldas kriteeriumi '$criterionName'.";
+        Db::delete('criteria', 'criterionId = ?', [$criterionId]);
+        $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
+
+        stop(200, 'Criterion removed');
     }
 
     private function saveCriteria($studentId, $criteria)
@@ -224,5 +309,19 @@ class assignments extends Controller
                 Db::delete('userDoneCriteria', 'userId = ? AND criterionId = ?', [$studentId, $criterionId]);
             }
         }
+    }
+
+    private function checkStudentSavePermission($studentId, $assignmentId)
+    {
+        $student = Db::getFirst("SELECT ua.assignmentStatusId, ua.userGrade FROM userAssignments ua WHERE ua.userId = ? AND ua.assignmentId = ?", [$studentId, $assignmentId]);
+        if ($student['assignmentStatusId'] == 3 && $student['userGrade'] && $student['userGrade'] != 'MA' && intval($student['userGrade']) > 2 ) {
+            return false;
+        }
+        return true;
+    }
+
+    private function saveMessage($assignmentId, $userId, $content, $isNotification  = false)
+    {
+        Db::insert('messages', ['assignmentId' => $assignmentId, 'userId' => $userId, 'content' => $content, 'CreatedAt' => date('Y-m-d H:i:s'), 'isNotification' => $isNotification]);
     }
 }
