@@ -87,13 +87,19 @@ class Auth
         }
 
         // Show login again if user is admin and password is wrong
-        if ($user['userIsAdmin'] && !password_verify($_POST['userPassword'], $user['userPassword'])) {
-            $this->show_login(['Vale parool']);
+        if (($user['userIsAdmin'] || $user['userIsTeacher'] || $user['groupId']) && !empty($user['userPassword']) && !password_verify($_POST['userPassword'], $user['userPassword'])) {
+            $this->show_login(['Vale parool'], $_POST['userPersonalCode']);
         }
 
         if (!$user['userIsAdmin'] && defined('ALLOWED_IP_ADDRESSES') && !in_array($_SERVER['REMOTE_ADDR'], ALLOWED_IP_ADDRESSES)) {
             $this->show_login(["Sellelt IP aadressilt ($_SERVER[REMOTE_ADDR]) pole teil õigust logida sisse"]);
         }
+
+        if ($user['groupId'] && empty($user['userPassword'])) {
+            $user['userPassword'] = password_hash($_POST['userPassword'], PASSWORD_DEFAULT);
+            Db::update('users', $user, 'userId = ?', [$user['userId']]);
+        }
+
 
         // User has provided correct login data if we are here
         User::login($user['userId']);

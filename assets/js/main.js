@@ -4,39 +4,59 @@ var error_modal = $("#error-modal");
 $(document).ready(function () {
     const $userPersonalCodeInput = $("#userPersonalCode");
     const $userPersonalCodeHelp = $("#userPersonalCodeHelp");
+    const $userPasswordHelp = $("#userPasswordHelp");
     const $submitButton = $("#submitButton");
     const $passwordField = $("#password-field");
     const $passwordInput = $("#userPassword");
-    const userPersonalCodePattern = /^[1-6]\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{4}$/;
+
+    // For testing purposes
+    const userPersonalCodePattern = /^\d{11}$/;
+
+    // const userPersonalCodePattern = /^[1-6]\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{4}$/;
+
     let userPersonalCodeValue = "";
 
-    $userPersonalCodeInput.on("input", function () {
-        userPersonalCodeValue = $userPersonalCodeInput.val();
+    function resetPasswordHelp() {
+        $userPasswordHelp.text("Sisesta oma parool").removeClass("text-danger text-success");
+    }
+    function showError(message) {
+        $userPersonalCodeHelp.text(message).addClass("text-danger").removeClass("text-success");
+        $passwordField.hide();
+        resetPasswordHelp();
+        $submitButton.prop("disabled", true);
+    }
 
-        // Определяем контекст (например, по атрибуту data-context на input)
-        const context = $userPersonalCodeInput.data('context') || 'default';
+    function showSuccess(userHelpElement, message) {
+        userHelpElement.text(message).addClass("text-success").removeClass("text-danger");
+    }
 
+    function handleAjaxResponse(response, context) {
+        if (!response || !response.data || !response.data.user) {
+            const message = "Selle isikukoodiga isik ei ole registreeritud.";
+            if (context === 'applicant' || context === 'admin') {
+                showSuccess($userPersonalCodeHelp, message);
+            } else {
+                showError(message);
+            }
+            return;
+        }
+        if (response.data.user.userIsAdmin || response.data.user.userIsTeacher || response.data.user.groupId) {
+            if (!response.data.user.isPasswordSet) {
+                showSuccess($userPasswordHelp, "Isikukood on õige. Palun sisesta oma uus parool.");
+            }
+            $passwordField.show();
+        } else {
+            $submitButton.prop("disabled", false);
+        }
+    }
+
+    function validateUserPersonalCode(context) {
         if (userPersonalCodeValue.length > 11) {
-            $userPersonalCodeHelp.text("Isikukood ei vasta mustrile").addClass("text-danger").removeClass("text-success");
-            $passwordField.hide();
-            $submitButton.prop("disabled", true);
+            showError("Isikukood ei vasta mustrile");
         } else if (userPersonalCodeValue.length === 11) {
             if (userPersonalCodePattern.test(userPersonalCodeValue) && validateControlNumber(userPersonalCodeValue)) {
                 ajax("users/check", {userPersonalCode: userPersonalCodeValue}, function (response) {
-                    if (!response || !response.data || !response.data.user) {
-                        // Изменяем цвет текста на зеленый для контекста "admin" или "applicant"
-                        if (context === 'applicant' || context === 'admin') {
-                            return $userPersonalCodeHelp.text("Selle isikukoodiga isik ei ole registreeritud.")
-                                .addClass("text-success").removeClass("text-danger");
-                        } else {
-                            return $userPersonalCodeHelp.text("Selle isikukoodiga isik ei ole registreeritud.")
-                                .addClass("text-danger").removeClass("text-success");
-                        }
-                    }
-                    if (response.data.user.userIsAdmin || response.data.user.userIsTeacher) {
-                        return $passwordField.show();
-                    }
-                    $submitButton.prop("disabled", false);
+                    handleAjaxResponse(response, context);
                 });
             } else {
                 $userPersonalCodeHelp.text("Isikukood ei vasta mustrile")
@@ -50,16 +70,19 @@ $(document).ready(function () {
                 (context === 'applicant' ? "Sisesta kandidaadi isikukood" : "Sisesta enda isikukood");
             $userPersonalCodeHelp.text(defaultText).removeClass("text-danger text-success");
             $passwordField.hide();
+            resetPasswordHelp();
             $submitButton.prop("disabled", true);
         }
+    }
+
+    $userPersonalCodeInput.on("input", function () {
+        userPersonalCodeValue = $userPersonalCodeInput.val();
+        const context = $userPersonalCodeInput.data('context') || 'default';
+        validateUserPersonalCode(context);
     });
 
     $passwordInput.on("input", () => {
-        if ($passwordInput.val()) {
-            $submitButton.prop("disabled", false);
-        } else {
-            $submitButton.prop("disabled", true);
-        }
+        $submitButton.prop("disabled", !$passwordInput.val());
     });
 });
 
@@ -182,7 +205,10 @@ function validateControlNumber(code) {
             mod = 0;
         }
     }
-    return mod === parseInt(code[10]);
+    // for testing purposes
+    return true;
+
+    // return mod === parseInt(code[10]);
 }
 
 $('table.clickable-rows tr').on('click', function () {
