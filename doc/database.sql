@@ -141,7 +141,7 @@ CREATE TABLE `assignments` (
   PRIMARY KEY (`assignmentId`),
   KEY `assignments_subjectId_fk` (`subjectId`),
   CONSTRAINT `assignments_subjectId_fk` FOREIGN KEY (`subjectId`) REFERENCES `subjects` (`subjectId`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -151,7 +151,7 @@ CREATE TABLE `assignments` (
 LOCK TABLES `assignments` WRITE;
 /*!40000 ALTER TABLE `assignments` DISABLE KEYS */;
 INSERT INTO `assignments` VALUES
-(1,'Trips Traps Trueeee','1. Kirjutage kood, mis loeb mitu korda esineb number (mitte sõne) 3 \n   $numbers listis ja väljastab tulemuse kujul \"found it <mitu korda> times\".\n   Ärge kasutage olemasolevaid funktsioone vaid kirjutage kood ise (for tsükkel).\nsdfdsfsdfjdsifsdhufusyhfeuyfwufgewfu\n',3,1231312,'2024-09-29'),
+(1,'Trips','1. Kirjutage kood, mis loeb mitu korda esineb number (mitte sõne) 3 \n   $numbers listis ja väljastab tulemuse kujul \"found it <mitu korda> times\".\n   Ärge kasutage olemasolevaid funktsioone vaid kirjutage kood ise (for tsükkel).\nsdfdsfsdfjdsifsdhufusyhfeuyfwufgewfu\ngrgergergree',3,1231312,'2024-09-29'),
 (2,'Trull Traps Trips','Luua Css file',3,1232131,'2024-09-30'),
 (3,'Andmebaas loomine','Luua uut \'students\' andmebaas ',4,3424324,'2024-09-07'),
 (4,'Andmebaas kustutamine','Kustuta \'students\' andmebaas',4,2313321,'2024-09-14');
@@ -172,7 +172,7 @@ CREATE TABLE `criteria` (
   PRIMARY KEY (`criterionId`),
   KEY `criteria_assignments_assignmentId_fk` (`assignmentId`),
   CONSTRAINT `criteria_assignments_assignmentId_fk` FOREIGN KEY (`assignmentId`) REFERENCES `assignments` (`assignmentId`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -182,8 +182,10 @@ CREATE TABLE `criteria` (
 LOCK TABLES `criteria` WRITE;
 /*!40000 ALTER TABLE `criteria` DISABLE KEYS */;
 INSERT INTO `criteria` VALUES
-(1,'Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo liguldpellentesque eu, pretium quis, sem.',1),
-(2,'Loetavus',1);
+(30,'fherufhuef',1),
+(31,'ggre',1),
+(32,'rrrrr',1),
+(33,'rrrrr1',1);
 /*!40000 ALTER TABLE `criteria` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -658,8 +660,9 @@ CREATE TABLE `userAssignments` (
 LOCK TABLES `userAssignments` WRITE;
 /*!40000 ALTER TABLE `userAssignments` DISABLE KEYS */;
 INSERT INTO `userAssignments` VALUES
-(1,2,3,'MA','https://bitbucket.org/taltech-vizako/test/src/main/.gitignore','sdadsa'),
+(1,2,1,'','\n\n',''),
 (1,50,1,NULL,NULL,NULL),
+(1,131,3,'MA','https://bitbucket.org/taltech-vizako/test/src/main/.gitignore','gfhthtrthrt'),
 (2,2,2,NULL,NULL,NULL),
 (2,50,2,'3',NULL,NULL),
 (3,2,3,'2',NULL,NULL),
@@ -755,7 +758,7 @@ CREATE TABLE `users` (
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
 INSERT INTO `users` VALUES
-(1,'Kati Maasikas','41111111115',1,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo',NULL,1,NULL),
+(1,'Kati Maasikas','41111111115',1,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo',NULL,1,'vzakorz@gmail.com'),
 (2,'Mati Vaarikas','31111111114',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo2',6,0,NULL),
 (49,'Karl Mets','11111111112',1,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo3',NULL,0,NULL),
 (50,'Anna Maria Puu','21111111113',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo4',6,0,NULL),
@@ -779,4 +782,4 @@ UNLOCK TABLES;
 /*!50503 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-09-12 17:51:20
+-- Dump completed on 2024-09-13 17:52:44

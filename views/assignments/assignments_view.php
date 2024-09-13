@@ -162,7 +162,7 @@
                                        value="<?= $assignment['assignmentName'] ?>">
                             </div>
                             <div class="mb-3">
-                                <label for="assignmentInstructions" class="form-label">Instruktioon</label>
+                                <label for="assignmentInstructions" class="form-label">Instruktsioon</label>
                                 <textarea class="form-control" id="assignmentInstructions" name="assignmentInstructions"
                                           rows="3"><?= $assignment['assignmentInstructions'] ?></textarea>
                             </div>
@@ -175,19 +175,20 @@
                             <!-- Block for criteria management -->
                             <div class="mb-3">
                                 <h5>Kriteeriumid</h5>
-                                <div id="criteriaContainer">
+                                <div id="editCriteriaContainer">
                                     <?php foreach ($assignment['criteria'] as $criterion): ?>
                                         <div class="criteria-row">
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox"
-                                                       id="criterion_<?= $criterion['criteriaId'] ?>" checked>
+                                                       id="edit_criterion_<?= $criterion['criteriaId'] ?>" checked
+                                                       disabled>
                                                 <label class="form-check-label"
-                                                       for="criterion_<?= $criterion['criteriaId'] ?>">
+                                                       for="edit_criterion_<?= $criterion['criteriaId'] ?>">
                                                     <?= $criterion['criteriaName'] ?>
                                                 </label>
                                             </div>
                                             <button type="button" class="btn btn-danger btn-sm"
-                                                    onclick="removeCriterion(<?= $criterion['criteriaId'] ?>)">X
+                                                    onclick="removeOldCriterion(<?= $criterion['criteriaId'] ?>)">X
                                             </button>
                                         </div>
                                     <?php endforeach; ?>
@@ -200,11 +201,38 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-primary" onclick="saveEditedAssignment()">Salvesta</button>
+                        <button type="button" class="btn btn-secondary" onclick="location.reload()"
+                                data-bs-dismiss="modal">Tühista
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="addCriterionModal" tabindex="-1" aria-labelledby="addCriterionModalLabel"
+             aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addCriterionModalLabel">Lisa uus kriteerium</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="addCriterionForm">
+                            <div class="mb-3">
+                                <label for="newCriterionName" class="form-label">Kriteeriumi nimi</label>
+                                <textarea class="form-control" id="newCriterionName" name="newCriterionName" rows="3"
+                                          placeholder="Sisestage kriteeriumi nimi"></textarea>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" onclick="addNewCriterion()">Lisa</button>
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tühista</button>
                     </div>
                 </div>
             </div>
         </div>
+
     <?php endif; ?>
 
     <div class="modal fade" id="studentModal" tabindex="-1" aria-labelledby="studentModalLabel" aria-hidden="true">
@@ -262,7 +290,7 @@
                             </div>
                         </div>
                     <?php endif; ?>
-                    <div id="criteriaContainer">
+                    <div id="studentGradeCriteriaContainer">
                         <h6 class="fw-bold">Kriteeriumid</h6>
                         <div id="checkboxesContainer">
                         </div>
@@ -362,12 +390,16 @@
                                     <h6 class="fw-bold mb-1"><?= $message['userName'] ?></h6>
                                     <small class="text-muted"><?= $message['createdAt'] ?></small>
                                 </div>
-                                <p class="mb-1"><?= $message['content'] ?></p>
+
+                                <!-- Processing the message to display quotes correctly -->
+                                <p class="mb-1"><?= nl2br(htmlspecialchars($message['content'])) ?></p>
+
                                 <?php if ($this->auth->userId !== $message['userId']): ?>
                                     <div class="d-flex justify-content-end">
                                         <button type="button" class="btn btn-secondary btn-sm"
                                                 style="font-size: 0.75rem; padding: 2px 8px;"
-                                                onclick="replyToMessage(<?= $message['messageId'] ?>)">Vasta
+                                                onclick="replyToMessage('<?= addslashes($message['userName']) ?>', '<?= $message['createdAt'] ?>', '<?= addslashes($message['content']) ?>')">
+                                            Vasta
                                         </button>
                                     </div>
                                 <?php endif; ?>
@@ -387,6 +419,7 @@
         </div>
     </div>
 
+
     <div class="container mt-3 mb-5">
         <form>
             <div class="mb-3">
@@ -402,194 +435,20 @@
 
 </div>
 <script>
-
     const assignment = <?= json_encode($assignment) ?>;
     let currentStudentId = null;
+    let newAddedCriteria = [];
 
-    function showContextMenu(event, studentId) {
-        event.preventDefault();
-        currentStudentId = studentId;
+    document.addEventListener('DOMContentLoaded', function () {
+        scrollToBottom();
+        [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            .map(el => new bootstrap.Tooltip(el));
+    });
 
-        const menu = document.getElementById('context-menu');
-        const criteriaContainer = menu.querySelector('.criteria');
-
-        criteriaContainer.innerHTML = '';
-
-        const student = assignment.students[studentId];
-        const allCriteria = assignment.criteria;
-
-        if (student && allCriteria) {
-            Object.keys(assignment.criteria).forEach(criteriaId => {
-                const criterion = assignment.criteria[criteriaId];
-                const isCompleted = assignment.students[studentId]?.userDoneCriteria[criteriaId]?.completed;
-
-                criteriaContainer.innerHTML += `
-    <div class="form-check">
-        <input class="form-check-input" type="checkbox" id="criterion_${criteriaId}" ${isCompleted ? 'checked' : ''}>
-        <label class="form-check-label" for="criterion_${criteriaId}">
-            ${criterion.criteriaName}
-        </label>
-    </div>
-    `;
-            });
+    document.getElementById('requiredCriteria').addEventListener('change', function (event) {
+        if (event.target && event.target.type === 'checkbox' && assignment.students[<?=$this->auth->userId?>].isDisabledStudentActionButton === '') {
+            document.querySelector('#studentCriteriaForm .btn-primary').hidden = false;
         }
-
-        menu.style.display = 'block';
-        menu.style.left = `${event.pageX}px`;
-        menu.style.top = `${event.pageY}px`;
-
-        adjustDropdownPosition(menu, event.pageX, event.pageY);
-
-        document.addEventListener('click', hideContextMenu);
-    }
-
-    function adjustDropdownPosition(menu, pageX, pageY) {
-        const menuRect = menu.getBoundingClientRect();
-        const windowWidth = window.innerWidth;
-        const windowHeight = window.innerHeight;
-
-        if (menuRect.right > windowWidth) {
-            menu.style.left = `${pageX - menuRect.width}px`;
-        }
-
-        if (menuRect.bottom > windowHeight) {
-            menu.style.top = `${pageY - menuRect.height}px`;
-        }
-    }
-
-    function hideContextMenu() {
-        const menu = document.getElementById('context-menu');
-        menu.style.display = 'none';
-        document.removeEventListener('click', hideContextMenu);
-    }
-
-    // Universal modal open function
-    function openStudentModal(isStudent, studentId = null) {
-        const modalTitle = document.getElementById('studentName');
-        const solutionInputContainer = document.getElementById('solutionInputContainer');
-        const solutionInput = document.getElementById('solutionInput');
-        const solutionUrlContainer = document.getElementById('solutionUrlContainer');
-        const submitButton = document.getElementById('submitButton');
-        const criteriaContainer = document.getElementById('checkboxesContainer');
-        const student = assignment.students[studentId];
-        currentStudentId = studentId;
-
-
-        if (isStudent) {
-            modalTitle.textContent = 'Sisesta Lahendus';
-            solutionInputContainer.style.display = 'block'; // Show the input for students to enter a link
-            submitButton.textContent = student.solutionUrl === null ? 'Esita' : 'Muuda';
-            submitButton.disabled = true; // Initially disable the "Esita" button
-
-            document.getElementById('checkboxesContainer').addEventListener('change', function (event) {
-                if (event.target && event.target.type === 'checkbox') {
-                    updateSubmitButtonState();
-                }
-            });
-
-            solutionInput.addEventListener('input', updateSubmitButtonState);
-
-            async function updateSubmitButtonState() {
-
-                const solutionUrlValue = solutionInput.value.trim();
-
-                const isValidUrl = isValidURL(solutionUrlValue);
-
-                const solutionInputFeedback = document.getElementById('solutionInputFeedback');
-
-                if (!isValidUrl) {
-                    solutionInputFeedback.textContent = 'Sisestatud link pole kehtiv. Palun sisestage kehtiv link.';
-                    solutionInputFeedback.style.color = 'red';
-                    submitButton.disabled = true;
-                    return;
-                }
-                let isValid = isValidUrl;
-                const knownServicesPattern = /(github\.com|bitbucket\.org|gitlab\.com|docs\.google\.com)/i;
-                const isKnownService = knownServicesPattern.test(solutionUrlValue);
-
-                if (isKnownService) {
-                    const isAccessible = await isLinkAccessible(solutionUrlValue);
-                    console.log('Is Link Accessible:', isAccessible);
-
-                    if (!isAccessible) {
-                        solutionInputFeedback.textContent = 'Sisestatud link pole kättesaadav. Kontrollige, kas see on privaatne või vale link.';
-                        solutionInputFeedback.style.color = 'red';
-                        submitButton.disabled = true;
-                        return;
-                    }
-                    isValid = isAccessible;
-                }
-
-                const allChecked = Array.from(document.querySelectorAll('#checkboxesContainer input[type="checkbox"]'))
-                    .every(cb => cb.checked);
-
-                solutionInputFeedback.textContent = '';
-                submitButton.disabled = !(allChecked && isValid && student.isDisabledStudentActionButton === '');
-            }
-
-
-        } else {
-            const gradeSection = document.getElementById('gradeSection');
-            const commentSection = document.getElementById('commentSection');
-            modalTitle.textContent = student.studentName;
-            gradeSection.style.display = 'block';
-            commentSection.style.display = 'block';
-            solutionInputContainer.style.display = 'none';
-            submitButton.textContent = 'Salvesta';
-            submitButton.disabled = false;
-
-            if (student.grade) {
-                document.querySelector(`#gradeRadioGroup input[value="${student.grade}"]`).checked = true;
-            } else {
-                document.querySelectorAll('#gradeRadioGroup input[type="radio"]').forEach(rb => {
-                    rb.checked = false;
-                });
-            }
-
-            if (student.comment) {
-                document.getElementById('studentComment').value = student.comment;
-            } else {
-                document.getElementById('studentComment').value = '';
-            }
-        }
-
-
-        if (student.solutionUrl) {
-            solutionUrlContainer.innerHTML = `
-            <?php if ($isStudent): ?>
-                <p class="pt-2 mb-0">Juba esitatud lahendus:</p>
-            <?php endif?>
-            <a href="${student.solutionUrl}" id="solutionUrl" target="_blank" rel="noopener noreferrer">${student.solutionUrl}</a>`;
-        } else {
-            solutionUrlContainer.innerHTML = 'Link puudub';  // Display plain text if no link
-        }
-
-        criteriaContainer.innerHTML = '';
-
-        Object.keys(assignment.criteria).forEach(criteriaId => {
-            const criterion = assignment.criteria[criteriaId];
-            const isCompleted = assignment.students[studentId]?.userDoneCriteria[criteriaId]?.completed;
-
-            criteriaContainer.innerHTML += `
-            <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="criterion_${criteriaId}" ${isCompleted ? 'checked' : ''}>
-                <label class="form-check-label" for="criterion_${criteriaId}">
-                    ${criterion.criteriaName}
-                </label>
-            </div>
-            `;
-        });
-
-        const modal = new bootstrap.Modal(document.getElementById('studentModal'));
-        modal.show();
-    }
-
-    document.querySelectorAll('#criteriaContainer input[type="checkbox"]').forEach(checkbox => {
-        checkbox.addEventListener('change', () => {
-            const allChecked = Array.from(document.querySelectorAll('#criteriaContainer input[type="checkbox"]'))
-                .every(cb => cb.checked);
-            document.getElementById('submitButton').disabled = !allChecked;
-        });
     });
 
     document.getElementById('submitButton').addEventListener('click', function () {
@@ -600,8 +459,11 @@
             ajax(`assignments/saveStudentSolutionUrl`, {
                     assignmentId: assignment.assignmentId,
                     studentId: <?=$this->auth->userId?>,
+                    studentName: assignment.students[<?=$this->auth->userId?>].studentName,
                     solutionUrl: solutionUrl,
-                    criteria: criteria
+                    criteria: criteria,
+                    teacherId: assignment.teacherId,
+                    teacherName: assignment.teacherName
                 },
                 function (res) {
                     if (res.status === 200) {
@@ -638,22 +500,186 @@
         }
     });
 
-    document.getElementById('requiredCriteria').addEventListener('change', function (event) {
-            if (event.target && event.target.type === 'checkbox' && assignment.students[<?=$this->auth->userId?>].isDisabledStudentActionButton === '') {
-                document.querySelector('#studentCriteriaForm .btn-primary').hidden = false;
+    document.querySelectorAll('#studentGradeCriteriaContainer input[type="checkbox"]').forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+            const allChecked = Array.from(document.querySelectorAll('#studentGradeCriteriaContainer input[type="checkbox"]'))
+                .every(cb => cb.checked);
+            document.getElementById('submitButton').disabled = !allChecked;
+        });
+    });
+
+    function showContextMenu(event, studentId) {
+        event.preventDefault();
+        currentStudentId = studentId;
+
+        const menu = document.getElementById('context-menu');
+        const criteriaContainer = menu.querySelector('.criteria');
+
+        criteriaContainer.innerHTML = '';
+
+        const student = assignment.students[studentId];
+        const allCriteria = assignment.criteria;
+
+        if (student && allCriteria) {
+            Object.keys(assignment.criteria).forEach(criteriaId => {
+                const criterion = assignment.criteria[criteriaId];
+                const isCompleted = assignment.students[studentId]?.userDoneCriteria[criteriaId]?.completed;
+
+                criteriaContainer.innerHTML += `
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="check_criterion_${criteriaId}" ${isCompleted ? 'checked' : ''}>
+                    <label class="form-check-label" for="check_criterion_${criteriaId}">
+                        ${criterion.criteriaName}
+                    </label>
+                </div>
+            `;
+            });
+        }
+
+        menu.style.display = 'block';
+        menu.style.left = `${event.pageX}px`;
+        menu.style.top = `${event.pageY}px`;
+
+        adjustDropdownPosition(menu, event.pageX, event.pageY);
+
+        document.addEventListener('click', hideContextMenu);
+    }
+
+    function adjustDropdownPosition(menu, pageX, pageY) {
+        const menuRect = menu.getBoundingClientRect();
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
+
+        if (menuRect.right > windowWidth) {
+            menu.style.left = `${pageX - menuRect.width}px`;
+        }
+
+        if (menuRect.bottom > windowHeight) {
+            menu.style.top = `${pageY - menuRect.height}px`;
+        }
+    }
+
+    function hideContextMenu() {
+        const menu = document.getElementById('context-menu');
+        menu.style.display = 'none';
+        document.removeEventListener('click', hideContextMenu);
+    }
+
+    function openStudentModal(isStudent, studentId = null) {
+        const modalTitle = document.getElementById('studentName');
+        const solutionInputContainer = document.getElementById('solutionInputContainer');
+        const solutionInput = document.getElementById('solutionInput');
+        const solutionUrlContainer = document.getElementById('solutionUrlContainer');
+        const submitButton = document.getElementById('submitButton');
+        const criteriaContainer = document.getElementById('checkboxesContainer');
+        const student = assignment.students[studentId];
+        currentStudentId = studentId;
+
+        if (isStudent) {
+            modalTitle.textContent = 'Sisesta Lahendus';
+            solutionInputContainer.style.display = 'block'; // Show the input for students to enter a link
+            submitButton.textContent = student.studentActionButtonName;
+            submitButton.disabled = true; // Initially disable the "Esita" button
+
+            document.getElementById('checkboxesContainer').addEventListener('change', function (event) {
+                if (event.target && event.target.type === 'checkbox') {
+                    updateSubmitButtonState();
+                }
+            });
+
+            solutionInput.addEventListener('input', updateSubmitButtonState);
+
+            async function updateSubmitButtonState() {
+                const solutionUrlValue = solutionInput.value.trim();
+                const isValidUrl = isValidURL(solutionUrlValue);
+                const solutionInputFeedback = document.getElementById('solutionInputFeedback');
+
+                if (!isValidUrl) {
+                    solutionInputFeedback.textContent = 'Sisestatud link pole kehtiv. Palun sisestage kehtiv link.';
+                    solutionInputFeedback.style.color = 'red';
+                    submitButton.disabled = true;
+                    return;
+                }
+                let isValid = isValidUrl;
+                const knownServicesPattern = /(github\.com|bitbucket\.org|gitlab\.com|docs\.google\.com)/i;
+                const isKnownService = knownServicesPattern.test(solutionUrlValue);
+
+                if (isKnownService) {
+                    const isAccessible = await isLinkAccessible(solutionUrlValue);
+                    console.log('Is Link Accessible:', isAccessible);
+
+                    if (!isAccessible) {
+                        solutionInputFeedback.textContent = 'Sisestatud link pole kättesaadav. Kontrollige, kas see on privaatne või vale link.';
+                        solutionInputFeedback.style.color = 'red';
+                        submitButton.disabled = true;
+                        return;
+                    }
+                    isValid = isAccessible;
+                }
+
+                const allChecked = Array.from(document.querySelectorAll('#checkboxesContainer input[type="checkbox"]'))
+                    .every(cb => cb.checked);
+
+                solutionInputFeedback.textContent = '';
+                submitButton.disabled = !(allChecked && isValid && student.isDisabledStudentActionButton === '');
+            }
+        } else {
+            const gradeSection = document.getElementById('gradeSection');
+            const commentSection = document.getElementById('commentSection');
+            modalTitle.textContent = student.studentName;
+            gradeSection.style.display = 'block';
+            commentSection.style.display = 'block';
+            solutionInputContainer.style.display = 'none';
+            submitButton.textContent = 'Salvesta';
+            submitButton.disabled = false;
+
+            if (student.grade) {
+                document.querySelector(`#gradeRadioGroup input[value="${student.grade}"]`).checked = true;
+            } else {
+                document.querySelectorAll('#gradeRadioGroup input[type="radio"]').forEach(rb => {
+                    rb.checked = false;
+                });
+            }
+
+            if (student.comment) {
+                document.getElementById('studentComment').value = student.comment;
+            } else {
+                document.getElementById('studentComment').value = '';
             }
         }
-    );
 
+        if (student.solutionUrl) {
+            solutionUrlContainer.innerHTML = `
+            <?php if ($isStudent): ?>
+                <p class="pt-2 mb-0">Juba esitatud lahendus:</p>
+            <?php endif?>
+            <a href="${student.solutionUrl}" id="solutionUrl" target="_blank" rel="noopener noreferrer">${student.solutionUrl}</a>`;
+        } else {
+            solutionUrlContainer.innerHTML = 'Link puudub';  // Display plain text if no link
+        }
 
-    document.addEventListener('DOMContentLoaded', function () {
-        [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-            .map(el => new bootstrap.Tooltip(el));
-    });
+        criteriaContainer.innerHTML = '';
+
+        Object.keys(assignment.criteria).forEach(criteriaId => {
+            const criterion = assignment.criteria[criteriaId];
+            const isCompleted = assignment.students[studentId]?.userDoneCriteria[criteriaId]?.completed;
+
+            criteriaContainer.innerHTML += `
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="criterion_${criteriaId}" ${isCompleted ? 'checked' : ''}>
+                <label class="form-check-label" for="criterion_${criteriaId}">
+                    ${criterion.criteriaName}
+                </label>
+            </div>
+        `;
+        });
+
+        const modal = new bootstrap.Modal(document.getElementById('studentModal'));
+        modal.show();
+    }
 
     function saveStudentCriteria() {
         const criteria = getCriteriaList('#studentCriteriaForm input[type="checkbox"]');
-        console.log(criteria);
         ajax(`assignments/saveStudentCriteria`, {
                 assignmentId: assignment.assignmentId,
                 studentId: <?= $this->auth->userId ?>,
@@ -669,10 +695,16 @@
         );
     }
 
-    function getCriteriaList(selector = '#criteriaContainer input[type="checkbox"]') {
+    function getCriteriaList(selector = '#studentGradeCriteriaContainer input[type="checkbox"]') {
         const criteria = {};
         document.querySelectorAll(selector).forEach(cb => {
-            criteria[parseInt(cb.id.replace('criterion_', ''))] = cb.checked;
+            if (selector.startsWith('#edit')) {
+                criteria[parseInt(cb.id.replace('edit_criterion_', ''))] = cb.checked;
+            } else if (selector.startsWith('#check')) {
+                criteria[parseInt(cb.id.replace('check_criterion_', ''))] = cb.checked;
+            }else{
+                criteria[parseInt(cb.id.replace('criterion_', ''))] = cb.checked;
+            }
         });
         return criteria;
     }
@@ -689,6 +721,149 @@
             'i' // case-insensitive
         );
         return !!urlPattern.test(string);
+    }
+
+    async function isLinkAccessible(url) {
+        try {
+            const response = await fetch(url, {method: 'GET', mode: 'cors'});
+            return response.ok || response.status === 200;
+        } catch (error) {
+            return false;
+        }
+    }
+
+    function scrollToBottom() {
+        const messageContainer = document.getElementById('messageContainer');
+        if (messageContainer) {
+            messageContainer.scrollTop = messageContainer.scrollHeight;
+        }
+    }
+
+    function submitMessage() {
+        const content = document.getElementById('messageContent').value;
+
+        ajax(`assignments/saveMessage`, {
+                assignmentId: assignment.assignmentId,
+                userId: <?= $this->auth->userId ?>,
+                content: content,
+                teacherId: assignment.teacherId,
+                teacherName: assignment.teacherName
+            },
+            function (res) {
+                if (res.status === 200) {
+                    location.reload();
+                    scrollToBottom();
+                } else {
+                    alert('Tekkis viga serveriga suhtlemisel.');
+                }
+            }
+        );
+    }
+
+    function editAssignment() {
+        const modal = new bootstrap.Modal(document.getElementById('editAssignmentModal'));
+        modal.show();
+    }
+
+    function removeOldCriterion(param) {
+        const editCriteriaContainer = document.getElementById('editCriteriaContainer');
+        const criterionElement = document.getElementById(`edit_criterion_${param}`);
+
+        if (criterionElement) {
+            const criterionRow = criterionElement.closest('.criteria-row');
+            if (criterionRow) {
+                editCriteriaContainer.removeChild(criterionRow);
+            } else {
+                console.error("Criterion row not found");
+            }
+        } else {
+            console.error("Criterion element not found");
+        }
+    }
+
+    function saveEditedAssignment() {
+        const assignmentName = document.getElementById('assignmentName').value;
+        const assignmentInstructions = document.getElementById('assignmentInstructions').value;
+        const assignmentDueAt = document.getElementById('assignmentDueAt').value;
+        const criteria = getCriteriaList('#editCriteriaContainer input[type="checkbox"]');
+        ajax(`assignments/editAssignment`, {
+                assignmentId: assignment.assignmentId,
+                teacherId: assignment.teacherId,
+                teacherName: assignment.teacherName,
+                assignmentName: assignmentName,
+                assignmentInstructions: assignmentInstructions,
+                assignmentDueAt: assignmentDueAt,
+                oldCriteria: criteria,
+                newCriteria: newAddedCriteria ?? [],
+            },
+            function (res) {
+                if (res.status === 200) {
+                    location.reload();
+                    scrollToBottom();
+                } else {
+                    alert('Tekkis viga serveriga suhtlemisel.');
+                }
+            }
+        );
+    }
+
+    <?php if (!$isStudent): ?>
+    document.getElementById('addCriterionButton').addEventListener('click', function () {
+        const modal = new bootstrap.Modal(document.getElementById('addCriterionModal'));
+        modal.show();
+    });
+    <?php endif; ?>
+
+    function addNewCriterion() {
+        const criterionName = document.getElementById('newCriterionName').value.trim();
+
+        if (!criterionName) {
+            alert('Sisestage kriteeriumi nimi!');
+            return;
+        }
+
+        const existingCriteria = Array.from(document.querySelectorAll('#editCriteriaContainer .form-check-label'))
+            .map(label => label.textContent.trim());
+
+        if (existingCriteria.includes(criterionName) || newAddedCriteria.includes(criterionName)) {
+            alert('Selline kriteerium on juba olemas!');
+            return;
+        }
+
+        const modal = bootstrap.Modal.getInstance(document.getElementById('addCriterionModal'));
+        modal.hide();
+
+        newAddedCriteria.push(criterionName);
+
+        const editCriteriaContainer = document.getElementById('editCriteriaContainer');
+
+        const criterionHTML = `
+        <div class="criteria-row">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" checked disabled>
+                <label class="form-check-label">${criterionName}</label>
+            </div>
+            <button type="button" class="btn btn-danger btn-sm" onclick="removeNewCriterion('${criterionName}')">X</button>
+        </div>
+    `;
+        document.getElementById('newCriterionName').value = '';
+        editCriteriaContainer.insertAdjacentHTML('beforeend', criterionHTML);
+    }
+
+    function removeNewCriterion(criterionName) {
+        newAddedCriteria = newAddedCriteria.filter(name => name !== criterionName);
+
+        const criterionRow = Array.from(document.querySelectorAll('.criteria-row')).find(row => row.textContent.includes(criterionName));
+        if (criterionRow) {
+            criterionRow.remove();
+        }
+    }
+
+    function replyToMessage(userName, createdAt, messageContent) {
+        const messageField = document.getElementById('messageContent');
+        const formattedReply = `> **${userName}** kirjutas *${createdAt}*:\n> ${messageContent}\n\n`;
+        messageField.value = formattedReply + messageField.value;
+        messageField.focus();
     }
 
     function setGrade(grade) {
@@ -715,95 +890,4 @@
             alert('Kõik kriteeriumid pole täidetud!');
         }
     }
-
-    async function isLinkAccessible(url) {
-        try {
-            const response = await fetch(url, {method: 'GET', mode: 'cors'});
-            return response.ok || response.status === 200;
-        } catch (error) {
-            return false;
-        }
-    }
-
-    document.addEventListener('DOMContentLoaded', function () {
-        scrollToBottom(); // Scroll to the bottom when the page loads
-    });
-
-    function scrollToBottom() {
-        const messageContainer = document.getElementById('messageContainer');
-        if (messageContainer) {
-            messageContainer.scrollTop = messageContainer.scrollHeight;
-
-        }
-    }
-
-    function submitMessage() {
-        const content = document.getElementById('messageContent').value;
-
-        ajax(`assignments/saveMessage`, {
-                assignmentId: assignment.assignmentId,
-                userId: <?= $this->auth->userId ?>,
-                content: content
-            },
-            function (res) {
-                if (res.status === 200) {
-                    location.reload();
-                    scrollToBottom();
-                } else {
-                    alert('Tekkis viga serveriga suhtlemisel.');
-                }
-            }
-        );
-    }
-
-    function editAssignment() {
-        const modal = new bootstrap.Modal(document.getElementById('editAssignmentModal'));
-        modal.show();
-    }
-
-    function removeCriterion(param) {
-        const criteriaContainer = document.getElementById('criteriaContainer');
-        const criterion = document.getElementById(`criterion_${param}`);
-        criteriaContainer.removeChild(criterion.parentNode);
-        ajax(`assignments/removeCriterion`, {
-                assignmentId: assignment.assignmentId,
-                teacherId: assignment.teacherId,
-                teacherName: assignment.teacherName,
-                criterionId: param
-            },
-            function (res) {
-                if (res.status === 200) {
-                    location.reload();
-                    scrollToBottom();
-                } else {
-                    alert('Tekkis viga serveriga suhtlemisel.');
-                }
-            }
-        );
-    }
-
-    function saveEditedAssignment(){
-        const assignmentName = document.getElementById('assignmentName').value;
-        const assignmentInstructions = document.getElementById('assignmentInstructions').value;
-        const assignmentDueAt = document.getElementById('assignmentDueAt').value;
-        ajax(`assignments/editAssignment`, {
-                assignmentId: assignment.assignmentId,
-                teacherId: assignment.teacherId,
-                teacherName: assignment.teacherName,
-                assignmentName: assignmentName,
-                assignmentInstructions: assignmentInstructions,
-                assignmentDueAt: assignmentDueAt
-            },
-            function (res) {
-                if (res.status === 200) {
-                    location.reload();
-                    scrollToBottom();
-                } else {
-                    alert('Tekkis viga serveriga suhtlemisel.');
-                }
-            }
-        );
-
-    }
-
 </script>

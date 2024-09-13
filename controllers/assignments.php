@@ -80,13 +80,13 @@ class assignments extends Controller
                     'grade' => !empty($row['userGrade']) ? trim($row['userGrade']) : '',
                     'assignmentStatusName' => $row['assignmentStatusName'] ?? 'Esitamata',
                     'initials' => mb_substr($row['studentName'], 0, 1) . mb_substr($row['studentName'], mb_strrpos($row['studentName'], ' ') + 1, 1),
-                    'solutionUrl' => $row['solutionUrl'],
+                    'solutionUrl' => isset($row['solutionUrl']) ? trim($row['solutionUrl']) : '',
                     'comment' => $row['comment'],
                     'userDoneCriteria' => [],
                     'userDoneCriteriaCount' => 0,
                     'class' => '',
                     'tooltipText' => '',
-                    'studentActionButtonName' => $row['solutionUrl'] === null ? 'Esita' : 'Muuda',
+                    'studentActionButtonName' => (isset($row['solutionUrl']) && !empty(trim($row['solutionUrl']))) ? 'Muuda' : 'Esita'
                 ];
             }
 
@@ -104,10 +104,9 @@ class assignments extends Controller
             $statusName = $row['assignmentStatusName'] ?? 'Esitamata';
             $grade = !empty($row['userGrade']) ? trim($row['userGrade']) : '';
             $isLowGrade = $grade == 'MA' || (is_numeric($grade) && intval($grade) < 3);
-            $isGraded = !$isLowGrade;
             $isEvaluated = isset($row['assignmentStatusName']) && $row['assignmentStatusName'] === 'Hinnatud';
 
-            $assignment['students'][$studentId]['isDisabledStudentActionButton'] = ($isEvaluated && $isGraded) ? 'disabled' : '';
+            $assignment['students'][$studentId]['isDisabledStudentActionButton'] = ($isEvaluated && !$isLowGrade) ? 'disabled' : '';
 
             $daysRemaining = (int)(new \DateTime())->diff(new \DateTime($row['assignmentDueAt']))->format('%r%a');
             $class = $daysRemaining < 0 ?
@@ -172,7 +171,7 @@ class assignments extends Controller
             stop(400, 'Invalid grade');
         }
 
-        if (count($criteria) !== 0){
+        if (count($criteria) !== 0) {
 
             $falseCriteria = array_keys(array_filter($criteria, function ($value) {
                 return $value === 'false';
@@ -182,13 +181,9 @@ class assignments extends Controller
                 $grade = 'MA';
             }
 
-            foreach ($falseCriteria as $criterionId) {
-                $criterionName = Db::getOne('SELECT criterionName FROM criteria WHERE criterionId = ?', [$criterionId]);
-                $message = "$_POST[teacherName] eemaldas õpilaselt $_POST[studentName] kriteeriumi $criterionName.";
-                Db::delete('userDoneCriteria', 'userId = ? AND criterionId = ?', [$studentId, $criterionId]);
-                $this->saveMessage($assignmentId, $_POST['teacherId'], $message);
-            }
+            $this->saveStudentCriteria();
         }
+
         if ($existAssignment['comment'] !== $comment && $comment !== '') {
             $message = "$_POST[teacherName] lisas õpilasele $_POST[studentName] tagasisideks: '$comment'";
             $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
@@ -197,7 +192,7 @@ class assignments extends Controller
         if (!$existAssignment['userGrade']) {
             $message = "$_POST[teacherName] lisas õpilasele $_POST[studentName] hindeks: $grade";
             $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
-        }elseif ($existAssignment['userGrade'] !== $grade) {
+        } elseif ($existAssignment['userGrade'] !== $grade) {
             $message = "$_POST[teacherName] muutis õpilase $_POST[studentName] hinnet: $existAssignment[userGrade] -> $grade";
             $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
         }
@@ -213,16 +208,36 @@ class assignments extends Controller
         $assignmentId = $_POST['assignmentId'];
         $studentId = $_POST['studentId'];
         $solutionUrl = $_POST['solutionUrl'];
-        $criteria = $_POST['criteria'];
 
-        $isSaveAllowed = $this->checkStudentSavePermission($studentId, $_POST['assignmentId']);
+        $isSaveAllowed = $this->checkIfStudentHasAllCriteria();
         if (!$isSaveAllowed) {
             stop(403, 'Save not allowed');
         }
 
-        $this->saveCriteria($studentId, $criteria);
+        $this->saveStudentCriteria();
 
-        Db::update('userAssignments', ['solutionUrl' => $solutionUrl], 'userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
+        // Check if userAssignment already exists
+        $existAssignment = Db::getFirst('SELECT * FROM userAssignments WHERE userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
+        if (!$existAssignment) {
+            Db::insert('userAssignments', ['userId' => $studentId, 'assignmentId' => $assignmentId, 'assignmentStatusId' => 2, 'solutionUrl' => $solutionUrl]);
+        }else {
+            Db::update('userAssignments', ['assignmentStatusId' => 2 ,'solutionUrl' => $solutionUrl], 'userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
+        }
+
+
+        $details = $this->getAssignmentDetails($assignmentId, $studentId, $_POST['teacherId']);
+        $userName = $details['userName'];
+        $teacherMail = $details['teacherMail'];
+        $assignment = $details['assignment'];
+
+        $emailBody = "Õpilane <strong>{$userName}</strong> on esitanud lahenduse ülesandele <strong>{$assignment['assignmentName']}</strong>.<br>";
+        $emailBody .= "Lahenduse link: <a href='{$solutionUrl}'>{$solutionUrl}</a><br>";
+
+        Mail::send(
+            $teacherMail,
+            $assignment['subjectName'] . ": $userName on esitanud lahenduse ülesandele " . $assignment['assignmentName'],
+            $emailBody
+        );
 
         stop(200, 'Solution url saved');
     }
@@ -233,12 +248,12 @@ class assignments extends Controller
         $studentId = $_POST['studentId'];
         $criteria = $_POST['criteria'];
 
-        $isSaveAllowed = $this->checkStudentSavePermission($studentId, $_POST['assignmentId']);
+        $isSaveAllowed = $this->checkIfStudentHasAllCriteria();
         if (!$isSaveAllowed) {
             stop(403, 'Save not allowed');
         }
 
-        $this->saveCriteria($studentId, $criteria);
+        $this->saveStudentCriteria();
 
         stop(200, 'Criteria saved');
     }
@@ -251,6 +266,23 @@ class assignments extends Controller
         $content = $_POST['content'];
 
         $this->saveMessage($assignmentId, $userId, $content);
+        if ($userId != $_POST['teacherId']) {
+            $details = $this->getAssignmentDetails($assignmentId, $userId, $_POST['teacherId']);
+            $userName = $details['userName'];
+            $teacherMail = $details['teacherMail'];
+            $assignment = $details['assignment'];
+
+            $emailBody = "Õpilane <strong>{$userName}</strong> saatis sõnumi ülesande <strong>{$assignment['assignmentName']}</strong> kohta.<br>";
+            $emailBody .= "Sõnumi sisu: <br>" . nl2br($content) . "<br><br>";
+            $url= BASE_URL . 'assignments/' . $assignmentId;
+            $emailBody .= "Ülesande link: <a href='{$url}'>{$url}</a><br>";
+
+            Mail::send(
+                $teacherMail,
+                $assignment['subjectName'] . ": $userName saatis sõnumi ülesande " . $assignment['assignmentName'] . " kohta",
+                $emailBody
+            );
+        }
 
         stop(200, 'Message saved');
     }
@@ -262,6 +294,8 @@ class assignments extends Controller
         $assignmentName = $_POST['assignmentName'];
         $assignmentInstructions = $_POST['assignmentInstructions'];
         $assignmentDueAt = $_POST['assignmentDueAt'];
+        $oldCriteria = $_POST['oldCriteria'] ?? [];
+        $newCriteria = $_POST['newCriteria'] ?? [];
 
         $existAssignment = Db::getFirst('SELECT * FROM assignments WHERE assignmentId = ?', [$assignmentId]);
 
@@ -280,47 +314,113 @@ class assignments extends Controller
             $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
         }
 
+        $this->saveEditAssignmentCriteria($oldCriteria, $newCriteria, $assignmentId);
+
         Db::update('assignments', ['assignmentName' => $assignmentName, 'assignmentInstructions' => $assignmentInstructions, 'assignmentDueAt' => $assignmentDueAt], 'assignmentId = ?', [$assignmentId]);
 
         stop(200, 'Assignment edited');
+
     }
 
-    function ajax_removeCriterion()
+    function saveNewCriterion()
     {
         $this->auth->userIsAdmin || $this->auth->userId == $_POST['teacherId'] || stop(403, 'Permission denied');
         $assignmentId = $_POST['assignmentId'];
-        $criterionId = $_POST['criterionId'];
+        $criterionName = $_POST['criterionName'];
 
-        $criterionName = Db::getOne('SELECT criterionName FROM criteria WHERE criterionId = ?', [$criterionId]);
-        $message = "$_POST[teacherName] eemaldas kriteeriumi '$criterionName'.";
-        Db::delete('criteria', 'criterionId = ?', [$criterionId]);
+        $existCriterion = Db::getOne('SELECT criterionId FROM criteria WHERE assignmentId = ? AND criterionName = ?', [$assignmentId, $criterionName]);
+        if ($existCriterion) {
+            stop(400, 'Criterion already exists');
+        }
+
+        $criterionId = Db::insert('criteria', ['assignmentId' => $assignmentId, 'criterionName' => $criterionName]);
+
+        $message = "$_POST[teacherName] lisas kriteeriumi '$criterionName'.";
         $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
 
-        stop(200, 'Criterion removed');
+        stop(200, ['criterionId' => $criterionId]);
     }
 
-    private function saveCriteria($studentId, $criteria)
+    private function saveStudentCriteria()
     {
+        $studentId = $_POST['studentId'];
+        $criteria = $_POST['criteria'];
         foreach ($criteria as $criterionId => $completed) {
             $existCriterion = Db::getOne('SELECT criterionId FROM userDoneCriteria WHERE userId = ? AND criterionId = ?', [$studentId, $criterionId]);
+            $criterionName = Db::getOne('SELECT criterionName FROM criteria WHERE criterionId = ?', [$criterionId]);
             if (!$existCriterion && $completed === 'true') {
                 Db::insert('userDoneCriteria', ['userId' => $studentId, 'criterionId' => $criterionId]);
+                if ($this->auth->userIsAdmin || $this->auth->userId == $_POST['teacherId']) {
+                    $message = "$_POST[teacherName] märkis õpilasele $_POST[studentName] kriteeriumi '$criterionName' tehtuks.";;
+                    $this->saveMessage($_POST['assignmentId'], $_POST['teacherId'], $message, true);
+                }
             } elseif ($existCriterion && $completed === 'false') {
                 Db::delete('userDoneCriteria', 'userId = ? AND criterionId = ?', [$studentId, $criterionId]);
+                if ($this->auth->userIsAdmin || $this->auth->userId == $_POST['teacherId']) {
+                    $message = "$_POST[teacherName] märkis õpilasele $_POST[studentName] kriteeriumi '$criterionName' mittetehtuks.";;
+                    $this->saveMessage($_POST['assignmentId'], $_POST['teacherId'], $message, true);
+                }
+
             }
         }
     }
 
-    private function checkStudentSavePermission($studentId, $assignmentId)
+    private function getAssignmentDetails($assignmentId, $studentId, $teacherId)
     {
-        $student = Db::getFirst("SELECT ua.assignmentStatusId, ua.userGrade FROM userAssignments ua WHERE ua.userId = ? AND ua.assignmentId = ?", [$studentId, $assignmentId]);
-        if ($student['assignmentStatusId'] == 3 && $student['userGrade'] && $student['userGrade'] != 'MA' && intval($student['userGrade']) > 2 ) {
-            return false;
-        }
-        return true;
+        $userName = Db::getOne('SELECT userName FROM users WHERE userId = ?', [$studentId]);
+        $teacherMail = Db::getOne('SELECT userEmail FROM users WHERE userId = ?', [$teacherId]);
+        $assignment = Db::getFirst('
+        SELECT a.assignmentName, s.subjectName
+        FROM assignments a
+        JOIN subjects s ON a.subjectId = s.subjectId
+        WHERE a.assignmentId = ?', [$assignmentId]);
+
+        return [
+            'userName' => $userName,
+            'teacherMail' => $teacherMail,
+            'assignment' => $assignment
+        ];
     }
 
-    private function saveMessage($assignmentId, $userId, $content, $isNotification  = false)
+    private function saveEditAssignmentCriteria($oldCriteria, $newCriteria, $assignmentId)
+    {
+        //Get all criteria for this assignment
+        $criteria = Db::getAll('SELECT criterionId, criterionName FROM criteria WHERE assignmentId = ?', [$assignmentId]);
+
+        if (count($oldCriteria) > 0) {
+            foreach ($criteria as $criterion) {
+                if (!array_key_exists($criterion['criterionId'], $oldCriteria)) {
+                    $message = "$_POST[teacherName] eemaldas kriteeriumi '$criterion[criterionName]'.";
+                    $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
+                    Db::delete('userDoneCriteria', 'criterionId = ?', [$criterion['criterionId']]);
+                    Db::delete('criteria', 'criterionId = ?', [$criterion['criterionId']]);
+                }
+            }
+        }
+
+        if (count($newCriteria) > 0) {
+            foreach ($newCriteria as $criterionName) {
+                Db::insert('criteria', ['assignmentId' => $assignmentId, 'criterionName' => $criterionName]);
+                $message = "$_POST[teacherName] lisas uue kriteeriumi '$criterionName'.";
+                $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
+            }
+        }
+    }
+
+    private function checkIfStudentHasAllCriteria()
+    {
+        $criteria = $_POST['criteria'];
+        if (count($criteria) > 0) {
+            $falseCriteria = array_keys(array_filter($criteria, function ($value) {
+                return $value === 'false';
+            }));
+
+            return count($falseCriteria) === 0;
+        }
+        return false;
+    }
+
+    private function saveMessage($assignmentId, $userId, $content, $isNotification = false)
     {
         Db::insert('messages', ['assignmentId' => $assignmentId, 'userId' => $userId, 'content' => $content, 'CreatedAt' => date('Y-m-d H:i:s'), 'isNotification' => $isNotification]);
     }
