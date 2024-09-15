@@ -8,12 +8,12 @@ $(document).ready(function () {
     const $passwordField = $("#password-field");
     const $passwordInput = $("#userPassword");
     const userPersonalCodePattern = /^[1-6]\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{4}$/;
+    // const userPersonalCodePattern = /^\d{11}$/;
     let userPersonalCodeValue = "";
 
     $userPersonalCodeInput.on("input", function () {
         userPersonalCodeValue = $userPersonalCodeInput.val();
 
-        // Определяем контекст (например, по атрибуту data-context на input)
         const context = $userPersonalCodeInput.data('context') || 'default';
 
         if (userPersonalCodeValue.length > 11) {
@@ -24,7 +24,6 @@ $(document).ready(function () {
             if (userPersonalCodePattern.test(userPersonalCodeValue) && validateControlNumber(userPersonalCodeValue)) {
                 ajax("users/check", {userPersonalCode: userPersonalCodeValue}, function (response) {
                     if (!response || !response.data || !response.data.user) {
-                        // Изменяем цвет текста на зеленый для контекста "admin" или "applicant"
                         if (context === 'applicant' || context === 'admin') {
                             return $userPersonalCodeHelp.text("Selle isikukoodiga isik ei ole registreeritud.")
                                 .addClass("text-success").removeClass("text-danger");
@@ -45,7 +44,6 @@ $(document).ready(function () {
                 $submitButton.prop("disabled", true);
             }
         } else {
-            // Устанавливаем текст в зависимости от контекста
             const defaultText = context === 'admin' ? "Sisesta administraatori isikukood" :
                 (context === 'applicant' ? "Sisesta kandidaadi isikukood" : "Sisesta enda isikukood");
             $userPersonalCodeHelp.text(defaultText).removeClass("text-danger text-success");
@@ -183,6 +181,7 @@ function validateControlNumber(code) {
         }
     }
     return mod === parseInt(code[10]);
+    // return true;
 }
 
 $('table.clickable-rows tr').on('click', function () {

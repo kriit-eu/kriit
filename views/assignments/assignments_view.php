@@ -251,7 +251,7 @@
                             <small id="solutionInputFeedback"></small>
                         </div>
 
-                        <p id="solutionUrlContainer">
+                        <p class="mt-1" id="solutionUrlContainer">
                             <a href="#" id="solutionUrl" target="_blank" rel="noopener noreferrer">No link provided</a>
                         </p>
                     </div>
@@ -381,9 +381,9 @@
                         <?php if (!$message['isNotification']): ?>
                             <!-- Regular user message -->
                             <div class="flex-shrink-0 me-3">
-                            <span class="avatar bg-primary text-white rounded-circle p-2">
-                                <?= strtoupper(substr($message['userName'], 0, 1)) ?>
-                            </span>
+                        <span class="avatar bg-primary text-white rounded-circle p-2">
+                            <?= strtoupper(substr($message['userName'], 0, 1)) ?>
+                        </span>
                             </div>
                             <div class="flex-grow-1">
                                 <div class="d-flex justify-content-between">
@@ -391,16 +391,16 @@
                                     <small class="text-muted"><?= $message['createdAt'] ?></small>
                                 </div>
 
-                                <!-- Processing the message to display quotes correctly -->
                                 <p class="mb-1"><?= nl2br(htmlspecialchars($message['content'])) ?></p>
 
                                 <?php if ($this->auth->userId !== $message['userId']): ?>
                                     <div class="d-flex justify-content-end">
                                         <button type="button" class="btn btn-secondary btn-sm"
                                                 style="font-size: 0.75rem; padding: 2px 8px;"
-                                                onclick="replyToMessage('<?= addslashes($message['userName']) ?>', '<?= $message['createdAt'] ?>', '<?= addslashes($message['content']) ?>')">
+                                                onclick='replyToMessage(<?= json_encode($message['userName']) ?>, <?= $message['messageId'] ?>, <?= json_encode($message['content']) ?>, "<?= $message['createdAt'] ?>")'>
                                             Vasta
                                         </button>
+
                                     </div>
                                 <?php endif; ?>
                             </div>
@@ -419,11 +419,18 @@
         </div>
     </div>
 
-
     <div class="container mt-3 mb-5">
         <form>
             <div class="mb-3">
                 <label for="messageContent" class="form-label">Sisesta sõnum</label>
+                <div id="replyInfo" class="alert alert-info " style="display:none;">
+                    <div class="d-flex justify-content-end">
+                        <button type="button" style="font-size: 0.75rem; padding: 2px 8px;"
+                                class="btn btn-sm btn-secondary mb-2" onclick="cancelReply()">x
+                        </button>
+                    </div>
+                    <div id="replyMessage" class="border rounded bg-light p-2 mb-2"></div>
+                </div>
                 <textarea class="form-control" id="messageContent" name="content" rows="3"
                           placeholder="Kirjuta oma sõnum siia..."></textarea>
             </div>
@@ -432,6 +439,7 @@
             </div>
         </form>
     </div>
+
 
 </div>
 <script>
@@ -468,11 +476,11 @@
                 function (res) {
                     if (res.status === 200) {
                         location.reload();
-                    } else {
-                        alert('Tekkis viga serveriga suhtlemisel.');
                     }
-                }
-            );
+                }, function (error) {
+                    alert(error ?? 'Tekkis viga serveriga suhtlemisel.');
+                });
+
         } else {
             const grade = document.querySelector('#gradeSection input[type="radio"]:checked')?.value;
             const criteria = getCriteriaList();
@@ -492,11 +500,10 @@
                 function (res) {
                     if (res.status === 200) {
                         location.reload();
-                    } else {
-                        alert('Tekkis viga serveriga suhtlemisel.');
                     }
-                }
-            );
+                }, function (error) {
+                    alert(error ?? 'Tekkis viga serveriga suhtlemisel.');
+                });
         }
     });
 
@@ -583,46 +590,64 @@
 
             document.getElementById('checkboxesContainer').addEventListener('change', function (event) {
                 if (event.target && event.target.type === 'checkbox') {
-                    updateSubmitButtonState();
+                    updateButtonState();
                 }
             });
 
             solutionInput.addEventListener('input', updateSubmitButtonState);
 
+            document.getElementById('checkboxesContainer').addEventListener('change', function (event) {
+                if (event.target && event.target.type === 'checkbox') {
+                    updateButtonState();
+                }
+            });
+
+            solutionInput.addEventListener('input', updateSubmitButtonState);
+
+            let isValidUrl = false;
+
             async function updateSubmitButtonState() {
                 const solutionUrlValue = solutionInput.value.trim();
-                const isValidUrl = isValidURL(solutionUrlValue);
                 const solutionInputFeedback = document.getElementById('solutionInputFeedback');
 
-                if (!isValidUrl) {
-                    solutionInputFeedback.textContent = 'Sisestatud link pole kehtiv. Palun sisestage kehtiv link.';
-                    solutionInputFeedback.style.color = 'red';
+                if (solutionUrlValue === '') {
+                    solutionInputFeedback.textContent = '';
                     submitButton.disabled = true;
                     return;
                 }
-                let isValid = isValidUrl;
-                const knownServicesPattern = /(github\.com|bitbucket\.org|gitlab\.com|docs\.google\.com)/i;
-                const isKnownService = knownServicesPattern.test(solutionUrlValue);
-
-                if (isKnownService) {
-                    const isAccessible = await isLinkAccessible(solutionUrlValue);
-                    console.log('Is Link Accessible:', isAccessible);
-
-                    if (!isAccessible) {
-                        solutionInputFeedback.textContent = 'Sisestatud link pole kättesaadav. Kontrollige, kas see on privaatne või vale link.';
+                try {
+                    ajax('assignments/validateAndCheckLinkAccessibility', {
+                        solutionUrl: solutionUrlValue
+                    }, function (res) {
+                        if (res.status === 200) {
+                            solutionInputFeedback.textContent = 'Link on valideeritud ja kättesaadav.';
+                            solutionInputFeedback.style.color = 'green';
+                            isValidUrl = true;
+                            updateButtonState();
+                        }
+                    }, function (error) {
+                        solutionInputFeedback.textContent = error || 'Link on vigane või kättesaamatu.';
                         solutionInputFeedback.style.color = 'red';
-                        submitButton.disabled = true;
-                        return;
-                    }
-                    isValid = isAccessible;
+                        isValidUrl = false;
+                        updateButtonState();
+                    });
+                } catch (error) {
+                    solutionInputFeedback.textContent = 'Tekkis viga URL-i valideerimisel';
+                    solutionInputFeedback.style.color = 'red';
+                    isValidUrl = false;
+                    updateButtonState();
                 }
 
+                updateButtonState();
+            }
+
+            function updateButtonState() {
                 const allChecked = Array.from(document.querySelectorAll('#checkboxesContainer input[type="checkbox"]'))
                     .every(cb => cb.checked);
 
-                solutionInputFeedback.textContent = '';
-                submitButton.disabled = !(allChecked && isValid && student.isDisabledStudentActionButton === '');
+                submitButton.disabled = !(allChecked && isValidUrl && student.isDisabledStudentActionButton === '');
             }
+
         } else {
             const gradeSection = document.getElementById('gradeSection');
             const commentSection = document.getElementById('commentSection');
@@ -679,20 +704,22 @@
     }
 
     function saveStudentCriteria() {
-        const criteria = getCriteriaList('#studentCriteriaForm input[type="checkbox"]');
+        const criteria = getCriteriaList('#requiredCriteria input[type="checkbox"]');
         ajax(`assignments/saveStudentCriteria`, {
                 assignmentId: assignment.assignmentId,
                 studentId: <?= $this->auth->userId ?>,
                 criteria: criteria,
+                teacherId: assignment.teacherId,
+                teacherName: assignment.teacherName
             },
             function (res) {
                 if (res.status === 200) {
                     location.reload();
-                } else {
-                    alert('Tekkis viga serveriga suhtlemisel.');
                 }
-            }
-        );
+            },
+            function (error) {
+                alert(error ?? 'Tekkis viga serveriga suhtlemisel.');
+            });
     }
 
     function getCriteriaList(selector = '#studentGradeCriteriaContainer input[type="checkbox"]') {
@@ -700,36 +727,13 @@
         document.querySelectorAll(selector).forEach(cb => {
             if (selector.startsWith('#edit')) {
                 criteria[parseInt(cb.id.replace('edit_criterion_', ''))] = cb.checked;
-            } else if (selector.startsWith('#check')) {
+            } else if (selector.startsWith('#context-menu') || selector.startsWith('#check')) {
                 criteria[parseInt(cb.id.replace('check_criterion_', ''))] = cb.checked;
-            }else{
+            } else {
                 criteria[parseInt(cb.id.replace('criterion_', ''))] = cb.checked;
             }
         });
         return criteria;
-    }
-
-    function isValidURL(string) {
-        const urlPattern = new RegExp(
-            '^(https?:\\/\\/)?' + // validate protocol (optional)
-            '((([a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,})|' + // validate domain name
-            '(\\d{1,3}\\.){3}\\d{1,3})' + // OR validate IP (IPv4)
-            '(\\:(6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-5][0-9]{4}|[1-9][0-9]{0,3}))?' + // port (optional)
-            '(\\/[-a-zA-Z0-9%_.~+]*)*' + // path (optional)
-            '(\\?[;&a-zA-Z0-9%_.~+=-]*)?' + // query string (optional)
-            '(\\#[-a-zA-Z0-9%_.~+=]*)?$', // fragment (optional)
-            'i' // case-insensitive
-        );
-        return !!urlPattern.test(string);
-    }
-
-    async function isLinkAccessible(url) {
-        try {
-            const response = await fetch(url, {method: 'GET', mode: 'cors'});
-            return response.ok || response.status === 200;
-        } catch (error) {
-            return false;
-        }
     }
 
     function scrollToBottom() {
@@ -737,27 +741,6 @@
         if (messageContainer) {
             messageContainer.scrollTop = messageContainer.scrollHeight;
         }
-    }
-
-    function submitMessage() {
-        const content = document.getElementById('messageContent').value;
-
-        ajax(`assignments/saveMessage`, {
-                assignmentId: assignment.assignmentId,
-                userId: <?= $this->auth->userId ?>,
-                content: content,
-                teacherId: assignment.teacherId,
-                teacherName: assignment.teacherName
-            },
-            function (res) {
-                if (res.status === 200) {
-                    location.reload();
-                    scrollToBottom();
-                } else {
-                    alert('Tekkis viga serveriga suhtlemisel.');
-                }
-            }
-        );
     }
 
     function editAssignment() {
@@ -800,9 +783,10 @@
                 if (res.status === 200) {
                     location.reload();
                     scrollToBottom();
-                } else {
-                    alert('Tekkis viga serveriga suhtlemisel.');
                 }
+            },
+            function (error) {
+                alert(error ?? 'Tekkis viga serveriga suhtlemisel.');
             }
         );
     }
@@ -859,35 +843,82 @@
         }
     }
 
-    function replyToMessage(userName, createdAt, messageContent) {
-        const messageField = document.getElementById('messageContent');
-        const formattedReply = `> **${userName}** kirjutas *${createdAt}*:\n> ${messageContent}\n\n`;
-        messageField.value = formattedReply + messageField.value;
-        messageField.focus();
+    function replyToMessage(userName, messageId, messageContent, createdAt) {
+        document.getElementById('replyInfo').style.display = 'block';
+        document.getElementById('replyMessage').innerHTML = `
+        <div class="d-flex align-items-start border rounded p-2" style="background-color: #f0f0f0;">
+            <div class="me-3">
+                <span class="avatar bg-primary text-white rounded-circle p-2">${userName[0]}</span>
+            </div>
+            <div>
+                <strong>${userName}</strong> kirjutas: ${createdAt}<br>
+                <em>${messageContent}</em>
+            </div>
+        </div>
+    `;
+        const content = document.getElementById('messageContent')
+        content.setAttribute('data-reply-id', messageId)
+        content.setAttribute('data-reply-user', userName)
+        content.setAttribute('data-reply-time', createdAt)
+        content.setAttribute('data-reply-content', messageContent)
+        content.focus();
+    }
+
+    function cancelReply() {
+        document.getElementById('replyInfo').style.display = 'none';
+        document.getElementById('messageContent').removeAttribute('data-reply-id');
+    }
+
+    function submitMessage() {
+        const messageContent = document.getElementById('messageContent');
+        const answerToId = messageContent.getAttribute('data-reply-id') || null;
+
+        let replyContent = '';
+        if (answerToId) {
+            const replyUser = messageContent.getAttribute('data-reply-user');
+            const replyTime = messageContent.getAttribute('data-reply-time');
+            const replyText = messageContent.getAttribute('data-reply-content');
+
+            replyContent = `> **${replyUser}** kirjutas *${replyTime}*:\n> ${replyText}\n\n`;
+        }
+
+        const finalContent = replyContent + messageContent.value;
+
+        ajax('assignments/saveMessage', {
+            assignmentId: assignment.assignmentId,
+            userId: <?= $this->auth->userId ?>,
+            content: finalContent,
+            answerToId: answerToId,
+            teacherId: assignment.teacherId,
+            teacherName: assignment.teacherName
+        }, function (res) {
+            if (res.status === 200) {
+                location.reload();
+                scrollToBottom();
+            }
+        }, function (error) {
+            alert(error ?? 'Tekkis viga serveriga suhtlemisel.');
+        });
     }
 
     function setGrade(grade) {
-        const criteria = getCriteriaList('#context-menu .criteria input[type="checkbox"]');
 
-        if (Object.values(criteria).every(Boolean)) {
-            ajax(`assignments/saveAssignmentGrade`, {
-                    assignmentId: assignment.assignmentId,
-                    studentId: currentStudentId,
-                    grade: grade,
-                    teacherName: assignment.teacherName,
-                    studentName: assignment.students[currentStudentId].studentName,
-                    teacherId: assignment.teacherId
-                },
-                function (res) {
-                    if (res.status === 200) {
-                        location.reload();
-                    } else {
-                        alert('Tekkis viga serveriga suhtlemisel.');
-                    }
+        ajax(`assignments/saveAssignmentGrade`, {
+                assignmentId: assignment.assignmentId,
+                studentId: currentStudentId,
+                grade: grade,
+                teacherName: assignment.teacherName,
+                studentName: assignment.students[currentStudentId].studentName,
+                teacherId: assignment.teacherId
+            },
+            function (res) {
+                if (res.status === 200) {
+                    location.reload();
                 }
-            );
-        } else {
-            alert('Kõik kriteeriumid pole täidetud!');
-        }
+            },
+            function (error) {
+                alert(error ?? 'Tekkis viga serveriga suhtlemisel.');
+            }
+        );
     }
 </script>
