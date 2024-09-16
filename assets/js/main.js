@@ -10,9 +10,9 @@ $(document).ready(function () {
     const $passwordInput = $("#userPassword");
 
     // For testing purposes
-    const userPersonalCodePattern = /^\d{11}$/;
+    // const userPersonalCodePattern = /^\d{11}$/;
 
-    // const userPersonalCodePattern = /^[1-6]\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{4}$/;
+    const userPersonalCodePattern = /^[1-6]\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{4}$/;
 
     let userPersonalCodeValue = "";
 
@@ -206,9 +206,9 @@ function validateControlNumber(code) {
         }
     }
     // for testing purposes
-    return true;
+    // return true;
 
-    // return mod === parseInt(code[10]);
+    return mod === parseInt(code[10]);
 }
 
 $('table.clickable-rows tr').on('click', function () {
