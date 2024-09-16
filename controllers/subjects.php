@@ -94,7 +94,7 @@ class subjects extends Controller
                         'assignmentName' => $row['assignmentName'],
                         'assignmentDueAt' => $row['assignmentDueAt'],
                         'badgeClass' => $daysRemaining >= 3 ? 'badge bg-light text-dark' :
-                            ($daysRemaining >= 0 ? 'badge bg-warning text-dark' : 'badge bg-danger'),
+                            ($daysRemaining > 0 ? 'badge bg-warning text-dark' : 'badge bg-danger'),
                         'daysRemaining' => $daysRemaining,
                         'assignmentStatuses' => []
                     ];

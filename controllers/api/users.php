@@ -34,7 +34,6 @@ class users extends Controller
             if ($existingUserId) {
                 Db::update('users', ['userName' => $fullName, 'groupId' => $groupId],'userId = ?', [$existingUserId]);
             } else {
-
                 Db::insert('users', [
                     'userName' => $fullName,
                     'userPersonalCode' => $personalCode,
