@@ -115,4 +115,73 @@ class assignments extends Controller
 
         stop(200, $assignmentId);
     }
+
+    function checkStudentsGrades()
+    {
+        $journalEntries = $_POST['journalEntries'];
+        $students = $_POST['students'];
+
+        // Ассоциативный массив, где ключ - journalEntryId
+        $mismatchedGradesInfo = [];
+
+        if (!empty($journalEntries)) {
+            foreach ($journalEntries as $entry) {
+                $assignmentId = Db::getOne(
+                    "SELECT assignmentId FROM kriit.assignments WHERE tahvelJournalEntryId = ?",
+                    [$entry['id']]
+                );
+
+                if (!$assignmentId) {
+                    continue;
+                }
+
+                foreach ($entry['journalStudentResults'] as $result) {
+                    $studentData = array_filter($students, function ($student) use ($result) {
+                        return $student['id'] === $result['studentId'];
+                    });
+
+                    if (empty($studentData)) {
+                        continue;
+                    }
+
+                    $studentData = reset($studentData);
+
+                    $userId = Db::getOne(
+                        "SELECT userId FROM kriit.users WHERE userName = ? AND groupId = (SELECT groupId FROM kriit.groups WHERE groupName = ?)",
+                        [$studentData['name'], $studentData['studentGroup']]
+                    );
+
+                    if (!$userId) {
+                        continue;
+                    }
+
+                    $tahvelGrade = str_replace("KUTSEHINDAMINE_", "", $result['gradeCode']);
+
+                    $currentGrade = Db::getOne(
+                        "SELECT userGrade FROM kriit.userAssignments WHERE userId = ? AND assignmentId = ?",
+                        [$userId, $assignmentId]
+                    );
+
+                    if ($tahvelGrade != $currentGrade) {
+                        if (!isset($mismatchedGradesInfo[$entry['id']])) {
+                            $mismatchedGradesInfo[$entry['id']] = [
+                                'assignmentName' => $entry['name'],
+                                'students' => []
+                            ];
+                        }
+
+                        $mismatchedGradesInfo[$entry['id']]['students'][] = [
+                            'studentId' => $studentData['id'],
+                            'studentName' => $studentData['name'],
+                            'kriitGrade' => $currentGrade,
+                            'tahvelGrade' => $tahvelGrade
+                        ];
+                    }
+                }
+            }
+        }
+
+        stop(200, ['mismatchedGradesInfo' => $mismatchedGradesInfo]);
+    }
+
 }
