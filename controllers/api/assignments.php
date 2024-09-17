@@ -53,7 +53,7 @@ class assignments extends Controller
 
         if (!$groupId) {
             if ($field === 'groupId') {
-                stop(400,"Invalid groupId provided");
+                stop(400, "Invalid groupId provided");
             } else {
                 $groupId = Db::insert('groups', ['groupName' => $_POST['groupName']]);
                 Activity::create(ACTIVITY_CREATE_GROUP, $this->auth->userId, $groupId);
@@ -66,18 +66,39 @@ class assignments extends Controller
 
         if (!$subjectId) {
             if ($field === 'subjectId') {
-                stop(400,"Invalid subjectId provided");
+                stop(400, "Invalid subjectId provided");
             } else {
                 $subjectId = Db::insert('subjects', ['subjectName' => $_POST['subjectName'], 'tahvelSubjectId' => $_POST['tahvelSubjectId'], 'groupId' => $groupId, 'teacherId' => $this->auth->userId]);
                 Activity::create(ACTIVITY_CREATE_SUBJECT, $this->auth->userId, $subjectId);
             }
-        }else{
+        } else {
             $subject = Db::getFirst("SELECT * FROM subjects WHERE subjectId = ?", [$subjectId]);
             if ($subject['teacherId'] !== $this->auth->userId) {
                 $otherTeacher = Db::getFirst("SELECT * FROM users WHERE userId = ?", [$subject['teacherId']]);
                 stop(403, 'Subject belongs to ' . $otherTeacher['userName']);
             }
         }
+
+        $teachers = $_POST['teachersData'];
+        if ($teachers) {
+            foreach ($teachers as $teacher) {
+                $existingTeacher = Db::getFirst("SELECT * FROM users WHERE userName = ?", [$teacher['teacherName']]);
+                if (!$existingTeacher) {
+                    $newTeacherId = Db::insert('users', ['userName' => $teacher['teacherName'], 'userIsTeacher' => 1, 'userIsAdmin' => 0, 'userPersonalCode' => $teacher['teacherPersonalCode'], 'userEmail' => $teacher['teacherEmail']]);
+                } else {
+                    $existingTeacher = $existingTeacher['userId'];
+
+                    if ($existingTeacher['userPersonalCode'] !== $teacher['teacherPersonalCode']) {
+                        Db::update('users', ['userPersonalCode' => $teacher['teacherPersonalCode']], "userId = ?", [$existingTeacher]);
+                    }
+                    if ($existingTeacher['userEmail'] !== $teacher['teacherEmail']) {
+                        Db::update('users', ['userEmail' => $teacher['teacherEmail']], "userId = ?", [$existingTeacher]);
+                    }
+                }
+
+            }
+        }
+
 
         //Check if assignment exists with given tahvelJournalEntryId
         $assignment = Db::getFirst("SELECT * FROM assignments WHERE tahvelJournalEntryId = ?", [$_POST['tahvelJournalEntryId']]);
