@@ -594,6 +594,10 @@ class assignments extends Controller
             GROUP BY subj.subjectId, subj.teacherId
         ', [$assignmentId]);
 
+        if (!$data){
+            return false;
+        }
+
         $data['groupIds'] = explode(',', $data['groupIds']);
 
         return ($this->auth->userIsAdmin || $this->auth->userId == $data['teacherId'] ||

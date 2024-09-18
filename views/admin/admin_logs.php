@@ -7,6 +7,10 @@ $activityLinks = [
         ACTIVITY_CREATE_SUBJECT => 'subjects',
         ACTIVITY_CREATE_ASSIGNMENT => 'assignments',
         ACTIVITY_UPDATE_ASSIGNMENT => 'assignments',
+        ACTIVITY_UPDATE_ASSIGNMENT_NAME => 'assignments',
+        ACTIVITY_UPDATE_ASSIGNMENT_DUE_AT => 'assignments',
+        ACTIVITY_UPDATE_ASSIGNMENT_INSTRUCTION => 'assignments',
+
 ];
 ?>
 
