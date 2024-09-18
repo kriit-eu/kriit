@@ -86,13 +86,13 @@ class assignments extends Controller
                 if (!$existingTeacher) {
                     $newTeacherId = Db::insert('users', ['userName' => $teacher['teacherName'], 'userIsTeacher' => 1, 'userIsAdmin' => 0, 'userPersonalCode' => $teacher['teacherPersonalCode'], 'userEmail' => $teacher['teacherEmail']]);
                 } else {
-                    $existingTeacher = $existingTeacher['userId'];
+                    $existingTeacherId = $existingTeacher['userId'];
 
                     if ($existingTeacher['userPersonalCode'] !== $teacher['teacherPersonalCode']) {
-                        Db::update('users', ['userPersonalCode' => $teacher['teacherPersonalCode']], "userId = ?", [$existingTeacher]);
+                        Db::update('users', ['userPersonalCode' => $teacher['teacherPersonalCode']], "userId = ?", [$existingTeacherId]);
                     }
                     if ($existingTeacher['userEmail'] !== $teacher['teacherEmail']) {
-                        Db::update('users', ['userEmail' => $teacher['teacherEmail']], "userId = ?", [$existingTeacher]);
+                        Db::update('users', ['userEmail' => $teacher['teacherEmail']], "userId = ?", [$existingTeacherId]);
                     }
                 }
 
@@ -121,6 +121,7 @@ class assignments extends Controller
 
             stop(200, $assignment['assignmentId']);
         }
+
 
         // Create assignment
         $data = [
