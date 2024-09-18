@@ -128,6 +128,19 @@ class admin extends Controller
         $this->averageExercisesDone = $userCount > 0 ? $totalSolvedTasks / $userCount : 0;
     }
 
+    function groups()
+    {
+        $this->groups = Db::getAll("
+            SELECT
+                groups.groupId,
+                groups.groupName
+            FROM groups
+            LEFT JOIN subjects
+                ON groups.groupId = subjects.groupId
+            GROUP BY groups.groupId, groups.groupName
+            ORDER BY groups.groupName");
+    }
+
 
     function users()
     {
@@ -154,27 +167,22 @@ class admin extends Controller
 
     function validatePersonalCode($personalCode)
     {
-        // Регулярное выражение для проверки формата isikukood
         $pattern = '/^[1-6]\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{4}$/';
 
-        // Проверка соответствия регулярному выражению
         if (!preg_match($pattern, $personalCode)) {
-            return false; // Не соответствует формату
+            return false;
         }
 
-        // Проверка контрольного числа
         $multipliers1 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 1];
         $multipliers2 = [3, 4, 5, 6, 7, 8, 9, 1, 2, 3];
         $sum = 0;
 
-        // Первая попытка проверки
         for ($i = 0; $i < 10; $i++) {
             $sum += intval($personalCode[$i]) * $multipliers1[$i];
         }
 
         $mod = $sum % 11;
 
-        // Если модуль 10, делаем вторую проверку
         if ($mod === 10) {
             $sum = 0;
             for ($i = 0; $i < 10; $i++) {
@@ -184,11 +192,10 @@ class admin extends Controller
             $mod = $sum % 11;
 
             if ($mod === 10) {
-                $mod = 0; // Если снова 10, контрольное число должно быть 0
+                $mod = 0;
             }
         }
 
-        // Проверка последнего символа isikukood
         return $mod === intval($personalCode[10]);
     }
 
