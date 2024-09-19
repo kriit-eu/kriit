@@ -1,6 +1,9 @@
 <?php require 'templates/partials/master_header.php'; ?>
 <body>
 <script src="assets/js/main.js?<?= COMMIT_HASH ?>"></script>
+<div class="text-end me-2 mt-2">
+    <button type="button" class="btn btn-secondary logout-btn" onclick="window.location.href = 'logout'">Logout</button>
+</div>
 
 <div class="container" id="container">
     <nav class="nav nav-pills flex-column flex-sm-row" style="margin-bottom: 4em">

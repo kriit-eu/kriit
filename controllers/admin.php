@@ -135,9 +135,6 @@ class admin extends Controller
                 groups.groupId,
                 groups.groupName
             FROM groups
-            LEFT JOIN subjects
-                ON groups.groupId = subjects.groupId
-            GROUP BY groups.groupId, groups.groupName
             ORDER BY groups.groupName");
     }
 
@@ -430,5 +427,85 @@ class admin extends Controller
         // Return the new exercise ID to the frontend
         stop(200, ['id' => $exerciseId]);
     }
+
+function AJAX_addGroup()
+{
+    if (empty($_POST['groupName'])) {
+        stop(400, 'Grupi nimi on kohustuslik');
+    }
+
+    $groupId = Db::insert('groups', ['groupName' => $_POST['groupName']]);
+    Activity::create(ACTIVITY_CREATE_GROUP, $this->auth->userId, $groupId);
+
+    if (!empty($_POST['students'])) {
+        try {
+            $students = json_decode($_POST['students'], true);
+        } catch (\Exception $e) {
+            stop(400, 'Invalid JSON format');
+        }
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            stop(400, 'Invalid JSON format');
+        }
+
+        foreach ($students as $student) {
+            if (!isset($student['studentId'], $student['userPersonalCode'], $student['name'])) {
+                stop(400, 'Missing student data');
+            }
+
+            $checkStudentNameAndPersonalCode = $this->checkStudentNameAndPersonalCode($student);
+            if ($checkStudentNameAndPersonalCode) {
+                stop($checkStudentNameAndPersonalCode['status'], $checkStudentNameAndPersonalCode['message']);
+            }
+
+            $tahvelStudentId = $student['studentId'];
+            $userPersonalCode = $student['userPersonalCode'];
+            $userName = addslashes($student['name']);
+
+            try {
+                Db::insert('users', [
+                    'userName' => $userName,
+                    'userPersonalCode' => $userPersonalCode,
+                    'tahvelStudentId' => $tahvelStudentId,
+                    'groupId' => $groupId
+                ]);
+            } catch (\Exception $e) {
+                stop(400, 'Õpilase lisamine ebaõnnestus: ' . $e->getMessage());
+            }
+        }
+    }
+
+    stop(200, ['groupId' => $groupId]);
+}
+
+    private function checkStudentNameAndPersonalCode($student): ?array
+    {
+        try {
+
+
+            if (empty($student['name'])) {
+                return ['status' => 400, 'message' => 'Nimi on kohustuslik'];
+            }
+            if (empty($student['userPersonalCode'])) {
+                return ['status' => 400, 'message' => "Isikukood on kohustuslik"];
+            }
+
+            $userPersonalCode = $student['userPersonalCode'];
+
+            if (!$this->validatePersonalCode($userPersonalCode)) {
+                return ['status' => 400, 'message' => "Isikukood ei vasta nõuetele"];
+            }
+
+            if (User::get(["userPersonalCode = '$userPersonalCode'"])) {
+                return ['status' => 409, 'message' => "Kandidaat selle isikukoodiga on juba olemas"];
+            }
+        } catch (\Exception $e) {
+            return ['status' => 400, 'message' => 'Õpilase lisamine ebaõnnestus: ' . $e->getMessage()];
+        }
+
+        return null;
+
+    }
+
 
 }

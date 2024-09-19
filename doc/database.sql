@@ -1,3 +1,4 @@
+/*!999999\- enable the sandbox mode */ 
 -- MariaDB dump 10.19  Distrib 10.11.8-MariaDB, for osx10.19 (arm64)
 --
 -- Host: 127.0.0.1    Database: kriit
@@ -69,7 +70,7 @@ CREATE TABLE `activityLog` (
   `activityId` int unsigned NOT NULL COMMENT 'Autocreated',
   `id` int unsigned DEFAULT NULL,
   PRIMARY KEY (`activityLogId`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=417 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -78,6 +79,57 @@ CREATE TABLE `activityLog` (
 
 LOCK TABLES `activityLog` WRITE;
 /*!40000 ALTER TABLE `activityLog` DISABLE KEYS */;
+INSERT INTO `activityLog` VALUES
+('2024-09-18 15:38:13',367,1,9,9),
+('2024-09-18 15:38:13',368,1,10,9),
+('2024-09-18 15:38:13',369,1,11,20),
+('2024-09-18 15:43:09',370,1,11,21),
+('2024-09-18 15:45:53',371,1,11,22),
+('2024-09-18 15:46:34',372,1,12,22),
+('2024-09-18 15:46:34',373,1,13,22),
+('2024-09-18 15:46:34',374,1,15,22),
+('2024-09-18 15:46:34',375,1,14,22),
+('2024-09-18 15:47:57',376,1,12,22),
+('2024-09-18 15:47:57',377,1,13,22),
+('2024-09-18 15:47:57',378,1,15,22),
+('2024-09-18 15:49:30',379,1,12,22),
+('2024-09-18 15:49:30',380,1,14,22),
+('2024-09-19 10:07:00',381,1,1,NULL),
+('2024-09-19 12:34:57',382,1,2,NULL),
+('2024-09-19 12:35:13',383,1,1,NULL),
+('2024-09-19 12:36:12',384,1,2,NULL),
+('2024-09-19 12:36:25',385,1,1,NULL),
+('2024-09-19 13:14:26',386,1,9,10),
+('2024-09-19 13:16:11',387,1,9,11),
+('2024-09-19 13:19:45',388,1,9,12),
+('2024-09-19 13:21:45',389,1,9,13),
+('2024-09-19 13:23:13',390,1,9,14),
+('2024-09-19 13:25:17',391,1,9,15),
+('2024-09-19 13:27:16',392,1,9,16),
+('2024-09-19 13:30:21',393,1,9,17),
+('2024-09-19 13:36:23',394,1,9,18),
+('2024-09-19 13:37:46',395,1,9,19),
+('2024-09-19 13:38:52',396,1,9,20),
+('2024-09-19 13:39:19',397,1,9,21),
+('2024-09-19 13:40:15',398,1,9,22),
+('2024-09-19 13:42:31',399,1,9,23),
+('2024-09-19 13:42:42',400,1,9,24),
+('2024-09-19 13:45:40',401,1,9,25),
+('2024-09-19 13:46:31',402,1,9,26),
+('2024-09-19 13:49:39',403,1,9,27),
+('2024-09-19 13:50:53',404,1,9,28),
+('2024-09-19 13:51:06',405,1,9,29),
+('2024-09-19 13:52:46',406,1,9,30),
+('2024-09-19 13:53:39',407,1,9,31),
+('2024-09-19 13:53:57',408,1,9,32),
+('2024-09-19 13:54:22',409,1,9,33),
+('2024-09-19 13:54:54',410,1,9,34),
+('2024-09-19 14:00:15',411,1,9,35),
+('2024-09-19 14:30:19',412,1,9,36),
+('2024-09-19 14:31:36',413,1,9,37),
+('2024-09-19 14:32:03',414,1,9,38),
+('2024-09-19 14:33:52',415,1,9,39),
+('2024-09-19 14:35:48',416,1,9,40);
 /*!40000 ALTER TABLE `activityLog` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -125,7 +177,7 @@ CREATE TABLE `assignments` (
   PRIMARY KEY (`assignmentId`),
   KEY `assignments_subjectId_fk` (`subjectId`),
   CONSTRAINT `assignments_subjectId_fk` FOREIGN KEY (`subjectId`) REFERENCES `subjects` (`subjectId`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -134,6 +186,10 @@ CREATE TABLE `assignments` (
 
 LOCK TABLES `assignments` WRITE;
 /*!40000 ALTER TABLE `assignments` DISABLE KEYS */;
+INSERT INTO `assignments` VALUES
+(20,'Add New Task For Kriit','Add New Task For Kriit',9,2847297,'2024-09-25'),
+(21,'Trynge Add to Existing','Trynge Add to Existing',9,2847244,'2024-09-26'),
+(22,'iiiiiiiiiiiiiiiii','iiiiiiiiiiiiiiiii',9,2847239,'2024-09-19');
 /*!40000 ALTER TABLE `assignments` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -151,7 +207,7 @@ CREATE TABLE `criteria` (
   PRIMARY KEY (`criterionId`),
   KEY `criteria_assignments_assignmentId_fk` (`assignmentId`),
   CONSTRAINT `criteria_assignments_assignmentId_fk` FOREIGN KEY (`assignmentId`) REFERENCES `assignments` (`assignmentId`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=42 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -178,9 +234,7 @@ CREATE TABLE `deployments` (
   `deploymentCommitAuthor` varchar(255) DEFAULT NULL,
   `deploymentCommitSha` varchar(256) NOT NULL,
   PRIMARY KEY (`deploymentId`)
-) ENGINE = InnoDB
-  AUTO_INCREMENT = 47
-  DEFAULT CHARSET = utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=57 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -234,7 +288,17 @@ INSERT INTO `deployments` VALUES
 (43,'2024-08-14 10:44:59','2024-08-14 10:46:08','Fix Admin button po','henno.taht@gmail.com','3837864'),
 (44,'2024-08-14 10:51:02','2024-08-14 10:51:30','Optimize query for ','Violetta Zakorzhevskaya','44b01e8'),
 (45,'2024-08-14 12:00:50','2024-08-14 12:15:03','Refine user ranking','Violetta Zakorzhevskaya','5441b81'),
-(46, '2024-08-14 14:11:35', '2024-08-14 14:29:55', 'Enhance the user ra', 'Violetta Zakorzhevskaya', '84b9b5f');
+(46,'2024-08-14 14:11:35','2024-08-14 14:29:55','Enhance the user ra','Violetta Zakorzhevskaya','84b9b5f'),
+(47,'2024-09-16 12:18:06','2024-09-16 14:16:47','Refactor and optimi','Violetta Zakorzhevskaya','b134eba'),
+(48,'2024-09-16 17:54:19','2024-09-17 10:00:48','## Refaktoreeritud ','Violetta Zakorzhevskaya','b0337d8'),
+(49,'2024-09-16 12:18:06','2024-09-17 13:09:26','Refactor and optimi','Violetta Zakorzhevskaya','b134eba'),
+(50,'2024-09-17 12:48:28','2024-09-17 13:18:12','## Refaktoreeritud ','Violetta Zakorzhevskaya','75784d9'),
+(51,'2024-09-17 16:53:34','2024-09-17 17:13:32','## Täiendatud üle','Violetta Zakorzhevskaya','d7d1468'),
+(52,'2024-09-16 12:18:06','2024-09-18 11:45:06','Refactor and optimi','Violetta Zakorzhevskaya','b134eba'),
+(53,'2024-09-16 12:18:06','2024-09-18 11:45:06','Refactor and optimi','Violetta Zakorzhevskaya','b134eba'),
+(54,'2024-09-09 13:47:17','2024-09-18 16:21:03','Lisatud gruppide ha','Violetta Zakorzhevskaya','13f7b5e'),
+(55,'2024-09-18 16:00:48','2024-09-18 16:40:34','As a teacher I can ','Violetta Zakorzhevskaya','0f1c14e'),
+(56,'2024-09-18 16:41:45','2024-09-19 10:06:49','As an admin I can l','Violetta Zakorzhevskaya','9b5f436');
 /*!40000 ALTER TABLE `deployments` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -306,7 +370,7 @@ CREATE TABLE `groups` (
   `groupId` int unsigned NOT NULL AUTO_INCREMENT COMMENT 'Autocreated',
   `groupName` varchar(50) NOT NULL COMMENT 'Autocreated',
   PRIMARY KEY (`groupId`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=41 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -315,6 +379,8 @@ CREATE TABLE `groups` (
 
 LOCK TABLES `groups` WRITE;
 /*!40000 ALTER TABLE `groups` DISABLE KEYS */;
+INSERT INTO `groups` VALUES
+(9,'TAK22');
 /*!40000 ALTER TABLE `groups` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -337,7 +403,7 @@ CREATE TABLE `messages` (
   KEY `messages_users_userId_fk` (`userId`),
   CONSTRAINT `messages_assignments_assignmentId_fk` FOREIGN KEY (`assignmentId`) REFERENCES `assignments` (`assignmentId`),
   CONSTRAINT `messages_users_userId_fk` FOREIGN KEY (`userId`) REFERENCES `users` (`userId`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=174 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -346,6 +412,16 @@ CREATE TABLE `messages` (
 
 LOCK TABLES `messages` WRITE;
 /*!40000 ALTER TABLE `messages` DISABLE KEYS */;
+INSERT INTO `messages` VALUES
+(165,'Kati Maasikas lõi ülesande \'Add New Task For Kriit\'.',20,1,'2024-09-18 15:38:13',1),
+(166,'Kati Maasikas lõi ülesande \'Trynge Add to Existing\'.',21,1,'2024-09-18 15:43:09',1),
+(167,'Kati Maasikas lõi ülesande \'hdjsfiheufwefuwebefw\'.',22,1,'2024-09-18 15:45:53',1),
+(168,'Kati Maasikas muutis ülesande nimeks \'ouerfruerferfehdjsfiheufwefuwebefw\'.',22,1,'2024-09-18 15:46:34',1),
+(169,'Kati Maasikas muutis ülesande juhendiks \'ouerfruerferfehdjsfiheufwefuwebefw\'.',22,1,'2024-09-18 15:46:34',1),
+(170,'Kati Maasikas muutis ülesande tähtajaks \'26.09.2024\'.',22,1,'2024-09-18 15:46:34',1),
+(171,'Kati Maasikas muutis ülesande nimeks \'iiiiiiiiiiiiiiiii\'.',22,1,'2024-09-18 15:47:57',1),
+(172,'Kati Maasikas muutis ülesande juhendiks \'iiiiiiiiiiiiiiiii\'.',22,1,'2024-09-18 15:47:57',1),
+(173,'Kati Maasikas muutis ülesande tähtajaks \'19.09.2024\'.',22,1,'2024-09-18 15:49:30',1);
 /*!40000 ALTER TABLE `messages` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -369,8 +445,9 @@ CREATE TABLE `settings` (
 
 LOCK TABLES `settings` WRITE;
 /*!40000 ALTER TABLE `settings` DISABLE KEYS */;
-INSERT INTO `settings` VALUES ('projectVersion', '84b9b5f'),
-                              ('translationUpdateLastRun', '2024-08-14 14:29:55');
+INSERT INTO `settings` VALUES
+('projectVersion','9b5f436'),
+('translationUpdateLastRun','2024-09-19 10:06:49');
 /*!40000 ALTER TABLE `settings` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -392,7 +469,7 @@ CREATE TABLE `subjects` (
   KEY `subjects_users_userId_fk` (`teacherId`),
   CONSTRAINT `subjects_groups_groupId_fk` FOREIGN KEY (`groupId`) REFERENCES `groups` (`groupId`),
   CONSTRAINT `subjects_users_userId_fk` FOREIGN KEY (`teacherId`) REFERENCES `users` (`userId`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -401,6 +478,8 @@ CREATE TABLE `subjects` (
 
 LOCK TABLES `subjects` WRITE;
 /*!40000 ALTER TABLE `subjects` DISABLE KEYS */;
+INSERT INTO `subjects` VALUES
+(9,'Programmeerimismustrid',301579,9,1);
 /*!40000 ALTER TABLE `subjects` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -550,7 +629,7 @@ CREATE TABLE `translations` (
   `TranslationSource` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`translationId`),
   UNIQUE KEY `translations_translationPhrase_uindex` (`translationPhrase`)
-) ENGINE=InnoDB AUTO_INCREMENT=44 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=51 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -582,7 +661,14 @@ INSERT INTO `translations` VALUES
 (40,'logged in','dynamic','activities.activityDescription'),
 (41,'logged out','dynamic','activities.activityDescription'),
 (42,'user has solved exercise','dynamic','activities.activityDescription'),
-(43,'user has started the timer','dynamic','activities.activityDescription');
+(43,'user has started the timer','dynamic','activities.activityDescription'),
+(44,'updated assignment \'due at\' date','dynamic','activities.activityDescription'),
+(45,'updated assignment','dynamic','activities.activityDescription'),
+(46,'updated assignment instruction','dynamic','activities.activityDescription'),
+(47,'updated assignment name','dynamic','activities.activityDescription'),
+(48,'created assignment','dynamic','activities.activityDescription'),
+(49,'created subject','dynamic','activities.activityDescription'),
+(50,'created group','dynamic','activities.activityDescription');
 /*!40000 ALTER TABLE `translations` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -752,10 +838,11 @@ CREATE TABLE `users` (
   `groupId` int unsigned DEFAULT NULL,
   `userIsTeacher` tinyint DEFAULT 0,
   `userEmail` varchar(191) DEFAULT NULL,
+  `tahvelStudentId` int unsigned DEFAULT NULL,
   PRIMARY KEY (`userId`),
   KEY `users_groups_groupId_fk` (`groupId`),
   CONSTRAINT `users_groups_groupId_fk` FOREIGN KEY (`groupId`) REFERENCES `groups` (`groupId`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -765,8 +852,18 @@ CREATE TABLE `users` (
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
 INSERT INTO `users` VALUES
-(1,'Kati Maasikas','41111111115',1,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo',NULL,1,NULL),
-(2,'Mati Vaarikas','31111111114',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo2',NULL,0,NULL);
+(1,'Kati Maasikas','41111111115',1,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo',NULL,1,NULL,NULL),
+(2,'Mati Vaarikas','31111111114',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo2',NULL,0,NULL,NULL),
+(15,'Kaisa Eesmaa','48408276572',0,'',0,NULL,NULL,NULL,NULL,1,'fff@asdfg.bb',NULL),
+(16,'Urmas Muldmaa','38102266013',0,'',0,NULL,NULL,NULL,NULL,1,'fff@asdfg.bb',NULL),
+(17,'Qiõsp Akiu','94932214723',0,'',0,NULL,NULL,NULL,9,0,'fff@asdfg.bb',NULL),
+(18,'Wxtketfk Ftkef','94932222295',0,'',0,NULL,NULL,NULL,9,0,'fff@asdfg.bb',NULL),
+(19,'Nöõmü Hvgfüe','94932250360',0,'',0,NULL,NULL,NULL,9,0,'fff@asdfg.bb',NULL),
+(20,'Xüpxn Lifbut','94932250345',0,'',0,NULL,NULL,NULL,9,0,'fff@asdfg.bb',NULL),
+(21,'Kõtqiv Nüfhvdik','94932250474',0,'',0,NULL,NULL,NULL,9,0,'fff@asdfg.bb',NULL),
+(22,'Ööbüb Ushxj','94932245772',0,'',0,NULL,NULL,NULL,9,0,'fff@asdfg.bb',NULL),
+(23,'Lfclyp Üpxtpwj','94932250494',0,'',0,NULL,NULL,NULL,9,0,'fff@asdfg.bb',NULL),
+(24,'Okuüjü Xdnmnh','94932250519',0,'',0,NULL,NULL,NULL,9,0,'fff@asdfg.bb',NULL);
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -779,4 +876,4 @@ UNLOCK TABLES;
 /*!50503 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-09-18 15:37:15
+-- Dump completed on 2024-09-19 14:39:48
