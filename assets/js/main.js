@@ -17,7 +17,7 @@ $(document).ready(function () {
     let userPersonalCodeValue = "";
 
     function resetPasswordHelp() {
-        $userPasswordHelp.text("Sisesta oma parool").removeClass("text-danger text-success");
+        $userPasswordHelp.text("Sisesta parool").removeClass("text-danger text-success");
     }
     function showError(message) {
         $userPersonalCodeHelp.text(message).addClass("text-danger").removeClass("text-success");
@@ -42,7 +42,7 @@ $(document).ready(function () {
         }
         if (response.data.user.userIsAdmin || response.data.user.userIsTeacher || response.data.user.groupId) {
             if (!response.data.user.isPasswordSet) {
-                showSuccess($userPasswordHelp, "Isikukood on õige. Palun sisesta oma uus parool.");
+                showSuccess($userPasswordHelp, "Isikukood on õige. Palun sisesta uus parool.");
             }
             $passwordField.show();
         } else {
@@ -65,8 +65,7 @@ $(document).ready(function () {
                 $submitButton.prop("disabled", true);
             }
         } else {
-            // Устанавливаем текст в зависимости от контекста
-            const defaultText = context === 'admin' ? "Sisesta administraatori isikukood" :
+            const defaultText = context === 'admin' ? "Sisesta kasutaja isikukood" :
                 (context === 'applicant' ? "Sisesta kandidaadi isikukood" : "Sisesta enda isikukood");
             $userPersonalCodeHelp.text(defaultText).removeClass("text-danger text-success");
             $passwordField.hide();

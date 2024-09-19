@@ -10,6 +10,9 @@ $activityLinks = [
         ACTIVITY_UPDATE_ASSIGNMENT_NAME => 'assignments',
         ACTIVITY_UPDATE_ASSIGNMENT_DUE_AT => 'assignments',
         ACTIVITY_UPDATE_ASSIGNMENT_INSTRUCTION => 'assignments',
+        ACTIVITY_ADD_USER => 'users',
+        ACTIVITY_UPDATE_USER => 'users',
+        ACTIVITY_DELETE_USER => 'users'
 
 ];
 ?>

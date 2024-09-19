@@ -95,7 +95,7 @@ class Auth
             $this->show_login(["Sellelt IP aadressilt ($_SERVER[REMOTE_ADDR]) pole teil õigust logida sisse"]);
         }
 
-        if ($user['groupId'] && empty($user['userPassword'])) {
+        if (($user['groupId']|| $user['userIsTeacher']) && empty($user['userPassword'])) {
             $user['userPassword'] = password_hash($_POST['userPassword'], PASSWORD_DEFAULT);
             Db::update('users', $user, 'userId = ?', [$user['userId']]);
         }
