@@ -110,7 +110,21 @@ class assignments extends Controller
             $isLowGrade = $grade == 'MA' || (is_numeric($grade) && intval($grade) < 3);
             $isEvaluated = isset($row['assignmentStatusName']) && $row['assignmentStatusName'] === 'Hinnatud';
 
-            $assignment['students'][$studentId]['isDisabledStudentActionButton'] = ($isEvaluated && !$isLowGrade) ? 'disabled' : '';
+
+            $isAllCriteriaCompleted = true;
+            foreach ($assignment['students'][$studentId]['userDoneCriteria'] as $criterion) {
+                if (!$criterion['completed']) {
+                    $isAllCriteriaCompleted = false;
+                    break;
+                }
+            }
+
+
+            $assignment['students'][$studentId]['isDisabledStudentActionButton'] =
+                (($isEvaluated && !$isLowGrade) || (!$isEvaluated && !$isAllCriteriaCompleted)) ? 'disabled' : '';
+
+            $assignment['students'][$studentId]['isAllCriteriaCompleted'] = $isAllCriteriaCompleted;
+
 
             $class = '';
 
@@ -552,15 +566,30 @@ class assignments extends Controller
             return ['code' => 400, 'message' => 'Sisestatud link pole kehtiv. Palun sisestage kehtiv link.'];
         }
 
+        $parsedUrl = parse_url($solutionUrl);
+        $host = $parsedUrl['host'] ?? '';
+        $path = $parsedUrl['path'] ?? '';
+
+        $allowedHosts = ['bitbucket.org', 'github.com', 'docs.google.com'];
+
+        if (!in_array($host, $allowedHosts)) {
+            return ['code' => 400, 'message' => 'Sisestatud link peab kuuluma kas Bitbucket, GitHub või Google Docs keskkonda.'];
+        }
+
+        if ($host === 'github.com') {
+            if (preg_match('/\/commit\/[0-9a-fA-F]{40}/', $path) !== 1) {
+                return ['code' => 400, 'message' => 'GitHubi URL peab viitama konkreetsele commitile.'];
+            }
+        }
+
         $headers = @get_headers($solutionUrl);
         if ($headers && strpos($headers[0], '200')) {
             return ['code' => 200, 'message' => 'Link on kättesaadav'];
-
         } else {
             return ['code' => 400, 'message' => 'Sisestatud link pole kättesaadav. Kontrollige, kas see on privaatne või vale link.'];
         }
-
     }
+
 
     private function checkIfStudentHasPositiveGrade($studentId, $assignmentId): bool
     {
@@ -596,7 +625,7 @@ class assignments extends Controller
             GROUP BY subj.subjectId, subj.teacherId
         ', [$assignmentId]);
 
-        if (!$data){
+        if (!$data) {
             return false;
         }
 

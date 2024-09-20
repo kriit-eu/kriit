@@ -99,10 +99,19 @@
 
         <?php if ($isStudent): ?>
             <div class="d-flex justify-content-end mt-3">
+                <span <?php if ($assignment['students'][$this->auth->userId]['isDisabledStudentActionButton'] === 'disabled'): ?>
+                            data-bs-toggle="tooltip" title="
+                            <?php if ($assignment['students'][$this->auth->userId]['isAllCriteriaCompleted']): ?>
+                            Ülesanne on juba hinnatud
+                            <?php else: ?>
+                            Kõik kriteeriumid pole sul veel märgitud valmis
+                            <?php endif; ?>"
+                <?php endif; ?>>
                 <button class="btn btn-primary"
                         onclick="openStudentModal(true, <?= $this->auth->userId ?>)" <?= $assignment['students'][$this->auth->userId]['isDisabledStudentActionButton'] ?>>
                     <?= $assignment['students'][$this->auth->userId]['studentActionButtonName'] ?>
                 </button>
+                </span>
             </div>
         <?php else: ?>
             <div class="d-flex justify-content-end mt-3">
@@ -448,13 +457,20 @@
     let newAddedCriteria = [];
 
     document.addEventListener('DOMContentLoaded', function () {
-        scrollToBottom();
-        [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-            .map(el => new bootstrap.Tooltip(el));
+        initializeTooltips();
     });
 
+    function initializeTooltips() {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+        console.log(tooltipList);
+    }
+
+
     document.getElementById('requiredCriteria').addEventListener('change', function (event) {
-        if (event.target && event.target.type === 'checkbox' && assignment.students[<?=$this->auth->userId?>].isDisabledStudentActionButton === '') {
+        if (event.target && event.target.type === 'checkbox') {
             document.querySelector('#studentCriteriaForm .btn-primary').hidden = false;
         }
     });
@@ -588,11 +604,6 @@
             submitButton.textContent = student.studentActionButtonName;
             submitButton.disabled = true; // Initially disable the "Esita" button
 
-            document.getElementById('checkboxesContainer').addEventListener('change', function (event) {
-                if (event.target && event.target.type === 'checkbox') {
-                    updateButtonState();
-                }
-            });
 
             solutionInput.addEventListener('input', updateSubmitButtonState);
 
@@ -691,7 +702,7 @@
 
             criteriaContainer.innerHTML += `
             <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="criterion_${criteriaId}" ${isCompleted ? 'checked' : ''}>
+                <input class="form-check-input" type="checkbox" id="criterion_${criteriaId}" ${isCompleted ? 'checked' : ''} disabled>
                 <label class="form-check-label" for="criterion_${criteriaId}">
                     ${criterion.criteriaName}
                 </label>
