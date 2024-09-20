@@ -191,5 +191,74 @@ class assignments extends Controller
 
     }
 
+    function checkStudentsGradesInfo()
+    {
+        $journalEntries = $_POST['journalEntries'];
+        $students = $_POST['students'];
+        $mismatchedGradesInfo = [];
+
+        if (empty($journalEntries)) {
+            stop(200, ['mismatchedGradesInfo' => $mismatchedGradesInfo]);
+        }
+
+        foreach ($journalEntries as $entry) {
+            $assignmentId = Db::getOne(
+                "SELECT assignmentId FROM kriit.assignments WHERE tahvelJournalEntryId = ?",
+                [$entry['id']]
+            );
+
+            if (!$assignmentId) continue;
+
+            foreach ($students as $studentData) {
+                $result = array_filter($entry['journalStudentResults'], fn($res) => $res['studentId'] === $studentData['id']);
+                $result = !empty($result) ? reset($result) : null;
+
+                $assignmentData = Db::getFirst(
+                    "SELECT ua.userGrade, ua.comment
+                 FROM kriit.users u
+                 JOIN kriit.groups g ON u.groupId = g.groupId
+                 JOIN kriit.userAssignments ua ON u.userId = ua.userId
+                 WHERE u.userName = ? AND g.groupName = ? AND ua.assignmentId = ?",
+                    [$studentData['name'], $studentData['studentGroup'], $assignmentId]
+                );
+
+                if (!$assignmentData) continue;
+
+                $currentGrade = $assignmentData['userGrade'] ?? null;
+                $currentComment = $assignmentData['comment'] ?? '';
+
+                $tahvelGrade = $result ? str_replace("KUTSEHINDAMINE_", "", $result['gradeCode']) : "puudub";
+                $tahvelComment = $result['addInfo'] ?? '';
+
+                if ($tahvelGrade !== $currentGrade || $tahvelComment !== $currentComment) {
+                    if (!isset($mismatchedGradesInfo[$entry['id']])) {
+                        $mismatchedGradesInfo[$entry['id']] = [
+                            'assignmentName' => $entry['name'],
+                            'students' => []
+                        ];
+                    }
+
+                    $studentInfo = [
+                        'studentId' => $studentData['id'],
+                        'studentName' => $studentData['name'],
+                    ];
+
+                    if ($tahvelGrade !== $currentGrade) {
+                        $studentInfo['kriitGrade'] = $currentGrade;
+                        $studentInfo['tahvelGrade'] = $tahvelGrade;
+                    }
+
+                    if ($tahvelComment !== $currentComment) {
+                        $studentInfo['kriitComment'] = $currentComment;
+                        $studentInfo['tahvelComment'] = $tahvelComment;
+                    }
+
+                    $mismatchedGradesInfo[$entry['id']]['students'][] = $studentInfo;
+                }
+            }
+        }
+
+        stop(200, ['mismatchedGradesInfo' => $mismatchedGradesInfo]);
+    }
 
 }

@@ -33,11 +33,13 @@ class users extends Controller
             $existingUser = Db::getFirst("SELECT userId, userName FROM users WHERE userPersonalCode = ?", [$personalCode]);
 
             if ($existingUser) {
+
                 Db::update('users', ['userName' => $fullName, 'groupId' => $groupId],'userId = ?', [$existingUser['userId']]);
                 if ($existingUser['userName'] != $fullName) {
                     Activity::create(ACTIVITY_UPDATE_USER, $this->auth->userId, $existingUser['userId'], "Name changed from {$existingUser['userName']} to $fullName");
                 }
-                if ($existingUser['groupId'] != $groupId) {
+
+                if (!empty($existingUser['groupId']) && $existingUser['groupId'] != $groupId) {
                     Activity::create(ACTIVITY_UPDATE_USER, $this->auth->userId, $existingUser['userId'], "Group changed from {$existingUser['groupId']} to $groupId");
                 }
 

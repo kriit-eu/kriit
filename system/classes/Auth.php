@@ -23,7 +23,7 @@ class Auth
             $user = Db::getFirst("SELECT * FROM users WHERE userApiKey = ?", [$api_key]);
 
             if (empty($user) || $user['userApiKey'] !== $api_key) {
-                stop(401, 'Unauthorized');
+                stop(403, 'API key is invalid');
             }
 
             $_SESSION['userId'] = $user['userId'];
