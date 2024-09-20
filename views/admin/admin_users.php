@@ -16,6 +16,7 @@
                     <table class="table table-striped table-bordered table-searchable">
                         <thead>
                         <tr>
+                            <th class="text-center">#</th>
                             <th>Nimi</th>
                             <th>Isikukood</th>
                             <th class="text-center">Grupp</th>
@@ -26,6 +27,7 @@
                         <tbody>
                         <?php foreach ($users as $user): ?>
                             <tr>
+                                <td class="text-center"><?= $user['userId'] ?></td>
                                 <td><?= $user['userName'] ?></td>
                                 <td><?= $user['userPersonalCode'] ?></td>
                                 <td class="text-center"><?= $user['groupName'] ?></td>
@@ -209,7 +211,6 @@
                             }
 
                             await ajax(url, data, function (response) {
-                                alert('Andmed edukalt salvestatud!');
                                 $('#addUserModal').modal('hide');
                                 location.reload();
                             }, function (error) {
@@ -222,7 +223,6 @@
                             const userId = $(this).data('id');
                             if (confirm('Kas oled kindel, et soovid kasutaja kustutada?')) {
                                 await ajax('admin/deleteUser', {userId: userId}, function (response) {
-                    alert('Kasutaja edukalt kustutatud!');
                                     location.reload();
                                 }, function (error) {
                                     alert('Viga: ' + error);

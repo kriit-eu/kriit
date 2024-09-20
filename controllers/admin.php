@@ -218,7 +218,7 @@ class admin extends Controller
         }
 
         if (User::get(["userPersonalCode = '$userPersonalCode'"])) {
-            stop(409, "Administraator selle isikukoodiga on juba olemas");
+            stop(409, "Kasutaja selle isikukoodiga on juba olemas");
         }
 
         $userName = addslashes($_POST['userName']);
@@ -279,22 +279,66 @@ class admin extends Controller
             stop(400, "Isikukood ei vasta nõuetele");
         }
 
-        $existingUser = User::get(["userPersonalCode = '$userPersonalCode'"]);
-        if ($existingUser && isset($existingUser['userId']) && $existingUser['userId'] != $userId) {
-            stop(409, "Administraator selle isikukoodiga on juba olemas");
+        $existingUser = Db::getFirst("SELECT * FROM users WHERE userId = $userId");
+        if (!$existingUser) {
+            stop(409, "Kasutajat ei leitud");
         }
 
-        // Remove empty password from $_POST or hash it
+        if ($existingUser && isset($existingUser['userId']) && $existingUser['userId'] != $userId) {
+            stop(409, "Kasutaja selle isikukoodiga on juba olemas");
+        }
+
         if (empty($_POST['userPassword'])) {
             unset($_POST['userPassword']);
         } else {
             $_POST['userPassword'] = password_hash($_POST['userPassword'], PASSWORD_DEFAULT);
         }
 
-        $data = $this->getUserDataForAddingOrUpdating();
+        $updatedUserData = $this->getUserDataForAddingOrUpdating();
 
-        User::edit($userId, $data);
-        Activity::create(ACTIVITY_UPDATE_USER, $this->auth->userId, $userId);
+        User::edit($userId, $updatedUserData);
+
+        if (!empty($updatedUserData['userPassword'])) {
+            Activity::create(ACTIVITY_UPDATE_USER, $this->auth->userId, $userId, "Password changed");
+        }
+
+        if ($existingUser['userName'] != $updatedUserData['userName']) {
+            Activity::create(ACTIVITY_UPDATE_USER, $this->auth->userId, $userId, "Name changed from {$existingUser['userName']} to {$updatedUserData['userName']}");
+        }
+
+        if (
+            (empty($existingUser['groupId']) && !empty($updatedUserData['groupId'])) ||
+            (!empty($existingUser['groupId']) && empty($updatedUserData['groupId'])) ||
+            (!empty($existingUser['groupId']) && !empty($updatedUserData['groupId']) && $existingUser['groupId'] != $updatedUserData['groupId'])
+        ) {
+            $oldGroupName = $newGroupName = null;
+            if (!empty($existingUser['groupId'])) {
+                $oldGroupName = Db::getFirst("SELECT groupName FROM groups WHERE groupId = {$existingUser['groupId']}")['groupName'] ?? 'No Group';
+            } else {
+                $oldGroupName = 'No Group';
+            }
+
+            if (!empty($updatedUserData['groupId'])) {
+                $newGroupName = Db::getFirst("SELECT groupName FROM groups WHERE groupId = {$updatedUserData['groupId']}")['groupName'] ?? 'No Group';
+            } else {
+                $newGroupName = 'No Group';
+            }
+
+            $changeDescription = ($oldGroupName === 'No Group' && $newGroupName !== 'No Group') ? "Added to group $newGroupName" :
+                (($oldGroupName !== 'No Group' && $newGroupName === 'No Group') ? "Removed from group $oldGroupName" :
+                    (($oldGroupName !== 'No Group' && $newGroupName !== 'No Group' && $oldGroupName !== $newGroupName) ? "Moved from group $oldGroupName to group $newGroupName" : null));
+
+
+            Activity::create(ACTIVITY_UPDATE_USER, $this->auth->userId, $userId, $changeDescription);
+        }
+
+        if ($existingUser['userIsAdmin'] && !empty($updatedUserData['userIsAdmin']) || !empty($existingUser['userIsAdmin']) && $existingUser['userIsAdmin'] != $updatedUserData['userIsAdmin']) {
+            Activity::create(ACTIVITY_UPDATE_USER, $this->auth->userId, $userId, "Admin status changed from {$existingUser['userIsAdmin']} to {$updatedUserData['userIsAdmin']}");
+        }
+
+        if ($existingUser['userPersonalCode'] != $updatedUserData['userPersonalCode']) {
+            Activity::create(ACTIVITY_UPDATE_USER, $this->auth->userId, $userId, "Personal code changed from {$existingUser['userPersonalCode']} to {$updatedUserData['userPersonalCode']}");
+        }
 
         stop(200, ['userId' => $userId]);
     }
@@ -370,18 +414,12 @@ class admin extends Controller
         $data = [
             'userName' => $_POST['userName'],
             'userPersonalCode' => $_POST['userPersonalCode'],
+            'groupId' => empty($_POST['groupId']) ? null : $_POST['groupId'],
+            'userIsAdmin' => empty($_POST['userIsAdmin']) ? 0 : 1
         ];
 
         if (!empty($_POST['userPassword'])) {
             $data['userPassword'] = $_POST['userPassword'];
-        }
-
-        if (!empty($_POST['groupId'])) {
-            $data['groupId'] = $_POST['groupId'];
-        }
-
-        if (!empty($_POST['userIsAdmin'])) {
-            $data['userIsAdmin'] = 1;
         }
 
         return $data;

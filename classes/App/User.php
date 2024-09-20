@@ -29,7 +29,7 @@ class User
         $criteria = $criteria ? 'AND ' . implode("AND", $criteria) : '';
         $orderBy = $orderBy ? $orderBy : 'userName';
         return Db::getAll("
-            SELECT userId, userName, userPersonalCode, userIsAdmin
+            SELECT userId, userName, userPersonalCode, userIsAdmin, groupId
             FROM users
             WHERE userDeleted=0 $criteria
             ORDER BY $orderBy");
