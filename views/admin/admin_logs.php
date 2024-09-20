@@ -10,7 +10,8 @@ $activityLinks = [
         ACTIVITY_DELETE_ASSIGNMENT => 'assignments',
         ACTIVITY_ADD_USER => 'admin/users',
         ACTIVITY_UPDATE_USER => 'admin/users',
-        ACTIVITY_DELETE_USER => 'admin/users'
+        ACTIVITY_DELETE_USER => 'admin/users',
+        ACTIVITY_SUBMIT_ASSIGNMENT => 'assignments',
 
 ];
 ?>

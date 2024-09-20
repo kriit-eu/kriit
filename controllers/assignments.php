@@ -228,6 +228,7 @@ class assignments extends Controller
         $this->checkIfUserHasPermissionForAction($assignmentId) || stop(403, 'Teil pole õigusi sellele tegevusele.');
         $studentId = $_POST['studentId'];
         $solutionUrl = $_POST['solutionUrl'];
+        $commentForTeacher = $_POST['comment'];
 
         $ifStudentHasAllCriteria = $this->checkIfStudentHasAllCriteria();
         $ifStudentHasPositiveGrade = $this->checkIfStudentHasPositiveGrade($studentId, $assignmentId);
@@ -245,13 +246,22 @@ class assignments extends Controller
             error_out($isValidUrl['message'], 400);
         }
 
-        $this->saveStudentCriteria();
 
         $existAssignment = Db::getFirst('SELECT * FROM userAssignments WHERE userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
         if (!$existAssignment) {
             Db::insert('userAssignments', ['userId' => $studentId, 'assignmentId' => $assignmentId, 'assignmentStatusId' => 2, 'solutionUrl' => $solutionUrl]);
+            Activity::create(ACTIVITY_SUBMIT_ASSIGNMENT, $this->auth->userId, $assignmentId);
         } else {
             Db::update('userAssignments', ['assignmentStatusId' => 2, 'solutionUrl' => $solutionUrl], 'userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
+        }
+
+        if ($commentForTeacher) {
+            $existingComment = Db::getOne('SELECT comment FROM assignmentComments WHERE userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
+            if (!$existingComment) {
+                Db::insert('assignmentComments', ['userId' => $studentId, 'assignmentId' => $assignmentId, 'comment' => $commentForTeacher]);
+            } elseif ($existingComment !== $commentForTeacher) {
+                Db::update('assignmentComments', ['comment' => $commentForTeacher], 'userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
+            }
         }
 
         $mailData = $this->getSenderNameAndReceiverEmail($studentId, $_POST['teacherId']);

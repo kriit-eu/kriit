@@ -100,7 +100,7 @@
         <?php if ($isStudent): ?>
             <div class="d-flex justify-content-end mt-3">
                 <span <?php if ($assignment['students'][$this->auth->userId]['isDisabledStudentActionButton'] === 'disabled'): ?>
-                            data-bs-toggle="tooltip" title="
+                    data-bs-toggle="tooltip" title="
                             <?php if ($assignment['students'][$this->auth->userId]['isAllCriteriaCompleted']): ?>
                             Ülesanne on juba hinnatud
                             <?php else: ?>
@@ -304,14 +304,11 @@
                         <div id="checkboxesContainer">
                         </div>
                     </div>
-                    <?php if (!$isStudent): ?>
-                        <div id="commentSection" class="mb-3" style="display: none;">
-                            <label for="studentComment" class="form-label fw-bold">Kommentaar</label>
-                            <textarea class="form-control" id="studentComment" rows="3"
-                                      placeholder="Lisa kommentaar siia..."></textarea>
-                        </div>
-                    <?php endif; ?>
-
+                    <div id="commentSection" class="mb-3">
+                        <label for="studentComment" class="form-label fw-bold">Kommentaar</label>
+                        <textarea class="form-control" id="studentComment" rows="3"
+                                  placeholder="Lisa kommentaar siia..."></textarea>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-primary" id="submitButton">
@@ -479,6 +476,7 @@
         if (submitButton.textContent === 'Esita' || submitButton.textContent === 'Muuda') {
             const solutionUrl = solutionInput.value;
             const criteria = getCriteriaList();
+            const comment = document.getElementById('studentComment').value;
 
             ajax(`assignments/saveStudentSolutionUrl`, {
                     assignmentId: assignment.assignmentId,
@@ -487,7 +485,8 @@
                     solutionUrl: solutionUrl,
                     criteria: criteria,
                     teacherId: assignment.teacherId,
-                    teacherName: assignment.teacherName
+                    teacherName: assignment.teacherName,
+                    comment: comment
                 },
                 function (res) {
                     if (res.status === 200) {
@@ -696,13 +695,15 @@
 
         criteriaContainer.innerHTML = '';
 
+
         Object.keys(assignment.criteria).forEach(criteriaId => {
             const criterion = assignment.criteria[criteriaId];
             const isCompleted = assignment.students[studentId]?.userDoneCriteria[criteriaId]?.completed;
 
+
             criteriaContainer.innerHTML += `
             <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="criterion_${criteriaId}" ${isCompleted ? 'checked' : ''} disabled>
+                <input class="form-check-input" type="checkbox" id="criterion_${criteriaId}" ${isCompleted ? 'checked' : ''}>
                 <label class="form-check-label" for="criterion_${criteriaId}">
                     ${criterion.criteriaName}
                 </label>
