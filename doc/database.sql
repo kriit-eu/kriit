@@ -27,7 +27,7 @@ CREATE TABLE `activities` (
   `activityName` varchar(50) NOT NULL COMMENT 'Autocreated',
   `activityDescription` varchar(191) NOT NULL,
   PRIMARY KEY (`activityId`)
-) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -49,9 +49,10 @@ INSERT INTO `activities` VALUES
 (10,'createSubject','created subject'),
 (11,'createAssignment','created assignment'),
 (12,'updateAssignment','updated assignment'),
-(13,'updateAssignmentName','updated assignment name'),
-(14,'updateAssignmentDueAt','updated assignment \'due at\' date'),
-(15,'updateAssignmentInstruction','updated assignment instruction');
+(13,'deleteAssignment','deleted assignment'),
+(14,'addUser','added user'),
+(15,'updateUser','updated user'),
+(16,'deleteUser','deleted user');
 /*!40000 ALTER TABLE `activities` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -68,6 +69,7 @@ CREATE TABLE `activityLog` (
   `userId` int unsigned NOT NULL,
   `activityId` int unsigned NOT NULL COMMENT 'Autocreated',
   `id` int unsigned DEFAULT NULL,
+  `details` text,
   PRIMARY KEY (`activityLogId`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
@@ -151,7 +153,7 @@ CREATE TABLE `criteria` (
   PRIMARY KEY (`criterionId`),
   KEY `criteria_assignments_assignmentId_fk` (`assignmentId`),
   CONSTRAINT `criteria_assignments_assignmentId_fk` FOREIGN KEY (`assignmentId`) REFERENCES `assignments` (`assignmentId`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=42 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -550,7 +552,7 @@ CREATE TABLE `translations` (
   `TranslationSource` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`translationId`),
   UNIQUE KEY `translations_translationPhrase_uindex` (`translationPhrase`)
-) ENGINE=InnoDB AUTO_INCREMENT=44 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=51 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -582,7 +584,14 @@ INSERT INTO `translations` VALUES
 (40,'logged in','dynamic','activities.activityDescription'),
 (41,'logged out','dynamic','activities.activityDescription'),
 (42,'user has solved exercise','dynamic','activities.activityDescription'),
-(43,'user has started the timer','dynamic','activities.activityDescription');
+(43,'user has started the timer','dynamic','activities.activityDescription'),
+(44,'updated assignment \'due at\' date','dynamic','activities.activityDescription'),
+(45,'updated assignment','dynamic','activities.activityDescription'),
+(46,'updated assignment instruction','dynamic','activities.activityDescription'),
+(47,'updated assignment name','dynamic','activities.activityDescription'),
+(48,'created assignment','dynamic','activities.activityDescription'),
+(49,'created subject','dynamic','activities.activityDescription'),
+(50,'created group','dynamic','activities.activityDescription');
 /*!40000 ALTER TABLE `translations` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -752,6 +761,7 @@ CREATE TABLE `users` (
   `groupId` int unsigned DEFAULT NULL,
   `userIsTeacher` tinyint DEFAULT 0,
   `userEmail` varchar(191) DEFAULT NULL,
+  `tahvelStudentId` int unsigned DEFAULT NULL,
   PRIMARY KEY (`userId`),
   KEY `users_groups_groupId_fk` (`groupId`),
   CONSTRAINT `users_groups_groupId_fk` FOREIGN KEY (`groupId`) REFERENCES `groups` (`groupId`)
@@ -765,8 +775,8 @@ CREATE TABLE `users` (
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
 INSERT INTO `users` VALUES
-(1,'Kati Maasikas','41111111115',1,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo',NULL,1,NULL),
-(2,'Mati Vaarikas','31111111114',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo2',NULL,0,NULL);
+(1,'Kati Maasikas','41111111115',1,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo',NULL,1,NULL, NULL),
+(2,'Mati Vaarikas','31111111114',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo2',NULL,0,NULL, NULL);
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -779,4 +789,4 @@ UNLOCK TABLES;
 /*!50503 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-09-18 15:37:15
+-- Dump completed on 2024-09-20 12:23:58

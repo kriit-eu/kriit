@@ -27,12 +27,12 @@ class assignments extends Controller
         $this->addAssignmentTeachers();
 
         //Check if assignment exists with given tahvelJournalEntryId
-        $assignment = Db::getFirst("SELECT * FROM assignments WHERE tahvelJournalEntryId = ?", [$_POST['tahvelJournalEntryId']]);
+        $existingAssignment = Db::getFirst("SELECT * FROM assignments WHERE tahvelJournalEntryId = ?", [$_POST['tahvelJournalEntryId']]);
         $assignmentName = mb_strlen($_POST['assignmentInstructions']) > 50 ? mb_substr($_POST['assignmentInstructions'], 0, 47) . '...' : $_POST['assignmentInstructions'];
 
-        if ($assignment) {
-            $this->updateAssignment($assignmentName, $currentTeacher, $assignment);
-            stop(200, $assignment['assignmentId']);
+        if ($existingAssignment) {
+            $this->updateAssignment($assignmentName, $currentTeacher, $existingAssignment);
+            stop(200, $existingAssignment['assignmentId']);
         } else {
 
             // Create assignment
@@ -52,7 +52,7 @@ class assignments extends Controller
         }
     }
 
-    private function updateAssignment($assignmentName, $currentTeacher, $assignment): void
+    private function updateAssignment($assignmentName, $currentTeacher, $existingAssignment): void
     {
         // Overwrite assignment existing data
         $data = [
@@ -61,23 +61,22 @@ class assignments extends Controller
             'assignmentInstructions' => $_POST['assignmentInstructions'],
         ];
 
-        Db::update('assignments', $data, "assignmentId=$assignment[assignmentId]");
-        Activity::create(ACTIVITY_UPDATE_ASSIGNMENT, $this->auth->userId, $assignment['assignmentId']);
+        Db::update('assignments', $data, "assignmentId=$existingAssignment[assignmentId]");
 
-        if($assignment['assignmentName'] !== $assignmentName){
-            $this->saveMessage($assignment['assignmentId'], $currentTeacher['userId'], "$currentTeacher[userName] muutis ülesande nimeks '$assignmentName'.", true);
-            Activity::create(ACTIVITY_UPDATE_ASSIGNMENT_NAME, $this->auth->userId, $assignment['assignmentId']);
+        if ($existingAssignment['assignmentName'] !== $assignmentName) {
+            $this->saveMessage($existingAssignment['assignmentId'], $currentTeacher['userId'], "$currentTeacher[userName] muutis ülesande nimeks '$assignmentName'.", true);
+            Activity::create(ACTIVITY_UPDATE_ASSIGNMENT, $this->auth->userId, $existingAssignment['assignmentId'], "Changed assignment name from $existingAssignment[assignmentName] to $assignmentName");
         }
 
-        if ($assignment['assignmentInstructions'] !== $_POST['assignmentInstructions']) {
-            $this->saveMessage($assignment['assignmentId'], $currentTeacher['userId'], "$currentTeacher[userName] muutis ülesande juhendiks '$_POST[assignmentInstructions]'.", true);
-            Activity::create(ACTIVITY_UPDATE_ASSIGNMENT_INSTRUCTION, $this->auth->userId, $assignment['assignmentId']);
+        if ($existingAssignment['assignmentInstructions'] !== $_POST['assignmentInstructions']) {
+            $this->saveMessage($existingAssignment['assignmentId'], $currentTeacher['userId'], "$currentTeacher[userName] muutis ülesande juhendiks '$_POST[assignmentInstructions]'.", true);
+            Activity::create(ACTIVITY_UPDATE_ASSIGNMENT, $this->auth->userId, $existingAssignment['assignmentId'], "Changed assignment instructions from $existingAssignment[assignmentInstructions] to $_POST[assignmentInstructions]");
         }
 
-        if ($assignment['assignmentDueAt'] !== $_POST['assignmentDueAt']) {
+        if ($existingAssignment['assignmentDueAt'] !== $_POST['assignmentDueAt']) {
             $date = date('d.m.Y', strtotime($_POST['assignmentDueAt']));
-            $this->saveMessage($assignment['assignmentId'], $currentTeacher['userId'], "$currentTeacher[userName] muutis ülesande tähtajaks '$date'.", true);
-            Activity::create(ACTIVITY_UPDATE_ASSIGNMENT_DUE_AT, $this->auth->userId, $assignment['assignmentId']);
+            $this->saveMessage($existingAssignment['assignmentId'], $currentTeacher['userId'], "$currentTeacher[userName] muutis ülesande tähtajaks '$date'.", true);
+            Activity::create(ACTIVITY_UPDATE_ASSIGNMENT, $this->auth->userId, $existingAssignment['assignmentId'], "Changed assignment due date from $existingAssignment[assignmentDueAt] to $_POST[assignmentDueAt]");
         }
     }
 
@@ -123,6 +122,7 @@ class assignments extends Controller
                 stop(403, 'Subject belongs to ' . $otherTeacher['userName']);
             }
         }
+
         return $subjectId;
     }
 
@@ -139,6 +139,7 @@ class assignments extends Controller
                 Activity::create(ACTIVITY_CREATE_GROUP, $this->auth->userId, $groupId);
             }
         }
+
         return $groupId;
     }
 

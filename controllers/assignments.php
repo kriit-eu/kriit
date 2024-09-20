@@ -339,25 +339,27 @@ class assignments extends Controller
         $newCriteria = $_POST['newCriteria'] ?? [];
 
         $existAssignment = Db::getFirst('SELECT * FROM assignments WHERE assignmentId = ?', [$assignmentId]);
+        $this->saveEditAssignmentCriteria($oldCriteria, $newCriteria, $assignmentId);
+
+        Db::update('assignments', ['assignmentName' => $assignmentName, 'assignmentInstructions' => $assignmentInstructions, 'assignmentDueAt' => $assignmentDueAt], 'assignmentId = ?', [$assignmentId]);
 
         if ($existAssignment['assignmentName'] !== $assignmentName) {
             $message = "$_POST[teacherName] muutis ülesande nimeks '$assignmentName'.";
             $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
+            Activity::create(ACTIVITY_UPDATE_ASSIGNMENT, $this->auth->userId, $assignmentId, "Changed assignment from '$existAssignment[assignmentName]' to '$assignmentName'");
         }
         if ($existAssignment['assignmentInstructions'] !== $assignmentInstructions) {
             $message = "$_POST[teacherName] muutis ülesande juhendiks '$assignmentInstructions'.";
             $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
+            Activity::create(ACTIVITY_UPDATE_ASSIGNMENT, $this->auth->userId, $assignmentId, "Changed assignment instructions from '$existAssignment[assignmentInstructions]' to '$assignmentInstructions'");
         }
 
         if ($existAssignment['assignmentDueAt'] !== $assignmentDueAt) {
             $date = date('d.m.Y', strtotime($assignmentDueAt));
             $message = "$_POST[teacherName] muutis ülesande tähtajaks '$date'.";
             $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
+            Activity::create(ACTIVITY_UPDATE_ASSIGNMENT, $this->auth->userId, $assignmentId, "Changed assignment due date from '$existAssignment[assignmentDueAt]' to '$assignmentDueAt'");
         }
-
-        $this->saveEditAssignmentCriteria($oldCriteria, $newCriteria, $assignmentId);
-
-        Db::update('assignments', ['assignmentName' => $assignmentName, 'assignmentInstructions' => $assignmentInstructions, 'assignmentDueAt' => $assignmentDueAt], 'assignmentId = ?', [$assignmentId]);
 
         stop(200, 'Assignment edited');
 

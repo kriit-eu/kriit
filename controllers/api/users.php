@@ -1,5 +1,6 @@
 <?php namespace App\api;
 
+use App\Activity;
 use App\Controller;
 use App\Db;
 
@@ -29,17 +30,25 @@ class users extends Controller
             $fullName = $student['fullname'];
             $personalCode = $student['idcode'];
 
-            $existingUserId = Db::getOne("SELECT userId FROM users WHERE userPersonalCode = ?", [$personalCode]);
+            $existingUser = Db::getFirst("SELECT userId, userName FROM users WHERE userPersonalCode = ?", [$personalCode]);
 
-            if ($existingUserId) {
-                Db::update('users', ['userName' => $fullName, 'groupId' => $groupId],'userId = ?', [$existingUserId]);
+            if ($existingUser) {
+                Db::update('users', ['userName' => $fullName, 'groupId' => $groupId],'userId = ?', [$existingUser['userId']]);
+                if ($existingUser['userName'] != $fullName) {
+                    Activity::create(ACTIVITY_UPDATE_USER, $this->auth->userId, $existingUser['userId'], "Name changed from {$existingUser['userName']} to $fullName");
+                }
+                if ($existingUser['groupId'] != $groupId) {
+                    Activity::create(ACTIVITY_UPDATE_USER, $this->auth->userId, $existingUser['userId'], "Group changed from {$existingUser['groupId']} to $groupId");
+                }
+
             } else {
-                Db::insert('users', [
+                $createdUserId = Db::insert('users', [
                     'userName' => $fullName,
                     'userPersonalCode' => $personalCode,
                     'groupId' => $groupId,
                 ]);
                 $newUsers[] = $personalCode;
+                Activity::create(ACTIVITY_ADD_USER, $this->auth->userId, $createdUserId);
             }
         }
 
@@ -58,6 +67,7 @@ class users extends Controller
 
             if ($existingUserId) {
                 Db::update('users', ['userEmail' => $emailData['userEmail']], 'userId = ?', [$existingUserId]);
+                Activity::create(ACTIVITY_UPDATE_USER, $this->auth->userId, $existingUserId, "Email changed to {$emailData['userEmail']}");
             } else {
                 stop(400, 'User not found');
             }

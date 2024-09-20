@@ -4,7 +4,7 @@
 class Activity
 {
 
-    public static function create($activityId, $userId = 0, $id = null)
+    public static function create($activityId, $userId = 0, $id = null, $details = null)
     {
         // Use the currently logged-in user's ID when not supplied
         $userId = $userId ? $userId : $_SESSION['userId'];
@@ -14,7 +14,8 @@ class Activity
             'userId' => $userId,
             'activityId' => $activityId,
             'activityLogTimestamp' => date('Y-m-d H:i:s'),
-            'id' => $id
+            'id' => $id,
+            'details' => $details,
         ]);
     }
 
@@ -29,7 +30,7 @@ class Activity
     {
         $where = SQL::getWhere($criteria);
         return Db::getAll("
-            SELECT *, DATE_FORMAT(activityLogTimestamp, '%Y-%m-%d %H:%i') activityLogTimestamp 
+            SELECT *, DATE_FORMAT(activityLogTimestamp, '%Y-%m-%d %H:%i') activityLogTimestamp
             FROM activityLog JOIN users USING (userId) JOIN activities USING (activityId)
             $where
             ORDER BY activityLogId DESC

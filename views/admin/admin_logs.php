@@ -3,13 +3,14 @@ $activityLinks = [
         ACTIVITY_SOLVED_EXERCISE => 'exercises',
         ACTIVITY_SOLVED_AGAIN_THE_SAME_EXERCISE => 'exercises',
         ACTIVITY_START_EXERCISE => 'exercises',
-        ACTIVITY_CREATE_GROUP => 'groups',
+        ACTIVITY_CREATE_GROUP => 'admin/groups',
         ACTIVITY_CREATE_SUBJECT => 'subjects',
         ACTIVITY_CREATE_ASSIGNMENT => 'assignments',
         ACTIVITY_UPDATE_ASSIGNMENT => 'assignments',
-        ACTIVITY_UPDATE_ASSIGNMENT_NAME => 'assignments',
-        ACTIVITY_UPDATE_ASSIGNMENT_DUE_AT => 'assignments',
-        ACTIVITY_UPDATE_ASSIGNMENT_INSTRUCTION => 'assignments',
+        ACTIVITY_DELETE_ASSIGNMENT => 'assignments',
+        ACTIVITY_ADD_USER => 'admin/users',
+        ACTIVITY_UPDATE_USER => 'admin/users',
+        ACTIVITY_DELETE_USER => 'admin/users'
 
 ];
 ?>
@@ -42,6 +43,7 @@ $activityLinks = [
             <th>Kasutaja</th>
             <th>Tegevus</th>
             <th>Üksus</th>
+            <th>Detailid</th>
         </tr>
         <?php foreach ($log as $row): ?>
             <tr class="<?= $row['activityName'] ?>">
@@ -55,6 +57,7 @@ $activityLinks = [
                         <?= $row['id'] ?>
                     <?php endif; ?>
                 </td>
+                <td><?= $row['details']  ?></td>
             </tr>
         <?php endforeach ?>
     </table>

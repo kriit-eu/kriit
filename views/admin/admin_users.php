@@ -1,177 +1,248 @@
 <div class="row">
-    <h1>Administraatorid</h1>
+    <h1>Kasutajad</h1>
     <div class="col text-end mb-3">
         <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addUserModal"
                 data-context="admin">
-            Lisa uus administraator
+            Lisa uus kasutaja
         </button>
     </div>
-    <div class="table-responsive">
-        <table class="table table-striped table-bordered">
-            <thead>
-            <tr>
-                <th>Nimi</th>
-                <th>Isikukood</th>
-                <th>Esm. sisselogimine</th>
-                <th>Tegevused</th>
-            </tr>
-            </thead>
-            <tbody>
-            <?php foreach ($users as $user): ?>
-                <tr>
-                    <td><?= $user['userName'] ?></td>
-                    <td><?= $user['userPersonalCode'] ?></td>
-                    <td><?= $user['userFirstLogin'] ?></td>
-                    <td>
-                        <a href="#" class="text-warning edit-user" data-id="<?= $user['userId'] ?>"
-                           data-name="<?= $user['userName'] ?>" data-personalcode="<?= $user['userPersonalCode'] ?>"
-                           data-context="edit">
-                            <i class="bi bi-pencil-fill"></i>
-                        </a>&nbsp;
 
-                        <a href="#" class="text-danger delete-user" data-id="<?= $user['userId'] ?>">
-                            <i class="bi bi-trash-fill"></i>
-                        </a>&nbsp;
-                    </td>
-                </tr>
-            <?php endforeach; ?>
-            </tbody>
-        </table>
+    <div class="col-12 mb-3">
+        <input type="text" id="searchBox" class="form-control" placeholder="Otsi kasutajaid...">
+        <small class="form-text feedback"></small>
     </div>
-</div>
 
-<div class="modal fade" id="addUserModal" tabindex="-1" role="dialog" aria-labelledby="addUserModalLabel"
-     aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="addUserModalLabel">Lisa uus administraator</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="table-responsive">
+                    <table class="table table-striped table-bordered table-searchable">
+                        <thead>
+                        <tr>
+                            <th class="text-center">#</th>
+                            <th>Nimi</th>
+                            <th>Isikukood</th>
+                            <th class="text-center">Grupp</th>
+                            <th class="text-center">Admin</th>
+                            <th>Tegevused</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <?php foreach ($users as $user): ?>
+                            <tr>
+                                <td class="text-center"><?= $user['userId'] ?></td>
+                                <td><?= $user['userName'] ?></td>
+                                <td><?= $user['userPersonalCode'] ?></td>
+                                <td class="text-center"><?= $user['groupName'] ?></td>
+                                <td class="text-center"><?= $user['userIsAdmin'] ? "&#9989;" : "" ?></td>
+                                <td data-searchable="false">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="#" class="text-warning edit-user" data-id="<?= $user['userId'] ?>"
+                                           data-name="<?= $user['userName'] ?>" data-personalcode="<?= $user['userPersonalCode'] ?>"
+                                           data-userisadmin="<?= $user['userIsAdmin'] ?>" data-groupid="<?= $user['groupId'] ?>"
+                                           data-context="edit">
+                                            <i class="bi bi-pencil-fill"></i>
+                                        </a>
+                                        <a href="#" class="text-danger delete-user" data-id="<?= $user['userId'] ?>">
+                                            <i class="bi bi-trash-fill"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
             </div>
-            <div class="modal-body">
-                <form id="addUserForm" method="post">
-                    <input type="hidden" id="userId" name="userId">
-                    <div class="mb-3">
-                        <label for="userName" class="form-label">Nimi</label>
-                        <input type="text" name="userName" class="form-control" id="userName"
-                               aria-describedby="userNameHelp" required>
-                        <div id="userNameHelp" class="form-text">Sisesta administraatori nimi</div>
+
+                <div class="modal fade" id="addUserModal" tabindex="-1" role="dialog" aria-labelledby="addUserModalLabel"
+                     aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="addUserModalLabel">Lisa uus kasutaja</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="addUserForm" method="post">
+                                    <input type="hidden" id="userId" name="userId">
+
+                                    <div class="mb-3">
+                                        <label for="userName" class="form-label">Nimi</label>
+                                        <input type="text" name="userName" class="form-control" id="userName"
+                                               aria-describedby="userNameHelp" required>
+                                        <div id="userNameHelp" class="form-text">Sisesta kasutaja nimi</div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="userPersonalCode" class="form-label">Isikukood</label>
+                                        <input type="text" name="userPersonalCode" class="form-control" id="userPersonalCode"
+                                               aria-describedby="userPersonalCodeHelp" data-context="admin" required>
+                                        <div id="userPersonalCodeHelp" class="form-text">Sisesta kasutaja isikukood</div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="userPassword" class="form-label">Parool</label>
+                                        <input type="password" name="userPassword" class="form-control" id="userPassword"
+                                               aria-describedby="userPasswordHelp">
+                                        <div id="userPasswordHelp" class="form-text">Sisesta kasutaja parool</div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="userGroup" class="form-label">Grupp</label>
+                                        <select name="groupId" class="form-control" id="userGroup">
+                                            <option value="">-- Vali grupp --</option>
+                                            <?php foreach ($groups as $group): ?>
+                                                <option value="<?= $group['groupId'] ?>"><?= $group['groupName'] ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+
+                                    <div class="mb-3 form-check">
+                                        <input type="checkbox" name="userIsAdmin" class="form-check-input" id="userIsAdmin">
+                                        <label class="form-check-label" for="userIsAdmin">Admin</label>
+                                    </div>
+
+                                    <button type="submit" id="submitUser" class="btn btn-primary">Lisa uus</button>
+                                </form>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="userPersonalCode" class="form-label">Isikukood</label>
-                        <input type="text" name="userPersonalCode" class="form-control" id="userPersonalCode"
-                               aria-describedby="userPersonalCodeHelp" data-context="admin" required>
-                        <div id="userPersonalCodeHelp" class="form-text">Sisesta administraatori isikukood</div>
-                    </div>
-                    <div class="mb-3">
-                        <label for="userPassword" class="form-label">Parool</label>
-                        <input type="password" name="userPassword" class="form-control" id="userPassword"
-                               aria-describedby="userPasswordHelp" required>
-                        <div id="userPasswordHelp" class="form-text">Sisesta administraatori parool</div>
-                    </div>
-                    <button type="submit" id="submitUser" class="btn btn-primary">Lisa uus</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
+                </div>
 
-<script>
-    $(document).ready(function () {
-        const $userNameInput = $("#userName");
-        const $userPersonalCodeInput = $("#userPersonalCode");
-        const $userPasswordInput = $("#userPassword");
-        const $submitButton = $("#submitUser");
-        const $modalTitle = $("#addUserModalLabel");
-        const $userIdInput = $("#userId");
-        const $userNameHelp = $("#userNameHelp");
-        const $userPersonalCodeHelp = $("#userPersonalCodeHelp");
+                <script>
+                    document.addEventListener('DOMContentLoaded', function () {
+                        const searchBox = document.getElementById('searchBox');
+                        const feedback = document.querySelector('.feedback');
+                        const table = document.querySelector('.table-searchable tbody');
+                        const rows = [...table.rows];
 
-        function setContext(context) {
-            if (context === "edit") {
-                $modalTitle.text('Muuda administraatori andmed');
-                $submitButton.text('Salvesta muudatused');
-                $userPasswordInput.removeAttr('required');
-            } else if (context === "admin") {
-                $modalTitle.text('Lisa uus administraator');
-                $submitButton.text('Lisa uus');
-                $userPasswordInput.attr('required', 'required');
-            }
-        }
+                        const getCellValue = (cell) => cell.textContent || cell.innerText;
 
-        $('.edit-user').on('click', function (e) {
-            e.preventDefault();
+                        searchBox.addEventListener('input', function (e) {
+                            const term = e.target.value.toLowerCase();
+                            const hasValue = !!term.length;
+                            let resultCount = 0;
 
-            const context = $(this).data('context');
-            setContext(context);
+                            rows.forEach((row) => {
+                                const cells = [...row.querySelectorAll('td:not([data-searchable="false"])')];
+                                let found = cells.some((cell) => {
+                                    const value = getCellValue(cell).toLowerCase();
+                                    return value.includes(term);
+                                });
 
-            const userId = $(this).data('id');
-            const userName = $(this).data('name');
-            const userPersonalCode = $(this).data('personalcode');
+                                row.style.display = found ? '' : 'none';
+                                if (found) resultCount++;
+                            });
 
-            $userIdInput.val(userId);
-            $userNameInput.val(userName);
-            $userPersonalCodeInput.val(userPersonalCode);
+                            feedback.textContent = hasValue
+                                ? resultCount === 1
+                                    ? '1 tulemus leitud'
+                                    : `${resultCount} tulemust leitud`
+                                : '';
+                        });
 
-            $('#addUserModal').modal('show');
-        });
+                        const $userNameInput = $("#userName");
+                        const $userPersonalCodeInput = $("#userPersonalCode");
+                        const $userPasswordInput = $("#userPassword");
+                        const $submitButton = $("#submitUser");
+                        const $modalTitle = $("#addUserModalLabel");
+                        const $userIdInput = $("#userId");
+                        const $userIsAdminCheckbox = $("#userIsAdmin");
+                        const $userGroupSelect = $("#userGroup");
 
-        $('[data-bs-toggle="modal"]').on('click', function () {
-            const context = $(this).data('context');
-            setContext(context);
+                        function setContext(context) {
+                            if (context === "edit") {
+                                $modalTitle.text('Muuda kasutaja andmed');
+                                $submitButton.text('Salvesta muudatused');
+                                $userPasswordInput.removeAttr('required');
+                            } else if (context === "admin") {
+                                $modalTitle.text('Lisa uus kasutaja');
+                                $submitButton.text('Lisa uus');
+                                $userPasswordInput.removeAttr('required');
+                            }
+                        }
 
-            $userIdInput.val('');
-            $userNameInput.val('');
-            $userPersonalCodeInput.val('');
-            $userPasswordInput.val('');
-            $userNameHelp.text('Sisesta administraatori nimi').removeClass('text-danger');
-            $userPersonalCodeHelp.text('Sisesta administraatori isikukood').removeClass('text-danger');
-        });
+                        $('.edit-user').on('click', function (e) {
+                            e.preventDefault();
 
-        $('.delete-user').on('click', function (e) {
-            e.preventDefault();
+                            const context = $(this).data('context');
+                            setContext(context);
 
-            const userId = $(this).data('id');
+                            const userId = $(this).data('id');
+                            const userName = $(this).data('name');
+                            const userPersonalCode = $(this).data('personalcode');
+                            const userIsAdmin = $(this).data('userisadmin');
+                            const userGroupId = $(this).data('groupid');
 
-            if (confirm('Oled kindel, et soovid selle administraatori kustutada?')) {
-                const url = 'admin/AJAX_deleteUser';
-                const data = {userId: userId};
+                            $userIdInput.val(userId);
+                            $userNameInput.val(userName);
+                            $userPersonalCodeInput.val(userPersonalCode);
+                            $userIsAdminCheckbox.prop('checked', userIsAdmin);
 
-                ajax(url, data, function (response) {
-                    alert('Administraator edukalt kustutatud!');
-                    location.reload();
-                }, function (error) {
-                    alert('Viga: ' + error);
-                });
-            }
-        });
+                            if (userGroupId) {
+                                $('#userGroup').val(userGroupId);
+                            } else {
+                                $('#userGroup').val(null);
+                            }
 
-        $('#addUserForm').on('submit', function (e) {
-            e.preventDefault();
+                            $('#addUserModal').modal('show');
+                        });
 
-            const data = $(this).serialize();
-            let url;
+                        $('[data-bs-toggle="modal"]').on('click', function () {
+                            const context = $(this).data('context');
+                            setContext(context);
 
-            if ($userIdInput.val()) {
-                url = 'admin/editUser';
-            } else {
-                url = 'admin/addUser';
-            }
+                            $userIdInput.val('');
+                            $userNameInput.val('');
+                            $userPersonalCodeInput.val('');
+                            $userPasswordInput.val('');
+                            $userIsAdminCheckbox.prop('checked', false);
+                            $userGroupSelect.val('');
+                        });
 
-            ajax(url, data, function (response) {
-                alert('Andmed edukalt salvestatud!');
-                $('#addUserModal').modal('hide');
-                location.reload();
-            }, function (error) {
-                alert('Viga: ' + error);
-            });
-        });
+                        $('#addUserForm').on('submit', async function (e) {
+                            e.preventDefault();
 
-        $('#addUserModal').on('hidden.bs.modal', function () {
-            $userIdInput.val('');
-            $userNameInput.val('');
-            $userPersonalCodeInput.val('');
-            $userPasswordInput.val('');
-        });
-    });
-</script>
+                            const data = $(this).serialize();
+                            let url;
+
+                            if ($userIdInput.val()) {
+                                url = 'admin/editUser';
+                            } else {
+                                url = 'admin/addUser';
+                            }
+
+                            await ajax(url, data, function (response) {
+                                $('#addUserModal').modal('hide');
+                                location.reload();
+                            }, function (error) {
+                                alert('Viga: ' + error);
+                            });
+                        });
+
+                        $('.delete-user').on('click', async function (e) {
+                            e.preventDefault();
+                            const userId = $(this).data('id');
+                            if (confirm('Kas oled kindel, et soovid kasutaja kustutada?')) {
+                                await ajax('admin/deleteUser', {userId: userId}, function (response) {
+                                    location.reload();
+                                }, function (error) {
+                                    alert('Viga: ' + error);
+                                });
+                            }
+                        });
+
+                        $('#addUserModal').on('hidden.bs.modal', function () {
+                            $userIdInput.val('');
+                            $userNameInput.val('');
+                            $userPersonalCodeInput.val('');
+                            $userPasswordInput.val('');
+                            $userIsAdminCheckbox.prop('checked', false);
+                            $userGroupSelect.val('');
+                        });
+                    });
+                </script>
+
+                <style>
+                    .table-searchable .is-hidden {
+                        display: none;
+                    }
+                </style>

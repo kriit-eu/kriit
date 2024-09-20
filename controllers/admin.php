@@ -145,19 +145,20 @@ class admin extends Controller
     function users()
     {
         $this->users = Db::getAll("
-            SELECT
-                u.*,
-                MIN(a.activityLogTimestamp) AS userFirstLogin
-            FROM
-                users u
-            LEFT JOIN
-                activityLog a
-                ON u.userId = a.userId
-                AND a.activityId = 1
-            WHERE
-                u.userIsAdmin = 1
-            GROUP BY
-                u.userId");
+        SELECT
+            u.*,
+
+            g.groupName
+        FROM
+            users u
+        LEFT JOIN
+            groups g ON u.groupId = g.groupId
+        GROUP BY
+            u.userId, u.userName, g.groupName
+        ORDER BY u.userName, g.groupName");
+
+        $this->groups = Db::getAll("SELECT * FROM groups");
+
     }
 
     function logs()
@@ -205,9 +206,6 @@ class admin extends Controller
         if (empty($_POST['userName'])) {
             stop(400, 'Nimi ei saa olla tühi');
         }
-        if (empty($_POST['userPassword'])) {
-            stop(400, 'Parool ei saa olla tühi');
-        }
 
         if (empty($_POST['userPersonalCode'])) {
             stop(400, "Isikukood on kohustuslik");
@@ -220,7 +218,7 @@ class admin extends Controller
         }
 
         if (User::get(["userPersonalCode = '$userPersonalCode'"])) {
-            stop(409, "Administraator selle isikukoodiga on juba olemas");
+            stop(409, "Kasutaja selle isikukoodiga on juba olemas");
         }
 
         $userName = addslashes($_POST['userName']);
@@ -228,14 +226,10 @@ class admin extends Controller
             stop(409, __('User already exists'));
         }
 
-        $data = [
-            'userName' => $_POST['userName'],
-            'userPersonalCode' => $_POST['userPersonalCode'],
-            'userPassword' => password_hash($_POST['userPassword'], PASSWORD_DEFAULT),
-            'userIsAdmin' => 1
-        ];
+        $data = $this->getUserDataForAddingOrUpdating();
 
         $userId = Db::insert('users', $data);
+        Activity::create(ACTIVITY_ADD_USER, $this->auth->userId, $userId);
         stop(200, ['userId' => $userId]);
     }
 
@@ -285,21 +279,68 @@ class admin extends Controller
             stop(400, "Isikukood ei vasta nõuetele");
         }
 
-        $existingUser = User::get(["userPersonalCode = '$userPersonalCode'"]);
-        if ($existingUser && isset($existingUser['userId']) && $existingUser['userId'] != $userId) {
-            stop(409, "Administraator selle isikukoodiga on juba olemas");
+        $existingUser = Db::getFirst("SELECT * FROM users WHERE userId = $userId");
+        if (!$existingUser) {
+            stop(409, "Kasutajat ei leitud");
         }
 
-        // Remove empty password from $_POST or hash it
+        if ($existingUser && isset($existingUser['userId']) && $existingUser['userId'] != $userId) {
+            stop(409, "Kasutaja selle isikukoodiga on juba olemas");
+        }
+
         if (empty($_POST['userPassword'])) {
             unset($_POST['userPassword']);
         } else {
             $_POST['userPassword'] = password_hash($_POST['userPassword'], PASSWORD_DEFAULT);
         }
 
-        User::edit($userId, $_POST);
+        $updatedUserData = $this->getUserDataForAddingOrUpdating();
 
-        stop(200);
+        User::edit($userId, $updatedUserData);
+
+        if (!empty($updatedUserData['userPassword'])) {
+            Activity::create(ACTIVITY_UPDATE_USER, $this->auth->userId, $userId, "Password changed");
+        }
+
+        if ($existingUser['userName'] != $updatedUserData['userName']) {
+            Activity::create(ACTIVITY_UPDATE_USER, $this->auth->userId, $userId, "Name changed from {$existingUser['userName']} to {$updatedUserData['userName']}");
+        }
+
+        if (
+            (empty($existingUser['groupId']) && !empty($updatedUserData['groupId'])) ||
+            (!empty($existingUser['groupId']) && empty($updatedUserData['groupId'])) ||
+            (!empty($existingUser['groupId']) && !empty($updatedUserData['groupId']) && $existingUser['groupId'] != $updatedUserData['groupId'])
+        ) {
+            $oldGroupName = $newGroupName = null;
+            if (!empty($existingUser['groupId'])) {
+                $oldGroupName = Db::getFirst("SELECT groupName FROM groups WHERE groupId = {$existingUser['groupId']}")['groupName'] ?? 'No Group';
+            } else {
+                $oldGroupName = 'No Group';
+            }
+
+            if (!empty($updatedUserData['groupId'])) {
+                $newGroupName = Db::getFirst("SELECT groupName FROM groups WHERE groupId = {$updatedUserData['groupId']}")['groupName'] ?? 'No Group';
+            } else {
+                $newGroupName = 'No Group';
+            }
+
+            $changeDescription = ($oldGroupName === 'No Group' && $newGroupName !== 'No Group') ? "Added to group $newGroupName" :
+                (($oldGroupName !== 'No Group' && $newGroupName === 'No Group') ? "Removed from group $oldGroupName" :
+                    (($oldGroupName !== 'No Group' && $newGroupName !== 'No Group' && $oldGroupName !== $newGroupName) ? "Moved from group $oldGroupName to group $newGroupName" : null));
+
+
+            Activity::create(ACTIVITY_UPDATE_USER, $this->auth->userId, $userId, $changeDescription);
+        }
+
+        if ($existingUser['userIsAdmin'] && !empty($updatedUserData['userIsAdmin']) || !empty($existingUser['userIsAdmin']) && $existingUser['userIsAdmin'] != $updatedUserData['userIsAdmin']) {
+            Activity::create(ACTIVITY_UPDATE_USER, $this->auth->userId, $userId, "Admin status changed from {$existingUser['userIsAdmin']} to {$updatedUserData['userIsAdmin']}");
+        }
+
+        if ($existingUser['userPersonalCode'] != $updatedUserData['userPersonalCode']) {
+            Activity::create(ACTIVITY_UPDATE_USER, $this->auth->userId, $userId, "Personal code changed from {$existingUser['userPersonalCode']} to {$updatedUserData['userPersonalCode']}");
+        }
+
+        stop(200, ['userId' => $userId]);
     }
 
     function AJAX_editApplicant()
@@ -326,6 +367,7 @@ class admin extends Controller
 
         User::edit($userId, $_POST);
 
+
         stop(200);
     }
 
@@ -341,6 +383,7 @@ class admin extends Controller
         }
 
         User::delete($_POST['userId']);
+        Activity::create(ACTIVITY_DELETE_USER, $this->auth->userId, $_POST['userId']);
 
         stop(200);
     }
@@ -363,6 +406,23 @@ class admin extends Controller
         $pure_html = $purifier->purify($html);
 
         return !!strcmp($html, $pure_html);
+
+    }
+
+    private function getUserDataForAddingOrUpdating(): array
+    {
+        $data = [
+            'userName' => $_POST['userName'],
+            'userPersonalCode' => $_POST['userPersonalCode'],
+            'groupId' => empty($_POST['groupId']) ? null : $_POST['groupId'],
+            'userIsAdmin' => empty($_POST['userIsAdmin']) ? 0 : 1
+        ];
+
+        if (!empty($_POST['userPassword'])) {
+            $data['userPassword'] = $_POST['userPassword'];
+        }
+
+        return $data;
 
     }
 
