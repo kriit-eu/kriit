@@ -261,4 +261,41 @@ class assignments extends Controller
         stop(200, ['mismatchedGradesInfo' => $mismatchedGradesInfo]);
     }
 
+
+    function deleteAssignmentByTahvelJournalId(): void
+    {
+        if (empty($_POST['tahvelJournalEntryId'])) {
+            stop(400, 'Invalid tahvelJournalEntryId');
+        }
+
+        $this->deleteAllAssignmentDependentData($_POST['tahvelJournalEntryId']);
+
+        try {
+            Db::delete('assignments', 'tahvelJournalEntryId = ?', [$_POST['tahvelJournalEntryId']]);
+            Activity::create(ACTIVITY_DELETE_ASSIGNMENT, $this->auth->userId, null, "Deleted assignment with tahvelJournalEntryId: $_POST[tahvelJournalEntryId]");
+        } catch (\Exception $e) {
+            stop(400, $e->getMessage());
+        }
+
+        stop(200, 'Assignment deleted');
+    }
+
+    private function deleteAllAssignmentDependentData($tahvelJournalEntryId): void
+    {
+        try {
+            $criteria = Db::getAll("SELECT criterionId FROM criteria WHERE assignmentId = (SELECT assignmentId FROM assignments WHERE tahvelJournalEntryId = ?)", [$tahvelJournalEntryId]);
+            foreach ($criteria as $criterion) {
+                Db::delete('userDoneCriteria', 'criterionId = ?', [$criterion['criterionId']]);
+            }
+
+            Db::delete('criteria', 'assignmentId = (SELECT assignmentId FROM assignments WHERE tahvelJournalEntryId = ?)', [$tahvelJournalEntryId]);
+            Db::delete('messages', 'assignmentId = (SELECT assignmentId FROM assignments WHERE tahvelJournalEntryId = ?)', [$tahvelJournalEntryId]);
+            Db::delete('userAssignments', 'assignmentId = (SELECT assignmentId FROM assignments WHERE tahvelJournalEntryId = ?)', [$tahvelJournalEntryId]);
+        } catch (\Exception $e) {
+            stop(400, $e->getMessage());
+        }
+
+
+    }
+
 }
