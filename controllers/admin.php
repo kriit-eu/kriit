@@ -163,9 +163,29 @@ class admin extends Controller
 
     function subjects(): void
     {
-        $this->subjects = Db::getAll("SELECT * FROM subjects ORDER BY subjectName");
+        $this->subjects = Db::getAll("
+        SELECT
+            subjects.subjectId,
+            subjects.subjectName,
+            subjects.teacherId,
+            subjects.tahvelSubjectId,
+            subjects.groupId,
+            groups.groupName AS subjectGroup,
+            users.userName AS teacherName
+        FROM
+            subjects
+        LEFT JOIN
+            groups ON subjects.groupId = groups.groupId
+        LEFT JOIN
+            users ON subjects.teacherId = users.userId
+        ORDER BY
+            subjects.subjectName ASC, groups.groupName ASC
+        ");
 
+        $this->teachers = Db::getAll("SELECT * FROM users WHERE userIsTeacher = 1");
+        $this->groups = Db::getAll("SELECT * FROM groups");
     }
+
 
     function logs(): void
     {
@@ -279,6 +299,48 @@ class admin extends Controller
         Activity::create(ACTIVITY_CREATE_ASSIGNMENT, $this->auth->userId, $assignmentId);
 
         stop(200, ['assignmentId' => $assignmentId]);
+
+    }
+
+    function AJAX_addSubject()
+    {
+        if (empty($_POST['subjectName'])) {
+            stop(400, 'Aine nimi on kohustuslik');
+        }
+
+        if (empty($_POST['tahvelSubjectId'])) {
+            stop(400, 'Tahvel aine ID on kohustuslik');
+        }
+
+        if (empty($_POST['teacherId'])) {
+            stop(400, 'Õpetaja on kohustuslik');
+        }
+
+        if (empty($_POST['groupId'])) {
+            stop(400, 'Grupp on kohustuslik');
+        }
+
+        $subject = Db::getFirst("SELECT * FROM subjects WHERE tahvelSubjectId = ?", [$_POST['tahvelSubjectId']]);
+        if ($subject) {
+            stop(409, 'Aine selle tahvel ID-ga on juba olemas');
+        }
+
+        $subject = Db::getFirst("SELECT * FROM subjects WHERE subjectName = ?", [$_POST['subjectName']]);
+        if ($subject) {
+            stop(409, 'Aine selle nimega on juba olemas');
+        }
+
+        $data = [
+            'subjectName' => $_POST['subjectName'],
+            'tahvelSubjectId' => $_POST['tahvelSubjectId'],
+            'teacherId' => $_POST['teacherId'],
+            'groupId' => $_POST['groupId']
+        ];
+
+        $subjectId = Db::insert('subjects', $data);
+        Activity::create(ACTIVITY_CREATE_SUBJECT, $this->auth->userId, $subjectId);
+
+        stop(200, ['subjectId' => $subjectId]);
 
     }
 

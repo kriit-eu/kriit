@@ -84,8 +84,8 @@ class subjects extends Controller
 
             // Process assignment data if exists
             if ($assignmentId) {
-                $dueDate = new \DateTime($row['assignmentDueAt']);
-                $daysRemaining = (int)(new \DateTime())->diff($dueDate)->format('%r%a');
+                $dueDate = !empty($row['assignmentDueAt']) ? new \DateTime($row['assignmentDueAt']) : null;
+                $daysRemaining = $dueDate ? (int)(new \DateTime())->diff($dueDate)->format('%r%a')  : 1000;
 
                 // Add or update assignment in subject
                 if (!isset($groups[$groupName]['subjects'][$subjectId]['assignments'][$assignmentId])) {

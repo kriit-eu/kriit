@@ -91,7 +91,7 @@
 
             <div class="modal-footer">
                 <button type="button" class="btn btn-primary" id="saveAssignmentBtn" disabled>Salvesta</button>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tühista</button>
+                <button type="button" class="btn btn-secondary" id="clearFieldsBtn" data-bs-dismiss="modal">Tühista</button>
             </div>
         </div>
     </div>
@@ -129,6 +129,11 @@
 
         $('#assignmentName, #assignmentInstructions, #assignmentDueAt').on('input change', function() {
             checkRequiredFields();
+        });
+
+        $('#clearFieldsBtn').on('click', function() {
+            $('#addAssignmentModal').find('input, textarea').val('');
+            $('#saveAssignmentBtn').prop('disabled', true);
         });
 
         $('#saveAssignmentBtn').on('click', async function () {
