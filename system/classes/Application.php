@@ -242,6 +242,11 @@ class Application
 
         }
 
+        // Custom routing for /admin/subjects/{id subject}
+        if ($this->controller == 'admin' && isset($this->params[0]) && $this->action == 'subjects') {
+            $this->action = 'subjects_view';
+        }
+
         // Allow shorter URLs (users/view/3 becomes users/3)
         if (is_numeric($this->action)) {
 

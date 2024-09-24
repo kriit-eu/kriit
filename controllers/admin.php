@@ -84,7 +84,7 @@ class admin extends Controller
         exit();
     }
 
-    function ranking()
+    function ranking(): void
     {
         // Fetch all users
         $allUsers = Db::getAll("
@@ -128,7 +128,7 @@ class admin extends Controller
         $this->averageExercisesDone = $userCount > 0 ? $totalSolvedTasks / $userCount : 0;
     }
 
-    function groups()
+    function groups(): void
     {
         $this->groups = Db::getAll("
             SELECT
@@ -142,7 +142,7 @@ class admin extends Controller
     }
 
 
-    function users()
+    function users(): void
     {
         $this->users = Db::getAll("
         SELECT
@@ -161,12 +161,24 @@ class admin extends Controller
 
     }
 
-    function logs()
+    function subjects(): void
+    {
+        $this->subjects = Db::getAll("SELECT * FROM subjects ORDER BY subjectName");
+
+    }
+
+    function logs(): void
     {
         $this->log = Activity::logs();
     }
 
-    function validatePersonalCode($personalCode)
+    function subjects_view(): void
+    {
+        //Ger all assignments for the subject
+        $this->assignments = Db::getAll("SELECT * FROM assignments WHERE subjectId = ?", [$this->getId()]);
+    }
+
+    function validatePersonalCode($personalCode): bool
     {
         $pattern = '/^[1-6]\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{4}$/';
 
@@ -200,8 +212,78 @@ class admin extends Controller
         return $mod === intval($personalCode[10]);
     }
 
+    function AJAX_deleteAssignment()
+    {
+        if (empty($_POST['assignmentId'])) {
+            stop(400, 'Invalid assignmentId');
+        }
 
-    function AJAX_addUser()
+        $this->deleteAllAssignmentDependentData($_POST['assignmentId']);
+
+        try {
+            Db::delete('assignments', 'assignmentId = ?', [$_POST['assignmentId']]);
+            Activity::create(ACTIVITY_DELETE_ASSIGNMENT, $this->auth->userId, null, "Deleted assignment with assignmentId: $_POST[assignmentId]");
+        } catch (\Exception $e) {
+            stop(400, $e->getMessage());
+        }
+
+        stop(200, 'Assignment deleted');
+    }
+
+    private function deleteAllAssignmentDependentData($assignmentId): void
+    {
+        try {
+            $criteria = Db::getAll("SELECT criterionId FROM criteria WHERE assignmentId = ?", [$assignmentId]);
+            foreach ($criteria as $criterion) {
+                Db::delete('userDoneCriteria', 'criterionId = ?', [$criterion['criterionId']]);
+            }
+
+            Db::delete('criteria', 'assignmentId =  ?', [$assignmentId]);
+            Db::delete('messages', 'assignmentId = ?', [$assignmentId]);
+            Db::delete('userAssignments', 'assignmentId = ?', [$assignmentId]);
+        } catch (\Exception $e) {
+            stop(400, $e->getMessage());
+        }
+
+
+    }
+
+    function AJAX_addAssignment()
+    {
+        if (empty($_POST['subjectId']) || !is_numeric($_POST['subjectId'])) {
+            stop(400, 'Invalid subjectId');
+        }
+
+        if (empty($_POST['assignmentName'])) {
+            stop(400, 'Assignment name is required');
+        }
+
+        if (empty($_POST['assignmentInstructions'])) {
+            stop(400, 'Instructions are required');
+        }
+
+        if (empty($_POST['assignmentDueAt'])) {
+            stop(400, 'Due date is required');
+        }
+
+        $data = [
+            'subjectId' => $_POST['subjectId'],
+            'assignmentName' => $_POST['assignmentName'],
+            'assignmentInstructions' => $_POST['assignmentInstructions'],
+            'assignmentDueAt' => $_POST['assignmentDueAt'],
+            'assignmentInitialCode' => $_POST['assignmentInitialCode'] ?? null,
+            'assignmentValidationFunction' => $_POST['assignmentValidationFunction'] ?? null
+        ];
+
+        $assignmentId = Db::insert('assignments', $data);
+        Activity::create(ACTIVITY_CREATE_ASSIGNMENT, $this->auth->userId, $assignmentId);
+
+        stop(200, ['assignmentId' => $assignmentId]);
+
+    }
+
+
+    function AJAX_addUser(): void
     {
         if (empty($_POST['userName'])) {
             stop(400, 'Nimi ei saa olla tühi');

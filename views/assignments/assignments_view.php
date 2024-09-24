@@ -462,7 +462,6 @@
         const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
             return new bootstrap.Tooltip(tooltipTriggerEl);
         });
-        console.log(tooltipList);
     }
 
 
