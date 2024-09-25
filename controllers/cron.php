@@ -20,8 +20,7 @@ class cron extends Controller
                 LEFT JOIN groups g ON subj.groupId = g.groupId
                 LEFT JOIN users u ON u.groupId = g.groupId
                 LEFT JOIN userAssignments ua ON ua.assignmentId = a.assignmentId AND ua.userId = u.userId
-                WHERE a.assignmentDueAt = DATE_ADD(CURDATE(), INTERVAL 1 DAY) AND (ua.assignmentStatusId IS NULL OR ua.assignmentStatusId = 1)
-                ORDER BY u.userName
+                WHERE (a.assignmentDueAt = CURDATE() OR a.assignmentDueAt = DATE_ADD(CURDATE(), INTERVAL 1 DAY)) AND (ua.assignmentStatusId IS NULL OR ua.assignmentStatusId = 1)                ORDER BY u.userName
             ");
 
         $assignments = [];
@@ -49,7 +48,7 @@ class cron extends Controller
 
 
         foreach ($assignments as $assignment) {
-            $mailData = $this->getSubjectAndBodyTemplateForMail($assignment['assignmentDueAt'], $assignment['subjectName'], $assignment['assignmentName']);
+            $mailData = $this->getSubjectAndBodyTemplateForMail($assignment['assignmentDueAt'], $assignment['subjectName'], $assignment['assignmentName'], $assignment['assignmentId']);
             $this->sendEmailsToStudents($assignment, $mailData['subject'], $mailData['bodyTemplate'], $assignment['teacherName']);
         }
 
@@ -57,22 +56,24 @@ class cron extends Controller
 
     }
 
-    private function getSubjectAndBodyTemplateForMail($dueAt, $subjectName, $assignmentName): array
+    private function getSubjectAndBodyTemplateForMail($dueAt, $subjectName, $assignmentName, $assignmentId): array
     {
-        if ($dueAt == date('Y-m-d', strtotime('+1 day'))) {
+        $assignmentLink = BASE_URL . "assignments/" . $assignmentId;
+        if (!empty($dueAt) && $dueAt == date('Y-m-d', strtotime('+1 day'))) {
             $subject = "Tähtaeg homme! $subjectName: {$assignmentName}";
             $bodyTemplate = "<p>Tere, {studentName},</p>"
-                . "<p>See on sõbralik meeldetuletus, et aines '{subjectName}' on homme, {assignmentDueDate}, ülesande '{assignmentName}' tähtaeg.</p>"
+                . "<p>See on sõbralik meeldetuletus, et aines '{subjectName}' on homme, {assignmentDueDate}, ülesande '{assignmentName}' tähtaeg. <br>Ülesande link: <a href=\"{$assignmentLink}\">{$assignmentName}</a></p>"
                 . "<p>Palun veendu, et oled oma ülesande esitanud enne tähtaega.</p>"
                 . "<p>Kui sul on küsimusi või vajad abi, võta kindlasti ühendust.</p>"
                 . "<p>Parimate soovidega,<br>{teacherName}</p>";
-        } else {
+        } elseif (!empty($dueAt) && $dueAt == date('Y-m-d')) {
             $subject = "Ära jää hiljaks! {$subjectName}: {$assignmentName}";
             $bodyTemplate = "<p>Tere, {studentName},</p>"
-                . "<p>Tähelepanu! Täna, {assignmentDueDate}, on aines '{subjectName}' ülesande '{assignmentName}' tähtaeg! Tegutse kohe, et mitte tähtaega maha magada!</p>"
+                . "<p>Tähelepanu! Täna, {assignmentDueDate}, on aines '{subjectName}' ülesande '{assignmentName}' tähtaeg! Tegutse kohe, et mitte tähtaega maha magada!<br> Ülesande link: <a href=\"{$assignmentLink}\">{$assignmentName}</a></p>"
                 . "<p>Palun veendu, et oled oma ülesande esitanud enne tähtaega.</p>"
                 . "<p>Kui sul on küsimusi või vajad abi, võta kindlasti ühendust.</p>"
                 . "<p>Parimate soovidega,<br>{teacherName}</p>";
+
         }
 
         return ["subject" => $subject, "bodyTemplate" => $bodyTemplate];
@@ -91,12 +92,11 @@ class cron extends Controller
                 $bodyTemplate
             );
 
-            if (!empty($student['userEmail'])){
+            if (!empty($student['userEmail'])) {
                 Mail::send($student['userEmail'], $subject, $message);
             }
         }
     }
-
 
 
 }

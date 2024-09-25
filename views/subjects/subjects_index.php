@@ -51,7 +51,7 @@
                                     <span class="badge <?= $a['badgeClass'] ?>"
                                           data-days-remaining="<?= $a['daysRemaining'] ?>"
                                           data-is-student="<?= json_encode($isStudent) ?>">
-                        <?= (new DateTime($a['assignmentDueAt']))->format('d.m.y') ?></span>
+                        <?= $a['assignmentDueAt'] ? (new DateTime($a['assignmentDueAt']))->format('d.m.y') : "Pole määratud" ?></span>
                                     <a href="assignments/<?= $a['assignmentId'] ?>"><?= $a['assignmentName'] ?></a>
                                 </td>
                                 <?php foreach ($group['students'] as $s): ?>

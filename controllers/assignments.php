@@ -271,15 +271,14 @@ class assignments extends Controller
 
         $emailBody = $existAssignment && $existAssignment['userGrade'] && ($existAssignment['userGrade'] === 'MA' || is_numeric(intval($existAssignment['userGrade']) < 3)) ?
             sprintf(
-                "Õpilane <strong>%s</strong> parandas ülesande '<strong>%s</strong>' lahendust.<br><br>Lahenduse link: <a href='%s'>%s</a><br>",
+                "Õpilane <strong>%s</strong> parandas ülesande '<a href=\"" . BASE_URL . "assignments/" . $assignmentId . "\"><strong>%s</strong></a> lahendust.<br><br>Lahenduse link: <a href='%s'>%s</a><br>",
                 $studentName,
                 $assignment['assignmentName'],
                 $solutionUrl,
                 $solutionUrl
             ) :
             sprintf(
-                "Õpilane <strong>%s</strong> esitas lahenduse ülesandele '<strong>%s</strong>'.<br><br>Lahenduse link: <a href='%s'>%s</a><br>",
-                $studentName,
+                "Õpilane <strong>%s</strong> esitas lahenduse ülesandele '<a href=\"" . BASE_URL . "assignments/" . $assignmentId . "\"><strong>%s</strong></a>'.<br><br>Lahenduse link: <a href='%s'>%s</a><br>", $studentName,
                 $assignment['assignmentName'],
                 $solutionUrl,
                 $solutionUrl
@@ -358,7 +357,7 @@ class assignments extends Controller
 
         $assignmentName = $_POST['assignmentName'];
         $assignmentInstructions = $_POST['assignmentInstructions'];
-        $assignmentDueAt = $_POST['assignmentDueAt'];
+        $assignmentDueAt = empty($_POST['assignmentDueAt']) ? null : $_POST['assignmentDueAt'];
         $oldCriteria = $_POST['oldCriteria'] ?? [];
         $newCriteria = $_POST['newCriteria'] ?? [];
 
@@ -506,7 +505,7 @@ class assignments extends Controller
             $row = $data[0];
 
             $assignment['assignmentName'] = $row['assignmentName'];
-            $assignment['assignmentDueAt'] = date('d.m.Y', strtotime($row['assignmentDueAt']));
+            $assignment['assignmentDueAt'] = !empty ($assignment['assignmentDueAt']) ? date('d.m.Y', strtotime($row['assignmentDueAt'])) : null;
             $assignment['teacherId'] = $row['teacherId'];
             $assignment['teacherName'] = $row['teacherName'];
             $assignment['subjectId'] = $row['subjectId'];

@@ -178,8 +178,9 @@
                             <div class="mb-3">
                                 <label for="assignmentDueAt" class="form-label">Tähtaeg</label>
                                 <input type="date" class="form-control" id="assignmentDueAt" name="assignmentDueAt"
-                                       value="<?= date('Y-m-d', strtotime(str_replace('.', '-', $assignment['assignmentDueAt']))); ?>">
+                                       value="<?= (!empty($assignment['assignmentDueAt']) && strtotime($assignment['assignmentDueAt']) > 0) ? date('Y-m-d', strtotime($assignment['assignmentDueAt'])) : "" ?>">
                             </div>
+
 
                             <!-- Block for criteria management -->
                             <div class="mb-3">
@@ -455,6 +456,7 @@
 
     document.addEventListener('DOMContentLoaded', function () {
         initializeTooltips();
+        scrollToBottom();
     });
 
     function initializeTooltips() {

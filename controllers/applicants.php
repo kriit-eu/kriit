@@ -17,7 +17,7 @@ class applicants extends Controller
             LEFT JOIN activityLog a1 ON u.userId = a1.userId AND a1.activityId = 1
             LEFT JOIN activityLog a2 ON u.userId = a2.userId AND a2.activityId = 3
             WHERE
-                u.userIsAdmin = 0
+                u.userIsAdmin = 0 AND u.userIsTeacher = 0 AND u.groupId IS NULL
             GROUP BY
                 u.userId
         ");
