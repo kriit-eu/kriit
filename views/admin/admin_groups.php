@@ -156,13 +156,14 @@
                 students: jsonInput
             };
 
+            console.log(data);
+
             const res = await ajax('admin/addGroup', data, function (response) {
                 if (response.status === 200) {
                     window.location.reload();
                 }
             }, function (response) {
-                let errorMessage = response.data || response.message || response.error || "Tundmatu viga";
-                alert('Error: ' + errorMessage);
+                alert('Error: ' + response);
             });
 
             console.log(res);

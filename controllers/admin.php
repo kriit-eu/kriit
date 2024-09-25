@@ -213,11 +213,11 @@ class admin extends Controller
         $userPersonalCode = $_POST['userPersonalCode'];
 
         if (!$this->validatePersonalCode($userPersonalCode)) {
-            stop(400, "Isikukood ei vasta nõuetele");
+            stop(400, "Isikukood $userPersonalCode ei vasta nõuetele.");
         }
 
         if (User::get(["userPersonalCode = '$userPersonalCode'"])) {
-            stop(409, "Administraator selle isikukoodiga on juba olemas");
+            stop(409, "Kasutaja selle isikukoodiga on juba olemas" . $userPersonalCode);
         }
 
         $userName = addslashes($_POST['userName']);
@@ -463,12 +463,14 @@ function AJAX_addGroup()
             $userName = addslashes($student['name']);
 
             try {
-                Db::insert('users', [
+                $userId = Db::insert('users', [
                     'userName' => $userName,
                     'userPersonalCode' => $userPersonalCode,
                     'tahvelStudentId' => $tahvelStudentId,
                     'groupId' => $groupId
                 ]);
+
+                Activity::create(ACTIVITY_ADD_USER, $this->auth->userId, $userId);
             } catch (\Exception $e) {
                 stop(400, 'Õpilase lisamine ebaõnnestus: ' . $e->getMessage());
             }
@@ -482,7 +484,6 @@ function AJAX_addGroup()
     {
         try {
 
-
             if (empty($student['name'])) {
                 return ['status' => 400, 'message' => 'Nimi on kohustuslik'];
             }
@@ -493,11 +494,11 @@ function AJAX_addGroup()
             $userPersonalCode = $student['userPersonalCode'];
 
             if (!$this->validatePersonalCode($userPersonalCode)) {
-                return ['status' => 400, 'message' => "Isikukood ei vasta nõuetele"];
+                return ['status' => 400, 'message' => "Isikukood $student[userPersonalCode] ei vasta nõuetele"];
             }
 
             if (User::get(["userPersonalCode = '$userPersonalCode'"])) {
-                return ['status' => 409, 'message' => "Kandidaat selle isikukoodiga on juba olemas"];
+                return ['status' => 409, 'message' => "Õpilane isikukoodiga $userPersonalCode on juba olemas"];
             }
         } catch (\Exception $e) {
             return ['status' => 400, 'message' => 'Õpilase lisamine ebaõnnestus: ' . $e->getMessage()];
