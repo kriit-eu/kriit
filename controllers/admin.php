@@ -198,6 +198,31 @@ class admin extends Controller
         $this->assignments = Db::getAll("SELECT * FROM assignments WHERE subjectId = ?", [$this->getId()]);
     }
 
+    function groups_view(): void
+    {
+        $data = Db::getAll("
+                SELECT
+                    u.userId, u.userName, u.groupId, u.userPersonalCode, u.tahvelStudentId, u.userEmail, g.groupName
+                FROM users u
+                LEFT JOIN groups g ON u.groupId = g.groupId
+                WHERE g.groupId = ?
+                ORDER BY g.groupName
+            ", [$this->getId()]);
+
+        $group = [
+            'groupId' => $this->getId(),
+            'groupName' => null,
+            'students' => []
+        ];
+
+        foreach ($data as $student) {
+            $group['groupName'] = $student['groupName'];
+            $group['students'][] = $student;
+        }
+
+        $this->group = $group;
+    }
+
     function validatePersonalCode($personalCode): bool
     {
         $pattern = '/^[1-6]\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{4}$/';
@@ -265,7 +290,29 @@ class admin extends Controller
             stop(400, $e->getMessage());
         }
 
+    }
 
+    function AJAX_deleteStudent()
+    {
+
+        if (empty($_POST['userId']) || !is_numeric($_POST['userId'])) {
+            stop(400, 'Invalid userId');
+        }
+
+        try {
+            Db::delete('userAssignments', 'userId = ?', [$_POST['userId']]);
+            Db::delete('userDoneExercises', 'userId = ?', [$_POST['userId']]);
+            Db::delete('userDoneCriteria', 'userId = ?', [$_POST['userId']]);
+            Db::delete('messages', 'userId = ?', [$_POST['userId']]);
+
+
+            Db::delete('users', 'userId = ?', [$_POST['userId']]);
+            Activity::create(ACTIVITY_DELETE_USER, $this->auth->userId, $_POST['userId']);
+        } catch (\Exception $e) {
+            stop(400, $e->getMessage());
+        }
+
+        stop(200);
     }
 
     function AJAX_addAssignment()
@@ -295,8 +342,14 @@ class admin extends Controller
             'assignmentValidationFunction' => $_POST['assignmentValidationFunction'] ?? null
         ];
 
-        $assignmentId = Db::insert('assignments', $data);
-        Activity::create(ACTIVITY_CREATE_ASSIGNMENT, $this->auth->userId, $assignmentId);
+        try {
+
+            $assignmentId = Db::insert('assignments', $data);
+            Activity::create(ACTIVITY_CREATE_ASSIGNMENT, $this->auth->userId, $assignmentId);
+        } catch (\Exception $e) {
+            stop(400, $e->getMessage());
+        }
+
 
         stop(200, ['assignmentId' => $assignmentId]);
 
@@ -337,8 +390,12 @@ class admin extends Controller
             'groupId' => $_POST['groupId']
         ];
 
-        $subjectId = Db::insert('subjects', $data);
-        Activity::create(ACTIVITY_CREATE_SUBJECT, $this->auth->userId, $subjectId);
+        try {
+            $subjectId = Db::insert('subjects', $data);
+            Activity::create(ACTIVITY_CREATE_SUBJECT, $this->auth->userId, $subjectId);
+        } catch (\Exception $e) {
+            stop(400, $e->getMessage());
+        }
 
         stop(200, ['subjectId' => $subjectId]);
 
@@ -372,8 +429,62 @@ class admin extends Controller
 
         $data = $this->getUserDataForAddingOrUpdating();
 
-        $userId = Db::insert('users', $data);
-        Activity::create(ACTIVITY_ADD_USER, $this->auth->userId, $userId);
+        try {
+
+            $userId = Db::insert('users', $data);
+            Activity::create(ACTIVITY_ADD_USER, $this->auth->userId, $userId);
+        } catch (\Exception $e) {
+            stop(400, $e->getMessage());
+        }
+
+        stop(200, ['userId' => $userId]);
+    }
+
+    function AJAX_addStudent()
+    {
+        if (empty($_POST['groupId'])) {
+            stop(400, 'Grupp on kohustuslik');
+        }
+
+        if (empty($_POST['userName'])) {
+            stop(400, "Nimi on kohustuslik");
+        }
+        if (empty($_POST['userPersonalCode'])) {
+            stop(400, "Isikukood on kohustuslik");
+        }
+
+        $userPersonalCode = $_POST['userPersonalCode'];
+
+        if (!$this->validatePersonalCode($userPersonalCode)) {
+            stop(400, "Isikukood ei vasta nõuetele");
+        }
+
+        if (User::get(["userPersonalCode = '$userPersonalCode'"])) {
+            stop(409, "Õpilane selle isikukoodiga on juba olemas");
+        }
+
+        if (!empty($_POST['tahvelStudentId']) && User::get(["tahvelStudentId = '$_POST[tahvelStudentId]'"])) {
+            stop(409, "Õpilane selle tahvel ID-ga on juba olemas");
+        }
+
+
+        $data = [
+            'groupId' => $_POST['groupId'],
+            'tahvelStudentId' => !empty($_POST['tahvelStudentId']) ? $_POST['tahvelStudentId'] : null,
+            'userName' => $_POST['userName'],
+            'userPersonalCode' => $_POST['userPersonalCode'],
+            'userEmail' => $_POST['userEmail'] ?? null
+        ];
+
+        try {
+            $userId = Db::insert('users', $data);
+            Activity::create(ACTIVITY_ADD_USER, $this->auth->userId, $userId);
+
+        } catch (\Exception $e) {
+            stop(400, $e->getMessage());
+        }
+
+
         stop(200, ['userId' => $userId]);
     }
 

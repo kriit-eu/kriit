@@ -247,6 +247,10 @@ class Application
             $this->action = 'subjects_view';
         }
 
+        if ($this->controller == 'admin' && isset($this->params[0]) && $this->action == 'groups') {
+            $this->action = 'groups_view';
+        }
+
         // Allow shorter URLs (users/view/3 becomes users/3)
         if (is_numeric($this->action)) {
 
