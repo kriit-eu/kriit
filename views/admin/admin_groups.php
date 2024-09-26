@@ -63,22 +63,27 @@
                 <form id="addGroupForm" method="post">
                     <div class="mb-3">
                         <label for="groupName" class="mb-2">
-                            Grupi nimi <span class="text-danger" data-bs-toggle="tooltip" title="See väli on kohustuslik">*</span>
+                            Grupi nimi <span class="text-danger" data-bs-toggle="tooltip"
+                                             title="See väli on kohustuslik">*</span>
                         </label>
-                        <input type="text" class="form-control" id="groupName" name="groupName" placeholder="Sisesta grupi nimi">
+                        <input type="text" class="form-control" id="groupName" name="groupName"
+                               placeholder="Sisesta grupi nimi">
                     </div>
 
                     <!-- JSON Input -->
                     <div class="mb-3">
                         <label for="jsonInput" class="mb-2">
-                            Õpilased <i class="bi bi-info-circle" data-bs-toggle="tooltip" title="JSON, mille saab opetaja-assistent Chrome’i laiendiga Tahvlist, kui ainepäevikus vajutada 'Õpilaste andmed JSON-ina' nuppu."></i>
+                            Õpilased <i class="bi bi-info-circle" data-bs-toggle="tooltip"
+                                        title="JSON, mille saab opetaja-assistent Chrome’i laiendiga Tahvlist, kui ainepäevikus vajutada 'Õpilaste andmed JSON-ina' nuppu."></i>
                         </label>
-                        <textarea class="form-control" id="jsonInput" name="jsonInput" rows="5" placeholder="Sisesta siia JSON andmed."></textarea>
-                        <div id="jsonError" class="text-danger" style="display: none;">Vigane JSON formaat</div> <!-- Error message -->
+                        <textarea class="form-control" id="jsonInput" name="jsonInput" rows="5"
+                                  placeholder="Sisesta siia JSON andmed."></textarea>
+                        <div id="jsonError" class="text-danger" style="display: none;">Vigane JSON formaat</div>
+                        <!-- Error message -->
                     </div>
                     <div class="text-end">
                         <button type="submit" id="submitGroup" class="btn btn-primary me-2" disabled>Lisa uus</button>
-                        <button type="button" id="cancelGroup" class="btn btn-secondary" >Tühista</button>
+                        <button type="button" id="cancelGroup" class="btn btn-secondary">Tühista</button>
                     </div>
                 </form>
             </div>
@@ -103,6 +108,8 @@
 
         // Refresh CodeMirror editor when modal is shown
         $('#addGroupModal').on('shown.bs.modal', function () {
+
+
             $('[data-bs-toggle="tooltip"]').tooltip(); // Initialize tooltips
             editor.refresh(); // Refresh CodeMirror to fix cursor issue
         });
@@ -147,20 +154,32 @@
         // Trigger validation when the group name changes
         $('#groupName').on('input', validateForm);
 
-        submitGroup.on('click', async function  () {
+        submitGroup.on('click', async function () {
             const groupName = $('#groupName').val();
-            const jsonInput = editor.getValue();
-            console.log(jsonInput);
+            let jsonInput = editor.getValue();
+
+            if (jsonInput) {
+                try {
+                    jsonInput = JSON.parse(jsonInput.trim());
+                } catch (e) {
+                    alert('Vigane JSON formaat');
+                    return;
+                }
+            }
+
             const data = {
                 groupName: groupName,
                 students: jsonInput
             };
 
-            console.log(data);
-
-            const res = await ajax('admin/addGroup', data, function (response) {
+            const res = await ajax('admin/addGroup', data,  async function (response) {
                 if (response.status === 200) {
+                    // Create delay 1 sec using promise
+                    await new Promise((resolve) => setTimeout(resolve, 1000))
+
                     window.location.reload();
+                } else {
+                    alert('Error: ' + response);
                 }
             }, function (response) {
                 alert('Error: ' + response);
@@ -170,7 +189,6 @@
         });
 
     });
-
 
 
 </script>
