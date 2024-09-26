@@ -247,7 +247,7 @@ class assignments extends Controller
         }
 
 
-        $existAssignment = Db::getFirst('SELECT * FROM userAssignments WHERE userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
+        $existAssignment = Db::getFirst('SELECT * FROM userAssignments WHERE userId = ? AND assignmentId = ? ', [$studentId, $assignmentId]);
         if (!$existAssignment) {
             Db::insert('userAssignments', ['userId' => $studentId, 'assignmentId' => $assignmentId, 'assignmentStatusId' => 2, 'solutionUrl' => $solutionUrl]);
             Activity::create(ACTIVITY_SUBMIT_ASSIGNMENT, $this->auth->userId, $assignmentId);
@@ -557,6 +557,10 @@ class assignments extends Controller
 
     private function checkIfStudentHasAllCriteria(): bool
     {
+        if (!isset($_POST['criteria']) || empty($_POST['criteria'])) {
+            return true;
+        }
+
         $criteria = $_POST['criteria'];
         if (count($criteria) > 0) {
             $falseCriteria = array_keys(array_filter($criteria, function ($value) {

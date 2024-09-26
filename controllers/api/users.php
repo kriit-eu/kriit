@@ -25,36 +25,49 @@ class users extends Controller
             stop(400, 'Group not found');
         }
 
-        $newUsers = [];
+        $usersWithoutEmail = [];
         foreach ($_POST['students'] as $student) {
+            $tahvelStudentId = $student['id'];
             $fullName = $student['fullname'];
             $personalCode = $student['idcode'];
 
-            $existingUser = Db::getFirst("SELECT userId, userName FROM users WHERE userPersonalCode = ?", [$personalCode]);
+            $existingUser = Db::getFirst("SELECT userId, userName, userEmail FROM users WHERE userPersonalCode = ?", [$personalCode]);
 
             if ($existingUser) {
+                try {
+                    if (empty($existingUser['userEmail'])) {
+                        $usersWithoutEmail[] = $personalCode;
+                    }
 
-                Db::update('users', ['userName' => $fullName, 'groupId' => $groupId],'userId = ?', [$existingUser['userId']]);
-                if ($existingUser['userName'] != $fullName) {
-                    Activity::create(ACTIVITY_UPDATE_USER, $this->auth->userId, $existingUser['userId'], "Name changed from {$existingUser['userName']} to $fullName");
-                }
+                    Db::update('users', ['userName' => $fullName, 'groupId' => $groupId], 'userId = ?', [$existingUser['userId']]);
+                    if ($existingUser['userName'] != $fullName) {
+                        Activity::create(ACTIVITY_UPDATE_USER, $this->auth->userId, $existingUser['userId'], "Name changed from {$existingUser['userName']} to $fullName");
+                    }
 
-                if (!empty($existingUser['groupId']) && $existingUser['groupId'] != $groupId) {
-                    Activity::create(ACTIVITY_UPDATE_USER, $this->auth->userId, $existingUser['userId'], "Group changed from {$existingUser['groupId']} to $groupId");
+                    if (!empty($existingUser['groupId']) && $existingUser['groupId'] != $groupId) {
+                        Activity::create(ACTIVITY_UPDATE_USER, $this->auth->userId, $existingUser['userId'], "Group changed from {$existingUser['groupId']} to $groupId");
+                    }
+                } catch (\Exception $e) {
+                    stop(400, 'Something went wrong with user updating: ' . $e->getMessage());
                 }
 
             } else {
-                $createdUserId = Db::insert('users', [
-                    'userName' => $fullName,
-                    'userPersonalCode' => $personalCode,
-                    'groupId' => $groupId,
-                ]);
-                $newUsers[] = $personalCode;
-                Activity::create(ACTIVITY_ADD_USER, $this->auth->userId, $createdUserId);
+                try {
+                    $createdUserId = Db::insert('users', [
+                        'tahvelStudentId' => $tahvelStudentId,
+                        'userName' => $fullName,
+                        'userPersonalCode' => $personalCode,
+                        'groupId' => $groupId,
+                    ]);
+                    $usersWithoutEmail[] = $personalCode;
+                    Activity::create(ACTIVITY_ADD_USER, $this->auth->userId, $createdUserId);
+                } catch (\Exception $e) {
+                    stop(400, 'Something went wrong with user adding: ' . $e->getMessage());
+                }
             }
         }
 
-        stop(200, $newUsers);
+        stop(200, $usersWithoutEmail);
     }
 
 

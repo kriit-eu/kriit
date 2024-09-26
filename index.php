@@ -38,6 +38,8 @@ try {
     new Application;
 
 } catch (\mysqli_sql_exception $e) { // Catch DatabaseException specifically
+    // Set http status code to 500
+    http_response_code(500);
 
     if (ENV == ENV_PRODUCTION) {
         handleProductionError($e);

@@ -195,6 +195,7 @@ class assignments extends Controller
     {
         $journalEntries = $_POST['journalEntries'];
         $students = $_POST['students'];
+        $groupName = $_POST['groupName'];
         $mismatchedGradesInfo = [];
 
         if (empty($journalEntries)) {
@@ -219,7 +220,7 @@ class assignments extends Controller
                  JOIN kriit.groups g ON u.groupId = g.groupId
                  JOIN kriit.userAssignments ua ON u.userId = ua.userId
                  WHERE u.userName = ? AND g.groupName = ? AND ua.assignmentId = ?",
-                    [$studentData['name'], $studentData['studentGroup'], $assignmentId]
+                    [$studentData['name'], $groupName, $assignmentId]
                 );
 
                 if (!$assignmentData) continue;
