@@ -99,4 +99,88 @@ class cron extends Controller
     }
 
 
+    function sendNotificationAboutUngradedAssignments(): void
+    {
+
+        $data = Db::getAll("
+        SELECT
+            a.assignmentId, a.assignmentName, a.assignmentInstructions, a.assignmentDueAt,
+            subj.subjectName, t.userName AS teacherName, t.userEmail AS teacherEmail,
+            u.userId AS studentId, u.userName AS studentName, u.groupId,
+            ua.assignmentStatusId, ua.userGrade, ua.solutionUrl
+        FROM assignments a
+        JOIN subjects subj ON a.subjectId = subj.subjectId
+        JOIN users t ON subj.teacherId = t.userId
+        LEFT JOIN groups g ON subj.groupId = g.groupId
+        LEFT JOIN users u ON u.groupId = g.groupId
+        LEFT JOIN userAssignments ua ON ua.assignmentId = a.assignmentId AND ua.userId = u.userId
+        WHERE ua.assignmentStatusId IS NOT NULL
+          AND ua.assignmentStatusId = 2
+        GROUP BY a.assignmentName, u.userName
+        ORDER BY a.assignmentName, u.userName
+    ");
+
+        if (!empty($data)) {
+            $teachers = [];
+
+            foreach ($data as $row) {
+                $teacherEmail = $row['teacherEmail'];
+
+                if (!isset($teachers[$teacherEmail])) {
+                    $teachers[$teacherEmail] = [
+                        'teacherName' => $row['teacherName'],
+                        'assignments' => []
+                    ];
+                }
+
+                $assignmentId = $row['assignmentId'];
+
+                if (!isset($teachers[$teacherEmail]['assignments'][$assignmentId])) {
+                    $teachers[$teacherEmail]['assignments'][$assignmentId] = [
+                        'assignmentName' => $row['assignmentName'],
+                        'assignmentDueAt' => $row['assignmentDueAt'],
+                        'subjectName' => $row['subjectName'],
+                        'assignmentLink' => BASE_URL . "assignments/" . $assignmentId,
+                        'students' => []
+                    ];
+                }
+
+                $teachers[$teacherEmail]['assignments'][$assignmentId]['students'][] = [
+                    'studentName' => $row['studentName'],
+                    'solutionUrl' => $row['solutionUrl']
+                ];
+            }
+
+            foreach ($teachers as $teacherEmail => $teacherData) {
+                $teacherName = $teacherData['teacherName'];
+                $messageBody = "<p>Tere, $teacherName,</p>";
+                $messageBody .= "<p>Järgnevad ülesanded on veel hindamata:</p>";
+
+                foreach ($teacherData['assignments'] as $assignment) {
+                    $messageBody .= "<h3><a href='{$assignment['assignmentLink']}'>{$assignment['assignmentName']} ({$assignment['subjectName']})</a></h3>";
+                    $messageBody .= "<p>Tähtaeg: " . date('d.m.Y', strtotime($assignment['assignmentDueAt'])) . "</p>";
+                    $messageBody .= "<ul>";
+
+                    foreach ($assignment['students'] as $student) {
+                        $messageBody .= "<li>{$student['studentName']} (<a href='{$student['solutionUrl']}'>{$student['solutionUrl']}</a>)</li>";
+                    }
+
+                    $messageBody .= "</ul>";
+                }
+
+                $messageBody .= "<p>Palun hindage ülesandeid esimesel võimalusel.</p>";
+                $messageBody .= "<p>Parimate soovidega,<br>Teie Kriit süsteem</p>";
+
+                if (!empty($teacherEmail) && !empty(trim($teacherEmail))) {
+                    Mail::send($teacherEmail, "Hindamata ülesanded vajavad teie tähelepanu!", $messageBody);
+                }
+            }
+
+            stop(200, 'Emails sent successfully');
+        } else {
+            stop(204, 'No ungraded assignments found');
+        }
+    }
+
+
 }
