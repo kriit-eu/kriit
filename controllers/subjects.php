@@ -10,7 +10,7 @@ class subjects extends Controller
         $this->template = $this->auth->userIsAdmin ? 'admin' : 'master';
         // Define user roles
         $this->isStudent = $this->auth->groupId && !$this->auth->userIsAdmin && !$this->auth->userIsTeacher;
-        $this->isTeacher = !$this->auth->userIsAdmin && $this->auth->userIsTeacher;
+        $this->isTeacher = $this->auth->userIsTeacher;
 
         // Construct the WHERE clause for the SQL query
         $whereClause = implode(' OR ', array_filter([
@@ -103,21 +103,22 @@ class subjects extends Controller
                 }
 
                 $statusName = $row['assignmentStatusName'] ?? 'Esitamata';
+                $statusId = $row['assignmentStatusId'] ?? ASSIGNMENT_STATUS_NOT_SUBMITTED;
                 $grade = $row['userGrade'] ?? '';
-                $isLowGrade = $grade == 'MA' || (is_numeric($grade) && intval($grade) < 3);
+                $isNegativeGrade = $grade == 'MA' || (is_numeric($grade) && intval($grade) < 3);
 
                 // Determine the CSS class for the assignment status
-                $class = $daysRemaining < 0 ?
-                    (($this->isStudent && $statusName == 'Esitamata') ||
-                    ($this->isStudent && $isLowGrade) ||
-                    ($this->isTeacher && $statusName !== 'Hinnatud') ? 'red-cell' : '') :
-                    ($isLowGrade ? 'red-cell' : ($statusClassMap[$statusName] ?? ''));
+                $class = ($daysRemaining < 0) ?
+                    (($this->isStudent && ($statusId == ASSIGNMENT_STATUS_NOT_SUBMITTED || $isNegativeGrade) || ($this->isTeacher && $statusId == ASSIGNMENT_STATUS_WAITING_FOR_REVIEW)) ? 'red-cell' :
+                        (($this->isTeacher && ($statusId == ASSIGNMENT_STATUS_NOT_SUBMITTED || $statusId == ASSIGNMENT_STATUS_GRADED) ? 'yellow-cell' : ''))) :
+                    ($isNegativeGrade ? 'red-cell' : ($statusClassMap[$statusName] ?? ''));
+
 
                 // Determine the link text based on assignment status
                 $linkText = match ($statusName) {
                     'Esitamata' => $this->isStudent ? 'Esita' : 'Hinda',
                     'Ülevaatamata' => $this->isStudent ? 'Muuda' : 'Hinda',
-                    'Hinnatud' => $isLowGrade ? ($this->isStudent ? 'Esita uuesti' : 'Muuda hinnet') : '',
+                    'Hinnatud' => $isNegativeGrade ? ($this->isStudent ? 'Esita uuesti' : 'Muuda hinnet') : '',
                     default => ''
                 };
 
