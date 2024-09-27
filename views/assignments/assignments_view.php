@@ -89,6 +89,10 @@
         margin-left: 10px;
     }
 
+    .clickable-cells-row td {
+        cursor: pointer;
+    }
+
 
 </style>
 <div>
@@ -355,7 +359,7 @@
             </tr>
             </thead>
             <tbody>
-            <tr>
+            <tr class="clickable-cells-row">
                 <?php foreach ($assignment['students'] as $s): ?>
                     <td class="<?= $s['class'] ?> text-center"
                         data-bs-toggle="tooltip"
