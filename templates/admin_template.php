@@ -13,7 +13,6 @@
         <a class="flex-sm-fill text-sm-center nav-link <?= $this->setActive('admin/groups') ?>" href="admin/groups">Grupid</a>
         <a class="flex-sm-fill text-sm-center nav-link <?= $this->setActive('admin/users') ?>" href="admin/users">Kasutajad</a>
         <a class="flex-sm-fill text-sm-center nav-link <?= $this->setActive('admin/logs') ?>" href="admin/logs">Logi</a>
-        <a class="flex-sm-fill text-sm-center nav-link <?= $this->setActive('applicants/index') ?>" href="applicants">Kandidaadid</a>
         <a class="flex-sm-fill text-sm-center nav-link <?= $this->setActive('admin/exercises') ?>"
            href="admin/exercises">Ülesanded</a>
         <a class="flex-sm-fill text-sm-center nav-link <?= $this->setActive('admin/ranking') ?>" href="admin/ranking">Ranking</a>

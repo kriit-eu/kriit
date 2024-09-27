@@ -23,7 +23,7 @@
 
 <h1>Ülesanded</h1>
 <div class="col text-end mb-3">
-    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAssignmentModal">Lisa uus Ülesanne</button>
+    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addAssignmentModal">Lisa uus ülesanne</button>
 </div>
 <div class="row">
     <div class="table-responsive">

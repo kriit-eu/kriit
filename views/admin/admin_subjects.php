@@ -9,7 +9,7 @@
 
 <h1>Ained</h1>
 <div class="col text-end mb-3">
-    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSubjectModal">Lisa uus Aine</button>
+    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addSubjectModal">Lisa uus aine</button>
 </div>
 <div class="row">
     <div class="table-responsive">
