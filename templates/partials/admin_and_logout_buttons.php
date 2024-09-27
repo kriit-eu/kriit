@@ -1,13 +1,13 @@
 <div class="d-flex justify-content-end">
     <?php if($auth->userIsAdmin): ?>
-        <button type="button" class="btn btn-warning admin-btn me-4" onclick="redirectToUsers()">Admin</button>
+        <button type="button" class="btn btn-warning admin-btn me-4" onclick="redirectToSubjects()">Admin</button>
     <?php endif; ?>
     <button type="button" class="btn btn-secondary logout-btn" onclick="redirectToLogout()">Logout</button>
 </div>
 
 <script>
-    const redirectToUsers = () => {
-        window.location.href = 'admin/users';
+    const redirectToSubjects = () => {
+        window.location.href = 'subjects';
     }
 
     const redirectToLogout = () => {

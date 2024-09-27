@@ -4,8 +4,10 @@ class subjects extends Controller
 {
     public $template = 'master';
 
+
     public function index()
     {
+        $this->template = $this->auth->userIsAdmin ? 'admin' : 'master';
         // Define user roles
         $this->isStudent = $this->auth->groupId && !$this->auth->userIsAdmin && !$this->auth->userIsTeacher;
         $this->isTeacher = !$this->auth->userIsAdmin && $this->auth->userIsTeacher;
@@ -39,7 +41,7 @@ class subjects extends Controller
         // Define status class mapping
         $statusClassMap = [
             'Esitamata' => $this->isStudent ? 'yellow-cell' : '',
-            'Ülevaatamata' => $this->auth->userIsTeacher? 'red-cell' : '',
+            'Ülevaatamata' => $this->auth->userIsTeacher ? 'red-cell' : '',
         ];
 
         // Process each row of data
@@ -85,7 +87,7 @@ class subjects extends Controller
             // Process assignment data if exists
             if ($assignmentId) {
                 $dueDate = !empty($row['assignmentDueAt']) ? new \DateTime($row['assignmentDueAt']) : null;
-                $daysRemaining = $dueDate ? (int)(new \DateTime())->diff($dueDate)->format('%r%a')  : 1000;
+                $daysRemaining = $dueDate ? (int)(new \DateTime())->diff($dueDate)->format('%r%a') : 1000;
 
                 // Add or update assignment in subject
                 if (!isset($groups[$groupName]['subjects'][$subjectId]['assignments'][$assignmentId])) {

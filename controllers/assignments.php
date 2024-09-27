@@ -6,6 +6,8 @@ class assignments extends Controller
 
     public function view(): void
     {
+        $this->template = $this->auth->userIsAdmin ? 'admin' : 'master';
+
         $this->checkIfUserHasPermissionForAction($this->getId()) || $this->redirect('subjects');
 
         $this->isStudent = $this->auth->groupId && !$this->auth->userIsAdmin && !$this->auth->userIsTeacher;
@@ -126,16 +128,16 @@ class assignments extends Controller
             $assignment['students'][$studentId]['isAllCriteriaCompleted'] = $isAllCriteriaCompleted;
 
 
-            $class = '';
-
             $daysRemaining = null;
             if (!empty($row['assignmentDueAt'])) {
                 $daysRemaining = (int)(new \DateTime())->diff(new \DateTime($row['assignmentDueAt']))->format('%r%a');
-                $class = $daysRemaining <= 0 ?
+                $class = $daysRemaining < 0 ?
                     (($this->isStudent && $statusName == 'Esitamata') ||
                     ($this->isStudent && $isLowGrade) ||
                     ($this->isTeacher && $statusName !== 'Hinnatud') ? 'red-cell' : '') :
                     ($isLowGrade ? 'red-cell' : ($statusClassMap[$statusName] ?? ''));
+            }else{
+                $class = ($isLowGrade ? 'red-cell' : ($statusClassMap[$statusName] ?? ''));
             }
 
             $tooltipText = $statusName . (($daysRemaining !== null && $daysRemaining < 0 && $statusName === 'Esitamata') ? ' (Tähtaeg möödas)' : '');

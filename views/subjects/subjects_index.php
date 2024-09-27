@@ -15,7 +15,11 @@
         text-align: center;
     }
 </style>
-
+<?php if ($this->auth->userIsAdmin): ?>
+    <div class="col text-end mb-3">
+        <button class="btn btn-primary" onclick="window.location.href='admin/subjects'">Muuda</button>
+    </div>
+<?php endif; ?>
 <div class="row">
     <?php foreach ($groups as $group): ?>
         <h1><?= $group['groupName'] ?></h1>
