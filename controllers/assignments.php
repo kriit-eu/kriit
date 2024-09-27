@@ -113,7 +113,6 @@ class assignments extends Controller
             $isNegativeGrade = $grade == 'MA' || (is_numeric($grade) && intval($grade) < 3);
             $isEvaluated = isset($row['assignmentStatusName']) && $row['assignmentStatusName'] === 'Hinnatud';
 
-
             $isAllCriteriaCompleted = true;
             foreach ($assignment['students'][$studentId]['userDoneCriteria'] as $criterion) {
                 if (!$criterion['completed']) {
@@ -122,25 +121,23 @@ class assignments extends Controller
                 }
             }
 
-
             $assignment['students'][$studentId]['isDisabledStudentActionButton'] =
                 (($isEvaluated && !$isNegativeGrade) || (!$isEvaluated && !$isAllCriteriaCompleted)) ? 'disabled' : '';
 
             $assignment['students'][$studentId]['isAllCriteriaCompleted'] = $isAllCriteriaCompleted;
 
+            $dueDate = !empty($row['assignmentDueAt']) ? new \DateTime($row['assignmentDueAt']) : null;
+            $daysRemaining = $dueDate ? (int)(new \DateTime())->diff($dueDate)->format('%r%a') : 1000;
 
-            $daysRemaining = null;
-            if (!empty($row['assignmentDueAt'])) {
-                $daysRemaining = (int)(new \DateTime())->diff(new \DateTime($row['assignmentDueAt']))->format('%r%a');
-                $class = ($daysRemaining < 0) ?
-                    (($this->isStudent && ($statusId == ASSIGNMENT_STATUS_NOT_SUBMITTED || $isNegativeGrade) || ($this->isTeacher && $statusId == ASSIGNMENT_STATUS_WAITING_FOR_REVIEW)) ? 'red-cell' :
-                        (($this->isTeacher && ($statusId == ASSIGNMENT_STATUS_NOT_SUBMITTED || $statusId == ASSIGNMENT_STATUS_GRADED) ? 'yellow-cell' : ''))) :
-                    ($isNegativeGrade ? 'red-cell' : ($statusClassMap[$statusName] ?? ''));
-            } else {
-                $class = ($isNegativeGrade ? 'red-cell' : ($statusClassMap[$statusName] ?? ''));
-            }
+            $class = ($this->isStudent && $isNegativeGrade) ? 'red-cell' :
+                ($daysRemaining < 0 ?
+                    (($this->isStudent && $statusId == ASSIGNMENT_STATUS_NOT_SUBMITTED) ||
+                    ($this->isTeacher && $statusId == ASSIGNMENT_STATUS_WAITING_FOR_REVIEW) ? 'red-cell' :
+                        ($this->isTeacher ? 'yellow-cell' : '')) :
+                    ($this->isTeacher && $statusId != ASSIGNMENT_STATUS_WAITING_FOR_REVIEW ? '' : ($statusClassMap[$statusName] ?? '')));
 
-            $tooltipText = $statusName . (($daysRemaining !== null && $daysRemaining < 0 && $statusName === 'Esitamata') ? ' (Tähtaeg möödas)' : '');
+
+            $tooltipText = $statusName . (($daysRemaining < 0 && $statusName === 'Esitamata') ? ' (Tähtaeg möödas)' : '');
             $assignment['students'][$studentId]['class'] = $class;
             $assignment['students'][$studentId]['tooltipText'] = $tooltipText;
         }

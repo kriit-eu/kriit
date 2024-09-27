@@ -108,10 +108,12 @@ class subjects extends Controller
                 $isNegativeGrade = $grade == 'MA' || (is_numeric($grade) && intval($grade) < 3);
 
                 // Determine the CSS class for the assignment status
-                $class = ($daysRemaining < 0) ?
-                    (($this->isStudent && ($statusId == ASSIGNMENT_STATUS_NOT_SUBMITTED || $isNegativeGrade) || ($this->isTeacher && $statusId == ASSIGNMENT_STATUS_WAITING_FOR_REVIEW)) ? 'red-cell' :
-                        (($this->isTeacher && ($statusId == ASSIGNMENT_STATUS_NOT_SUBMITTED || $statusId == ASSIGNMENT_STATUS_GRADED) ? 'yellow-cell' : ''))) :
-                    ($isNegativeGrade ? 'red-cell' : ($statusClassMap[$statusName] ?? ''));
+                $class = ($this->isStudent && $isNegativeGrade) ? 'red-cell' :
+                    ($daysRemaining < 0 ?
+                        (($this->isStudent && $statusId == ASSIGNMENT_STATUS_NOT_SUBMITTED) ||
+                        ($this->isTeacher && $statusId == ASSIGNMENT_STATUS_WAITING_FOR_REVIEW) ? 'red-cell' :
+                            ($this->isTeacher ? 'yellow-cell' : '')) :
+                        ($this->isTeacher && $statusId != ASSIGNMENT_STATUS_WAITING_FOR_REVIEW ? '' : ($statusClassMap[$statusName] ?? '')));
 
 
                 // Determine the link text based on assignment status
