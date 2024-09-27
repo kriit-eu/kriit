@@ -432,9 +432,12 @@ class assignments extends Controller
             $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
         } else {
             Db::update('userAssignments', ['userGrade' => $grade, 'assignmentStatusId' => 3, 'comment' => $comment], 'userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
-            $message = "$_POST[teacherName] muutis õpilase $_POST[studentName] hinnet: $existUserAssignment[userGrade] -> $grade";
-            $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
-            $isUpdated = !empty($existUserAssignment['userGrade']);
+            if ($existUserAssignment['userGrade'] !== $grade) {
+                $message = "$_POST[teacherName] muutis õpilase $_POST[studentName] hinnet: $existUserAssignment[userGrade] -> $grade";
+                $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
+            }
+
+            $isUpdated = true;
         }
 
         return $isUpdated;
