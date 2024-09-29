@@ -29,7 +29,7 @@ class subjects extends Controller
             FROM subjects s
             JOIN users t ON s.teacherId = t.userId
             JOIN groups g ON s.groupId = g.groupId
-            JOIN users u ON u.groupId = g.groupId
+            LEFT JOIN users u ON u.groupId = g.groupId
             LEFT JOIN assignments a ON a.subjectId = s.subjectId
             LEFT JOIN userAssignments ua ON ua.assignmentId = a.assignmentId AND ua.userId = u.userId
             LEFT JOIN assignmentStatuses ast ON ua.assignmentStatusId = ast.assignmentStatusId
