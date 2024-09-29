@@ -14,7 +14,14 @@ class Auth
     function __construct()
     {
 
-        if (str_starts_with($_SERVER['REQUEST_URI'], '/api/')) {
+// Get the base path from BASE_URL
+        $basePath = rtrim(parse_url(BASE_URL, PHP_URL_PATH), '/');
+
+// Remove the base path from REQUEST_URI to get the relative URI
+        $relativeUri = substr($_SERVER['REQUEST_URI'], strlen($basePath));
+
+// Now check if the relative URI starts with '/api/'
+        if (str_starts_with($relativeUri, '/api/')) {
             if (!isset($_SERVER['HTTP_AUTHORIZATION'])) {
                 stop(400, 'No API key provided');
             }
