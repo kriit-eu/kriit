@@ -133,7 +133,7 @@ class assignments extends Controller
                 ($daysRemaining < 0 ?
                     (($this->isStudent && $statusId == ASSIGNMENT_STATUS_NOT_SUBMITTED) ||
                     ($this->isTeacher && $statusId == ASSIGNMENT_STATUS_WAITING_FOR_REVIEW) ? 'red-cell' :
-                        ($this->isTeacher ? 'yellow-cell' : '')) :
+                        ($this->isTeacher && $statusId == ASSIGNMENT_STATUS_NOT_SUBMITTED ? 'yellow-cell' : '')) :
                     ($this->isTeacher && $statusId != ASSIGNMENT_STATUS_WAITING_FOR_REVIEW ? '' : ($statusClassMap[$statusName] ?? '')));
 
 
