@@ -70,8 +70,8 @@ class subjects extends Controller
                 'subjectId' => $subjectId,
                 'status' => $row['assignmentStatusName'] ?? 'Esitamata',
                 'userId' => $studentId,
-                'initials' => mb_substr($row['studentName'], 0, 1)
-                    . mb_substr($row['studentName'], mb_strrpos($row['studentName'], ' ') + 1, 1)
+                'initials' => mb_substr($row['studentName'] ?? '', 0, 1)
+                    . mb_substr(mb_strrpos($row['studentName'] ?? '', ' ') + 1, 1)
             ];
 
             // Add or update subject in group
@@ -112,7 +112,7 @@ class subjects extends Controller
                     ($daysRemaining < 0 ?
                         (($this->isStudent && $statusId == ASSIGNMENT_STATUS_NOT_SUBMITTED) ||
                         ($this->isTeacher && $statusId == ASSIGNMENT_STATUS_WAITING_FOR_REVIEW) ? 'red-cell' :
-                            ($this->isTeacher && $statusId == ASSIGNMENT_STATUS_NOT_SUBMITTED ? 'yellow-cell' : '')) :
+                            ($this->isTeacher && $statusId == ASSIGNMENT_STATUS_NOT_SUBMITTED || $isNegativeGrade ? 'yellow-cell' : '')) :
                         ($this->isTeacher && $statusId != ASSIGNMENT_STATUS_WAITING_FOR_REVIEW ? '' : ($statusClassMap[$statusName] ?? '')));
 
 
