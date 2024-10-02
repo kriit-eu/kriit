@@ -9,10 +9,37 @@ class cron extends Controller
 
     function index(): void
     {
+        $this->sendNotificationAboutDeadline();
+        $this->sendNotificationAboutUngradedAssignments();
+        $this->sendNotificationAboutAssignmentsWithOverDeadlines();
+
+        stop(200, 'Emails sent successfully');
+
+    }
+
+
+    private function sendNotificationAboutAssignmentsWithOverDeadlines(): void
+    {
+
+        $students = $this->StudentsWithPassedDeadlines();
+
+        if (!empty($students)) {
+            foreach ($students as $studentId => $studentData) {
+                $messageBody = $this->generateEmailMessageForStudentsWithPassedDeadlines($studentData);
+                $studentEmail = $studentData['studentEmail'];
+                $subject = "Esitamata ülesanded!";
+                Mail::send($studentEmail, $subject, $messageBody);
+            }
+        }
+    }
+
+
+    private function sendNotificationAboutDeadline(): void
+    {
         $assignments = $this->getStudentsWithNotSubmittedWorks();
 
         if (empty($assignments)) {
-            stop(200, 'No students with unsubmitted works found');
+            return;
         }
 
         foreach ($assignments as $assignment) {
@@ -20,7 +47,6 @@ class cron extends Controller
             $this->sendEmailsToStudents($assignment, $mailData['subject'], $mailData['bodyTemplate'], $assignment['teacherName']);
         }
 
-        stop(200, 'Emails sent successfully');
 
     }
 
@@ -67,12 +93,12 @@ class cron extends Controller
     }
 
 
-    function ungradedAssignments(): void
+    function sendNotificationAboutUngradedAssignments(): void
     {
         $teachers = $this->getTeachersWithUngradedAssignments();
 
         if (empty($teachers)) {
-            stop(200, 'No ungraded assignments found');
+            return;
         }
 
         foreach ($teachers as $teacherEmail => $teacherData) {
@@ -84,8 +110,85 @@ class cron extends Controller
             }
         }
 
-        stop(200, 'Emails sent successfully');
+    }
 
+    function generateEmailMessageForStudentsWithPassedDeadlines($studentData): string
+    {
+        $messageBody = "<h3>Tähelepanu! Teil {} on esitamata ülesanded, mille tähtaeg on möödunud:</h3>";
+        $messageBody .= "<table border='1' cellpadding='10' cellspacing='0' style='border-collapse: collapse; width: 100%;'>";
+        $messageBody .= "<thead>";
+        $messageBody .= "<tr>";
+        $messageBody .= "<th>Aine nimi</th>";
+        $messageBody .= "<th>Ülesande nimi</th>";
+        $messageBody .= "<th>Tähtaeg</th>";
+        $messageBody .= "<th>Õpetaja</th>";
+        $messageBody .= "</tr>";
+        $messageBody .= "</thead>";
+        $messageBody .= "<tbody>";
+
+        foreach ($studentData['advertisements'] as $assignment) {
+            $assignmentLink = BASE_URL . "assignments/" . $assignment['assignmentId'];
+            $messageBody .= "<tr>";
+            $messageBody .= "<td>{$assignment['subjectName']}</td>";
+            $messageBody .= "<td><a href=\"{$assignmentLink}\">{$assignment['assignmentName']}</a></td>";
+            $messageBody .= "<td>" . date('d.m.Y', strtotime($assignment['assignmentDueAt'])) . "</td>";
+            $messageBody .= "<td>{$assignment['teacherName']}</td>";
+            $messageBody .= "</tr>";
+        }
+
+        $messageBody .= "</tbody>";
+        $messageBody .= "</table>";
+        $messageBody .= "<p><b>Palun esitage need ülesanded esimesel võimalusel.</b></p>";
+
+        return $messageBody;
+
+    }
+
+    private function StudentsWithPassedDeadlines(): array
+    {
+        $students = [];
+        $data = Db::getAll("
+            SELECT
+                a.assignmentId, a.assignmentName, a.assignmentInstructions, a.assignmentDueAt,
+                subj.subjectName, t.userName AS teacherName,
+                u.userId AS studentId, u.userName AS studentName, u.groupId, u.userEmail AS studentEmail,
+                ua.assignmentStatusId
+            FROM assignments a
+            JOIN subjects subj ON a.subjectId = subj.subjectId
+            JOIN users t ON subj.teacherId = t.userId
+            LEFT JOIN groups g ON subj.groupId = g.groupId
+            LEFT JOIN users u ON u.groupId = g.groupId
+            LEFT JOIN userAssignments ua ON ua.assignmentId = a.assignmentId AND ua.userId = u.userId
+            WHERE a.assignmentDueAt < CURDATE() AND ua.assignmentStatusId IS NULL
+        ");
+
+        if (!empty($data)) {
+            foreach ($data as $entry) {
+                $studentId = $entry['studentId'];
+                if (empty($studentId)) {
+                    continue;
+                }
+
+                if (!isset($students[$studentId])) {
+                    $students[$studentId] = [
+                        'studentName' => $entry['studentName'],
+                        'studentEmail' => $entry['studentEmail'],
+                        'advertisements' => []
+                    ];
+                }
+
+                $students[$studentId]['advertisements'][] = [
+                    'assignmentId' => $entry['assignmentId'],
+                    'assignmentName' => $entry['assignmentName'],
+                    'assignmentInstructions' => $entry['assignmentInstructions'],
+                    'assignmentDueAt' => $entry['assignmentDueAt'],
+                    'subjectName' => $entry['subjectName'],
+                    'teacherName' => $entry['teacherName']
+                ];
+            }
+        }
+
+        return $students;
     }
 
     private function getTeachersWithUngradedAssignments(): array
