@@ -147,15 +147,14 @@ class admin extends Controller
         $this->users = Db::getAll("
         SELECT
             u.*,
-
             g.groupName
         FROM
             users u
         LEFT JOIN
             groups g ON u.groupId = g.groupId
         GROUP BY
-            u.userId, u.userName, g.groupName
-        ORDER BY u.userName, g.groupName");
+            u.userName, g.groupName
+        ORDER BY  g.groupName, u.userName");
 
         $this->groups = Db::getAll("SELECT * FROM groups");
 
@@ -670,7 +669,8 @@ class admin extends Controller
             'userName' => $_POST['userName'],
             'userPersonalCode' => $_POST['userPersonalCode'],
             'groupId' => empty($_POST['groupId']) ? null : $_POST['groupId'],
-            'userIsAdmin' => empty($_POST['userIsAdmin']) ? 0 : 1
+            'userIsAdmin' => empty($_POST['userIsAdmin']) ? 0 : 1,
+            'userEmail' => $_POST['userEmail']
         ];
 
         if (!empty($_POST['userPassword'])) {

@@ -25,6 +25,7 @@
                 <th>Nimi</th>
                 <th>Isikukood</th>
                 <th class="text-center">Grupp</th>
+                <th class="text-center">Email</th>
                 <th class="text-center">Admin</th>
                 <th>Tegevused</th>
             </tr>
@@ -36,12 +37,14 @@
                     <td><?= $user['userName'] ?></td>
                     <td><?= $user['userPersonalCode'] ?></td>
                     <td class="text-center"><?= $user['groupName'] ?></td>
+                    <td class="text-center"><?= $user['userEmail'] ?></td>
                     <td class="text-center"><?= $user['userIsAdmin'] ? "&#9989;" : "" ?></td>
                     <td data-searchable="false">
                         <div class="btn-group btn-group-sm" role="group">
                             <a href="#" class="text-warning edit-user" data-id="<?= $user['userId'] ?>"
                                data-name="<?= $user['userName'] ?>" data-personalcode="<?= $user['userPersonalCode'] ?>"
                                data-userisadmin="<?= $user['userIsAdmin'] ?>" data-groupid="<?= $user['groupId'] ?>"
+                               data-useremail="<?= $user['userEmail'] ?>"
                                data-context="edit">
                                 <i class="bi bi-pencil-fill"></i>
                             </a>
@@ -81,6 +84,12 @@
                         <input type="text" name="userPersonalCode" class="form-control" id="userPersonalCode"
                                aria-describedby="userPersonalCodeHelp" data-context="admin" required>
                         <div id="userPersonalCodeHelp" class="form-text">Sisesta kasutaja isikukood</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="userEmail" class="form-label">Email</label>
+                        <input type="text" name="userEmail" class="form-control" id="userEmail"
+                                data-context="admin">
+                        <div id="userEmail" class="form-text">Sisesta kasutaja email</div>
                     </div>
 
                     <div class="mb-3">
@@ -152,6 +161,7 @@
         const $userIdInput = $("#userId");
         const $userIsAdminCheckbox = $("#userIsAdmin");
         const $userGroupSelect = $("#userGroup");
+        const $userEmailInput = $("#userEmail");
 
         function setContext(context) {
             if (context === "edit") {
@@ -176,11 +186,13 @@
             const userPersonalCode = $(this).data('personalcode');
             const userIsAdmin = $(this).data('userisadmin');
             const userGroupId = $(this).data('groupid');
+            const userEmail = $(this).data('useremail');
 
             $userIdInput.val(userId);
             $userNameInput.val(userName);
             $userPersonalCodeInput.val(userPersonalCode);
             $userIsAdminCheckbox.prop('checked', userIsAdmin);
+            $userEmailInput.val(userEmail);
 
             if (userGroupId) {
                 $('#userGroup').val(userGroupId);
@@ -195,12 +207,8 @@
             const context = $(this).data('context');
             setContext(context);
 
-            $userIdInput.val('');
-            $userNameInput.val('');
-            $userPersonalCodeInput.val('');
-            $userPasswordInput.val('');
-            $userIsAdminCheckbox.prop('checked', false);
-            $userGroupSelect.val('');
+            clearForm();
+
         });
 
         $('#addUserForm').on('submit', async function (e) {
@@ -236,13 +244,18 @@
         });
 
         $('#addUserModal').on('hidden.bs.modal', function () {
+            clearForm();
+        });
+
+        function clearForm() {
             $userIdInput.val('');
             $userNameInput.val('');
             $userPersonalCodeInput.val('');
             $userPasswordInput.val('');
             $userIsAdminCheckbox.prop('checked', false);
             $userGroupSelect.val('');
-        });
+            $userEmailInput.val('');
+        }
     });
 </script>
 
