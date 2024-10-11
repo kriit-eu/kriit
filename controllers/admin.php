@@ -164,7 +164,7 @@ class admin extends Controller
 
     function validatePersonalCode($personalCode)
     {
-        $pattern = '/^[1-6]\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{4}$/';
+        $pattern = '/^[1-9]\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{4}$/';
 
         if (!preg_match($pattern, $personalCode)) {
             return false;
@@ -442,34 +442,13 @@ class admin extends Controller
         $groupId = Db::insert('groups', ['groupName' => $_POST['groupName']]);
         Activity::create(ACTIVITY_CREATE_GROUP, $this->auth->userId, $groupId);
 
-        if (!empty($_POST['students'])) {
 
-            foreach ($_POST['students'] as $student) {
-
-                $checkStudentNameAndPersonalCode = $this->checkStudentNameAndPersonalCode($student);
-                if ($checkStudentNameAndPersonalCode) {
-                    stop($checkStudentNameAndPersonalCode['status'], json_encode($checkStudentNameAndPersonalCode['message']));
-                }
-
-                try {
-                    $userId = Db::insert('users', [
-                        'userName' => addslashes($student['name']),
-                        'userPersonalCode' => $student['idcode'],
-                        'tahvelStudentId' => $student['studentId'],
-                        'groupId' => $groupId
-                    ]);
-
-//                Activity::create(ACTIVITY_ADD_USER, $this->auth->userId, $userId);
-                } catch (\Exception $e) {
-                    stop(400, 'Õpilase lisamine ebaõnnestus: ' . $e->getMessage());
-                }
-            }
-        }
+        $this->addStudentsToGroup($groupId);
 
         stop(200, ['groupId' => $groupId]);
     }
 
-    private function checkStudentNameAndPersonalCode($student): ?array
+    private function checkStudentNameAndPersonalCode($student): array
     {
         try {
 
@@ -493,9 +472,38 @@ class admin extends Controller
             return ['status' => 400, 'message' => 'Õpilase lisamine ebaõnnestus: ' . $e->getMessage()];
         }
 
-        return null;
+        return [];
 
     }
 
+
+    private function addStudentsToGroup($groupId): void
+    {
+        if (!empty($_POST['students'])) {
+
+
+            foreach ($_POST['students'] as $student) {
+
+                $checkStudentNameAndPersonalCode = $this->checkStudentNameAndPersonalCode($student);
+                if ($checkStudentNameAndPersonalCode) {
+                    stop($checkStudentNameAndPersonalCode['status'], json_encode($checkStudentNameAndPersonalCode['message']));
+                }
+
+                try {
+                    $userId = Db::insert('users', [
+                        'userName' => addslashes($student['name']),
+                        'userPersonalCode' => $student['idcode'],
+                        'tahvelStudentId' => $student['studentId'],
+                        'groupId' => $groupId
+                    ]);
+
+//                Activity::create(ACTIVITY_ADD_USER, $this->auth->userId, $userId);
+                } catch (\Exception $e) {
+                    stop(400, 'Õpilase lisamine ebaõnnestus: ' . $e->getMessage());
+                }
+            }
+            stop(200, ['groupId' => $groupId]);
+        }
+    }
 
 }

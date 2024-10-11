@@ -60,7 +60,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="addGroupForm" method="post">
+                <div id="addGroupForm">
                     <div class="mb-3">
                         <label for="groupName" class="mb-2">
                             Grupi nimi <span class="text-danger" data-bs-toggle="tooltip"
@@ -85,7 +85,7 @@
                         <button type="submit" id="submitGroup" class="btn btn-primary me-2" disabled>Lisa uus</button>
                         <button type="button" id="cancelGroup" class="btn btn-secondary">Tühista</button>
                     </div>
-                </form>
+                </div>
             </div>
         </div>
     </div>
@@ -152,7 +152,7 @@
         }
 
         // Trigger validation when the group name changes
-        $('#groupName').on('input', validateForm);
+        $('#group Name').on('input', validateForm);
 
         submitGroup.on('click', async function () {
             const groupName = $('#groupName').val();
@@ -172,11 +172,9 @@
                 students: jsonInput
             };
 
-            const res = await ajax('admin/addGroup', data,  async function (response) {
+             await ajax('admin/addGroup', data,  async function (response) {
+                 console.log("response", response);
                 if (response.status === 200) {
-                    // Create delay 1 sec using promise
-                    await new Promise((resolve) => setTimeout(resolve, 1000))
-
                     window.location.reload();
                 } else {
                     alert('Error: ' + response);
@@ -185,7 +183,6 @@
                 alert('Error: ' + response);
             });
 
-            console.log(res);
         });
 
     });
