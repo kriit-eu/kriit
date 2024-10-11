@@ -17,6 +17,14 @@ class cron extends Controller
 
     }
 
+    function assignmentDeadlinePassed()
+    {
+        $this->sendNotificationAboutDeadlinePassed();
+
+        stop(200, 'Emails sent successfully');
+
+    }
+
 
     private function sendNotificationAboutAssignmentsWithOverDeadlines(): void
     {
@@ -114,7 +122,7 @@ class cron extends Controller
 
     function generateEmailMessageForStudentsWithPassedDeadlines($studentData): string
     {
-        $messageBody = "<h3>Tähelepanu! Teil {} on esitamata ülesanded, mille tähtaeg on möödunud:</h3>";
+        $messageBody = "<h3>Tähelepanu! Teil on esitamata ülesanded, mille tähtaeg on möödunud:</h3>";
         $messageBody .= "<table border='1' cellpadding='10' cellspacing='0' style='border-collapse: collapse; width: 100%;'>";
         $messageBody .= "<thead>";
         $messageBody .= "<tr>";
@@ -289,9 +297,14 @@ class cron extends Controller
         return $messageBody;
     }
 
-    private function getStudentsWithNotSubmittedWorks(): array
+    private function getStudentsWithNotSubmittedWorks($isDeadlinePassed = false): array
     {
         $assignments = [];
+        if ($isDeadlinePassed) {
+            $whereClause = "a.assignmentDueAt = DATE_SUB(CURDATE(), INTERVAL 1 DAY) AND (ua.assignmentStatusId IS NULL OR ua.assignmentStatusId = 1)";
+        } else {
+            $whereClause = "(a.assignmentDueAt = CURDATE() OR a.assignmentDueAt = DATE_ADD(CURDATE(), INTERVAL 1 DAY)) AND (ua.assignmentStatusId IS NULL OR ua.assignmentStatusId = 1)";
+        }
         //Get all assignments that are due tomorrow  with the group id using subject and users from that group who is not in userAssignment or assignmentStatusId is 1 in one query
         $data = Db::getAll("
                 SELECT
@@ -305,9 +318,9 @@ class cron extends Controller
                 LEFT JOIN groups g ON subj.groupId = g.groupId
                 LEFT JOIN users u ON u.groupId = g.groupId
                 LEFT JOIN userAssignments ua ON ua.assignmentId = a.assignmentId AND ua.userId = u.userId
-                WHERE (a.assignmentDueAt = CURDATE() OR a.assignmentDueAt = DATE_ADD(CURDATE(), INTERVAL 1 DAY)) AND (ua.assignmentStatusId IS NULL OR ua.assignmentStatusId = 1)                ORDER BY u.userName
+                WHERE $whereClause
+                ORDER BY u.userName
             ");
-
 
         if (!empty($data)) {
             foreach ($data as $entry) {
@@ -326,6 +339,8 @@ class cron extends Controller
                 }
 
                 $assignments[$assignmentId]['students'][] = [
+                    'assignmentId' => $assignmentId,
+                    'studentId' => $entry['studentId'],
                     'userName' => $entry['studentName'],
                     'userEmail' => $entry['studentEmail']
                 ];
@@ -333,6 +348,47 @@ class cron extends Controller
         }
 
         return $assignments;
+    }
+
+    private function sendNotificationAboutDeadlinePassed(): void
+    {
+        $assignments = $this->getStudentsWithNotSubmittedWorks(true);
+
+        if (empty($assignments)) {
+            return;
+        }
+
+        foreach ($assignments as $assignment) {
+            if ($assignment['students']) {
+
+                $this->gradeStudentsAssignmentWithPassedDeadline($assignment['students']);
+                foreach ($assignment['students'] as $student) {
+                    $assignmentUrl = BASE_URL . "assignments/" . $assignment['assignmentId'];
+                    Mail::send(
+                        $student['userEmail'],
+                        "Ülesande tähtaeg on möödas!",
+                        "Tere, {$student['userName']},<br><br>Tähelepanu! Eile, " . date('d.m.Y', strtotime($assignment['assignmentDueAt'])) . ", oli aines '{$assignment['subjectName']}' ülesande '<a href='$assignmentUrl'>{$assignment['assignmentName']}</a>' tähtaeg. Kuna tähtaeg on möödas ja ülesanne ei olnud esitatud, siis on see hinnatud märkega 'MA'.<br><br>Parimate soovidega,<br>{$assignment['teacherName']}"
+                    );
+                }
+            }
+        }
+    }
+
+    private function gradeStudentsAssignmentWithPassedDeadline($students): void
+    {
+        foreach ($students as $student) {
+            try {
+                Db::insert('userAssignments', [
+                    'assignmentId' => $student['assignmentId'],
+                    'userId' => $student['studentId'],
+                    'assignmentStatusId' => 3,
+                    'userGrade' => 'MA',
+                ]);
+            }catch (\Exception $e){
+                stop(500, $e->getMessage());
+            }
+        }
+
     }
 
 }
