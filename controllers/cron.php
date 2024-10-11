@@ -114,7 +114,7 @@ class cron extends Controller
             $messageBody = $this->createTableWithUngradedWorks($teacherData);
 
             if (!empty($teacherEmail) && !empty(trim($teacherEmail))) {
-                Mail::send($teacherEmail, "Hindamata ülesanded!", $messageBody);
+                Mail::send($teacherEmail, "Kriit vajab Sinu tähelepanu!", $messageBody);
             }
         }
 
@@ -199,6 +199,17 @@ class cron extends Controller
         return $students;
     }
 
+    private function getUnSynchronizedSubjects($teacherId): array
+    {
+        return Db::getAll("
+            SELECT
+                subj.subjectId, subj.subjectName
+            FROM subjects subj
+            WHERE subj.teacherId = ?
+              AND subj.isSynchronized = 0
+        ", [$teacherId]);
+    }
+
     private function getTeachersWithUngradedAssignments(): array
     {
         $teachers = [];
@@ -206,7 +217,7 @@ class cron extends Controller
         $data = Db::getAll("
         SELECT
             a.assignmentId, a.assignmentName, a.assignmentInstructions, a.assignmentDueAt,
-            subj.subjectName, t.userName AS teacherName, t.userEmail AS teacherEmail,
+            subj.subjectName, subj.isSynchronized, subj.subjectId, t.userId AS teacherId, t.userName AS teacherName, t.userEmail AS teacherEmail,
             u.userId AS studentId, u.userName AS studentName, u.groupId,
             ua.assignmentStatusId, ua.userGrade, ua.solutionUrl
         FROM assignments a
@@ -226,15 +237,18 @@ class cron extends Controller
             foreach ($data as $row) {
                 $teacherEmail = $row['teacherEmail'];
 
+                // Initialize the teacher array if it does not exist
                 if (!isset($teachers[$teacherEmail])) {
                     $teachers[$teacherEmail] = [
                         'teacherName' => $row['teacherName'],
-                        'assignments' => []
+                        'assignments' => [],
+                        'unSynchronized' => $this->getUnSynchronizedSubjects($row['teacherId'])// Add this key for unsynchronized subjects
                     ];
                 }
 
                 $assignmentId = $row['assignmentId'];
 
+                // Initialize the assignment array if it does not exist for this teacher
                 if (!isset($teachers[$teacherEmail]['assignments'][$assignmentId])) {
                     $teachers[$teacherEmail]['assignments'][$assignmentId] = [
                         'assignmentName' => $row['assignmentName'],
@@ -245,6 +259,7 @@ class cron extends Controller
                     ];
                 }
 
+                // Add the student details to the assignment
                 $teachers[$teacherEmail]['assignments'][$assignmentId]['students'][] = [
                     'studentName' => $row['studentName'],
                     'solutionUrl' => $row['solutionUrl']
@@ -252,6 +267,7 @@ class cron extends Controller
             }
         }
 
+        var_dump($teachers);
         return $teachers;
     }
 
@@ -261,26 +277,26 @@ class cron extends Controller
         $messageBody = "<p>Tere, $teacherName,</p>";
         $messageBody .= "<p>Järgnevad ülesanded on veel hindamata:</p>";
 
-        // Table header
-        $messageBody .= "<table border='1' cellpadding='10' cellspacing='0' style='border-collapse: collapse; width: 100%;'>";
-        $messageBody .= "<thead>";
+        // Table header for ungraded assignments
+        $messageBody .= "<table style='border-collapse: collapse; width: 100%; margin-top: 20px;'>";
+        $messageBody .= "<thead style='background-color: #f2f2f2;'>";
         $messageBody .= "<tr>";
-        $messageBody .= "<th>Ülesande nimi</th>";
-        $messageBody .= "<th>Tähtaeg</th>";
-        $messageBody .= "<th>Õpilased ja lahendused</th>";
+        $messageBody .= "<th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Ülesande nimi</th>";
+        $messageBody .= "<th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Tähtaeg</th>";
+        $messageBody .= "<th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Õpilased ja lahendused</th>";
         $messageBody .= "</tr>";
         $messageBody .= "</thead>";
         $messageBody .= "<tbody>";
 
         foreach ($teacherData['assignments'] as $assignment) {
-            $messageBody .= "<tr>";
-            $messageBody .= "<td><a href='{$assignment['assignmentLink']}'>{$assignment['assignmentName']} ({$assignment['subjectName']})</a></td>";
-            $messageBody .= "<td>" . date('d.m.Y', strtotime($assignment['assignmentDueAt'])) . "</td>";
-            $messageBody .= "<td>";
-            $messageBody .= "<ul>";
+            $messageBody .= "<tr style='background-color: #f9f9f9;'>";
+            $messageBody .= "<td style='border: 1px solid #ddd; padding: 8px;'><a href='{$assignment['assignmentLink']}' style='color: #007bff; text-decoration: none;'>{$assignment['assignmentName']} ({$assignment['subjectName']})</a></td>";
+            $messageBody .= "<td style='border: 1px solid #ddd; padding: 8px;'>" . date('d.m.Y', strtotime($assignment['assignmentDueAt'])) . "</td>";
+            $messageBody .= "<td style='border: 1px solid #ddd; padding: 8px;'>";
+            $messageBody .= "<ul style='list-style-type: none; padding: 0; margin: 0;'>";
 
             foreach ($assignment['students'] as $student) {
-                $messageBody .= "<li>{$student['studentName']} (<a href='{$student['solutionUrl']}'>Lahendus</a>)</li>";
+                $messageBody .= "<li style='margin-bottom: 5px;'>{$student['studentName']} (<a href='{$student['solutionUrl']}' style='color: #007bff; text-decoration: none;'>Lahendus</a>)</li>";
             }
 
             $messageBody .= "</ul>";
@@ -292,6 +308,20 @@ class cron extends Controller
         $messageBody .= "</table>";
 
         $messageBody .= "<p>Palun hinda ülesandeid esimesel võimalusel.</p>";
+
+        if (!empty($teacherData['unSynchronized'])) {
+            $messageBody .= "<div style='margin-top: 5px; padding: 0 15px 0; background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 5px;'>";
+            $messageBody .= "<p style='font-weight: bold; font-size: 1.1em; color: #333;'>Järgnevad ained ei ole sünkroniseeritud:</p>";
+            $messageBody .= "<ol style='padding-left: 20px; margin-top: 10px;'>";
+
+            foreach ($teacherData['unSynchronized'] as $subject) {
+                $messageBody .= "<li style='margin-bottom: 5px; color: #555; font-size: 1em;'>{$subject['subjectName']}</li>";
+            }
+
+            $messageBody .= "</ol>";
+            $messageBody .= "</div>";
+        }
+
         $messageBody .= "<p>Parimate soovidega,<br>Teie Kriit süsteem</p>";
 
         return $messageBody;

@@ -1,4 +1,3 @@
-/*!999999\- enable the sandbox mode */
 -- MariaDB dump 10.19  Distrib 10.11.8-MariaDB, for osx10.19 (arm64)
 --
 -- Host: 127.0.0.1    Database: kriit
@@ -420,6 +419,7 @@ CREATE TABLE `subjects` (
   `tahvelSubjectId` int unsigned DEFAULT NULL,
   `groupId` int unsigned NOT NULL,
   `teacherId` int unsigned NOT NULL,
+  `isSynchronized` tinyint DEFAULT 0,
   PRIMARY KEY (`subjectId`),
   KEY `subjects_groups_groupId_fk` (`groupId`),
   KEY `subjects_users_userId_fk` (`teacherId`),
@@ -746,7 +746,6 @@ LOCK TABLES `userDoneCriteria` WRITE;
 /*!40000 ALTER TABLE `userDoneCriteria` ENABLE KEYS */;
 UNLOCK TABLES;
 
-
 --
 -- Table structure for table `userDoneExercises`
 --
@@ -821,4 +820,4 @@ UNLOCK TABLES;
 /*!50503 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-09-24 13:22:04
+-- Dump completed on 2024-10-11 15:55:14

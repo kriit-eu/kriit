@@ -191,7 +191,7 @@ class assignments extends Controller
 
     }
 
-    function checkStudentsGradesInfo()
+    function checkStudentsGradesInfo(): void
     {
         $journalEntries = $_POST['journalEntries'];
         $students = $_POST['students'];
@@ -216,9 +216,9 @@ class assignments extends Controller
 
                 $assignmentData = Db::getFirst(
                     "SELECT ua.userGrade, ua.comment
-                 FROM kriit.users u
-                 JOIN kriit.groups g ON u.groupId = g.groupId
-                 JOIN kriit.userAssignments ua ON u.userId = ua.userId
+                 FROM users u
+                 JOIN groups g ON u.groupId = g.groupId
+                 JOIN userAssignments ua ON u.userId = ua.userId
                  WHERE u.userName = ? AND g.groupName = ? AND ua.assignmentId = ?",
                     [$studentData['name'], $groupName, $assignmentId]
                 );
@@ -295,7 +295,6 @@ class assignments extends Controller
         } catch (\Exception $e) {
             stop(400, $e->getMessage());
         }
-
 
     }
 
