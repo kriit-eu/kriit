@@ -131,8 +131,14 @@
     #messageContainer {
         max-height: 500px;
         overflow-y: auto;
+        overflow-x: hidden; /* Prevent horizontal scrolling */
+
         border: 1px solid #ccc;
         margin: 5em 0; /* Adds some margin for spacing */
+    }
+
+    .card-body {
+        word-wrap: break-word; /* Ensure long words break and wrap to the next line */
     }
 
 
@@ -160,6 +166,10 @@
     }
 
     @media (max-width: 768px) {
+
+        #message-notification {
+     flex-wrap: wrap;
+        }
 
         #main-container {
             display: flex;
@@ -222,6 +232,7 @@
 
         .card-body {
             margin: 0 10px;
+            flex-wrap: wrap;
         }
 
         .grades ul {
@@ -567,21 +578,21 @@
             <div id="messageContainer" class="card">
                 <div class="card-body">
                     <?php foreach ($assignment['messages'] as $message): ?>
-                        <div class="d-flex align-items-start mb-3 border rounded p-3 <?php if ($message['isNotification']) echo 'bg-light'; ?>">
+                        <div class="d-flex align-items-start  mb-3 border rounded p-3 <?php if ($message['isNotification']) echo 'bg-light'; ?>">
                             <?php if (!$message['isNotification']): ?>
                                 <!-- Regular user message -->
                                 <div class="flex-shrink-0 me-3">
-                        <span class="avatar bg-primary text-white rounded-circle p-2">
-                            <?= strtoupper(substr($message['userName'], 0, 1)) ?>
-                        </span>
+                                    <span class="avatar bg-primary text-white rounded-circle p-2">
+                                        <?= strtoupper(substr($message['userName'], 0, 1)) ?>
+                                    </span>
                                 </div>
                                 <div class="flex-grow-1">
-                                    <div class="d-flex justify-content-between">
+                                    <div class="d-flex flex-wrap justify-content-between">
                                         <h6 class="fw-bold mb-1"><?= $message['userName'] ?></h6>
                                         <small class="text-muted"><?= $message['createdAt'] ?></small>
                                     </div>
 
-                                    <p class="mb-1"><?= nl2br(htmlspecialchars($message['content'])) ?></p>
+                                    <p class="mb-1 text-break"><?= nl2br(htmlspecialchars($message['content'])) ?></p>
 
                                     <?php if ($this->auth->userId !== $message['userId']): ?>
                                         <div class="d-flex justify-content-end">
@@ -597,8 +608,8 @@
                             <?php else: ?>
                                 <!-- Notification message -->
                                 <div class="flex-grow-1">
-                                    <div class="d-flex justify-content-between">
-                                        <p class="fw-bold mb-1"><?= $message['content'] ?></p>
+                                    <div class="d-flex justify-content-between" id="message-notification">
+                                        <p class="fw-bold mb-1 text-break"><?= $message['content'] ?></p>
                                         <small class="text-muted"><?= $message['createdAt'] ?></small>
                                     </div>
                                 </div>
@@ -1042,7 +1053,7 @@
     function replyToMessage(userName, messageId, messageContent, createdAt) {
         document.getElementById('replyInfo').style.display = 'block';
         document.getElementById('replyMessage').innerHTML = `
-        <div class="d-flex align-items-start border rounded p-2" style="background-color: #f0f0f0;">
+        <div class="d-flex text-break align-items-start border rounded p-2" style="background-color: #f0f0f0;">
             <div class="me-3">
                 <span class="avatar bg-primary text-white rounded-circle p-2">${userName[0]}</span>
             </div>
