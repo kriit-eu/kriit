@@ -135,9 +135,6 @@ class admin extends Controller
                 groups.groupId,
                 groups.groupName
             FROM groups
-            LEFT JOIN subjects
-                ON groups.groupId = subjects.groupId
-            GROUP BY groups.groupId, groups.groupName
             ORDER BY groups.groupName");
     }
 
@@ -224,7 +221,7 @@ class admin extends Controller
 
     function validatePersonalCode($personalCode): bool
     {
-        $pattern = '/^[1-6]\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{4}$/';
+        $pattern = '/^[1-9]\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{4}$/';
 
         if (!preg_match($pattern, $personalCode)) {
             return false;
@@ -414,11 +411,11 @@ class admin extends Controller
         $userPersonalCode = $_POST['userPersonalCode'];
 
         if (!$this->validatePersonalCode($userPersonalCode)) {
-            stop(400, "Isikukood ei vasta nõuetele");
+            stop(400, "Isikukood $userPersonalCode ei vasta nõuetele.");
         }
 
         if (User::get(["userPersonalCode = '$userPersonalCode'"])) {
-            stop(409, "Kasutaja selle isikukoodiga on juba olemas");
+            stop(409, "Kasutaja selle isikukoodiga on juba olemas" . $userPersonalCode);
         }
 
         $userName = addslashes($_POST['userName']);
@@ -744,6 +741,84 @@ class admin extends Controller
 
         // Return the new exercise ID to the frontend
         stop(200, ['id' => $exerciseId]);
+    }
+
+    function AJAX_addGroup(): void
+    {
+        if (empty($_POST['groupName'])) {
+            stop(400, 'Grupi nimi on kohustuslik');
+        }
+
+        $existingGroup = Db::getFirst("SELECT groupId FROM groups WHERE groupName = ?", [$_POST['groupName']]);
+        if ($existingGroup) {
+            stop(409, 'Grupp nimega ' . $_POST['groupName'] . ' on juba olemas');
+        }
+
+        $groupId = Db::insert('groups', ['groupName' => $_POST['groupName']]);
+        Activity::create(ACTIVITY_CREATE_GROUP, $this->auth->userId, $groupId);
+
+
+        $this->addStudentsToGroup($groupId);
+
+        stop(200, ['groupId' => $groupId]);
+    }
+
+    private function checkStudentNameAndPersonalCode($student): array
+    {
+        try {
+
+            if (empty($student['name'])) {
+                return ['status' => 400, 'message' => 'Nimi on kohustuslik'];
+            }
+            if (empty($student['idcode'])) {
+                return ['status' => 400, 'message' => "Isikukood on kohustuslik"];
+            }
+
+            $userPersonalCode = $student['idcode'];
+
+            if (!$this->validatePersonalCode($userPersonalCode)) {
+                return ['status' => 400, 'message' => "Isikukood $userPersonalCode ei vasta nõuetele"];
+            }
+
+            if (User::get(["userPersonalCode = '$userPersonalCode'"])) {
+                return ['status' => 409, 'message' => "Õpilane isikukoodiga $userPersonalCode on juba olemas"];
+            }
+        } catch (\Exception $e) {
+            return ['status' => 400, 'message' => 'Õpilase lisamine ebaõnnestus: ' . $e->getMessage()];
+        }
+
+        return [];
+
+    }
+
+
+    private function addStudentsToGroup($groupId): void
+    {
+        if (!empty($_POST['students'])) {
+
+
+            foreach ($_POST['students'] as $student) {
+
+                $checkStudentNameAndPersonalCode = $this->checkStudentNameAndPersonalCode($student);
+                if ($checkStudentNameAndPersonalCode) {
+                    stop($checkStudentNameAndPersonalCode['status'], json_encode($checkStudentNameAndPersonalCode['message']));
+                }
+
+                try {
+                    $userId = Db::insert('users', [
+                        'userName' => addslashes($student['name']),
+                        'userPersonalCode' => $student['idcode'],
+                        'tahvelStudentId' => $student['studentId'],
+                        'groupId' => $groupId
+                    ]);
+
+                Activity::create(ACTIVITY_ADD_USER, $this->auth->userId, $userId);
+                } catch (\Exception $e) {
+                    stop(400, 'Õpilase lisamine ebaõnnestus: ' . $e->getMessage());
+                }
+            }
+            stop(200, ['groupId' => $groupId]);
+        }
     }
 
 }

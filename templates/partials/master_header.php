@@ -12,6 +12,15 @@
     <!-- Site core CSS -->
     <link href="assets/css/main.css?<?= COMMIT_HASH ?>" rel="stylesheet">
 
+    <!-- Include CodeMirror CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/theme/monokai.min.css">
+    <!-- Include CodeMirror JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
+    <!-- CodeMirror mode for JSON -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/javascript/javascript.min.js"></script>
+
+
     <!-- jQuery -->
     <script src="node_modules/jquery/dist/jquery.min.js?<?= COMMIT_HASH ?>"></script>
 

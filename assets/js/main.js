@@ -12,7 +12,7 @@ $(document).ready(function () {
     // For testing purposes
     // const userPersonalCodePattern = /^\d{11}$/;
 
-    const userPersonalCodePattern = /^[1-6]\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{4}$/;
+    const userPersonalCodePattern = /^[1-9]\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{4}$/;
 
     let userPersonalCodeValue = "";
 
