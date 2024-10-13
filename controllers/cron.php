@@ -13,15 +13,18 @@ class cron extends Controller
         $this->sendNotificationAboutUngradedAssignments();
         $this->sendNotificationAboutAssignmentsWithOverDeadlines();
 
-        stop(200, 'Emails sent successfully');
+        exit();
 
     }
 
+    /**
+     * This function is called by a cron job every day at 00:00
+     */
     function assignmentDeadlinePassed()
     {
         $this->sendNotificationAboutDeadlinePassed();
 
-        stop(200, 'Emails sent successfully');
+        exit();
 
     }
 
