@@ -400,7 +400,7 @@ class cron extends Controller
                     Mail::send(
                         $student['userEmail'],
                         "Ülesande tähtaeg on möödas!",
-                        "Tere, {$student['userName']},<br><br>Tähelepanu! Eile, " . date('d.m.Y', strtotime($assignment['assignmentDueAt'])) . ", oli aines '{$assignment['subjectName']}' ülesande '<a href='$assignmentUrl'>{$assignment['assignmentName']}</a>' tähtaeg. Kuna tähtaeg on möödas ja ülesanne ei olnud esitatud, siis on see hinnatud märkega 'MA'.<br><br>Parimate soovidega,<br>{$assignment['teacherName']}"
+                        "<strong>Lugupeetud õppur!</strong><p>Teatame, et eile, " . date('d.m.Y', strtotime($assignment['assignmentDueAt'])) . ", oli aine '{$assignment['subjectName']}' ülesande '<a href='$assignmentUrl'>{$assignment['assignmentName']}</a>' esitamise tähtaeg. Kuna ülesannet ei esitatud õigeaegselt, on see hinnatud hindega 'MA' (hinne sünkroonitakse Kriidist Tahvlisse viitega).</p> <p>Vastavalt õppekorralduseeskirjale tuleb sellisel juhul osaleda esimesel võimalusel konsultatsioonis ja juhul, kui õppevõlg ei ole õppekorralduseeskirjas sätestatud tähtajaks likvideeritud, esitada seletuskiri korralduse mittetäitmise kohta läbi rühmajuhendaja osakonnajuhile.</p> <p>Palun võta esimesel võimalusel ühendust aine õpetajaga, et leppida kokku edasised tegevused.</p> <p>Parimate soovidega,<br>Kriit</p>"
                     );
                 }
             }
