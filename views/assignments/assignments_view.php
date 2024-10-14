@@ -8,6 +8,27 @@
         background-color: #fff8b3 !important;
     }
 
+    .modal-body {
+        word-wrap: break-word;
+        word-break: break-all;
+    }
+
+    #solutionUrl {
+        display: inline-block;
+        max-width: 100%;
+        overflow-wrap: break-word;
+        word-break: break-all;
+    }
+
+    .modal-dialog {
+        max-width: 800px;
+        width: 100%;
+    }
+
+    .modal-content {
+        padding: 15px;
+    }
+
     .text-center {
         text-align: center;
     }
