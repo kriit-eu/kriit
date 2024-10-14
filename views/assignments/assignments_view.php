@@ -149,13 +149,73 @@
         border-radius: 8px;
     }
 
-    #messageContainer {
+    #notificationContainer {
         max-height: 500px;
-        overflow-y: auto;
-        overflow-x: hidden; /* Prevent horizontal scrolling */
+        border: 2px solid #4a90e2;
+        background-color: #e8f4ff;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        padding: 5px;
+        margin-bottom: 20px;
+    }
 
+    #notificationContainer .content-part {
+        max-height: 400px;
+        overflow-y: auto;
+        padding: 5px;
+    }
+
+    .notification-item {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        margin-bottom: 10px;
+        padding: 5px;
+        border-radius: 5px;
+        background-color: #fff;
+        box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.05);
+        transition: background-color 0.3s ease;
+    }
+
+    .notification-item:hover {
+        background-color: #f0f8ff;
+    }
+
+    .notification-icon {
+        margin-right: 2px;
+        color: #4a90e2;
+        font-size: 24px;
+    }
+
+    .notification-text {
+        flex-grow: 1;
+        font-size: 14px;
+        color: #333;
+    }
+
+     .notification-time {
+        font-size: 12px;
+        color: #777;
+        margin-left: 2px;
+    }
+
+    #messageContainer {
+        max-height: 600px;
+        overflow-x: hidden;
         border: 1px solid #ccc;
-        margin: 5em 0; /* Adds some margin for spacing */
+    }
+
+    .content-part {
+        max-height: 300px;
+        overflow-y: auto;
+        word-wrap: break-word;
+        word-break: break-word;
+        overflow-wrap: break-word;
+        white-space: normal;
+    }
+
+    #messageContainer .content-part{
+        max-height: 500px;
     }
 
     .card-body {
@@ -174,6 +234,8 @@
         flex: 2; /* Take the remaining space */
         display: flex;
         flex-direction: column;
+        gap: 2em;
+        margin-top: 3em;
     }
 
     @media (min-width: 769px) {
@@ -188,9 +250,6 @@
 
     @media (max-width: 768px) {
 
-        #message-notification {
-            flex-wrap: wrap;
-        }
 
         #main-container {
             display: flex;
@@ -215,12 +274,28 @@
             overflow-x: hidden;
         }
 
+        #notificationContainer{
+            max-height: 900px; /* Set a max height for the message container */
+            height: auto; /* Make it fill the remaining height */
+            margin: 0; /* Remove margin */
+            border: 1px solid #ccc;
+        }
+
 
         #messageContainer {
             max-height: 900px; /* Set a max height for the message container */
             height: auto; /* Make it fill the remaining height */
             margin: 0; /* Remove margin */
             border: 1px solid #ccc;
+            overflow-y: auto;
+        }
+        small.text-muted {
+            white-space: nowrap;
+            display: block;
+        }
+
+        .content-part {
+            max-height: 800px;
             overflow-y: auto;
         }
 
@@ -286,7 +361,25 @@
             height: auto;
             margin: 0; /* Remove margin */
             border: 1px solid #ccc;
+        }
+
+
+        #notificationContainer {
+            max-height: 600px; /* Set a max height for the message container */
+            height: auto;
+            margin: 0; /* Remove margin */
+            border: 1px solid #ccc;
+        }
+
+
+        .content-part {
+            max-height: 500px;
             overflow-y: auto;
+        }
+
+        small.text-muted {
+            white-space: nowrap;
+            display: block;
         }
 
         .assignment-item {
@@ -596,49 +689,49 @@
             </div>
         </div>
         <div id="messages-container">
+            <div id="notificationContainer" class="card mt-3">
+                <div class="card-body">
+                    <h5>Sündmused</h5>
+                    <div class="content-part">
+                        <?php foreach ($assignment['messages'] as $message): ?>
+                            <?php if ($message['isNotification']): ?>
+                                <div class="notification-item">
+                                    <i class="fa fa-bell notification-icon"></i>
+                                    <div class="notification-text">
+                                        <p class="fw-bold mb-1"><?= $message['content'] ?></p>
+                                    </div>
+                                    <small class="notification-time text-muted"><?= $message['createdAt'] ?></small>
+                                </div>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            </div>
+
             <div id="messageContainer" class="card">
                 <div class="card-body">
-                    <?php foreach ($assignment['messages'] as $message): ?>
-                        <div class="d-flex align-items-start  mb-3 border rounded p-3 <?php if ($message['isNotification']) echo 'bg-light'; ?>">
+                    <h5>Vestlus</h5>
+                    <div class="content-part">
+                        <?php foreach ($assignment['messages'] as $message): ?>
                             <?php if (!$message['isNotification']): ?>
-                                <!-- Regular user message -->
-                                <div class="flex-shrink-0 me-3">
-                                    <span class="avatar bg-primary text-white rounded-circle p-2">
-                                        <?= strtoupper(substr($message['userName'], 0, 1)) ?>
-                                    </span>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <div class="d-flex flex-wrap justify-content-between">
-                                        <h6 class="fw-bold mb-1"><?= $message['userName'] ?></h6>
-                                        <small class="text-muted"><?= $message['createdAt'] ?></small>
+                                <div class="d-flex align-items-start mb-3 border rounded p-3">
+                                    <div class="flex-shrink-0 me-3">
+                                        <span class="avatar bg-primary text-white rounded-circle p-2"><?= strtoupper(substr($message['userName'], 0, 1)) ?></span>
                                     </div>
-
-                                    <p class="mb-1 text-break"><?= nl2br(htmlspecialchars($message['content'])) ?></p>
-
-                                    <?php if ($this->auth->userId !== $message['userId']): ?>
-                                        <div class="d-flex justify-content-end">
-                                            <button type="button" class="btn btn-secondary btn-sm"
-                                                    style="font-size: 0.75rem; padding: 2px 8px;"
-                                                    onclick='replyToMessage(<?= json_encode($message['userName']) ?>, <?= $message['messageId'] ?>, <?= json_encode($message['content']) ?>, "<?= $message['createdAt'] ?>")'>
-                                                Vasta
-                                            </button>
-
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex flex-wrap justify-content-between">
+                                            <h6 class="fw-bold mb-1"><?= $message['userName'] ?></h6>
+                                            <small class="text-muted"><?= $message['createdAt'] ?></small>
                                         </div>
-                                    <?php endif; ?>
-                                </div>
-                            <?php else: ?>
-                                <!-- Notification message -->
-                                <div class="flex-grow-1">
-                                    <div class="d-flex justify-content-between" id="message-notification">
-                                        <p class="fw-bold mb-1 text-break"><?= $message['content'] ?></p>
-                                        <small class="text-muted"><?= $message['createdAt'] ?></small>
+                                        <p class="mb-1"><?= htmlspecialchars($message['content']) ?></p>
                                     </div>
                                 </div>
                             <?php endif; ?>
-                        </div>
-                    <?php endforeach; ?>
+                        <?php endforeach; ?>
+                    </div>
                 </div>
             </div>
+
 
             <div class="container mb-5">
                 <form>
@@ -965,11 +1058,19 @@
     }
 
     function scrollToBottom() {
-        const messageContainer = document.getElementById('messageContainer');
+        const messageContainer = document.querySelector('#messageContainer .content-part');
+        const notificationContainer = document.querySelector('#notificationContainer .content-part');
+
+
         if (messageContainer) {
             messageContainer.scrollTop = messageContainer.scrollHeight;
         }
+
+        if (notificationContainer) {
+            notificationContainer.scrollTop = notificationContainer.scrollHeight;
+        }
     }
+
 
     function editAssignment() {
         const modal = new bootstrap.Modal(document.getElementById('editAssignmentModal'));
