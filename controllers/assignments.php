@@ -133,7 +133,7 @@ class assignments extends Controller
                 ($daysRemaining < 0 ?
                     (($this->isStudent && $statusId == ASSIGNMENT_STATUS_NOT_SUBMITTED) ||
                     ($this->isTeacher && $statusId == ASSIGNMENT_STATUS_WAITING_FOR_REVIEW) ? 'red-cell' :
-                        ($this->isTeacher && $statusId == ASSIGNMENT_STATUS_NOT_SUBMITTED || $isNegativeGrade? 'yellow-cell' : '')) :
+                        ($this->isTeacher && $statusId == ASSIGNMENT_STATUS_NOT_SUBMITTED || $isNegativeGrade ? 'yellow-cell' : '')) :
                     ($this->isTeacher && $statusId != ASSIGNMENT_STATUS_WAITING_FOR_REVIEW ? '' : ($statusClassMap[$statusName] ?? '')));
 
 
@@ -592,8 +592,14 @@ class assignments extends Controller
         }
 
         if ($host === 'github.com') {
-            if (preg_match('/\/commit\/[0-9a-fA-F]{40}/', $path) !== 1) {
-                return ['code' => 400, 'message' => 'GitHubi URL peab viitama konkreetsele commitile.'];
+            $githubCommitUrl = '/\/commit\/[0-9a-fA-F]{40}/';
+            $githubRepoUrl = '/\/[a-zA-Z0-9-]+\/[a-zA-Z0-9-]+/';
+            $githubIssuesUrl = '/.*\/issues/';
+            if (preg_match($githubCommitUrl, $path) !== 1
+                && preg_match($githubRepoUrl, $path) !== 1
+                && preg_match($githubIssuesUrl, $path) !== 1
+            ) {
+                return ['code' => 400, 'message' => 'GitHubi URL peab olema kas commiti, repositooriumi või issue link.'];
             }
         }
 
