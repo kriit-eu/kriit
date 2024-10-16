@@ -193,7 +193,7 @@
         color: #333;
     }
 
-     .notification-time {
+    .notification-time {
         font-size: 12px;
         color: #777;
         margin-left: 2px;
@@ -214,7 +214,7 @@
         white-space: normal;
     }
 
-    #messageContainer .content-part{
+    #messageContainer .content-part {
         max-height: 500px;
     }
 
@@ -274,7 +274,7 @@
             overflow-x: hidden;
         }
 
-        #notificationContainer{
+        #notificationContainer {
             max-height: 900px; /* Set a max height for the message container */
             height: auto; /* Make it fill the remaining height */
             margin: 0; /* Remove margin */
@@ -289,6 +289,7 @@
             border: 1px solid #ccc;
             overflow-y: auto;
         }
+
         small.text-muted {
             white-space: nowrap;
             display: block;
@@ -1135,32 +1136,40 @@
             return;
         }
 
-        const existingCriteria = Array.from(document.querySelectorAll('#editCriteriaContainer .form-check-label'))
-            .map(label => label.textContent.trim());
+        ajax('assignments/checkCriterionNameSize', {
+            criterionName: criterionName
+        }, function (res) {
+            if (res.status === 200) {
+                const existingCriteria = Array.from(document.querySelectorAll('#editCriteriaContainer .form-check-label'))
+                    .map(label => label.textContent.trim());
 
-        if (existingCriteria.includes(criterionName) || newAddedCriteria.includes(criterionName)) {
-            alert('Selline kriteerium on juba olemas!');
-            return;
-        }
+                if (existingCriteria.includes(criterionName) || newAddedCriteria.includes(criterionName)) {
+                    alert('Selline kriteerium on juba olemas!');
+                    return;
+                }
 
-        const modal = bootstrap.Modal.getInstance(document.getElementById('addCriterionModal'));
-        modal.hide();
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addCriterionModal'));
+                modal.hide();
 
-        newAddedCriteria.push(criterionName);
+                newAddedCriteria.push(criterionName);
 
-        const editCriteriaContainer = document.getElementById('editCriteriaContainer');
+                const editCriteriaContainer = document.getElementById('editCriteriaContainer');
 
-        const criterionHTML = `
-        <div class="criteria-row">
-            <div class="form-check">
-                <input class="form-check-input" type="checkbox" checked disabled>
-                <label class="form-check-label">${criterionName}</label>
-            </div>
-            <button type="button" class="btn btn-danger btn-sm" onclick="removeNewCriterion('${criterionName}')">X</button>
-        </div>
-    `;
-        document.getElementById('newCriterionName').value = '';
-        editCriteriaContainer.insertAdjacentHTML('beforeend', criterionHTML);
+                const criterionHTML = `
+                <div class="criteria-row">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" checked disabled>
+                        <label class="form-check-label">${criterionName}</label>
+                    </div>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="removeNewCriterion('${criterionName}')">X</button>
+                </div>
+            `;
+                document.getElementById('newCriterionName').value = '';
+                editCriteriaContainer.insertAdjacentHTML('beforeend', criterionHTML);
+            }
+        }, function (error) {
+            alert(error ?? 'Tekkis viga serveriga suhtlemisel.');
+        });
     }
 
     function removeNewCriterion(criterionName) {

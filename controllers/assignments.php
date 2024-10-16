@@ -167,6 +167,26 @@ class assignments extends Controller
         $this->assignment = $assignment;
     }
 
+
+    function ajax_checkCriterionNameSize()
+    {
+        $criterionName = $_POST['criterionName'];
+
+        $lengthInBytes = mb_strlen($criterionName, '8bit');
+
+        $maxBytes = (int) Db::getOne("
+            SELECT CHARACTER_MAXIMUM_LENGTH
+            FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_NAME = 'criteria'
+            AND COLUMN_NAME = 'criterionName'
+        ");
+
+        if ($lengthInBytes > $maxBytes) {
+            stop(400, 'Kriteeriumi nimi on liiga pikk');
+        }
+        stop(200, 'OK');
+    }
+
     // Helper function to check if a date is today
     private function formatMessageDate($date): string
     {
