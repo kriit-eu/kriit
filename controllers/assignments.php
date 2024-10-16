@@ -605,11 +605,7 @@ class assignments extends Controller
         $host = $parsedUrl['host'] ?? '';
         $path = $parsedUrl['path'] ?? '';
 
-        $allowedHosts = ['bitbucket.org', 'github.com', 'docs.google.com'];
 
-        if (!in_array($host, $allowedHosts)) {
-            return ['code' => 400, 'message' => 'Sisestatud link peab kuuluma kas Bitbucket, GitHub või Google Docs keskkonda.'];
-        }
 
         if ($host === 'github.com') {
             $githubCommitUrl = '/\/commit\/[0-9a-fA-F]{40}/';
@@ -630,7 +626,6 @@ class assignments extends Controller
             return ['code' => 400, 'message' => 'Sisestatud link pole kättesaadav. Kontrollige, kas see on privaatne või vale link.'];
         }
     }
-
 
     private function checkIfStudentHasPositiveGrade($studentId, $assignmentId): bool
     {
