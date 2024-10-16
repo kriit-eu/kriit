@@ -725,7 +725,7 @@
                                             <h6 class="fw-bold mb-1"><?= $message['userName'] ?></h6>
                                             <small class="text-muted"><?= $message['createdAt'] ?></small>
                                         </div>
-                                        <p class="mb-1"><?= htmlspecialchars($message['content']) ?></p>
+                                        <p class="mb-1"><?= strip_tags($message['content'], '<br><ul><ol><h2><li><h3><p><strong>') ?></p>
                                         <?php if ($this->auth->userId !== $message['userId']): ?>
                                             <div class="d-flex justify-content-end">
                                                 <button type="button" class="btn btn-secondary btn-sm"
