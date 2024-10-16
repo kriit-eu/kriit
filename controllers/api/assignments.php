@@ -225,7 +225,7 @@ class assignments extends Controller
 
                 if (!$assignmentData) continue;
 
-                $currentGrade = $assignmentData['userGrade'] ?? null;
+                $currentGrade = $assignmentData['userGrade'] ?? "puudub";
                 $currentComment = $assignmentData['comment'] ?? '';
 
                 $tahvelGrade = $result ? str_replace("KUTSEHINDAMINE_", "", $result['gradeCode']) : "puudub";

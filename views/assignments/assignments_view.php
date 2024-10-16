@@ -455,7 +455,8 @@
                     }
                     ?>
                     <div class="form-check">
-                        <input class="form-check-input" id="criterion_<?= $criterion['criteriaId'] ?>" type="checkbox"
+                        <input class="form-check-input" id="criterion_<?= $criterion['criteriaId'] ?>"
+                               type="checkbox"
                                name="criteria[<?= $criterion['criteriaId'] ?>]"
                                value="1" <?= $isCompleted ? 'checked' : '' ?>
                                 <?= $isStudent ? '' : 'disabled' ?>>
@@ -725,6 +726,15 @@
                                             <small class="text-muted"><?= $message['createdAt'] ?></small>
                                         </div>
                                         <p class="mb-1"><?= htmlspecialchars($message['content']) ?></p>
+                                        <?php if ($this->auth->userId !== $message['userId']): ?>
+                                            <div class="d-flex justify-content-end">
+                                                <button type="button" class="btn btn-secondary btn-sm"
+                                                        style="font-size: 0.75rem; padding: 2px 8px;"
+                                                        onclick='replyToMessage(<?= json_encode($message['userName']) ?>, <?= $message['messageId'] ?>, <?= json_encode($message['content']) ?>, "<?= $message['createdAt'] ?>")'>
+                                                    Vasta
+                                                </button>
+                                            </div>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
                             <?php endif; ?>
