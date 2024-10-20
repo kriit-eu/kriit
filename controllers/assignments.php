@@ -215,10 +215,6 @@ class assignments extends Controller
         }
 
         if (count($criteria) !== 0) {
-            $falseCriteria = array_keys(array_filter($criteria, fn($value) => $value === 'false'));
-            if (count($falseCriteria) > 0) {
-                $grade = 'MA';
-            }
             $this->saveStudentCriteria();
         }
 
