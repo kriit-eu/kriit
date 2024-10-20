@@ -459,7 +459,7 @@
                                type="checkbox"
                                name="criteria[<?= $criterion['criteriaId'] ?>]"
                                value="1" <?= $isCompleted ? 'checked' : '' ?>
-                                <?= $isStudent ? '' : 'disabled' ?>>
+                            <?= $isStudent ? '' : 'disabled' ?>>
                         <label class="form-check-label" for="criterion_<?= $criterion['criteriaId'] ?>">
                             <?= $criterion['criteriaName'] ?>
                         </label>
@@ -670,9 +670,9 @@
                         <div class="body-item <?= $s['class'] ?> text-center clickable-cells-row"
                              data-bs-toggle="tooltip"
                              title="<?= $s['tooltipText'] ?>"
-                                <?php if (!$isStudent): ?>
-                                    oncontextmenu="showContextMenu(event, <?= $s['studentId'] ?>)"
-                                <?php endif; ?>
+                            <?php if (!$isStudent): ?>
+                                oncontextmenu="showContextMenu(event, <?= $s['studentId'] ?>)"
+                            <?php endif; ?>
                              onclick="openStudentModal(<?= $isStudent ? 'true' : 'false' ?>, <?= $s['studentId'] ?>)">
                             <?= $s['grade'] ?? '' ?>
                             <?php if ($s['assignmentStatusName'] !== 'Esitamata'): ?>
@@ -793,6 +793,20 @@
     });
 
     document.getElementById('submitButton').addEventListener('click', function () {
+        const gradeRadioGroup = document.querySelectorAll('#gradeRadioGroup input[type="radio"]');
+        let gradeSelected = false;
+
+        gradeRadioGroup.forEach(radio => {
+            if (radio.checked) {
+                gradeSelected = true;
+            }
+        });
+
+        if (!gradeSelected) {
+            alert('Palun vali hinne.');
+            return;
+        }
+
         if (submitButton.textContent === 'Esita' || submitButton.textContent === 'Muuda') {
             const solutionUrl = solutionInput.value;
             const criteria = getCriteriaList();
