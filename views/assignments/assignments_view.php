@@ -115,6 +115,7 @@
         flex-wrap: nowrap;
         overflow-x: auto;
         border: 1px solid #ccc;
+        border-radius: 8px;
     }
 
     .assignment-item {
@@ -128,7 +129,7 @@
         text-align: center;
         padding: 10px;
         box-sizing: border-box;
-        border: 1px solid #ccc;
+        border-bottom: 1px solid #ccc;
         min-height: 50px;
         background-color: inherit;
         white-space: nowrap;
@@ -228,6 +229,8 @@
         flex: 1;
         max-width: 100%;
         overflow-x: auto /* Set a max-width for the grades section */
+        border-radius: 8px
+
     }
 
     #messages-container {
@@ -245,166 +248,6 @@
 
         #messageContainer {
             max-width: 100%; /* Ensures it doesn't take the full width */
-        }
-    }
-
-    @media (max-width: 768px) {
-
-
-        #main-container {
-            display: flex;
-            flex-direction: row;
-            gap: 20px;
-            align-items: flex-start;
-
-        }
-
-        #messages-container {
-            max-width: 60%;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            height: auto;
-        }
-
-
-        #assignments-container {
-            max-width: 40%;
-            flex-shrink: 0;
-            overflow-x: hidden;
-        }
-
-        #notificationContainer {
-            max-height: 900px; /* Set a max height for the message container */
-            height: auto; /* Make it fill the remaining height */
-            margin: 0; /* Remove margin */
-            border: 1px solid #ccc;
-        }
-
-
-        #messageContainer {
-            max-height: 900px; /* Set a max height for the message container */
-            height: auto; /* Make it fill the remaining height */
-            margin: 0; /* Remove margin */
-            border: 1px solid #ccc;
-            overflow-y: auto;
-        }
-
-        small.text-muted {
-            white-space: nowrap;
-            display: block;
-        }
-
-        .content-part {
-            max-height: 800px;
-            overflow-y: auto;
-        }
-
-        .assignments-body {
-            display: block;
-        }
-
-        .adaptive-background {
-            margin-left: 0;
-        }
-
-        .assignment-item {
-            display: flex;
-            flex-direction: row;
-            justify-content: space-between;
-            padding: 10px;
-            border-bottom: 1px solid #ccc;
-            flex: 1;
-        }
-
-        .header-item, .body-item {
-            flex-basis: 100%;
-            min-height: 50px; /* Set a minimum height */
-            height: 50px; /* Set a fixed height for uniformity */
-            display: flex;
-            align-items: center; /* Vertically center the content */
-            justify-content: center; /* Horizontally center the content */
-            border: 1px solid #ccc; /* Keep the border consistent */
-        }
-
-        .card-body {
-            margin: 0 10px;
-            flex-wrap: wrap;
-        }
-
-        .grades ul {
-            margin: 0 10px;
-        }
-
-        .adaptive-background {
-            width: calc(100% - 20px);
-            margin: 10px auto;
-        }
-    }
-
-    @media (max-width: 400px) {
-
-        #main-container {
-            display: flex;
-            flex-direction: column; /* Stack the sections vertically */
-            gap: 10px; /* Add some space between sections */
-            align-items: flex-start;
-        }
-
-        #assignments-container, #messages-container {
-            max-width: 100%; /* Make both containers full width */
-            width: 100%; /* Ensures they take the full width available */
-            overflow-x: auto; /* Ensures content doesn't overflow */
-        }
-
-        #messageContainer {
-            max-height: 600px; /* Set a max height for the message container */
-            height: auto;
-            margin: 0; /* Remove margin */
-            border: 1px solid #ccc;
-        }
-
-
-        #notificationContainer {
-            max-height: 600px; /* Set a max height for the message container */
-            height: auto;
-            margin: 0; /* Remove margin */
-            border: 1px solid #ccc;
-        }
-
-
-        .content-part {
-            max-height: 500px;
-            overflow-y: auto;
-        }
-
-        small.text-muted {
-            white-space: nowrap;
-            display: block;
-        }
-
-        .assignment-item {
-            display: flex;
-            flex-direction: row;
-            justify-content: space-between;
-            padding: 5px;
-            border-bottom: 1px solid #ccc;
-            flex: 1;
-        }
-
-        .header-item, .body-item {
-            flex-basis: 100%;
-            min-height: 50px;
-            height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid #ccc;
-        }
-
-        .adaptive-background {
-            width: calc(100% - 20px);
-            margin: 10px auto;
         }
     }
 
@@ -667,110 +510,111 @@
         <div id="assignments-container">
             <div class="assignments-body">
                 <?php foreach ($assignment['students'] as $s): ?>
-                    <div>
-                        <div class="header-item" data-bs-toggle="tooltip" title="<?= $s['studentName'] ?>">
-                            <?= $s['initials'] ?>
-                        </div>
-                        <div class="body-item <?= $s['class'] ?> text-center clickable-cells-row"
-                             data-bs-toggle="tooltip"
-                             title="<?= $s['tooltipText'] ?>"
-                            <?php if (!$isStudent): ?>
-                                oncontextmenu="showContextMenu(event, <?= $s['studentId'] ?>)"
-                            <?php endif; ?>
-                             onclick="openStudentModal(<?= $isStudent ? 'true' : 'false' ?>, <?= $s['studentId'] ?>)">
-                            <?= $s['grade'] ?? '' ?>
-                            <?php if ($s['assignmentStatusName'] !== 'Esitamata'): ?>
-                                <span style="font-size: 8px"><?= $s['userDoneCriteriaCount'] ?>/<?= count($assignment['criteria']) ?></span>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                    <?php if ($isStudent): ?>
-                        <div class="assignment-item">
-                            <div class="header-item">Kommentaar</div>
-                            <div class="body-item pre-wrap"><?= $s['comment'] ?></div>
-                        </div>
-
+                <div>
+                    <div class="header-item" data-bs-toggle="tooltip" title="<?= $s['studentName'] ?>" style="<?= $s['studentId'] !== array_key_first($assignment['students']) ? 'border-left: 1px solid #ccc;' : '' ?>">
+                        <?= $s['initials'] ?>
+                </div>
+                <div class="body-item <?= $s['class'] ?> text-center clickable-cells-row"
+                     data-bs-toggle="tooltip"
+                     style="<?= $s['studentId'] !== array_key_first($assignment['students']) ? 'border-left: 1px solid #ccc;' : '' ?>"
+                     title="<?= $s['tooltipText'] ?>"
+                    <?php if (!$isStudent): ?>
+                        oncontextmenu="showContextMenu(event, <?= $s['studentId'] ?>)"
                     <?php endif; ?>
-                <?php endforeach; ?>
-            </div>
-        </div>
-        <div id="messages-container">
-            <div id="notificationContainer" class="card mt-3">
-                <div class="card-body">
-                    <h5>Sündmused</h5>
-                    <div class="content-part">
-                        <?php foreach ($assignment['messages'] as $message): ?>
-                            <?php if ($message['isNotification']): ?>
-                                <div class="notification-item">
-                                    <i class="fa fa-bell notification-icon"></i>
-                                    <div class="notification-text">
-                                        <p class="fw-bold mb-1"><?= $message['content'] ?></p>
-                                    </div>
-                                    <small class="notification-time text-muted"><?= $message['createdAt'] ?></small>
-                                </div>
-                            <?php endif; ?>
-                        <?php endforeach; ?>
-                    </div>
+                     onclick="openStudentModal(<?= $isStudent ? 'true' : 'false' ?>, <?= $s['studentId'] ?>)">
+                    <?= $s['grade'] ?? '' ?>
+                    <?php if ($s['assignmentStatusName'] !== 'Esitamata'): ?>
+                        <span style="font-size: 8px"><?= $s['userDoneCriteriaCount'] ?>/<?= count($assignment['criteria']) ?></span>
+                    <?php endif; ?>
                 </div>
             </div>
-
-            <div id="messageContainer" class="card">
-                <div class="card-body">
-                    <h5>Vestlus</h5>
-                    <div class="content-part">
-                        <?php foreach ($assignment['messages'] as $message): ?>
-                            <?php if (!$message['isNotification']): ?>
-                                <div class="d-flex align-items-start mb-3 border rounded p-3">
-                                    <div class="flex-shrink-0 me-3">
-                                        <span class="avatar bg-primary text-white rounded-circle p-2"><?= strtoupper(substr($message['userName'], 0, 1)) ?></span>
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <div class="d-flex flex-wrap justify-content-between">
-                                            <h6 class="fw-bold mb-1"><?= $message['userName'] ?></h6>
-                                            <small class="text-muted"><?= $message['createdAt'] ?></small>
-                                        </div>
-                                        <p class="mb-1"><?= strip_tags($message['content'], '<br><ul><ol><h2><li><h3><p><strong>') ?></p>
-                                        <?php if ($this->auth->userId !== $message['userId']): ?>
-                                            <div class="d-flex justify-content-end">
-                                                <button type="button" class="btn btn-secondary btn-sm"
-                                                        style="font-size: 0.75rem; padding: 2px 8px;"
-                                                        onclick='replyToMessage(<?= json_encode($message['userName']) ?>, <?= $message['messageId'] ?>, <?= json_encode($message['content']) ?>, "<?= $message['createdAt'] ?>")'>
-                                                    Vasta
-                                                </button>
-                                            </div>
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
-                            <?php endif; ?>
-                        <?php endforeach; ?>
-                    </div>
+            <?php if ($isStudent): ?>
+                <div class="assignment-item">
+                    <div class="header-item">Kommentaar</div>
+                    <div class="body-item pre-wrap"><?= $s['comment'] ?></div>
                 </div>
-            </div>
 
-
-            <div class="container mb-5">
-                <form>
-                    <div class="mb-3">
-                        <label for="messageContent" class="form-label">Sisesta sõnum</label>
-                        <div id="replyInfo" class="alert alert-info " style="display:none;">
-                            <div class="d-flex justify-content-end">
-                                <button type="button" style="font-size: 0.75rem; padding: 2px 8px;"
-                                        class="btn btn-sm btn-secondary mb-2" onclick="cancelReply()">x
-                                </button>
-                            </div>
-                            <div id="replyMessage" class="border rounded bg-light p-2 mb-2"></div>
-                        </div>
-                        <textarea class="form-control" id="messageContent" name="content" rows="3"
-                                  placeholder="Kirjuta oma sõnum siia..."></textarea>
-                    </div>
-                    <div class="d-flex justify-content-end">
-                        <button type="button" class="btn btn-primary" onclick="submitMessage()">Postita</button>
-                    </div>
-                </form>
-            </div>
-
+            <?php endif; ?>
+            <?php endforeach; ?>
         </div>
     </div>
+    <div id="messages-container">
+        <div id="notificationContainer" class="card mt-3">
+            <div class="card-body">
+                <h5>Sündmused</h5>
+                <div class="content-part">
+                    <?php foreach ($assignment['messages'] as $message): ?>
+                        <?php if ($message['isNotification']): ?>
+                            <div class="notification-item">
+                                <i class="fa fa-bell notification-icon"></i>
+                                <div class="notification-text">
+                                    <p class="fw-bold mb-1"><?= $message['content'] ?></p>
+                                </div>
+                                <small class="notification-time text-muted"><?= $message['createdAt'] ?></small>
+                            </div>
+                        <?php endif; ?>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+
+        <div id="messageContainer" class="card">
+            <div class="card-body">
+                <h5>Vestlus</h5>
+                <div class="content-part">
+                    <?php foreach ($assignment['messages'] as $message): ?>
+                        <?php if (!$message['isNotification']): ?>
+                            <div class="d-flex align-items-start mb-3 border rounded p-3">
+                                <div class="flex-shrink-0 me-3">
+                                    <span class="avatar bg-primary text-white rounded-circle p-2"><?= strtoupper(substr($message['userName'], 0, 1)) ?></span>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex flex-wrap justify-content-between">
+                                        <h6 class="fw-bold mb-1"><?= $message['userName'] ?></h6>
+                                        <small class="text-muted"><?= $message['createdAt'] ?></small>
+                                    </div>
+                                    <p class="mb-1"><?= strip_tags($message['content'], '<br><ul><ol><h2><li><h3><p><strong>') ?></p>
+                                    <?php if ($this->auth->userId !== $message['userId']): ?>
+                                        <div class="d-flex justify-content-end">
+                                            <button type="button" class="btn btn-secondary btn-sm"
+                                                    style="font-size: 0.75rem; padding: 2px 8px;"
+                                                    onclick='replyToMessage(<?= json_encode($message['userName']) ?>, <?= $message['messageId'] ?>, <?= json_encode($message['content']) ?>, "<?= $message['createdAt'] ?>")'>
+                                                Vasta
+                                            </button>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="container mb-5">
+            <form>
+                <div class="mb-3">
+                    <label for="messageContent" class="form-label">Sisesta sõnum</label>
+                    <div id="replyInfo" class="alert alert-info " style="display:none;">
+                        <div class="d-flex justify-content-end">
+                            <button type="button" style="font-size: 0.75rem; padding: 2px 8px;"
+                                    class="btn btn-sm btn-secondary mb-2" onclick="cancelReply()">x
+                            </button>
+                        </div>
+                        <div id="replyMessage" class="border rounded bg-light p-2 mb-2"></div>
+                    </div>
+                    <textarea class="form-control" id="messageContent" name="content" rows="3"
+                              placeholder="Kirjuta oma sõnum siia..."></textarea>
+                </div>
+                <div class="d-flex justify-content-end">
+                    <button type="button" class="btn btn-primary" onclick="submitMessage()">Postita</button>
+                </div>
+            </form>
+        </div>
+
+    </div>
+
 </div>
 <script>
     const assignment = <?= json_encode($assignment) ?>;
