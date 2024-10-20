@@ -38,11 +38,6 @@ class subjects extends Controller
 
         $groups = [];
 
-        // Define status class mapping
-        $statusClassMap = [
-            'Esitamata' => $this->isStudent ? 'yellow-cell' : '',
-            'Ülevaatamata' => $this->auth->userIsTeacher ? 'red-cell' : '',
-        ];
 
         // Process each row of data
         foreach ($this->data as $row) {
@@ -108,13 +103,13 @@ class subjects extends Controller
                 $isNegativeGrade = $grade == 'MA' || (is_numeric($grade) && intval($grade) < 3);
 
                 // Determine the CSS class for the assignment status
-                $class = ($this->isStudent && $isNegativeGrade) ? 'red-cell' :
-                    ($daysRemaining < 0 ?
-                        (($this->isStudent && $statusId == ASSIGNMENT_STATUS_NOT_SUBMITTED) ||
-                        ($this->isTeacher && $statusId == ASSIGNMENT_STATUS_WAITING_FOR_REVIEW) ? 'red-cell' :
-                            ($this->isTeacher && $statusId == ASSIGNMENT_STATUS_NOT_SUBMITTED || $isNegativeGrade ? 'yellow-cell' : '')) :
-                        ($this->isTeacher && $statusId != ASSIGNMENT_STATUS_WAITING_FOR_REVIEW ? '' : ($statusClassMap[$statusName] ?? '')));
-
+                $class = Assignment::cellColor(
+                    $this->isStudent,
+                    $this->isTeacher,
+                    $isNegativeGrade,
+                    $daysRemaining,
+                    $statusId,
+                    $statusName);
 
                 // Determine the link text based on assignment status
                 $linkText = match ($statusName) {
@@ -137,7 +132,7 @@ class subjects extends Controller
             }
         }
 
-        $this->statusClassMap = $statusClassMap;
+        $this->statusClassMap = Assignment::statusClassMap($this->isStudent, $this->isTeacher);
         $this->groups = $groups;
     }
 }

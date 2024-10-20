@@ -13,12 +13,6 @@ class assignments extends Controller
         $this->isStudent = $this->auth->groupId && !$this->auth->userIsAdmin && !$this->auth->userIsTeacher;
         $this->isTeacher = $this->auth->userIsTeacher;
         $assignmentId = $this->getId();
-
-        $statusClassMap = [
-            'Esitamata' => $this->isStudent ? 'yellow-cell' : '',
-            'Ülevaatamata' => $this->auth->userIsTeacher ? 'red-cell' : '',
-        ];
-
         $data = Db::getAll("
                 SELECT
                     a.assignmentId, a.assignmentName, a.assignmentInstructions, a.assignmentDueAt,
@@ -129,13 +123,13 @@ class assignments extends Controller
             $dueDate = !empty($row['assignmentDueAt']) ? new \DateTime($row['assignmentDueAt']) : null;
             $daysRemaining = $dueDate ? (int)(new \DateTime())->diff($dueDate)->format('%r%a') : 1000;
 
-            $class = ($this->isStudent && $isNegativeGrade) ? 'red-cell' :
-                ($daysRemaining < 0 ?
-                    (($this->isStudent && $statusId == ASSIGNMENT_STATUS_NOT_SUBMITTED) ||
-                    ($this->isTeacher && $statusId == ASSIGNMENT_STATUS_WAITING_FOR_REVIEW) ? 'red-cell' :
-                        ($this->isTeacher && $statusId == ASSIGNMENT_STATUS_NOT_SUBMITTED || $isNegativeGrade ? 'yellow-cell' : '')) :
-                    ($this->isTeacher && $statusId != ASSIGNMENT_STATUS_WAITING_FOR_REVIEW ? '' : ($statusClassMap[$statusName] ?? '')));
-
+            $class = Assignment::cellColor(
+                $this->isStudent,
+                $this->isTeacher,
+                $isNegativeGrade,
+                $daysRemaining,
+                $statusId,
+                $statusName);
 
             $tooltipText = $statusName . (($daysRemaining < 0 && $statusName === 'Esitamata') ? ' (Tähtaeg möödas)' : '');
             $assignment['students'][$studentId]['class'] = $class;
