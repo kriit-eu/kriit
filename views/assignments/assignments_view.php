@@ -408,6 +408,10 @@
         }
     }
 
+    .pre-wrap {
+        white-space: pre-wrap;
+        text-align: left;
+    }
 </style>
 
 <div>
@@ -663,7 +667,7 @@
         <div id="assignments-container">
             <div class="assignments-body">
                 <?php foreach ($assignment['students'] as $s): ?>
-                    <div class="assignment-item">
+                    <div>
                         <div class="header-item" data-bs-toggle="tooltip" title="<?= $s['studentName'] ?>">
                             <?= $s['initials'] ?>
                         </div>
@@ -683,7 +687,7 @@
                     <?php if ($isStudent): ?>
                         <div class="assignment-item">
                             <div class="header-item">Kommentaar</div>
-                            <div class="body-item"><?= $s['comment'] ?></div>
+                            <div class="body-item pre-wrap"><?= $s['comment'] ?></div>
                         </div>
 
                     <?php endif; ?>
