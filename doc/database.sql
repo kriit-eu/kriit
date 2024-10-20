@@ -1,8 +1,8 @@
--- MariaDB dump 10.19  Distrib 10.11.8-MariaDB, for osx10.19 (arm64)
+-- MariaDB dump 10.19  Distrib 10.11.9-MariaDB, for osx10.19 (arm64)
 --
 -- Host: 127.0.0.1    Database: kriit
 -- ------------------------------------------------------
--- Server version	10.7.8-MariaDB-1:10.7.8+maria~ubu2004-log
+-- Server version	10.11.9-MariaDB
 
 /*!50503 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!50503 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -72,7 +72,7 @@ CREATE TABLE `activityLog` (
   `id` int unsigned DEFAULT NULL,
   `details` text,
   PRIMARY KEY (`activityLogId`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -157,7 +157,7 @@ CREATE TABLE `assignments` (
   PRIMARY KEY (`assignmentId`),
   KEY `assignments_subjectId_fk` (`subjectId`),
   CONSTRAINT `assignments_subjectId_fk` FOREIGN KEY (`subjectId`) REFERENCES `subjects` (`subjectId`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -183,7 +183,7 @@ CREATE TABLE `criteria` (
   PRIMARY KEY (`criterionId`),
   KEY `criteria_assignments_assignmentId_fk` (`assignmentId`),
   CONSTRAINT `criteria_assignments_assignmentId_fk` FOREIGN KEY (`assignmentId`) REFERENCES `assignments` (`assignmentId`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -210,9 +210,7 @@ CREATE TABLE `deployments` (
   `deploymentCommitAuthor` varchar(255) DEFAULT NULL,
   `deploymentCommitSha` varchar(256) NOT NULL,
   PRIMARY KEY (`deploymentId`)
-) ENGINE = InnoDB
-  AUTO_INCREMENT = 47
-  DEFAULT CHARSET = utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=47 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -266,7 +264,7 @@ INSERT INTO `deployments` VALUES
 (43,'2024-08-14 10:44:59','2024-08-14 10:46:08','Fix Admin button po','henno.taht@gmail.com','3837864'),
 (44,'2024-08-14 10:51:02','2024-08-14 10:51:30','Optimize query for ','Violetta Zakorzhevskaya','44b01e8'),
 (45,'2024-08-14 12:00:50','2024-08-14 12:15:03','Refine user ranking','Violetta Zakorzhevskaya','5441b81'),
-(46, '2024-08-14 14:11:35', '2024-08-14 14:29:55', 'Enhance the user ra', 'Violetta Zakorzhevskaya', '84b9b5f');
+(46,'2024-08-14 14:11:35','2024-08-14 14:29:55','Enhance the user ra','Violetta Zakorzhevskaya','84b9b5f');
 /*!40000 ALTER TABLE `deployments` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -338,7 +336,7 @@ CREATE TABLE `groups` (
   `groupId` int unsigned NOT NULL AUTO_INCREMENT COMMENT 'Autocreated',
   `groupName` varchar(50) NOT NULL COMMENT 'Autocreated',
   PRIMARY KEY (`groupId`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -369,7 +367,7 @@ CREATE TABLE `messages` (
   KEY `messages_users_userId_fk` (`userId`),
   CONSTRAINT `messages_assignments_assignmentId_fk` FOREIGN KEY (`assignmentId`) REFERENCES `assignments` (`assignmentId`),
   CONSTRAINT `messages_users_userId_fk` FOREIGN KEY (`userId`) REFERENCES `users` (`userId`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -401,8 +399,9 @@ CREATE TABLE `settings` (
 
 LOCK TABLES `settings` WRITE;
 /*!40000 ALTER TABLE `settings` DISABLE KEYS */;
-INSERT INTO `settings` VALUES ('projectVersion', '84b9b5f'),
-                              ('translationUpdateLastRun', '2024-08-14 14:29:55');
+INSERT INTO `settings` VALUES
+('projectVersion','84b9b5f'),
+('translationUpdateLastRun','2024-08-14 14:29:55');
 /*!40000 ALTER TABLE `settings` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -425,7 +424,7 @@ CREATE TABLE `subjects` (
   KEY `subjects_users_userId_fk` (`teacherId`),
   CONSTRAINT `subjects_groups_groupId_fk` FOREIGN KEY (`groupId`) REFERENCES `groups` (`groupId`),
   CONSTRAINT `subjects_users_userId_fk` FOREIGN KEY (`teacherId`) REFERENCES `users` (`userId`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -640,6 +639,8 @@ CREATE TABLE `userAssignments` (
   `userGrade` varchar(191) DEFAULT NULL,
   `solutionUrl` text,
   `comment` text,
+  `userAssignmentCreatedAt` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
+  `userAssignmentEditedAt` datetime DEFAULT NULL,
   PRIMARY KEY (`assignmentId`,`userId`),
   KEY `userAssignments_users_userId_fk` (`userId`),
   KEY `userAssignments_assignmentStatuses_assignmentStatusId_fk` (`assignmentStatusId`),
@@ -820,4 +821,4 @@ UNLOCK TABLES;
 /*!50503 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-10-11 15:55:14
+-- Dump completed on 2024-10-20 16:10:01
