@@ -22,7 +22,7 @@ class Controller
         require 'templates/' . $template . '_template.php';
     }
 
-    function getId($index = 0)
+    function getId($index = 0): int
     {
 
         // Verify the existence of the first parameter after the action name in the URL (the project_id)

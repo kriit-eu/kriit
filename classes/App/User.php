@@ -67,4 +67,12 @@ class User
         }
     }
 
+    /**
+     * @throws \Exception
+     */
+    public static function getAssignment($studentId, $assignmentId): bool|array|null
+    {
+        return Db::getFirst('SELECT * FROM userAssignments WHERE userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
+    }
+
 }

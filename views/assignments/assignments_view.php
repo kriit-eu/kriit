@@ -1,3 +1,8 @@
+<?php
+
+use App\Assignment;
+
+?>
 <style>
 
     .red-cell {
@@ -6,6 +11,10 @@
 
     .yellow-cell {
         background-color: #fff8b3 !important;
+    }
+
+    .green-cell {
+        background-color: #d4edda !important;
     }
 
     .modal-body {
@@ -141,7 +150,6 @@
 
     .adaptive-background {
         width: 100%;
-        max-width: 500px;
         min-width: 250px;
         padding: 15px;
         margin: 0;
@@ -229,7 +237,7 @@
         flex: 1;
         max-width: 100%;
         overflow-x: auto /* Set a max-width for the grades section */
-        border-radius: 8px
+        border-radius: 8px;
 
     }
 
@@ -257,38 +265,16 @@
     }
 </style>
 
-<div>
-    <div class="mb-3">
-        <h2 class="mb-4"><?= $assignment['assignmentName'] ?></h2>
-        <p class="mb-0"><?= $assignment['assignmentInstructions'] ?></p>
-        <p class="mt-4 fw-bold">Tähtaeg: <?= $assignment['assignmentDueAt'] ?></p>
 
-        <?php if ($isStudent): ?>
-            <div class="d-flex justify-content-end mt-3">
-                <span <?php if ($assignment['students'][$this->auth->userId]['isDisabledStudentActionButton'] === 'disabled'): ?>
-                    data-bs-toggle="tooltip" title="
-                            <?php if ($assignment['students'][$this->auth->userId]['isAllCriteriaCompleted']): ?>
-                            Ülesanne on juba hinnatud
-                            <?php else: ?>
-                            Kõik kriteeriumid pole sul veel märgitud valmis
-                            <?php endif; ?>"
-                <?php endif; ?>>
-                <button class="btn btn-primary"
-                        onclick="openStudentModal(true, <?= $this->auth->userId ?>)" <?= $assignment['students'][$this->auth->userId]['isDisabledStudentActionButton'] ?>>
-                    <?= $assignment['students'][$this->auth->userId]['studentActionButtonName'] ?>
-                </button>
-                </span>
-            </div>
-        <?php else: ?>
-            <div class="d-flex justify-content-end mt-3">
-                <button class="btn btn-secondary" onclick="editAssignment()">Muuda</button>
-            </div>
-        <?php endif; ?>
+<div class="mb-3">
+    <h2 class="mb-4"><span
+                class="<?= $assignment['deadlineColor'] ?>"><?= $assignment['assignmentDueAt'] ?></span> <?= $assignment['assignmentName'] ?>
+    </h2>
+    <p class="mb-0"><?= $assignment['assignmentInstructions'] ?></p>
+</div>
 
-    </div>
-
-
-    <div class="adaptive-background p-3 mb-5 mt-5">
+<?php if (!empty($assignment['criteria'])): ?>
+    <div class="adaptive-background mb-5 p-3">
         <h5 class="mb-3">Kriteeriumid</h5>
         <form id="studentCriteriaForm">
             <div id="requiredCriteria">
@@ -301,7 +287,7 @@
                         $isCompleted = $assignment['students'][$studentId]['userDoneCriteria'][$criterion['criteriaId']]['completed'];
                     }
                     ?>
-                    <div class="form-check">
+                    <div class="form-check" <?= $criterion['criteriaId'] != $assignment['criteria'][array_key_last($assignment['criteria'])]['criteriaId'] ? 'style="border-bottom: 1px solid #ddd"' : '' ?>>
                         <input class="form-check-input" id="criterion_<?= $criterion['criteriaId'] ?>"
                                type="checkbox"
                                name="criteria[<?= $criterion['criteriaId'] ?>]"
@@ -320,302 +306,362 @@
             <?php endif; ?>
         </form>
     </div>
+<?php endif; ?>
 
-    <?php if (!$isStudent): ?>
-        <div class="modal fade " id="editAssignmentModal" tabindex="-1" aria-labelledby="editAssignmentModalLabel"
-             aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="editAssignmentModalLabel">Muuta ülesanne</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="editAssignmentForm">
-                            <div class="mb-3">
-                                <label for="assignmentName" class="form-label">Pealkiri</label>
-                                <input type="text" class="form-control" id="assignmentName" name="assignmentName"
-                                       value="<?= $assignment['assignmentName'] ?>">
-                            </div>
-                            <div class="mb-3">
-                                <label for="assignmentInstructions" class="form-label">Instruktsioon</label>
-                                <textarea class="form-control" id="assignmentInstructions" name="assignmentInstructions"
-                                          rows="3"><?= $assignment['assignmentInstructions'] ?></textarea>
-                            </div>
-                            <div class="mb-3">
-                                <label for="assignmentDueAt" class="form-label">Tähtaeg</label>
-                                <input type="date" class="form-control" id="assignmentDueAt" name="assignmentDueAt"
-                                       value="<?= (!empty($assignment['assignmentDueAt']) && strtotime($assignment['assignmentDueAt']) > 0) ? date('Y-m-d', strtotime($assignment['assignmentDueAt'])) : "" ?>">
-                            </div>
-
-
-                            <!-- Block for criteria management -->
-                            <div class="mb-3">
-                                <h5>Kriteeriumid</h5>
-                                <div id="editCriteriaContainer">
-                                    <?php foreach ($assignment['criteria'] as $criterion): ?>
-                                        <div class="criteria-row">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox"
-                                                       id="edit_criterion_<?= $criterion['criteriaId'] ?>" checked
-                                                       disabled>
-                                                <label class="form-check-label"
-                                                       for="edit_criterion_<?= $criterion['criteriaId'] ?>">
-                                                    <?= $criterion['criteriaName'] ?>
-                                                </label>
-                                            </div>
-                                            <button type="button" class="btn btn-danger btn-sm"
-                                                    onclick="removeOldCriterion(<?= $criterion['criteriaId'] ?>)">X
-                                            </button>
-                                        </div>
-                                    <?php endforeach; ?>
-                                </div>
-                                <button type="button" class="btn btn-primary mt-2" id="addCriterionButton">Lisa
-                                    kriteerium
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-primary" onclick="saveEditedAssignment()">Salvesta</button>
-                        <button type="button" class="btn btn-secondary" onclick="location.reload()"
-                                data-bs-dismiss="modal">Tühista
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="modal fade" id="addCriterionModal" tabindex="-1" aria-labelledby="addCriterionModalLabel"
-             aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="addCriterionModalLabel">Lisa uus kriteerium</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="addCriterionForm">
-                            <div class="mb-3">
-                                <label for="newCriterionName" class="form-label">Kriteeriumi nimi</label>
-                                <textarea class="form-control" id="newCriterionName" name="newCriterionName" rows="3"
-                                          placeholder="Sisestage kriteeriumi nimi"></textarea>
-                            </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-primary" onclick="addNewCriterion()">Lisa</button>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tühista</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    <?php endif; ?>
-
-    <div class="modal fade" id="studentModal" tabindex="-1" aria-labelledby="studentModalLabel" aria-hidden="true">
+<?php if (!$isStudent): ?>
+    <div class="modal fade " id="editAssignmentModal" tabindex="-1" aria-labelledby="editAssignmentModalLabel"
+         aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="studentName"></h5>
+                    <h5 class="modal-title" id="editAssignmentModalLabel">Muuta ülesanne</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="solutionUrl" class="form-label fw-bold">Lahenduse link</label>
-                        <div id="solutionInputContainer">
-                            <input type="text" id="solutionInput" class="form-control"
-                                   placeholder="Sisesta link siia...">
-                            <small id="solutionInputFeedback"></small>
+                    <form id="editAssignmentForm">
+                        <div class="mb-3">
+                            <label for="assignmentName" class="form-label">Pealkiri</label>
+                            <input type="text" class="form-control" id="assignmentName" name="assignmentName"
+                                   value="<?= $assignment['assignmentName'] ?>">
+                        </div>
+                        <div class="mb-3">
+                            <label for="assignmentInstructions" class="form-label">Instruktsioon</label>
+                            <textarea class="form-control" id="assignmentInstructions" name="assignmentInstructions"
+                                      rows="3"><?= $assignment['assignmentInstructions'] ?></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="assignmentDueAt" class="form-label">Tähtaeg</label>
+                            <input type="date" class="form-control" id="assignmentDueAt" name="assignmentDueAt"
+                                   value="<?= (!empty($assignment['assignmentDueAt']) && strtotime($assignment['assignmentDueAt']) > 0) ? date('Y-m-d', strtotime($assignment['assignmentDueAt'])) : "" ?>">
                         </div>
 
-                        <p class="mt-1" id="solutionUrlContainer">
-                            <a href="#" id="solutionUrl" target="_blank" rel="noopener noreferrer">No link provided</a>
-                        </p>
-                    </div>
-                    <?php if (!$isStudent): ?>
-                        <div id="gradeSection" class="mb-3" style="display: none;">
-                            <label class="form-label fw-bold">Hinne</label>
-                            <div id="gradeRadioGroup" class="d-flex justify-content-around">
-                                <div class="text-center">
-                                    <input class="form-check-input" type="radio" name="grade" id="grade5" value="5">
-                                    <label class="form-check-label d-block" for="grade5">5</label>
-                                </div>
-                                <div class="text-center">
-                                    <input class="form-check-input" type="radio" name="grade" id="grade4" value="4">
-                                    <label class="form-check-label d-block" for="grade4">4</label>
-                                </div>
-                                <div class="text-center">
-                                    <input class="form-check-input" type="radio" name="grade" id="grade3" value="3">
-                                    <label class="form-check-label d-block" for="grade3">3</label>
-                                </div>
-                                <div class="text-center">
-                                    <input class="form-check-input" type="radio" name="grade" id="grade2" value="2">
-                                    <label class="form-check-label d-block" for="grade2">2</label>
-                                </div>
-                                <div class="text-center">
-                                    <input class="form-check-input" type="radio" name="grade" id="grade1" value="1">
-                                    <label class="form-check-label d-block" for="grade1">1</label>
-                                </div>
-                                <div class="text-center">
-                                    <input class="form-check-input" type="radio" name="grade" id="gradeA" value="A">
-                                    <label class="form-check-label d-block" for="gradeA">A</label>
-                                </div>
-                                <div class="text-center">
-                                    <input class="form-check-input" type="radio" name="grade" id="gradeMA" value="MA">
-                                    <label class="form-check-label d-block" for="gradeMA">MA</label>
-                                </div>
+
+                        <!-- Block for criteria management -->
+                        <div class="mb-3">
+                            <h5>Kriteeriumid</h5>
+                            <div id="editCriteriaContainer">
+                                <?php foreach ($assignment['criteria'] as $criterion): ?>
+                                    <div class="criteria-row">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox"
+                                                   id="edit_criterion_<?= $criterion['criteriaId'] ?>" checked
+                                                   disabled>
+                                            <label class="form-check-label"
+                                                   for="edit_criterion_<?= $criterion['criteriaId'] ?>">
+                                                <?= $criterion['criteriaName'] ?>
+                                            </label>
+                                        </div>
+                                        <button type="button" class="btn btn-danger btn-sm"
+                                                onclick="removeOldCriterion(<?= $criterion['criteriaId'] ?>)">X
+                                        </button>
+                                    </div>
+                                <?php endforeach; ?>
                             </div>
+                            <button type="button" class="btn btn-primary mt-2" id="addCriterionButton">Lisa
+                                kriteerium
+                            </button>
                         </div>
-                    <?php endif; ?>
-                    <div id="studentGradeCriteriaContainer">
-                        <h6 class="fw-bold">Kriteeriumid</h6>
-                        <div id="checkboxesContainer">
-                        </div>
-                    </div>
-                    <div id="commentSection" class="mb-3">
-                        <label for="studentComment" class="form-label fw-bold">Kommentaar</label>
-                        <textarea class="form-control" id="studentComment" rows="3"
-                                  placeholder="Lisa kommentaar siia..."></textarea>
-                    </div>
+                    </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" id="submitButton">
-                        Salvesta muudatused
+                    <button type="button" class="btn btn-primary" onclick="saveEditedAssignment()">Salvesta</button>
+                    <button type="button" class="btn btn-secondary" onclick="location.reload()"
+                            data-bs-dismiss="modal">Tühista
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="addCriterionModal" tabindex="-1" aria-labelledby="addCriterionModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addCriterionModalLabel">Lisa uus kriteerium</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addCriterionForm">
+                        <div class="mb-3">
+                            <label for="newCriterionName" class="form-label">Kriteeriumi nimi</label>
+                            <textarea class="form-control" id="newCriterionName" name="newCriterionName" rows="3"
+                                      placeholder="Sisestage kriteeriumi nimi"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="addNewCriterion()">Lisa</button>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tühista</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <?php if (!$isStudent): ?>
-        <div id="context-menu" class="context-menu">
-            <div class="grades">
-                <ul>
-                    <li onclick="setGrade(5)">5</li>
-                    <li onclick="setGrade(4)">4</li>
-                    <li onclick="setGrade(3)">3</li>
-                    <li onclick="setGrade(2)">2</li>
-                    <li onclick="setGrade(1)">1</li>
-                    <li onclick="setGrade('A')">A</li>
-                    <li onclick="setGrade('MA')">MA</li>
-                </ul>
-            </div>
-            <div class="criteria">
-            </div>
-        </div>
-    <?php endif; ?>
+<?php endif; ?>
 
-    <div id="main-container">
-        <div id="assignments-container">
-            <div class="assignments-body">
-                <?php foreach ($assignment['students'] as $s): ?>
-                <div>
-                    <div class="header-item" data-bs-toggle="tooltip" title="<?= $s['studentName'] ?>" style="<?= $s['studentId'] !== array_key_first($assignment['students']) ? 'border-left: 1px solid #ccc;' : '' ?>">
-                        <?= $s['initials'] ?>
+<div class="modal fade" id="gradingModal" tabindex="-1" aria-labelledby="gradingModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="studentName"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    asd
+                    <label for="solutionUrl" class="form-label fw-bold">Lahenduse link</label>
+                    <div id="solutionInputContainer">
+                        <input type="text" id="solutionInput" class="form-control"
+                               placeholder="Sisesta link siia...">
+                        <small id="solutionInputFeedback"></small>
+                    </div>
+
+                    <p class="mt-1" id="solutionUrlContainer">
+                        <a href="#" id="solutionUrl" target="_blank" rel="noopener noreferrer">No link provided</a>
+                    </p>
                 </div>
-                <div class="body-item <?= $s['class'] ?> text-center clickable-cells-row"
-                     data-bs-toggle="tooltip"
-                     style="<?= $s['studentId'] !== array_key_first($assignment['students']) ? 'border-left: 1px solid #ccc;' : '' ?>"
-                     title="<?= $s['tooltipText'] ?>"
-                    <?php if (!$isStudent): ?>
-                        oncontextmenu="showContextMenu(event, <?= $s['studentId'] ?>)"
-                    <?php endif; ?>
-                     onclick="openStudentModal(<?= $isStudent ? 'true' : 'false' ?>, <?= $s['studentId'] ?>)">
-                    <?= $s['grade'] ?? '' ?>
-                    <?php if ($s['assignmentStatusName'] !== 'Esitamata'): ?>
-                        <span style="font-size: 8px"><?= $s['userDoneCriteriaCount'] ?>/<?= count($assignment['criteria']) ?></span>
-                    <?php endif; ?>
+                <?php if (!$isStudent): ?>
+                    <div id="gradeSection" class="mb-3" style="display: none;">
+                        <label class="form-label fw-bold">Hinne</label>
+                        <div id="gradeRadioGroup" class="d-flex justify-content-around">
+                            <div class="text-center">
+                                <input class="form-check-input" type="radio" name="grade" id="grade5" value="5">
+                                <label class="form-check-label d-block" for="grade5">5</label>
+                            </div>
+                            <div class="text-center">
+                                <input class="form-check-input" type="radio" name="grade" id="grade4" value="4">
+                                <label class="form-check-label d-block" for="grade4">4</label>
+                            </div>
+                            <div class="text-center">
+                                <input class="form-check-input" type="radio" name="grade" id="grade3" value="3">
+                                <label class="form-check-label d-block" for="grade3">3</label>
+                            </div>
+                            <div class="text-center">
+                                <input class="form-check-input" type="radio" name="grade" id="grade2" value="2">
+                                <label class="form-check-label d-block" for="grade2">2</label>
+                            </div>
+                            <div class="text-center">
+                                <input class="form-check-input" type="radio" name="grade" id="grade1" value="1">
+                                <label class="form-check-label d-block" for="grade1">1</label>
+                            </div>
+                            <div class="text-center">
+                                <input class="form-check-input" type="radio" name="grade" id="gradeA" value="A">
+                                <label class="form-check-label d-block" for="gradeA">A</label>
+                            </div>
+                            <div class="text-center">
+                                <input class="form-check-input" type="radio" name="grade" id="gradeMA" value="MA">
+                                <label class="form-check-label d-block" for="gradeMA">MA</label>
+                            </div>
+                        </div>
+                    </div>
+                <?php endif; ?>
+                <div id="studentGradeCriteriaContainer">
+                    <h6 class="fw-bold">Kriteeriumid</h6>
+                    <div id="checkboxesContainer">
+                    </div>
+                </div>
+                <div id="commentSection" class="mb-3">
+                    <label for="studentComment" class="form-label fw-bold">Kommentaar</label>
+                    <textarea class="form-control" id="studentComment" rows="3"
+                              placeholder="Lisa kommentaar siia..."></textarea>
                 </div>
             </div>
-            <?php if ($isStudent): ?>
-                <div class="assignment-item">
-                    <div class="header-item">Kommentaar</div>
-                    <div class="body-item pre-wrap"><?= $s['comment'] ?></div>
-                </div>
-
-            <?php endif; ?>
-            <?php endforeach; ?>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="submitButton">
+                    Salvesta muudatused
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tühista</button>
+            </div>
         </div>
     </div>
-    <div id="messages-container">
-        <div id="notificationContainer" class="card mt-3">
-            <div class="card-body">
-                <h5>Sündmused</h5>
-                <div class="content-part">
-                    <?php foreach ($assignment['messages'] as $message): ?>
-                        <?php if ($message['isNotification']): ?>
-                            <div class="notification-item">
-                                <i class="fa fa-bell notification-icon"></i>
-                                <div class="notification-text">
-                                    <p class="fw-bold mb-1"><?= $message['content'] ?></p>
-                                </div>
-                                <small class="notification-time text-muted"><?= $message['createdAt'] ?></small>
-                            </div>
-                        <?php endif; ?>
-                    <?php endforeach; ?>
-                </div>
-            </div>
+</div>
+
+<?php if (!$isStudent): ?>
+    <div id="context-menu" class="context-menu">
+        <div class="grades">
+            <ul>
+                <li onclick="setGrade(5)">5</li>
+                <li onclick="setGrade(4)">4</li>
+                <li onclick="setGrade(3)">3</li>
+                <li onclick="setGrade(2)">2</li>
+                <li onclick="setGrade(1)">1</li>
+                <li onclick="setGrade('A')">A</li>
+                <li onclick="setGrade('MA')">MA</li>
+            </ul>
         </div>
-
-        <div id="messageContainer" class="card">
-            <div class="card-body">
-                <h5>Vestlus</h5>
-                <div class="content-part">
-                    <?php foreach ($assignment['messages'] as $message): ?>
-                        <?php if (!$message['isNotification']): ?>
-                            <div class="d-flex align-items-start mb-3 border rounded p-3">
-                                <div class="flex-shrink-0 me-3">
-                                    <span class="avatar bg-primary text-white rounded-circle p-2"><?= strtoupper(substr($message['userName'], 0, 1)) ?></span>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <div class="d-flex flex-wrap justify-content-between">
-                                        <h6 class="fw-bold mb-1"><?= $message['userName'] ?></h6>
-                                        <small class="text-muted"><?= $message['createdAt'] ?></small>
-                                    </div>
-                                    <p class="mb-1"><?= strip_tags($message['content'], '<br><ul><ol><h2><li><h3><p><strong>') ?></p>
-                                    <?php if ($this->auth->userId !== $message['userId']): ?>
-                                        <div class="d-flex justify-content-end">
-                                            <button type="button" class="btn btn-secondary btn-sm"
-                                                    style="font-size: 0.75rem; padding: 2px 8px;"
-                                                    onclick='replyToMessage(<?= json_encode($message['userName']) ?>, <?= $message['messageId'] ?>, <?= json_encode($message['content']) ?>, "<?= $message['createdAt'] ?>")'>
-                                                Vasta
-                                            </button>
-                                        </div>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                        <?php endif; ?>
-                    <?php endforeach; ?>
-                </div>
-            </div>
+        <div class="criteria">
         </div>
+    </div>
+<?php endif; ?>
 
 
-        <div class="container mb-5">
-            <form>
-                <div class="mb-3">
-                    <label for="messageContent" class="form-label">Sisesta sõnum</label>
-                    <div id="replyInfo" class="alert alert-info " style="display:none;">
-                        <div class="d-flex justify-content-end">
-                            <button type="button" style="font-size: 0.75rem; padding: 2px 8px;"
-                                    class="btn btn-sm btn-secondary mb-2" onclick="cancelReply()">x
-                            </button>
-                        </div>
-                        <div id="replyMessage" class="border rounded bg-light p-2 mb-2"></div>
+<div id="assignments-container">
+    <?php if ($isStudent): ?>
+
+        <?php if ($assignment['students'][$this->auth->userId]['grade'] || $assignment['students'][$this->auth->userId]['comment']): ?>
+            <div class="assignments-body">
+                <div>
+                    <div class="header-item">Hinne</div>
+                    <div class="body-item <?= $assignment['students'][$this->auth->userId]['gradeInfo']['colorClass'] ?>"
+                         title="<?= $assignment['students'][$this->auth->userId]['gradeInfo']['tooltip'] ?>"
+                         data-bs-toggle="tooltip">
+                        <?= $assignment['students'][$this->auth->userId]['grade'] ?? 'Esitamata' ?>
                     </div>
-                    <textarea class="form-control" id="messageContent" name="content" rows="3"
-                              placeholder="Kirjuta oma sõnum siia..."></textarea>
                 </div>
-                <div class="d-flex justify-content-end">
-                    <button type="button" class="btn btn-primary" onclick="submitMessage()">Postita</button>
+                <div class="assignment-item">
+                    <div class="header-item">Kommentaar sinu tööle</div>
+                    <div class="body-item pre-wrap">
+                        <?php if (!empty($assignment['students'][$this->auth->userId]['comments'])): ?>
+                            <?php foreach ($assignment['students'][$this->auth->userId]['comments'] as $comment): ?>
+                                <div class="comment">
+                                    <div><?= $comment['commentAuthorName'] ?></div>
+                                    <div class="text-muted small"><?= $comment['commentCreatedAt'] ?></div>
+                                    <div><?= $comment['comment'] ?></div>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </div>
                 </div>
-            </form>
-        </div>
+            </div>
+        <?php endif; ?>
 
+    <?php else: ?>
+
+        <button class="btn btn-primary w-100 mb-5" data-bs-toggle="modal" data-bs-target="#editAssignmentModal">
+            Muuda ülesannet
+        </button>
+
+        <table class="table table-bordered table-hover">
+            <thead>
+            <tr>
+                <th>Hinne</th>
+                <th>Õpilane</th>
+                <th>Lahenduse link</th>
+            </tr>
+            </thead>
+            <tbody>
+            <?php foreach ($assignment['students'] as $s): ?>
+                <tr class="clickable-cells-row" data-toggle="modal"
+                    onclick="openStudentModal(<?= $isStudent ? 'true' : 'false' ?>, <?= $s['studentId'] ?>)">
+                    <td class="<?= $s['gradeInfo']['colorClass'] ?> text-center">
+                        <?= $s['grade'] ?? '' ?>
+                    </td>
+                    <td style="white-space: nowrap"
+                        onclick="showContextMenu(event, <?= $s['studentId'] ?>)">
+                        <?= $s['studentName'] ?>
+                    </td>
+                    <td style="white-space: nowrap">
+                        <!-- A nice badge for the solution URL -->
+                        <?php if ($s['solutionUrl']): ?>
+                            <strong><a href="<?= $s['solutionUrl'] ?>" target="_blank" rel="noopener noreferrer">
+                                    <?= shortenUrl($s['solutionUrl'], 30) ?>
+                                </a></strong>
+                        <?php else: ?>
+                            <span class="badge bg-light text-dark">Esitamata</span>
+                        <?php endif; ?>
+                        <!-- Badge for solution submission date -->
+                        <?php if ($s['solutionSubmittedAt']): ?>
+                            <span class="badge bg-light text-dark"><?= $s['solutionSubmittedAt'] ?></span>
+                        <?php endif; ?>
+
+                        <div style="white-space: pre-wrap; text-align: left"><?= empty(trim($s['comment'])) ? '&nbsp;' : $s['comment'] ?></div>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+
+    <?php endif; ?>
+
+</div>
+
+<div class="d-flex justify-content-end mt-5">
+    <?php if ($isStudent): ?>
+        <button class="btn btn-primary w-100"
+                onclick="openStudentModal(true, <?= $this->auth->userId ?>)"
+            <?= $assignment['students'][$this->auth->userId]['isDisabledStudentActionButton'] ?>>
+            <?= $assignment['students'][$this->auth->userId]['studentActionButtonName'] ?>
+        </button>
+    <?php endif; ?>
+</div>
+<div id="messages-container">
+
+    <div id="messageContainer" class="card">
+        <div class="card-body">
+            <h5>Vestlus</h5>
+            <div class="content-part">
+                <?php foreach ($assignment['messages'] as $message): ?>
+                    <?php if (!$message['isNotification']): ?>
+                        <div class="d-flex align-items-start mb-3 border rounded p-3">
+                            <div class="flex-shrink-0 me-3">
+                                <span class="avatar bg-primary text-white rounded-circle p-2"><?= strtoupper(substr($message['userName'], 0, 1)) ?></span>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex flex-wrap justify-content-between">
+                                    <h6 class="fw-bold mb-1"><?= $message['userName'] ?></h6>
+                                    <small class="text-muted"><?= $message['createdAt'] ?></small>
+                                </div>
+                                <p class="mb-1"><?= strip_tags($message['content'], '<br><ul><ol><h2><li><h3><p><strong>') ?></p>
+                                <?php if ($this->auth->userId !== $message['userId']): ?>
+                                    <div class="d-flex justify-content-end">
+                                        <button type="button" class="btn btn-secondary btn-sm"
+                                                style="font-size: 0.75rem; padding: 2px 8px;"
+                                                onclick='replyToMessage(<?= json_encode($message['userName']) ?>, <?= $message['messageId'] ?>, <?= json_encode($message['content']) ?>, "<?= $message['createdAt'] ?>")'>
+                                            Vasta
+                                        </button>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mb-5">
+        <form>
+            <div class="mb-3">
+                <label for="messageContent" class="form-label">Sisesta sõnum</label>
+                <div id="replyInfo" class="alert alert-info " style="display:none;">
+                    <div class="d-flex justify-content-end">
+                        <button type="button" style="font-size: 0.75rem; padding: 2px 8px;"
+                                class="btn btn-sm btn-secondary mb-2" onclick="cancelReply()">x
+                        </button>
+                    </div>
+                    <div id="replyMessage" class="border rounded bg-light p-2 mb-2"></div>
+                </div>
+                <textarea class="form-control" id="messageContent" name="content" rows="3"
+                          placeholder="Kirjuta oma sõnum siia..."></textarea>
+            </div>
+            <div class="d-flex justify-content-end">
+                <button type="button" class="btn btn-primary" onclick="submitMessage()">Postita</button>
+            </div>
+        </form>
+    </div>
+
+    <div id="notificationContainer" class="card mt-3">
+        <div class="card-body">
+            <h5>Sündmused</h5>
+            <div class="content-part">
+                <?php foreach ($assignment['messages'] as $message): ?>
+                    <?php if ($message['isNotification']): ?>
+                        <div class="notification-item">
+                            <i class="fa fa-bell notification-icon"></i>
+                            <div class="notification-text">
+                                <p class="fw-bold mb-1"><?= $message['content'] ?></p>
+                            </div>
+                            <small class="notification-time text-muted"><?= $message['createdAt'] ?></small>
+                        </div>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+            </div>
+        </div>
     </div>
 
 </div>
+
+
 <script>
     const assignment = <?= json_encode($assignment) ?>;
     let currentStudentId = null;
@@ -650,12 +696,15 @@
             }
         });
 
+
+        <?php if(!$isStudent): ?>
         if (!gradeSelected) {
             alert('Palun vali hinne.');
             return;
         }
+        <?php endif; ?>
 
-        if (submitButton.textContent === 'Esita' || submitButton.textContent === 'Muuda') {
+        if (submitButton.textContent === 'Esita lahendus' || submitButton.textContent === 'Paranda hinnet') {
             const solutionUrl = solutionInput.value;
             const criteria = getCriteriaList();
             const comment = document.getElementById('studentComment').value;
@@ -893,7 +942,7 @@
         `;
         });
 
-        const modal = new bootstrap.Modal(document.getElementById('studentModal'));
+        const modal = new bootstrap.Modal(document.getElementById('gradingModal'));
         modal.show();
     }
 
@@ -944,11 +993,6 @@
         }
     }
 
-
-    function editAssignment() {
-        const modal = new bootstrap.Modal(document.getElementById('editAssignmentModal'));
-        modal.show();
-    }
 
     function removeOldCriterion(param) {
         const editCriteriaContainer = document.getElementById('editCriteriaContainer');

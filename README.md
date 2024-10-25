@@ -1,19 +1,24 @@
-# Sisseastumiskatsete rakendus
+# Kriit
 
-Käesolev rakendus on loodud kutsekooli IT erialade sisseastumiskatsete läbiviimiseks ja iseseisvate tööde haldamiseks.
+Käesolev rakendus on loodud kutsekooli IT erialade sisseastumiskatsete läbiviimiseks ja iseseisvate tööde haldamiseks. Rakendus töötab Tahvel.Edu.Ee jaoks loodud [Õpetaja Assistendi](https://github.com/kriit-eu/opetaja-assistent) nimelise Chrome laiendi backendina.
 
 # Funktsionaalsus
 
-- Administraator saab lisada kandidaate ja nende isikukoodi alusel kandidaatidele katseid määrata.
+## Sisseastumiskatsed
 - Administraator saab lisada katseülesandeid.
 - Kandidaadid saavad isikukoodi alusel sisse logida ja katseid lahendada.
 - Administraator saab vaadata kandidaatide tulemusi ja pingerida kandidaate.
 - Administraator saab vaadata kandidaatide poolt lahendatud katseid.
 - Administraator saab vaadata sündmuslogisid.
-- Õpetajad saavad Tahvlisse lisatud ülesandeid automaatselt ka Kriiti lisada, et saada keskne ülevaade, kes mis ülesande on (mitte)esitanud ja võimaldada ülesandeid hõlpsasti tagasi lükata või hinnata (nõuab [Õpetaja assistent](http://kriit.eu/opetaja-assistent) Chrome'i laiendust ja õpetajale API võtme genereerimist administraatori poolt)
+
+## Kodutööd
+
+- Õpetajad saavad Tahvlisse lisatud ülesandeid automaatselt ka Kriiti lisada, et saada keskne ülevaade, kes mis ülesande on (mitte)esitanud ja võimaldada ülesandeid hõlpsasti tagasi lükata või hinnata (nõuab [Õpetaja assistent](http://kriit.eu/opetaja-assistent) Chrome'i laiendust ja õpetajale API võtme genereerimist administraatori poolt).
 - Õpilased saavad ülesannetele lahendusi ja nende parandusi esitada.
-- Õpetajad saavad esitatud ülesannete kohta teavitusi.
-- 
+- Õpetajad saavad esitatud ülesannete kohta meiliteavitusi.
+- Õpetajad saavad määrata kriteeriumid kodutöö esitamiseks: õpilased peavad linnukesega kinnitama, et nad on iga kriteeriumi ära täitnud, enne kui Kriit lubab õpilasel kodutöö esitada.
+- Õpetaja saab korraga kõigile kodutööd veel positiivselt mitte esitanud kodutöödele lisakriteeriume, kui ilmneb vajadus nõuda midagi lisaks, et tagada edasiste kodutööde parem kvaliteet.
+- Õpetajad saavad ülevaate kõikide tema õpetatavate ainete ja gruppide kohta, kes on kodutöö esitanud ja kelle kodutöö on veel üle kontrollimata ning seal samas hinnata kodutööd, mis peale see õpilane saab koheselt meiliga teavituse.
 
 ## Eeldused
 
@@ -39,3 +44,6 @@ Käesolev rakendus on loodud kutsekooli IT erialade sisseastumiskatsete läbivii
 4. Lisage admin/exercises lehel katsete ülesanded.
 5. Kandidaadid saavad oma isikukoodiga sisse logides lahendada katseid.
 6. Administraator saab kandidaatide pingerida vaadata admin/applicants lehel.
+7. Õpetajad saavad Tahvlisse lisatud ülesandeid automaatselt Kriiti lisada ja hallata.
+8. Õpilased saavad oma kodutööd Kriiti esitada ja kinnitada, et nad on kõik kriteeriumid täitnud.
+9. Õpetajad saavad kodutöid hinnata ja õpilasi teavitada.

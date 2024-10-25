@@ -41,7 +41,13 @@ class Auth
             $user = Db::getFirst("SELECT *
                                FROM users
                                WHERE userId = '{$_SESSION['userId']}'");
-            $this->load_user_data($user);
+            // Check if user has been deleted
+            if (empty($user['userId'])) {
+                $this->logged_in = FALSE;
+                unset($_SESSION['userId']);
+            } else {
+                $this->load_user_data($user);
+            }
 
         }
     }

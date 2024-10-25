@@ -11,6 +11,10 @@
         background-color: #fff8b3 !important;
     }
 
+    .green-cell {
+        background-color: #c3e6cb !important;
+    }
+
     .text-center {
         text-align: center;
     }
@@ -28,7 +32,7 @@
                 <thead>
                 <tr>
                     <th>Aine</th>
-                    <?= $isStudent ? "<th>Staatus / Hinne</th>" : "" ?>
+                    <?= $isStudent ? "<th class='text-center'>Staatus / Hinne</th>" : "" ?>
                     <?php if (!$isStudent): ?>
                         <?php foreach ($group['students'] as $s): ?>
                             <th data-bs-toggle="tooltip" title="<?= $s['userName'] ?>">
@@ -41,11 +45,8 @@
                 <tbody>
                 <?php foreach ($group['subjects'] as $subject): ?>
                     <tr data-href="subjects/<?= $subject['subjectId'] ?>">
-                        <td>
-                            <b><?= $subject['subjectName'] ?></b>
-                        </td>
-                        <td colspan="<?= count($group['students']) + 1 ?>" class="text-end">
-                            <b><?= $subject['teacherName'] ?></b>
+                        <td colspan="<?= count($group['students']) + 1 ?>">
+                            <b><?= $subject['subjectName'] ?> (<?= $subject['teacherName'] ?>)</b>
                         </td>
                     </tr>
                     <?php if (!empty($subject['assignments'])): ?>
@@ -60,7 +61,7 @@
                                 </td>
                                 <?php foreach ($group['students'] as $s): ?>
                                     <?php $status = $a['assignmentStatuses'][$s['userId']]; ?>
-                                    <td class="<?= $status['class'] ?> text-center"
+                                    <td class="<?= $status['gradeInfo']['colorClass'] ?> text-center"
                                         data-bs-toggle="tooltip"
                                         title="<?= $status['tooltipText'] ?>"
                                         data-grade="<?= is_numeric($status['grade']) ? intval($status['grade']) : '' ?>"

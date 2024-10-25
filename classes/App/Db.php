@@ -1,6 +1,7 @@
 <?php namespace App;
 
 use Doctrine\SqlFormatter\SqlFormatter;
+use Exception;
 use JetBrains\PhpStorm\NoReturn;
 
 
@@ -21,7 +22,7 @@ class Db
         mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
         if ($this->conn->connect_error) {
-            throw new \Exception("Connection failed: " . $this->conn->connect_error);
+            throw new Exception("Connection failed: " . $this->conn->connect_error);
         }
     }
 
@@ -35,7 +36,7 @@ class Db
                     DATABASE_PASSWORD,
                     DATABASE_DATABASE
                 );
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 die("Database connection error: " . $e->getMessage());
             }
         }
@@ -142,11 +143,14 @@ class Db
                 case 'string':
                     return 's';
                 default:
-                    throw new \Exception("Unsupported data type: {$type}");
+                    throw new Exception("Unsupported data type: {$type}");
             }
         }, $params));
     }
 
+    /**
+     * @throws Exception
+     */
     private function executePrepared($query, $params = [], $returnType = self::GET_RESULT): bool|\mysqli_result
     {
         $types = self::getTypeString($params);
@@ -197,6 +201,9 @@ class Db
         return $returnType === self::AFFECTED_ROWS ? $stmt->affected_rows : $stmt->get_result();
     }
 
+    /**
+     * @throws Exception
+     */
     public static function getOne($query, array $params = [])
     {
         $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
@@ -204,7 +211,10 @@ class Db
         return self::getInstance()->executePrepared($query, $params, $callingFunction)->fetch_array(MYSQLI_NUM)[0] ?? null;
     }
 
-    public static function getCol($query, $params = [])
+    /**
+     * @throws Exception
+     */
+    public static function getCol($query, $params = []): array
     {
         $result = self::getInstance()->executePrepared($query, $params);
         $output = [];
@@ -212,7 +222,10 @@ class Db
         return $output;
     }
 
-    public static function getFirst($query, $params = [])
+    /**
+     * @throws Exception
+     */
+    public static function getFirst($query, $params = []): bool|array|null
     {
         return self::getInstance()->executePrepared($query, $params)->fetch_assoc();
     }

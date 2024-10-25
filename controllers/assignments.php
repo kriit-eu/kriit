@@ -1,18 +1,26 @@
 <?php namespace App;
 
+use Exception;
+
 class assignments extends Controller
 {
     public $template = 'master';
 
+    /**
+     * @throws \DateMalformedStringException
+     * @throws Exception
+     */
     public function view(): void
     {
+        $assignmentId = $this->getId();
         $this->template = $this->auth->userIsAdmin ? 'admin' : 'master';
 
-        $this->checkIfUserHasPermissionForAction($this->getId()) || $this->redirect('subjects');
+        $permissionLevel = $this->userPermissionLevel($this->getId());
+        $permissionLevel < PERMISSION_LEVEL_STUDENT && $this->redirect('subjects');
 
-        $this->isStudent = $this->auth->groupId && !$this->auth->userIsAdmin && !$this->auth->userIsTeacher;
-        $this->isTeacher = $this->auth->userIsTeacher;
-        $assignmentId = $this->getId();
+        $this->isStudent = $permissionLevel === PERMISSION_LEVEL_STUDENT;
+        $this->isTeacher = $permissionLevel === PERMISSION_LEVEL_TEACHER;
+
         $data = Db::getAll("
                 SELECT
                     a.assignmentId, a.assignmentName, a.assignmentInstructions, a.assignmentDueAt,
@@ -22,7 +30,10 @@ class assignments extends Controller
                     ast.statusName AS assignmentStatusName,
                     udc.criterionId AS userDoneCriterionId,
                     subj.teacherId AS teacherId,
-                    t.userName AS teacherName
+                    t.userName AS teacherName,
+                    ac.comment,
+                    ac.assignmentCommentAuthorId,
+                    ac.assignmentCommentCreatedAt
                 FROM assignments a
                 LEFT JOIN criteria c ON c.assignmentId = a.assignmentId
                 JOIN subjects subj ON a.subjectId = subj.subjectId
@@ -32,6 +43,7 @@ class assignments extends Controller
                 LEFT JOIN userAssignments ua ON ua.assignmentId = a.assignmentId AND ua.userId = u.userId
                 LEFT JOIN assignmentStatuses ast ON ua.assignmentStatusId = ast.assignmentStatusId
                 LEFT JOIN userDoneCriteria udc ON udc.criterionId = c.criterionId AND udc.userId = u.userId
+                LEFT JOIN assignmentComments ac ON ac.assignmentId = a.assignmentId AND ac.userId = u.userId
                 WHERE a.assignmentId = ?
                 ORDER BY u.userName, c.criterionId
             ", [$assignmentId]);
@@ -86,7 +98,7 @@ class assignments extends Controller
                     'userDoneCriteriaCount' => 0,
                     'class' => '',
                     'tooltipText' => '',
-                    'studentActionButtonName' => (isset($row['solutionUrl']) && !empty(trim($row['solutionUrl']))) ? 'Muuda' : 'Esita'
+                    'studentActionButtonName' => (isset($row['solutionUrl']) && !empty(trim($row['solutionUrl']))) ? 'Paranda hinnet' : 'Esita lahendus'
                 ];
             }
 
@@ -102,9 +114,10 @@ class assignments extends Controller
             }
 
             $statusName = $row['assignmentStatusName'] ?? 'Esitamata';
-            $statusId = $row['assignmentStatusId'] ?? ASSIGNMENT_STATUS_NOT_SUBMITTED;
+            $assignmentStatusId = $row['assignmentStatusId'] ?? ASSIGNMENT_STATUS_NOT_SUBMITTED;
             $grade = !empty($row['userGrade']) ? trim($row['userGrade']) : '';
             $isNegativeGrade = $grade == 'MA' || (is_numeric($grade) && intval($grade) < 3);
+            $assignment['isNegativeGrade'] = $isNegativeGrade;
             $isEvaluated = isset($row['assignmentStatusName']) && $row['assignmentStatusName'] === 'Hinnatud';
 
             $isAllCriteriaCompleted = true;
@@ -122,18 +135,25 @@ class assignments extends Controller
 
             $dueDate = !empty($row['assignmentDueAt']) ? new \DateTime($row['assignmentDueAt']) : null;
             $daysRemaining = $dueDate ? (int)(new \DateTime())->diff($dueDate)->format('%r%a') : 1000;
-
-            $class = Assignment::cellColor(
-                $this->isStudent,
-                $this->isTeacher,
-                $isNegativeGrade,
-                $daysRemaining,
-                $statusId,
-                $statusName);
+            $assignment['deadlineColor'] = Assignment::deadlineColor($daysRemaining);
+            $assignment['students'][$studentId]['reviewPending'] = $statusName === 'Ülevaatamata';
 
             $tooltipText = $statusName . (($daysRemaining < 0 && $statusName === 'Esitamata') ? ' (Tähtaeg möödas)' : '');
-            $assignment['students'][$studentId]['class'] = $class;
+            $assignment['students'][$studentId]['gradeInfo'] = Grade::info(
+                $this->isStudent,
+                $grade,
+                $daysRemaining,
+                $assignmentStatusId);
             $assignment['students'][$studentId]['tooltipText'] = $tooltipText;
+
+            // Comments
+            if ($row['comment']) {
+                $assignment['students'][$studentId]['comments'][] = [
+                    'comment' => $row['comment'],
+                    'assignmentCommentCreatedAt' => date('d.m.Y H:i', strtotime($row['assignmentCommentCreatedAt'])),
+                    'assignmentCommentAuthorId' => $row['assignmentCommentAuthorId']
+                ];
+            }
         }
 
         // Separate query for fetching messages
@@ -168,7 +188,7 @@ class assignments extends Controller
 
         $lengthInBytes = mb_strlen($criterionName, '8bit');
 
-        $maxBytes = (int) Db::getOne("
+        $maxBytes = (int)Db::getOne("
             SELECT CHARACTER_MAXIMUM_LENGTH
             FROM INFORMATION_SCHEMA.COLUMNS
             WHERE TABLE_NAME = 'criteria'
@@ -194,10 +214,13 @@ class assignments extends Controller
     }
 
 
+    /**
+     * @throws Exception
+     */
     function ajax_saveAssignmentGrade(): void
     {
         $assignmentId = $_POST['assignmentId'];
-        $this->checkIfUserHasPermissionForAction($assignmentId) || stop(403, 'Teil pole õigusi sellele tegevusele.');
+        $this->userPermissionLevel($assignmentId) < PERMISSION_LEVEL_TEACHER && stop(403, 'Teil pole õigusi sellele tegevusele.');
 
         $studentId = $_POST['studentId'];
         $grade = $_POST['grade'] ?? null;
@@ -212,20 +235,23 @@ class assignments extends Controller
             $this->saveStudentCriteria();
         }
 
-        if ($comment) {
-            $existUserAssignment = Db::getFirst('SELECT * FROM userAssignments WHERE userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
+        $existingUserAssignment = User::getAssignment($studentId, $assignmentId);
 
-            if ($existUserAssignment && !$existUserAssignment['comment']) {
-                $message = "$_POST[teacherName] lisas õpilasele $_POST[studentName] tagasisideks: '$comment'";
-                $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
-            } elseif ($existUserAssignment && $existUserAssignment['comment'] !== $comment) {
-                $message = "$_POST[teacherName] muutis õpilase $_POST[studentName] tagasisidet: '$existUserAssignment[comment]' -> '$comment'";
-                $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
-            }
-
+        if (!$existingUserAssignment) {
+            stop(404, 'User assignment not found');
         }
 
-        $isUpdated = $this->saveOrUpdateUserAssignment($studentId, $assignmentId, $grade, $comment);
+        if ($comment) {
+            if ($existingUserAssignment && !$existingUserAssignment['comment']) {
+                $message = "$_POST[teacherName] lisas õpilasele $_POST[studentName] tagasisideks: '$comment'";
+                $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
+            } elseif ($existingUserAssignment && $existingUserAssignment['comment'] !== $comment) {
+                $message = "$_POST[teacherName] muutis õpilase $_POST[studentName] tagasisidet: '$existingUserAssignment[comment]' -> '$comment'";
+                $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
+            }
+        }
+
+        $isUpdated = $this->updateUserAssignment($studentId, $assignmentId, $grade, $comment, $existingUserAssignment);
         $this->sendGradeNotification($assignmentId, $studentId, $_POST['teacherId'], $isUpdated);
 
         stop(200, 'Grade saved');
@@ -234,7 +260,7 @@ class assignments extends Controller
     function ajax_saveStudentSolutionUrl(): void
     {
         $assignmentId = $_POST['assignmentId'];
-        $this->checkIfUserHasPermissionForAction($assignmentId) || stop(403, 'Teil pole õigusi sellele tegevusele.');
+        $this->userPermissionLevel($assignmentId) < PERMISSION_LEVEL_STUDENT && stop(403, 'Teil pole õigusi sellele tegevusele.');
         $studentId = $_POST['studentId'];
         $solutionUrl = $_POST['solutionUrl'];
         $commentForTeacher = $_POST['comment'];
@@ -258,19 +284,30 @@ class assignments extends Controller
 
         $existAssignment = Db::getFirst('SELECT * FROM userAssignments WHERE userId = ? AND assignmentId = ? ', [$studentId, $assignmentId]);
         if (!$existAssignment) {
-            Db::insert('userAssignments', ['userId' => $studentId, 'assignmentId' => $assignmentId, 'assignmentStatusId' => 2, 'solutionUrl' => $solutionUrl]);
+            Db::insert('userAssignments', [
+                'userId' => $studentId,
+                'assignmentId' => $assignmentId,
+                'assignmentStatusId' => 2,
+                'solutionUrl' => $solutionUrl,
+                'userAssignmentCreatedAt' => date('Y-m-d H:i:s')]);
             Activity::create(ACTIVITY_SUBMIT_ASSIGNMENT, $this->auth->userId, $assignmentId);
         } else {
-            Db::update('userAssignments', ['assignmentStatusId' => 2, 'solutionUrl' => $solutionUrl], 'userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
+            Db::update('userAssignments', [
+                'assignmentStatusId' => 2,
+                'solutionUrl' => $solutionUrl,
+                'userAssignmentEditedAt' => date('Y-m-d H:i:s')],
+                'userId = ? AND assignmentId = ?',
+                [$studentId, $assignmentId]);
         }
 
         if ($commentForTeacher) {
-            $existingComment = Db::getOne('SELECT comment FROM assignmentComments WHERE userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
-            if (!$existingComment) {
-                Db::insert('assignmentComments', ['userId' => $studentId, 'assignmentId' => $assignmentId, 'comment' => $commentForTeacher]);
-            } elseif ($existingComment !== $commentForTeacher) {
-                Db::update('assignmentComments', ['comment' => $commentForTeacher], 'userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
-            }
+            Db::insert('assignmentComments', [
+                'userId' => $studentId,
+                'assignmentId' => $assignmentId,
+                'comment' => $commentForTeacher,
+                'assignmentCommentCreatedAt' => date('Y-m-d H:i:s'),
+                'assignmentCommentAuthorId' => $studentId
+            ]);
         }
 
         $mailData = $this->getSenderNameAndReceiverEmail($studentId, $_POST['teacherId']);
@@ -307,7 +344,7 @@ class assignments extends Controller
     function ajax_saveStudentCriteria(): void
     {
         $assignmentId = $_POST['assignmentId'];
-        $this->checkIfUserHasPermissionForAction($assignmentId) || stop(403, 'Teil pole õigusi sellele tegevusele.');
+        $this->userPermissionLevel($assignmentId) < PERMISSION_LEVEL_STUDENT && stop(403, 'Teil pole õigusi sellele tegevusele.');
 
         $this->saveStudentCriteria();
 
@@ -317,7 +354,7 @@ class assignments extends Controller
     function ajax_saveMessage(): void
     {
         $assignmentId = $_POST['assignmentId'];
-        $this->checkIfUserHasPermissionForAction($assignmentId) || stop(403, 'Teil pole õigusi sellele tegevusele.');
+        $this->userPermissionLevel($assignmentId) < PERMISSION_LEVEL_STUDENT && stop(403, 'Teil pole õigusi sellele tegevusele.');
         $content = $_POST['content'];
 
         $answerToId = $_POST['answerToId'] ?? null;
@@ -362,7 +399,7 @@ class assignments extends Controller
     function ajax_editAssignment(): void
     {
         $assignmentId = $_POST['assignmentId'];
-        $this->checkIfUserHasPermissionForAction($assignmentId) || stop(403, 'Teil pole õigusi sellele tegevusele.');
+        $this->userPermissionLevel($assignmentId) < PERMISSION_LEVEL_TEACHER && stop(403, 'Teil pole õigusi sellele tegevusele.');
 
         $assignmentName = $_POST['assignmentName'];
         $assignmentInstructions = $_POST['assignmentInstructions'];
@@ -431,26 +468,30 @@ class assignments extends Controller
         }
     }
 
-    private function saveOrUpdateUserAssignment($studentId, $assignmentId, $grade, $comment): bool
+    /**
+     * @throws Exception
+     */
+    private function updateUserAssignment($studentId, $assignmentId, $grade, $comment, $existingUserAssignment): bool
     {
-        $existUserAssignment = Db::getFirst('SELECT * FROM userAssignments WHERE userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
-        $isUpdated = false;
-
-        if (!$existUserAssignment) {
-            Db::insert('userAssignments', ['userId' => $studentId, 'assignmentId' => $assignmentId, 'userGrade' => $grade, 'assignmentStatusId' => $grade ? 3 : 1, 'comment' => $comment]);
-            $message = "$_POST[teacherName] lisas õpilasele $_POST[studentName] hindeks: $grade";
-            $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
-        } else {
-            Db::update('userAssignments', ['userGrade' => $grade, 'assignmentStatusId' => $grade ? 3 : $existUserAssignment['assignmentStatusId'], 'comment' => $existUserAssignment['userGrade'] !== $grade ? "" : $comment], 'userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
-            if ($existUserAssignment['userGrade'] !== $grade) {
-                $message = "$_POST[teacherName] muutis õpilase $_POST[studentName] hinnet: $existUserAssignment[userGrade] -> $grade";
-                $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
-            }
-
-            $isUpdated = true;
+        if (!$existingUserAssignment) {
+            throw new Exception('User assignment not found');
         }
 
-        return $isUpdated;
+        Db::update('userAssignments', [
+            'userGrade' => $grade,
+            'assignmentStatusId' => $grade ? ASSIGNMENT_STATUS_GRADED : $existingUserAssignment['assignmentStatusId'],
+            'comment' => $existingUserAssignment['userGrade'] !== $grade ? "" : $comment,
+            'userAssignmentReviewedAt' => date('Y-m-d H:i:s')
+        ], 'userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
+
+        if ($existingUserAssignment['userGrade'] !== $grade) {
+            $this->saveMessage(
+                $assignmentId,
+                $_POST['teacherId'],
+                "$_POST[teacherName] muutis õpilase $_POST[studentName] hinnet: $existingUserAssignment[userGrade] -> $grade",
+                true);
+        }
+
     }
 
     private function sendGradeNotification($assignmentId, $studentId, $teacherId, $isUpdated): void
@@ -596,7 +637,6 @@ class assignments extends Controller
         $path = $parsedUrl['path'] ?? '';
 
 
-
         if ($host === 'github.com') {
             $githubCommitUrl = '/\/commit\/[0-9a-fA-F]{40}/';
             $githubRepoUrl = '/\/[a-zA-Z0-9-]+\/[a-zA-Z0-9-]+/';
@@ -641,25 +681,30 @@ class assignments extends Controller
         );
     }
 
-    private function checkIfUserHasPermissionForAction($assignmentId): bool
+    /**
+     * Returns the permission level of the user for the given assignment
+     * @param $assignmentId
+     * @return int 0 - no permission, 1 - group permission, 2 - teacher/admin permission
+     */
+    private function userPermissionLevel($assignmentId): int
     {
-        $data = Db::getFirst('
-            SELECT subj.subjectId, subj.teacherId, GROUP_CONCAT(subj.groupId) AS groupIds
+        $user = Db::getFirst('
+            SELECT subj.teacherId, subj.groupId
             FROM assignments a
             JOIN subjects subj ON a.subjectId = subj.subjectId
-            WHERE a.assignmentId = ?
-            GROUP BY subj.subjectId, subj.teacherId
-        ', [$assignmentId]);
+            WHERE a.assignmentId = ?', [$assignmentId]);
 
-        if (!$data) {
-            return false;
+        if (!$user) {
+            return 0;
         }
 
-        $data['groupIds'] = explode(',', $data['groupIds']);
+        // Check if user is admin or teacher
+        if ($this->auth->userIsAdmin || $this->auth->userId == $user['teacherId']) {
+            return 2;
+        }
 
-        return ($this->auth->userIsAdmin || $this->auth->userId == $data['teacherId'] ||
-            $this->auth->groupId && in_array((string)$this->auth->groupId, $data['groupIds']));
-
+        // Check if user belongs to the group
+        return $this->auth->groupId == $user['groupId'] ? 1 : 0;
     }
 
 }

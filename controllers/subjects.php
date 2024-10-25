@@ -5,6 +5,9 @@ class subjects extends Controller
     public $template = 'master';
 
 
+    /**
+     * @throws \DateMalformedStringException
+     */
     public function index()
     {
         $this->template = $this->auth->userIsAdmin ? 'admin' : 'master';
@@ -90,8 +93,7 @@ class subjects extends Controller
                         'assignmentId' => $assignmentId,
                         'assignmentName' => $row['assignmentName'],
                         'assignmentDueAt' => $row['assignmentDueAt'],
-                        'badgeClass' => $daysRemaining >= 3 ? 'badge bg-light text-dark' :
-                            ($daysRemaining > 0 ? 'badge bg-warning text-dark' : 'badge bg-danger'),
+                        'badgeClass' => Assignment::deadlineColor($daysRemaining),
                         'daysRemaining' => $daysRemaining,
                         'assignmentStatuses' => []
                     ];
@@ -103,18 +105,10 @@ class subjects extends Controller
                 $isNegativeGrade = $grade == 'MA' || (is_numeric($grade) && intval($grade) < 3);
 
                 // Determine the CSS class for the assignment status
-                $class = Assignment::cellColor(
-                    $this->isStudent,
-                    $this->isTeacher,
-                    $isNegativeGrade,
-                    $daysRemaining,
-                    $statusId,
-                    $statusName);
-
                 // Determine the link text based on assignment status
                 $linkText = match ($statusName) {
                     'Esitamata' => $this->isStudent ? 'Esita' : 'Hinda',
-                    'Ülevaatamata' => $this->isStudent ? 'Muuda' : 'Hinda',
+                    'Ülevaatamata' => $this->isStudent ? 'Ootab ülevaatamist' : 'Hinda',
                     'Hinnatud' => $isNegativeGrade ? ($this->isStudent ? 'Esita uuesti' : 'Muuda hinnet') : '',
                     default => ''
                 };
@@ -126,13 +120,16 @@ class subjects extends Controller
                     'userId' => $studentId,
                     'assignmentStatusName' => $statusName,
                     'grade' => $grade,
-                    'class' => $class,
+                    'gradeInfo' => Grade::info(
+                        $this->isStudent,
+                        $grade,
+                        $daysRemaining,
+                        $statusId),
                     'tooltipText' => $tooltipText
                 ];
             }
         }
 
-        $this->statusClassMap = Assignment::statusClassMap($this->isStudent, $this->isTeacher);
         $this->groups = $groups;
     }
 }

@@ -192,3 +192,16 @@ function isValidID($id): bool
 {
     return !!filter_var($id, FILTER_VALIDATE_INT) && $id > 0;
 }
+
+function shortenUrl($url, $maxLength = 30)
+{
+    $parsedUrl = parse_url($url);
+    $host = $parsedUrl['host'];
+    $path = $parsedUrl['path'];
+
+    if (strlen($path) > $maxLength) {
+        $path = substr($path, 0, $maxLength) . '...';
+    }
+
+    return $host . $path;
+}
