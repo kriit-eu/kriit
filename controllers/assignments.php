@@ -168,7 +168,7 @@ class assignments extends Controller
 
         $lengthInBytes = mb_strlen($criterionName, '8bit');
 
-        $maxBytes = (int) Db::getOne("
+        $maxBytes = (int)Db::getOne("
             SELECT CHARACTER_MAXIMUM_LENGTH
             FROM INFORMATION_SCHEMA.COLUMNS
             WHERE TABLE_NAME = 'criteria'
@@ -595,8 +595,6 @@ class assignments extends Controller
         $host = $parsedUrl['host'] ?? '';
         $path = $parsedUrl['path'] ?? '';
 
-
-
         if ($host === 'github.com') {
             $githubCommitUrl = '/\/commit\/[0-9a-fA-F]{40}/';
             $githubRepoUrl = '/\/[a-zA-Z0-9-]+\/[a-zA-Z0-9-]+/';
@@ -609,7 +607,7 @@ class assignments extends Controller
             }
         }
 
-        $headers = @get_headers($solutionUrl);
+        $headers = @get_headers($solutionUrl, 0, stream_context_create(['http' => ['timeout' => 1]]));
         if ($headers && strpos($headers[0], '200')) {
             return ['code' => 200, 'message' => 'Link on kättesaadav'];
         } else {

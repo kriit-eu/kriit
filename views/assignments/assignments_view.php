@@ -423,9 +423,16 @@
                     <div class="mb-3">
                         <label for="solutionUrl" class="form-label fw-bold">Lahenduse link</label>
                         <div id="solutionInputContainer">
-                            <input type="text" id="solutionInput" class="form-control"
-                                   placeholder="Sisesta link siia...">
+                            <div class="mb-3 input-group">
+                                <input type="text" class="form-control" id="solutionInput"
+                                       placeholder="Sisesta link siia..." aria-label="Sisesta link siia..."
+                                       aria-describedby="button-addon1">
+                                <button class="btn btn-outline-secondary" type="button" id="solutionButton" style="background-color: #28a745; color: white;">
+                                    Kontrolli
+                                </button>
+                            </div>
                             <small id="solutionInputFeedback"></small>
+
                         </div>
 
                         <p class="mt-1" id="solutionUrlContainer">
@@ -479,9 +486,11 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" id="submitButton">
-                        Salvesta muudatused
-                    </button>
+                    <div id="submitButtonWrapper" data-bs-toggle="tooltip">
+                        <button type="button" class="btn btn-primary" id="submitButton">
+                            Salvesta muudatused
+                        </button>
+                    </div>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tühista</button>
                 </div>
             </div>
@@ -510,226 +519,240 @@
         <div id="assignments-container">
             <div class="assignments-body">
                 <?php foreach ($assignment['students'] as $s): ?>
-                <div>
-                    <div class="header-item" data-bs-toggle="tooltip" title="<?= $s['studentName'] ?>" style="<?= $s['studentId'] !== array_key_first($assignment['students']) ? 'border-left: 1px solid #ccc;' : '' ?>">
-                        <?= $s['initials'] ?>
-                </div>
-                <div class="body-item <?= $s['class'] ?> text-center clickable-cells-row"
-                     data-bs-toggle="tooltip"
-                     style="<?= $s['studentId'] !== array_key_first($assignment['students']) ? 'border-left: 1px solid #ccc;' : '' ?>"
-                     title="<?= $s['tooltipText'] ?>"
-                    <?php if (!$isStudent): ?>
-                        oncontextmenu="showContextMenu(event, <?= $s['studentId'] ?>)"
-                    <?php endif; ?>
-                     onclick="openStudentModal(<?= $isStudent ? 'true' : 'false' ?>, <?= $s['studentId'] ?>)">
-                    <?= $s['grade'] ?? '' ?>
-                    <?php if ($s['assignmentStatusName'] !== 'Esitamata'): ?>
-                        <span style="font-size: 8px"><?= $s['userDoneCriteriaCount'] ?>/<?= count($assignment['criteria']) ?></span>
-                    <?php endif; ?>
-                </div>
-            </div>
-            <?php if ($isStudent): ?>
-                <div class="assignment-item">
-                    <div class="header-item">Kommentaar</div>
-                    <div class="body-item pre-wrap"><?= $s['comment'] ?></div>
-                </div>
-
-            <?php endif; ?>
-            <?php endforeach; ?>
-        </div>
-    </div>
-    <div id="messages-container">
-        <div id="notificationContainer" class="card mt-3">
-            <div class="card-body">
-                <h5>Sündmused</h5>
-                <div class="content-part">
-                    <?php foreach ($assignment['messages'] as $message): ?>
-                        <?php if ($message['isNotification']): ?>
-                            <div class="notification-item">
-                                <i class="fa fa-bell notification-icon"></i>
-                                <div class="notification-text">
-                                    <p class="fw-bold mb-1"><?= $message['content'] ?></p>
-                                </div>
-                                <small class="notification-time text-muted"><?= $message['createdAt'] ?></small>
-                            </div>
-                        <?php endif; ?>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-        </div>
-
-        <div id="messageContainer" class="card">
-            <div class="card-body">
-                <h5>Vestlus</h5>
-                <div class="content-part">
-                    <?php foreach ($assignment['messages'] as $message): ?>
-                        <?php if (!$message['isNotification']): ?>
-                            <div class="d-flex align-items-start mb-3 border rounded p-3">
-                                <div class="flex-shrink-0 me-3">
-                                    <span class="avatar bg-primary text-white rounded-circle p-2"><?= strtoupper(substr($message['userName'], 0, 1)) ?></span>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <div class="d-flex flex-wrap justify-content-between">
-                                        <h6 class="fw-bold mb-1"><?= $message['userName'] ?></h6>
-                                        <small class="text-muted"><?= $message['createdAt'] ?></small>
-                                    </div>
-                                    <p class="mb-1"><?= strip_tags($message['content'], '<br><ul><ol><h2><li><h3><p><strong>') ?></p>
-                                    <?php if ($this->auth->userId !== $message['userId']): ?>
-                                        <div class="d-flex justify-content-end">
-                                            <button type="button" class="btn btn-secondary btn-sm"
-                                                    style="font-size: 0.75rem; padding: 2px 8px;"
-                                                    onclick='replyToMessage(<?= json_encode($message['userName']) ?>, <?= $message['messageId'] ?>, <?= json_encode($message['content']) ?>, "<?= $message['createdAt'] ?>")'>
-                                                Vasta
-                                            </button>
-                                        </div>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                        <?php endif; ?>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-        </div>
-
-
-        <div class="container mb-5">
-            <form>
-                <div class="mb-3">
-                    <label for="messageContent" class="form-label">Sisesta sõnum</label>
-                    <div id="replyInfo" class="alert alert-info " style="display:none;">
-                        <div class="d-flex justify-content-end">
-                            <button type="button" style="font-size: 0.75rem; padding: 2px 8px;"
-                                    class="btn btn-sm btn-secondary mb-2" onclick="cancelReply()">x
-                            </button>
+                    <div>
+                        <div class="header-item" data-bs-toggle="tooltip" title="<?= $s['studentName'] ?>"
+                             style="<?= $s['studentId'] !== array_key_first($assignment['students']) ? 'border-left: 1px solid #ccc;' : '' ?>">
+                            <?= $s['initials'] ?>
                         </div>
-                        <div id="replyMessage" class="border rounded bg-light p-2 mb-2"></div>
+                        <div class="body-item <?= $s['class'] ?> text-center clickable-cells-row"
+                             data-bs-toggle="tooltip"
+                             style="<?= $s['studentId'] !== array_key_first($assignment['students']) ? 'border-left: 1px solid #ccc;' : '' ?>"
+                             title="<?= $s['tooltipText'] ?>"
+                            <?php if (!$isStudent): ?>
+                                oncontextmenu="showContextMenu(event, <?= $s['studentId'] ?>)"
+                            <?php endif; ?>
+                             onclick="openStudentModal(<?= $isStudent ? 'true' : 'false' ?>, <?= $s['studentId'] ?>)">
+                            <?= $s['grade'] ?? '' ?>
+                            <?php if ($s['assignmentStatusName'] !== 'Esitamata'): ?>
+                                <span style="font-size: 8px"><?= $s['userDoneCriteriaCount'] ?>/<?= count($assignment['criteria']) ?></span>
+                            <?php endif; ?>
+                        </div>
                     </div>
-                    <textarea class="form-control" id="messageContent" name="content" rows="3"
-                              placeholder="Kirjuta oma sõnum siia..."></textarea>
+                    <?php if ($isStudent): ?>
+                        <div class="assignment-item">
+                            <div class="header-item">Kommentaar</div>
+                            <div class="body-item pre-wrap"><?= $s['comment'] ?></div>
+                        </div>
+
+                    <?php endif; ?>
+                <?php endforeach; ?>
+            </div>
+        </div>
+        <div id="messages-container">
+            <div id="notificationContainer" class="card mt-3">
+                <div class="card-body">
+                    <h5>Sündmused</h5>
+                    <div class="content-part">
+                        <?php foreach ($assignment['messages'] as $message): ?>
+                            <?php if ($message['isNotification']): ?>
+                                <div class="notification-item">
+                                    <i class="fa fa-bell notification-icon"></i>
+                                    <div class="notification-text">
+                                        <p class="fw-bold mb-1"><?= $message['content'] ?></p>
+                                    </div>
+                                    <small class="notification-time text-muted"><?= $message['createdAt'] ?></small>
+                                </div>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+                    </div>
                 </div>
-                <div class="d-flex justify-content-end">
-                    <button type="button" class="btn btn-primary" onclick="submitMessage()">Postita</button>
+            </div>
+
+            <div id="messageContainer" class="card">
+                <div class="card-body">
+                    <h5>Vestlus</h5>
+                    <div class="content-part">
+                        <?php foreach ($assignment['messages'] as $message): ?>
+                            <?php if (!$message['isNotification']): ?>
+                                <div class="d-flex align-items-start mb-3 border rounded p-3">
+                                    <div class="flex-shrink-0 me-3">
+                                        <span class="avatar bg-primary text-white rounded-circle p-2"><?= strtoupper(substr($message['userName'], 0, 1)) ?></span>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex flex-wrap justify-content-between">
+                                            <h6 class="fw-bold mb-1"><?= $message['userName'] ?></h6>
+                                            <small class="text-muted"><?= $message['createdAt'] ?></small>
+                                        </div>
+                                        <p class="mb-1"><?= strip_tags($message['content'], '<br><ul><ol><h2><li><h3><p><strong>') ?></p>
+                                        <?php if ($this->auth->userId !== $message['userId']): ?>
+                                            <div class="d-flex justify-content-end">
+                                                <button type="button" class="btn btn-secondary btn-sm"
+                                                        style="font-size: 0.75rem; padding: 2px 8px;"
+                                                        onclick='replyToMessage(<?= json_encode($message['userName']) ?>, <?= $message['messageId'] ?>, <?= json_encode($message['content']) ?>, "<?= $message['createdAt'] ?>")'>
+                                                    Vasta
+                                                </button>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+                    </div>
                 </div>
-            </form>
+            </div>
+
+
+            <div class="container mb-5">
+                <form>
+                    <div class="mb-3">
+                        <label for="messageContent" class="form-label">Sisesta sõnum</label>
+                        <div id="replyInfo" class="alert alert-info " style="display:none;">
+                            <div class="d-flex justify-content-end">
+                                <button type="button" style="font-size: 0.75rem; padding: 2px 8px;"
+                                        class="btn btn-sm btn-secondary mb-2" onclick="cancelReply()">x
+                                </button>
+                            </div>
+                            <div id="replyMessage" class="border rounded bg-light p-2 mb-2"></div>
+                        </div>
+                        <textarea class="form-control" id="messageContent" name="content" rows="3"
+                                  placeholder="Kirjuta oma sõnum siia..."></textarea>
+                    </div>
+                    <div class="d-flex justify-content-end">
+                        <button type="button" class="btn btn-primary" onclick="submitMessage()">Postita</button>
+                    </div>
+                </form>
+            </div>
+
         </div>
 
     </div>
+    <script>
+        const assignment = <?= json_encode($assignment) ?>;
+        let currentStudentId = null;
+        let newAddedCriteria = [];
 
-</div>
-<script>
-    const assignment = <?= json_encode($assignment) ?>;
-    let currentStudentId = null;
-    let newAddedCriteria = [];
+        document.addEventListener('DOMContentLoaded', function () {
+            initializeTooltips();
+            scrollToBottom();
 
-    document.addEventListener('DOMContentLoaded', function () {
-        initializeTooltips();
-        scrollToBottom();
-    });
-
-    function initializeTooltips() {
-        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
         });
-    }
 
+        function initializeTooltips() {
+            // Select all elements with the tooltip data attribute
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
 
-    document.getElementById('requiredCriteria').addEventListener('change', function (event) {
-        if (event.target && event.target.type === 'checkbox') {
-            document.querySelector('#studentCriteriaForm .btn-primary').hidden = false;
+            // Dispose of existing tooltip instances
+            tooltipTriggerList.forEach((tooltipTriggerEl) => {
+                const existingTooltip = bootstrap.Tooltip.getInstance(tooltipTriggerEl);
+                if (existingTooltip) {
+                    existingTooltip.dispose();
+                    console.log('Disposed tooltip');
+                }
+            });
+
+            // Initialize new tooltips
+            tooltipTriggerList.forEach((tooltipTriggerEl) => {
+                new bootstrap.Tooltip(tooltipTriggerEl);
+            });
         }
-    });
 
-    document.getElementById('submitButton').addEventListener('click', function () {
-        const gradeRadioGroup = document.querySelectorAll('#gradeRadioGroup input[type="radio"]');
-        let gradeSelected = false;
 
-        gradeRadioGroup.forEach(radio => {
-            if (radio.checked) {
-                gradeSelected = true;
+        document.getElementById('requiredCriteria').addEventListener('change', function (event) {
+            if (event.target && event.target.type === 'checkbox') {
+                document.querySelector('#studentCriteriaForm .btn-primary').hidden = false;
             }
         });
 
-        if (!gradeSelected) {
-            alert('Palun vali hinne.');
-            return;
-        }
+        document.getElementById('submitButton').addEventListener('click', function () {
+            const gradeRadioGroup = document.querySelectorAll('#gradeRadioGroup input[type="radio"]');
+            let gradeSelected = false;
 
-        if (submitButton.textContent === 'Esita' || submitButton.textContent === 'Muuda') {
-            const solutionUrl = solutionInput.value;
-            const criteria = getCriteriaList();
-            const comment = document.getElementById('studentComment').value;
+            gradeRadioGroup.forEach(radio => {
+                if (radio.checked) {
+                    gradeSelected = true;
+                }
+            });
 
-            ajax(`assignments/saveStudentSolutionUrl`, {
-                    assignmentId: assignment.assignmentId,
-                    studentId: <?=$this->auth->userId?>,
-                    studentName: assignment.students[<?=$this->auth->userId?>].studentName,
-                    solutionUrl: solutionUrl,
-                    criteria: criteria,
-                    teacherId: assignment.teacherId,
-                    teacherName: assignment.teacherName,
-                    comment: comment
-                },
-                function (res) {
-                    if (res.status === 200) {
-                        location.reload();
-                    }
-                }, function (error) {
-                    alert(error ?? 'Tekkis viga serveriga suhtlemisel.');
-                });
+            if (!gradeSelected) {
+                alert('Palun vali hinne.');
+                return;
+            }
 
-        } else {
-            const grade = document.querySelector('#gradeSection input[type="radio"]:checked')?.value;
-            const criteria = getCriteriaList();
+            if (submitButton.textContent === 'Esita' || submitButton.textContent === 'Muuda') {
+                const solutionUrl = solutionInput.value;
+                const criteria = getCriteriaList();
+                const comment = document.getElementById('studentComment').value;
 
-            const comment = document.getElementById('studentComment').value;
+                ajax(`assignments/saveStudentSolutionUrl`, {
+                        assignmentId: assignment.assignmentId,
+                        studentId: <?=$this->auth->userId?>,
+                        studentName: assignment.students[<?=$this->auth->userId?>].studentName,
+                        solutionUrl: solutionUrl,
+                        criteria: criteria,
+                        teacherId: assignment.teacherId,
+                        teacherName: assignment.teacherName,
+                        comment: comment
+                    },
+                    function (res) {
+                        if (res.status === 200) {
+                            location.reload();
+                        }
+                    }, function (error) {
+                        alert(error ?? 'Tekkis viga serveriga suhtlemisel.');
+                    });
 
-            ajax(`assignments/saveAssignmentGrade`, {
-                    assignmentId: assignment.assignmentId,
-                    studentId: currentStudentId,
-                    grade: grade,
-                    criteria: criteria,
-                    comment: comment,
-                    teacherId: assignment.teacherId,
-                    teacherName: assignment.teacherName,
-                    studentName: assignment.students[currentStudentId].studentName
-                },
-                function (res) {
-                    if (res.status === 200) {
-                        location.reload();
-                    }
-                }, function (error) {
-                    alert(error ?? 'Tekkis viga serveriga suhtlemisel.');
-                });
-        }
-    });
+            } else {
+                const grade = document.querySelector('#gradeSection input[type="radio"]:checked')?.value;
+                const criteria = getCriteriaList();
 
-    document.querySelectorAll('#studentGradeCriteriaContainer input[type="checkbox"]').forEach(checkbox => {
-        checkbox.addEventListener('change', () => {
-            const allChecked = Array.from(document.querySelectorAll('#studentGradeCriteriaContainer input[type="checkbox"]'))
-                .every(cb => cb.checked);
-            document.getElementById('submitButton').disabled = !allChecked;
+                const comment = document.getElementById('studentComment').value;
+
+                ajax(`assignments/saveAssignmentGrade`, {
+                        assignmentId: assignment.assignmentId,
+                        studentId: currentStudentId,
+                        grade: grade,
+                        criteria: criteria,
+                        comment: comment,
+                        teacherId: assignment.teacherId,
+                        teacherName: assignment.teacherName,
+                        studentName: assignment.students[currentStudentId].studentName
+                    },
+                    function (res) {
+                        if (res.status === 200) {
+                            location.reload();
+                        }
+                    }, function (error) {
+                        alert(error ?? 'Tekkis viga serveriga suhtlemisel.');
+                    });
+            }
         });
-    });
 
-    function showContextMenu(event, studentId) {
-        event.preventDefault();
-        currentStudentId = studentId;
+        document.querySelectorAll('#studentGradeCriteriaContainer input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', () => {
+                const allChecked = Array.from(document.querySelectorAll('#studentGradeCriteriaContainer input[type="checkbox"]'))
+                    .every(cb => cb.checked);
+                document.getElementById('submitButton').disabled = !allChecked;
+            });
+        });
 
-        const menu = document.getElementById('context-menu');
-        const criteriaContainer = menu.querySelector('.criteria');
+        function showContextMenu(event, studentId) {
+            event.preventDefault();
+            currentStudentId = studentId;
 
-        criteriaContainer.innerHTML = '';
+            const menu = document.getElementById('context-menu');
+            const criteriaContainer = menu.querySelector('.criteria');
 
-        const student = assignment.students[studentId];
-        const allCriteria = assignment.criteria;
+            criteriaContainer.innerHTML = '';
 
-        if (student && allCriteria) {
-            Object.keys(assignment.criteria).forEach(criteriaId => {
-                const criterion = assignment.criteria[criteriaId];
-                const isCompleted = assignment.students[studentId]?.userDoneCriteria[criteriaId]?.completed;
+            const student = assignment.students[studentId];
+            const allCriteria = assignment.criteria;
 
-                criteriaContainer.innerHTML += `
+            if (student && allCriteria) {
+                Object.keys(assignment.criteria).forEach(criteriaId => {
+                    const criterion = assignment.criteria[criteriaId];
+                    const isCompleted = assignment.students[studentId]?.userDoneCriteria[criteriaId]?.completed;
+
+                    criteriaContainer.innerHTML += `
                 <div class="form-check">
                     <input class="form-check-input" type="checkbox" id="check_criterion_${criteriaId}" ${isCompleted ? 'checked' : ''}>
                     <label class="form-check-label" for="check_criterion_${criteriaId}">
@@ -737,153 +760,176 @@
                     </label>
                 </div>
             `;
-            });
-        }
-
-        menu.style.display = 'block';
-        menu.style.left = `${event.pageX}px`;
-        menu.style.top = `${event.pageY}px`;
-
-        adjustDropdownPosition(menu, event.pageX, event.pageY);
-
-        document.addEventListener('click', hideContextMenu);
-    }
-
-    function adjustDropdownPosition(menu, pageX, pageY) {
-        const menuRect = menu.getBoundingClientRect();
-        const windowWidth = window.innerWidth;
-        const windowHeight = window.innerHeight;
-
-        if (menuRect.right > windowWidth) {
-            menu.style.left = `${pageX - menuRect.width}px`;
-        }
-
-        if (menuRect.bottom > windowHeight) {
-            menu.style.top = `${pageY - menuRect.height}px`;
-        }
-    }
-
-    function hideContextMenu() {
-        const menu = document.getElementById('context-menu');
-        menu.style.display = 'none';
-        document.removeEventListener('click', hideContextMenu);
-    }
-
-    function openStudentModal(isStudent, studentId = null) {
-        const modalTitle = document.getElementById('studentName');
-        const solutionInputContainer = document.getElementById('solutionInputContainer');
-        const solutionInput = document.getElementById('solutionInput');
-        const solutionUrlContainer = document.getElementById('solutionUrlContainer');
-        const submitButton = document.getElementById('submitButton');
-        const criteriaContainer = document.getElementById('checkboxesContainer');
-        const student = assignment.students[studentId];
-        currentStudentId = studentId;
-
-        if (isStudent) {
-            modalTitle.textContent = 'Sisesta Lahendus';
-            solutionInputContainer.style.display = 'block'; // Show the input for students to enter a link
-            submitButton.textContent = student.studentActionButtonName;
-            submitButton.disabled = true; // Initially disable the "Esita" button
-
-
-            solutionInput.addEventListener('input', updateSubmitButtonState);
-
-            document.getElementById('checkboxesContainer').addEventListener('change', function (event) {
-                if (event.target && event.target.type === 'checkbox') {
-                    updateButtonState();
-                }
-            });
-
-            solutionInput.addEventListener('input', updateSubmitButtonState);
-
-            let isValidUrl = false;
-
-            async function updateSubmitButtonState() {
-                const solutionUrlValue = solutionInput.value.trim();
-                const solutionInputFeedback = document.getElementById('solutionInputFeedback');
-
-                if (solutionUrlValue === '') {
-                    solutionInputFeedback.textContent = '';
-                    submitButton.disabled = true;
-                    return;
-                }
-                try {
-                    ajax('assignments/validateAndCheckLinkAccessibility', {
-                        solutionUrl: solutionUrlValue
-                    }, function (res) {
-                        if (res.status === 200) {
-                            solutionInputFeedback.textContent = 'Link on valideeritud ja kättesaadav.';
-                            solutionInputFeedback.style.color = 'green';
-                            isValidUrl = true;
-                            updateButtonState();
-                        }
-                    }, function (error) {
-                        solutionInputFeedback.textContent = error || 'Link on vigane või kättesaamatu.';
-                        solutionInputFeedback.style.color = 'red';
-                        isValidUrl = false;
-                        updateButtonState();
-                    });
-                } catch (error) {
-                    solutionInputFeedback.textContent = 'Tekkis viga URL-i valideerimisel';
-                    solutionInputFeedback.style.color = 'red';
-                    isValidUrl = false;
-                    updateButtonState();
-                }
-
-                updateButtonState();
-            }
-
-            function updateButtonState() {
-                const allChecked = Array.from(document.querySelectorAll('#checkboxesContainer input[type="checkbox"]'))
-                    .every(cb => cb.checked);
-
-                submitButton.disabled = !(allChecked && isValidUrl && student.isDisabledStudentActionButton === '');
-            }
-
-        } else {
-            const gradeSection = document.getElementById('gradeSection');
-            const commentSection = document.getElementById('commentSection');
-            modalTitle.textContent = student.studentName;
-            gradeSection.style.display = 'block';
-            commentSection.style.display = 'block';
-            solutionInputContainer.style.display = 'none';
-            submitButton.textContent = 'Salvesta';
-            submitButton.disabled = false;
-
-            if (student.grade) {
-                document.querySelector(`#gradeRadioGroup input[value="${student.grade}"]`).checked = true;
-            } else {
-                document.querySelectorAll('#gradeRadioGroup input[type="radio"]').forEach(rb => {
-                    rb.checked = false;
                 });
             }
 
-            if (student.comment) {
-                document.getElementById('studentComment').value = student.comment;
-            } else {
-                document.getElementById('studentComment').value = '';
+            menu.style.display = 'block';
+            menu.style.left = `${event.pageX}px`;
+            menu.style.top = `${event.pageY}px`;
+
+            adjustDropdownPosition(menu, event.pageX, event.pageY);
+
+            document.addEventListener('click', hideContextMenu);
+        }
+
+        function adjustDropdownPosition(menu, pageX, pageY) {
+            const menuRect = menu.getBoundingClientRect();
+            const windowWidth = window.innerWidth;
+            const windowHeight = window.innerHeight;
+
+            if (menuRect.right > windowWidth) {
+                menu.style.left = `${pageX - menuRect.width}px`;
+            }
+
+            if (menuRect.bottom > windowHeight) {
+                menu.style.top = `${pageY - menuRect.height}px`;
             }
         }
 
-        if (student.solutionUrl) {
-            solutionUrlContainer.innerHTML = `
+        function hideContextMenu() {
+            const menu = document.getElementById('context-menu');
+            menu.style.display = 'none';
+            document.removeEventListener('click', hideContextMenu);
+        }
+
+        function openStudentModal(isStudent, studentId = null) {
+            const modalTitle = document.getElementById('studentName');
+            const solutionInputContainer = document.getElementById('solutionInputContainer');
+            const solutionInput = document.getElementById('solutionInput');
+            const solutionUrlContainer = document.getElementById('solutionUrlContainer');
+            const submitButton = document.getElementById('submitButton');
+            const criteriaContainer = document.getElementById('checkboxesContainer');
+            const student = assignment.students[studentId];
+            const solutionButton = document.getElementById('solutionButton');
+            const submitButtonWrapper = document.getElementById('submitButtonWrapper');
+            currentStudentId = studentId;
+
+            function allCriteriaChecked() {
+                return Array.from(document.querySelectorAll('#checkboxesContainer input[type="checkbox"]'))
+                    .every(cb => cb.checked);
+            }
+
+            if (isStudent) {
+                modalTitle.textContent = 'Sisesta Lahendus';
+                solutionInputContainer.style.display = 'block'; // Show the input for students to enter a link
+                submitButton.textContent = student.studentActionButtonName;
+                submitButton.disabled = true; // Initially disable the "Esita" button
+                submitButtonWrapper.title = 'Palun täida kõik kriteeriumid ja sisesta link';
+                initializeTooltips()
+
+                document.getElementById('checkboxesContainer').addEventListener('change', function (event) {
+                    if (event.target && event.target.type === 'checkbox') {
+                        updateButtonState();
+                    }
+                });
+
+                solutionButton.addEventListener('click', updateSubmitButtonState);
+
+
+                let isValidUrl = false;
+
+                async function updateSubmitButtonState() {
+                    const solutionUrlValue = solutionInput.value.trim();
+                    const solutionInputFeedback = document.getElementById('solutionInputFeedback');
+
+                    if (solutionUrlValue === '') {
+                        solutionInputFeedback.textContent = '';
+                        submitButton.disabled = true;
+                        return;
+                    }
+                    try {
+                        ajax('assignments/validateAndCheckLinkAccessibility', {
+                            solutionUrl: solutionUrlValue
+                        }, function (res) {
+                            if (res.status === 200) {
+                                solutionInputFeedback.textContent = 'Link on valideeritud ja kättesaadav.';
+                                solutionInputFeedback.style.color = 'green';
+                                isValidUrl = true;
+                                updateButtonState();
+                                // make the solutioninput a light green color
+
+                                solutionInput.style.backgroundColor = '#d4edda';
+                                solutionInput.style.color = 'black';
+                                if (allCriteriaChecked()) {
+                                    submitButton.disabled = false;
+                                    submitButtonWrapper.title = '';
+                                }
+                                else {
+                                    submitButton.disabled = true;
+                                    submitButtonWrapper.title = 'Palun täida kõik kriteeriumid';
+                                }
+                            }
+                        }, function (error) {
+                            solutionInputFeedback.textContent = error || 'Link on vigane või kättesaamatu.';
+                            solutionInputFeedback.style.color = 'red';
+                            isValidUrl = false;
+                            updateButtonState();
+
+                            // make the solutioninput a light red color
+                            solutionInput.style.backgroundColor = '#f8d7da';
+                            solutionInput.style.color = 'black';
+                        });
+                    } catch (error) {
+                        solutionInputFeedback.textContent = 'Tekkis viga URL-i valideerimisel';
+                        solutionInputFeedback.style.color = 'red';
+                        isValidUrl = false;
+                        updateButtonState();
+                    }
+
+                    updateButtonState();
+                }
+
+                function updateButtonState() {
+                    const allChecked = Array.from(document.querySelectorAll('#checkboxesContainer input[type="checkbox"]'))
+                        .every(cb => cb.checked);
+
+                    submitButton.disabled = !(allChecked && isValidUrl && student.isDisabledStudentActionButton === '');
+                }
+
+            } else {
+                const gradeSection = document.getElementById('gradeSection');
+                const commentSection = document.getElementById('commentSection');
+                modalTitle.textContent = student.studentName;
+                gradeSection.style.display = 'block';
+                commentSection.style.display = 'block';
+                solutionInputContainer.style.display = 'none';
+                submitButton.textContent = 'Salvesta';
+                submitButton.disabled = false;
+
+                if (student.grade) {
+                    document.querySelector(`#gradeRadioGroup input[value="${student.grade}"]`).checked = true;
+                } else {
+                    document.querySelectorAll('#gradeRadioGroup input[type="radio"]').forEach(rb => {
+                        rb.checked = false;
+                    });
+                }
+
+                if (student.comment) {
+                    document.getElementById('studentComment').value = student.comment;
+                } else {
+                    document.getElementById('studentComment').value = '';
+                }
+            }
+
+            if (student.solutionUrl) {
+                solutionUrlContainer.innerHTML = `
             <?php if ($isStudent): ?>
                 <p class="pt-2 mb-0">Juba esitatud lahendus:</p>
             <?php endif?>
             <a href="${student.solutionUrl}" id="solutionUrl" target="_blank" rel="noopener noreferrer">${student.solutionUrl}</a>`;
-        } else {
-            solutionUrlContainer.innerHTML = 'Link puudub';  // Display plain text if no link
-        }
+            } else {
+                solutionUrlContainer.innerHTML = 'Link puudub';  // Display plain text if no link
+            }
 
-        criteriaContainer.innerHTML = '';
-
-
-        Object.keys(assignment.criteria).forEach(criteriaId => {
-            const criterion = assignment.criteria[criteriaId];
-            const isCompleted = assignment.students[studentId]?.userDoneCriteria[criteriaId]?.completed;
+            criteriaContainer.innerHTML = '';
 
 
-            criteriaContainer.innerHTML += `
+            Object.keys(assignment.criteria).forEach(criteriaId => {
+                const criterion = assignment.criteria[criteriaId];
+                const isCompleted = assignment.students[studentId]?.userDoneCriteria[criteriaId]?.completed;
+
+
+                criteriaContainer.innerHTML += `
             <div class="form-check">
                 <input class="form-check-input" type="checkbox" id="criterion_${criteriaId}" ${isCompleted ? 'checked' : ''}>
                 <label class="form-check-label" for="criterion_${criteriaId}">
@@ -891,143 +937,143 @@
                 </label>
             </div>
         `;
-        });
-
-        const modal = new bootstrap.Modal(document.getElementById('studentModal'));
-        modal.show();
-    }
-
-    function saveStudentCriteria() {
-        const criteria = getCriteriaList('#requiredCriteria input[type="checkbox"]');
-        ajax(`assignments/saveStudentCriteria`, {
-                assignmentId: assignment.assignmentId,
-                studentId: <?= $this->auth->userId ?>,
-                criteria: criteria,
-                teacherId: assignment.teacherId,
-                teacherName: assignment.teacherName
-            },
-            function (res) {
-                if (res.status === 200) {
-                    location.reload();
-                }
-            },
-            function (error) {
-                alert(error ?? 'Tekkis viga serveriga suhtlemisel.');
             });
-    }
 
-    function getCriteriaList(selector = '#studentGradeCriteriaContainer input[type="checkbox"]') {
-        const criteria = {};
-        document.querySelectorAll(selector).forEach(cb => {
-            if (selector.startsWith('#edit')) {
-                criteria[parseInt(cb.id.replace('edit_criterion_', ''))] = cb.checked;
-            } else if (selector.startsWith('#context-menu') || selector.startsWith('#check')) {
-                criteria[parseInt(cb.id.replace('check_criterion_', ''))] = cb.checked;
-            } else {
-                criteria[parseInt(cb.id.replace('criterion_', ''))] = cb.checked;
+            const modal = new bootstrap.Modal(document.getElementById('studentModal'));
+            modal.show();
+        }
+
+        function saveStudentCriteria() {
+            const criteria = getCriteriaList('#requiredCriteria input[type="checkbox"]');
+            ajax(`assignments/saveStudentCriteria`, {
+                    assignmentId: assignment.assignmentId,
+                    studentId: <?= $this->auth->userId ?>,
+                    criteria: criteria,
+                    teacherId: assignment.teacherId,
+                    teacherName: assignment.teacherName
+                },
+                function (res) {
+                    if (res.status === 200) {
+                        location.reload();
+                    }
+                },
+                function (error) {
+                    alert(error ?? 'Tekkis viga serveriga suhtlemisel.');
+                });
+        }
+
+        function getCriteriaList(selector = '#studentGradeCriteriaContainer input[type="checkbox"]') {
+            const criteria = {};
+            document.querySelectorAll(selector).forEach(cb => {
+                if (selector.startsWith('#edit')) {
+                    criteria[parseInt(cb.id.replace('edit_criterion_', ''))] = cb.checked;
+                } else if (selector.startsWith('#context-menu') || selector.startsWith('#check')) {
+                    criteria[parseInt(cb.id.replace('check_criterion_', ''))] = cb.checked;
+                } else {
+                    criteria[parseInt(cb.id.replace('criterion_', ''))] = cb.checked;
+                }
+            });
+            return criteria;
+        }
+
+        function scrollToBottom() {
+            const messageContainer = document.querySelector('#messageContainer .content-part');
+            const notificationContainer = document.querySelector('#notificationContainer .content-part');
+
+
+            if (messageContainer) {
+                messageContainer.scrollTop = messageContainer.scrollHeight;
             }
+
+            if (notificationContainer) {
+                notificationContainer.scrollTop = notificationContainer.scrollHeight;
+            }
+        }
+
+
+        function editAssignment() {
+            const modal = new bootstrap.Modal(document.getElementById('editAssignmentModal'));
+            modal.show();
+        }
+
+        function removeOldCriterion(param) {
+            const editCriteriaContainer = document.getElementById('editCriteriaContainer');
+            const criterionElement = document.getElementById(`edit_criterion_${param}`);
+
+            if (criterionElement) {
+                const criterionRow = criterionElement.closest('.criteria-row');
+                if (criterionRow) {
+                    editCriteriaContainer.removeChild(criterionRow);
+                } else {
+                    console.error("Criterion row not found");
+                }
+            } else {
+                console.error("Criterion element not found");
+            }
+        }
+
+        function saveEditedAssignment() {
+            const assignmentName = document.getElementById('assignmentName').value;
+            const assignmentInstructions = document.getElementById('assignmentInstructions').value;
+            const assignmentDueAt = document.getElementById('assignmentDueAt').value;
+            const criteria = getCriteriaList('#editCriteriaContainer input[type="checkbox"]');
+            ajax(`assignments/editAssignment`, {
+                    assignmentId: assignment.assignmentId,
+                    teacherId: assignment.teacherId,
+                    teacherName: assignment.teacherName,
+                    assignmentName: assignmentName,
+                    assignmentInstructions: assignmentInstructions,
+                    assignmentDueAt: assignmentDueAt,
+                    oldCriteria: criteria,
+                    newCriteria: newAddedCriteria ?? [],
+                },
+                function (res) {
+                    if (res.status === 200) {
+                        location.reload();
+                        scrollToBottom();
+                    }
+                },
+                function (error) {
+                    alert(error ?? 'Tekkis viga serveriga suhtlemisel.');
+                }
+            );
+        }
+
+        <?php if (!$isStudent): ?>
+        document.getElementById('addCriterionButton').addEventListener('click', function () {
+            const modal = new bootstrap.Modal(document.getElementById('addCriterionModal'));
+            modal.show();
         });
-        return criteria;
-    }
+        <?php endif; ?>
 
-    function scrollToBottom() {
-        const messageContainer = document.querySelector('#messageContainer .content-part');
-        const notificationContainer = document.querySelector('#notificationContainer .content-part');
+        function addNewCriterion() {
+            const criterionName = document.getElementById('newCriterionName').value.trim();
 
-
-        if (messageContainer) {
-            messageContainer.scrollTop = messageContainer.scrollHeight;
-        }
-
-        if (notificationContainer) {
-            notificationContainer.scrollTop = notificationContainer.scrollHeight;
-        }
-    }
-
-
-    function editAssignment() {
-        const modal = new bootstrap.Modal(document.getElementById('editAssignmentModal'));
-        modal.show();
-    }
-
-    function removeOldCriterion(param) {
-        const editCriteriaContainer = document.getElementById('editCriteriaContainer');
-        const criterionElement = document.getElementById(`edit_criterion_${param}`);
-
-        if (criterionElement) {
-            const criterionRow = criterionElement.closest('.criteria-row');
-            if (criterionRow) {
-                editCriteriaContainer.removeChild(criterionRow);
-            } else {
-                console.error("Criterion row not found");
+            if (!criterionName) {
+                alert('Sisestage kriteeriumi nimi!');
+                return;
             }
-        } else {
-            console.error("Criterion element not found");
-        }
-    }
 
-    function saveEditedAssignment() {
-        const assignmentName = document.getElementById('assignmentName').value;
-        const assignmentInstructions = document.getElementById('assignmentInstructions').value;
-        const assignmentDueAt = document.getElementById('assignmentDueAt').value;
-        const criteria = getCriteriaList('#editCriteriaContainer input[type="checkbox"]');
-        ajax(`assignments/editAssignment`, {
-                assignmentId: assignment.assignmentId,
-                teacherId: assignment.teacherId,
-                teacherName: assignment.teacherName,
-                assignmentName: assignmentName,
-                assignmentInstructions: assignmentInstructions,
-                assignmentDueAt: assignmentDueAt,
-                oldCriteria: criteria,
-                newCriteria: newAddedCriteria ?? [],
-            },
-            function (res) {
+            ajax('assignments/checkCriterionNameSize', {
+                criterionName: criterionName
+            }, function (res) {
                 if (res.status === 200) {
-                    location.reload();
-                    scrollToBottom();
-                }
-            },
-            function (error) {
-                alert(error ?? 'Tekkis viga serveriga suhtlemisel.');
-            }
-        );
-    }
+                    const existingCriteria = Array.from(document.querySelectorAll('#editCriteriaContainer .form-check-label'))
+                        .map(label => label.textContent.trim());
 
-    <?php if (!$isStudent): ?>
-    document.getElementById('addCriterionButton').addEventListener('click', function () {
-        const modal = new bootstrap.Modal(document.getElementById('addCriterionModal'));
-        modal.show();
-    });
-    <?php endif; ?>
+                    if (existingCriteria.includes(criterionName) || newAddedCriteria.includes(criterionName)) {
+                        alert('Selline kriteerium on juba olemas!');
+                        return;
+                    }
 
-    function addNewCriterion() {
-        const criterionName = document.getElementById('newCriterionName').value.trim();
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('addCriterionModal'));
+                    modal.hide();
 
-        if (!criterionName) {
-            alert('Sisestage kriteeriumi nimi!');
-            return;
-        }
+                    newAddedCriteria.push(criterionName);
 
-        ajax('assignments/checkCriterionNameSize', {
-            criterionName: criterionName
-        }, function (res) {
-            if (res.status === 200) {
-                const existingCriteria = Array.from(document.querySelectorAll('#editCriteriaContainer .form-check-label'))
-                    .map(label => label.textContent.trim());
+                    const editCriteriaContainer = document.getElementById('editCriteriaContainer');
 
-                if (existingCriteria.includes(criterionName) || newAddedCriteria.includes(criterionName)) {
-                    alert('Selline kriteerium on juba olemas!');
-                    return;
-                }
-
-                const modal = bootstrap.Modal.getInstance(document.getElementById('addCriterionModal'));
-                modal.hide();
-
-                newAddedCriteria.push(criterionName);
-
-                const editCriteriaContainer = document.getElementById('editCriteriaContainer');
-
-                const criterionHTML = `
+                    const criterionHTML = `
                 <div class="criteria-row">
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" checked disabled>
@@ -1036,26 +1082,26 @@
                     <button type="button" class="btn btn-danger btn-sm" onclick="removeNewCriterion('${criterionName}')">X</button>
                 </div>
             `;
-                document.getElementById('newCriterionName').value = '';
-                editCriteriaContainer.insertAdjacentHTML('beforeend', criterionHTML);
-            }
-        }, function (error) {
-            alert(error ?? 'Tekkis viga serveriga suhtlemisel.');
-        });
-    }
-
-    function removeNewCriterion(criterionName) {
-        newAddedCriteria = newAddedCriteria.filter(name => name !== criterionName);
-
-        const criterionRow = Array.from(document.querySelectorAll('.criteria-row')).find(row => row.textContent.includes(criterionName));
-        if (criterionRow) {
-            criterionRow.remove();
+                    document.getElementById('newCriterionName').value = '';
+                    editCriteriaContainer.insertAdjacentHTML('beforeend', criterionHTML);
+                }
+            }, function (error) {
+                alert(error ?? 'Tekkis viga serveriga suhtlemisel.');
+            });
         }
-    }
 
-    function replyToMessage(userName, messageId, messageContent, createdAt) {
-        document.getElementById('replyInfo').style.display = 'block';
-        document.getElementById('replyMessage').innerHTML = `
+        function removeNewCriterion(criterionName) {
+            newAddedCriteria = newAddedCriteria.filter(name => name !== criterionName);
+
+            const criterionRow = Array.from(document.querySelectorAll('.criteria-row')).find(row => row.textContent.includes(criterionName));
+            if (criterionRow) {
+                criterionRow.remove();
+            }
+        }
+
+        function replyToMessage(userName, messageId, messageContent, createdAt) {
+            document.getElementById('replyInfo').style.display = 'block';
+            document.getElementById('replyMessage').innerHTML = `
         <div class="d-flex text-break align-items-start border rounded p-2" style="background-color: #f0f0f0;">
             <div class="me-3">
                 <span class="avatar bg-primary text-white rounded-circle p-2">${userName[0]}</span>
@@ -1066,69 +1112,69 @@
             </div>
         </div>
     `;
-        const content = document.getElementById('messageContent')
-        content.setAttribute('data-reply-id', messageId)
-        content.setAttribute('data-reply-user', userName)
-        content.setAttribute('data-reply-time', createdAt)
-        content.setAttribute('data-reply-content', messageContent)
-        content.focus();
-    }
-
-    function cancelReply() {
-        document.getElementById('replyInfo').style.display = 'none';
-        document.getElementById('messageContent').removeAttribute('data-reply-id');
-    }
-
-    function submitMessage() {
-        const messageContent = document.getElementById('messageContent');
-        const answerToId = messageContent.getAttribute('data-reply-id') || null;
-
-        let replyContent = '';
-        if (answerToId) {
-            const replyUser = messageContent.getAttribute('data-reply-user');
-            const replyTime = messageContent.getAttribute('data-reply-time');
-            const replyText = messageContent.getAttribute('data-reply-content');
-
-            replyContent = `> **${replyUser}** kirjutas *${replyTime}*:\n> ${replyText}\n\n`;
+            const content = document.getElementById('messageContent')
+            content.setAttribute('data-reply-id', messageId)
+            content.setAttribute('data-reply-user', userName)
+            content.setAttribute('data-reply-time', createdAt)
+            content.setAttribute('data-reply-content', messageContent)
+            content.focus();
         }
 
-        const finalContent = replyContent + messageContent.value;
+        function cancelReply() {
+            document.getElementById('replyInfo').style.display = 'none';
+            document.getElementById('messageContent').removeAttribute('data-reply-id');
+        }
 
-        ajax('assignments/saveMessage', {
-            assignmentId: assignment.assignmentId,
-            userId: <?= $this->auth->userId ?>,
-            content: finalContent,
-            answerToId: answerToId,
-            teacherId: assignment.teacherId,
-            teacherName: assignment.teacherName
-        }, function (res) {
-            if (res.status === 200) {
-                location.reload();
-                scrollToBottom();
+        function submitMessage() {
+            const messageContent = document.getElementById('messageContent');
+            const answerToId = messageContent.getAttribute('data-reply-id') || null;
+
+            let replyContent = '';
+            if (answerToId) {
+                const replyUser = messageContent.getAttribute('data-reply-user');
+                const replyTime = messageContent.getAttribute('data-reply-time');
+                const replyText = messageContent.getAttribute('data-reply-content');
+
+                replyContent = `> **${replyUser}** kirjutas *${replyTime}*:\n> ${replyText}\n\n`;
             }
-        }, function (error) {
-            alert(error ?? 'Tekkis viga serveriga suhtlemisel.');
-        });
-    }
 
-    function setGrade(grade) {
+            const finalContent = replyContent + messageContent.value;
 
-        ajax(`assignments/saveAssignmentGrade`, {
+            ajax('assignments/saveMessage', {
                 assignmentId: assignment.assignmentId,
-                studentId: currentStudentId,
-                grade: grade,
-                teacherName: assignment.teacherName,
-                studentName: assignment.students[currentStudentId].studentName,
-                teacherId: assignment.teacherId
-            },
-            function (res) {
+                userId: <?= $this->auth->userId ?>,
+                content: finalContent,
+                answerToId: answerToId,
+                teacherId: assignment.teacherId,
+                teacherName: assignment.teacherName
+            }, function (res) {
                 if (res.status === 200) {
                     location.reload();
+                    scrollToBottom();
                 }
-            },
-            function (error) {
+            }, function (error) {
                 alert(error ?? 'Tekkis viga serveriga suhtlemisel.');
-            }
-        );
-    }
-</script>
+            });
+        }
+
+        function setGrade(grade) {
+
+            ajax(`assignments/saveAssignmentGrade`, {
+                    assignmentId: assignment.assignmentId,
+                    studentId: currentStudentId,
+                    grade: grade,
+                    teacherName: assignment.teacherName,
+                    studentName: assignment.students[currentStudentId].studentName,
+                    teacherId: assignment.teacherId
+                },
+                function (res) {
+                    if (res.status === 200) {
+                        location.reload();
+                    }
+                },
+                function (error) {
+                    alert(error ?? 'Tekkis viga serveriga suhtlemisel.');
+                }
+            );
+        }
+    </script>
