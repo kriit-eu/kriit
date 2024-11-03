@@ -7,7 +7,7 @@ class Assignment
     {
         return [
             'Esitamata' => $isStudent ? 'yellow-cell' : '',
-            'Ülevaatamata' => $isTeacher ? 'red-cell' : '',
+            'Kontrollimisel' => $isTeacher ? 'red-cell' : '',
         ];
     }
 

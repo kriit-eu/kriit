@@ -114,7 +114,7 @@ class subjects extends Controller
                 // Determine the link text based on assignment status
                 $linkText = match ($statusName) {
                     'Esitamata' => $this->isStudent ? 'Esita' : 'Hinda',
-                    'Ülevaatamata' => $this->isStudent ? 'Muuda' : 'Hinda',
+                    'Kontrollimisel' => $this->isStudent ? 'Muuda' : 'Hinda',
                     'Hinnatud' => $isNegativeGrade ? ($this->isStudent ? 'Esita uuesti' : 'Muuda hinnet') : '',
                     default => ''
                 };

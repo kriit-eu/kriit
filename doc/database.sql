@@ -133,7 +133,7 @@ LOCK TABLES `assignmentStatuses` WRITE;
 /*!40000 ALTER TABLE `assignmentStatuses` DISABLE KEYS */;
 INSERT INTO `assignmentStatuses` VALUES
 (1,'Esitamata'),
-(2,'Ülevaatamata'),
+(2,'Kontrollimisel'),
 (3,'Hinnatud');
 /*!40000 ALTER TABLE `assignmentStatuses` ENABLE KEYS */;
 UNLOCK TABLES;
