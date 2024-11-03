@@ -650,10 +650,12 @@
             }
         });
 
+        <?php if(!$isStudent): ?>
         if (!gradeSelected) {
             alert('Palun vali hinne.');
             return;
         }
+        <?php endif ?>
 
         if (submitButton.textContent === 'Esita' || submitButton.textContent === 'Muuda') {
             const solutionUrl = solutionInput.value;

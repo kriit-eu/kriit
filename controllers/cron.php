@@ -170,7 +170,7 @@ class cron extends Controller
             LEFT JOIN groups g ON subj.groupId = g.groupId
             LEFT JOIN users u ON u.groupId = g.groupId
             LEFT JOIN userAssignments ua ON ua.assignmentId = a.assignmentId AND ua.userId = u.userId
-            WHERE a.assignmentDueAt < CURDATE() AND ua.assignmentStatusId IS NULL
+            WHERE a.assignmentDueAt < CURDATE() AND ua.assignmentStatusId IS NULL OR ua.assignmentStatusId = 1
         ");
 
         if (!empty($data)) {
