@@ -1,5 +1,23 @@
 <style>
+    .comment-item {
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 10px;
+        margin-bottom: 10px;
+        background-color: #f9f9f9;
+    }
 
+    .comment-item p {
+        margin: 0;
+        font-size: 14px;
+    }
+
+    .comment-item small {
+        display: block;
+        margin-top: 5px;
+        color: #888;
+        font-size: 12px;
+    }
     .red-cell {
         background-color: rgb(255, 180, 176) !important;
     }
@@ -473,7 +491,9 @@
                         </div>
                     </div>
                     <div id="commentSection" class="mb-3">
-                        <label for="studentComment" class="form-label fw-bold">Kommentaar</label>
+                        <label for="studentComment" class="form-label fw-bold">Suhtlus</label>
+                        <div id="commentList"></div>
+                        <br />
                         <textarea class="form-control" id="studentComment" rows="3"
                                   placeholder="Lisa kommentaar siia..."></textarea>
                     </div>
@@ -538,82 +558,81 @@
             <?php endforeach; ?>
         </div>
     </div>
-    <div id="messages-container">
-        <div id="notificationContainer" class="card mt-3">
-            <div class="card-body">
-                <h5>Sündmused</h5>
-                <div class="content-part">
-                    <?php foreach ($assignment['messages'] as $message): ?>
-                        <?php if ($message['isNotification']): ?>
-                            <div class="notification-item">
-                                <i class="fa fa-bell notification-icon"></i>
-                                <div class="notification-text">
-                                    <p class="fw-bold mb-1"><?= $message['content'] ?></p>
-                                </div>
-                                <small class="notification-time text-muted"><?= $message['createdAt'] ?></small>
-                            </div>
-                        <?php endif; ?>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-        </div>
-
-        <div id="messageContainer" class="card">
-            <div class="card-body">
-                <h5>Vestlus</h5>
-                <div class="content-part">
-                    <?php foreach ($assignment['messages'] as $message): ?>
-                        <?php if (!$message['isNotification']): ?>
-                            <div class="d-flex align-items-start mb-3 border rounded p-3">
-                                <div class="flex-shrink-0 me-3">
-                                    <span class="avatar bg-primary text-white rounded-circle p-2"><?= strtoupper(substr($message['userName'], 0, 1)) ?></span>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <div class="d-flex flex-wrap justify-content-between">
-                                        <h6 class="fw-bold mb-1"><?= $message['userName'] ?></h6>
-                                        <small class="text-muted"><?= $message['createdAt'] ?></small>
-                                    </div>
-                                    <p class="mb-1"><?= strip_tags($message['content'], '<br><ul><ol><h2><li><h3><p><strong>') ?></p>
-                                    <?php if ($this->auth->userId !== $message['userId']): ?>
-                                        <div class="d-flex justify-content-end">
-                                            <button type="button" class="btn btn-secondary btn-sm"
-                                                    style="font-size: 0.75rem; padding: 2px 8px;"
-                                                    onclick='replyToMessage(<?= json_encode($message['userName']) ?>, <?= $message['messageId'] ?>, <?= json_encode($message['content']) ?>, "<?= $message['createdAt'] ?>")'>
-                                                Vasta
-                                            </button>
-                                        </div>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                        <?php endif; ?>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-        </div>
-
-
-        <div class="container mb-5">
-            <form>
-                <div class="mb-3">
-                    <label for="messageContent" class="form-label">Sisesta sõnum</label>
-                    <div id="replyInfo" class="alert alert-info " style="display:none;">
-                        <div class="d-flex justify-content-end">
-                            <button type="button" style="font-size: 0.75rem; padding: 2px 8px;"
-                                    class="btn btn-sm btn-secondary mb-2" onclick="cancelReply()">x
-                            </button>
+        <div id="messageContainer" class="card mt-3">
+    <div class="card-body">
+        <h5>Vestlus</h5>
+        <div class="content-part">
+            <?php foreach ($assignment['messages'] as $message): ?>
+                <?php if (!$message['isNotification']): ?>
+                    <div class="d-flex align-items-start mb-3 border rounded p-3">
+                        <div class="flex-shrink-0 me-3">
+                            <span class="avatar bg-primary text-white rounded-circle p-2"><?= strtoupper(substr($message['userName'], 0, 1)) ?></span>
                         </div>
-                        <div id="replyMessage" class="border rounded bg-light p-2 mb-2"></div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex flex-wrap justify-content-between">
+                                <h6 class="fw-bold mb-1"><?= $message['userName'] ?></h6>
+                                <small class="text-muted"><?= $message['createdAt'] ?></small>
+                            </div>
+                            <p class="mb-1"><?= strip_tags($message['content'], '<br><ul><ol><h2><li><h3><p><strong>') ?></p>
+                            <?php if ($this->auth->userId !== $message['userId']): ?>
+                                <div class="d-flex justify-content-end">
+                                    <button type="button" class="btn btn-secondary btn-sm"
+                                            style="font-size: 0.75rem; padding: 2px 8px;"
+                                            onclick='replyToMessage(<?= json_encode($message['userName']) ?>, <?= $message['messageId'] ?>, <?= json_encode($message['content']) ?>, "<?= $message['createdAt'] ?>")'>
+                                        Vasta
+                                    </button>
+                                </div>
+                            <?php endif; ?>
+                        </div>
                     </div>
-                    <textarea class="form-control" id="messageContent" name="content" rows="3"
-                              placeholder="Kirjuta oma sõnum siia..."></textarea>
-                </div>
-                <div class="d-flex justify-content-end">
-                    <button type="button" class="btn btn-primary" onclick="submitMessage()">Postita</button>
-                </div>
-            </form>
+                <?php endif; ?>
+            <?php endforeach; ?>
         </div>
-
     </div>
+
+    <div class="card-body">
+        <form>
+            <div class="mb-3">
+                <label for="messageContent" class="form-label">Sisesta sõnum</label>
+                <div id="replyInfo" class="alert alert-info " style="display:none;">
+                    <div class="d-flex justify-content-end">
+                        <button type="button" style="font-size: 0.75rem; padding: 2px 8px;"
+                                class="btn btn-sm btn-secondary mb-2" onclick="cancelReply()">x
+                        </button>
+                    </div>
+                    <div id="replyMessage" class="border rounded bg-light p-2 mb-2"></div>
+                </div>
+                <textarea class="form-control" id="messageContent" name="content" rows="3"
+                          placeholder="Kirjuta oma sõnum siia..."></textarea>
+            </div>
+            <div class="d-flex justify-content-end">
+                <button type="button" class="btn btn-primary" onclick="submitMessage()">Postita</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+        <div id="messages-container">
+            <div id="notificationContainer" class="card mt-3">
+                <div class="card-body">
+                    <h5>Sündmused</h5>
+                    <div class="content-part">
+                        <?php foreach ($assignment['messages'] as $message): ?>
+                            <?php if ($message['isNotification']): ?>
+                                <div class="notification-item">
+                                    <i class="fa fa-bell notification-icon"></i>
+                                    <div class="notification-text">
+                                        <p class="fw-bold mb-1"><?= $message['content'] ?></p>
+                                    </div>
+                                    <small class="notification-time text-muted"><?= $message['createdAt'] ?></small>
+                                </div>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            </div>
+
+        </div>
 
 </div>
 <script>
@@ -771,135 +790,153 @@
         document.removeEventListener('click', hideContextMenu);
     }
 
-    function openStudentModal(isStudent, studentId = null) {
-        const modalTitle = document.getElementById('studentName');
-        const solutionInputContainer = document.getElementById('solutionInputContainer');
-        const solutionInput = document.getElementById('solutionInput');
-        const solutionUrlContainer = document.getElementById('solutionUrlContainer');
-        const submitButton = document.getElementById('submitButton');
-        const criteriaContainer = document.getElementById('checkboxesContainer');
-        const student = assignment.students[studentId];
-        currentStudentId = studentId;
+function openStudentModal(isStudent, studentId = null) {
+    const modalTitle = document.getElementById('studentName');
+    const solutionInputContainer = document.getElementById('solutionInputContainer');
+    const solutionInput = document.getElementById('solutionInput');
+    const solutionUrlContainer = document.getElementById('solutionUrlContainer');
+    const submitButton = document.getElementById('submitButton');
+    const criteriaContainer = document.getElementById('checkboxesContainer');
+    const gradeSection = document.getElementById('gradeSection');
+    const commentSection = document.getElementById('commentSection');
+    const commentList = document.getElementById('commentList');
+    currentStudentId = studentId;
 
-        if (isStudent) {
-            modalTitle.textContent = 'Sisesta Lahendus';
-            solutionInputContainer.style.display = 'block'; // Show the input for students to enter a link
-            submitButton.textContent = student.studentActionButtonName;
-            submitButton.disabled = true; // Initially disable the "Esita" button
+    // Clear previous data
+    modalTitle.textContent = '';
+    solutionInputContainer.style.display = 'none';
+    solutionInput.value = '';
+    solutionUrlContainer.innerHTML = '';
+    criteriaContainer.innerHTML = '';
+    if (gradeSection) gradeSection.style.display = 'none';
+    commentSection.style.display = 'none';
+    submitButton.textContent = '';
+    submitButton.disabled = true;
+    commentList.innerHTML = '';
 
+    // Fetch data from the server
+    ajax('assignments/getUserAssignmentDetails', {
+        assignmentId: assignment.assignmentId,
+        userId: studentId
+    }, function (res) {
+        if (res.status === 200) {
+            const data = res.data;
+            modalTitle.textContent = data.studentName;
+            if (isStudent) {
+                solutionInputContainer.style.display = 'block';
+                submitButton.textContent = data.studentActionButtonName;
+                submitButton.disabled = true;
 
-            solutionInput.addEventListener('input', updateSubmitButtonState);
+                solutionInput.addEventListener('input', updateSubmitButtonState);
+                document.getElementById('checkboxesContainer').addEventListener('change', function (event) {
+                    if (event.target && event.target.type === 'checkbox') {
+                        updateButtonState();
+                    }
+                });
 
-            document.getElementById('checkboxesContainer').addEventListener('change', function (event) {
-                if (event.target && event.target.type === 'checkbox') {
-                    updateButtonState();
-                }
-            });
+                let isValidUrl = false;
 
-            solutionInput.addEventListener('input', updateSubmitButtonState);
+                async function updateSubmitButtonState() {
+                    const solutionUrlValue = solutionInput.value.trim();
+                    const solutionInputFeedback = document.getElementById('solutionInputFeedback');
 
-            let isValidUrl = false;
-
-            async function updateSubmitButtonState() {
-                const solutionUrlValue = solutionInput.value.trim();
-                const solutionInputFeedback = document.getElementById('solutionInputFeedback');
-
-                if (solutionUrlValue === '') {
-                    solutionInputFeedback.textContent = '';
-                    submitButton.disabled = true;
-                    return;
-                }
-                try {
-                    ajax('assignments/validateAndCheckLinkAccessibility', {
-                        solutionUrl: solutionUrlValue
-                    }, function (res) {
-                        if (res.status === 200) {
-                            solutionInputFeedback.textContent = 'Link on valideeritud ja kättesaadav.';
-                            solutionInputFeedback.style.color = 'green';
-                            isValidUrl = true;
+                    if (solutionUrlValue === '') {
+                        solutionInputFeedback.textContent = '';
+                        submitButton.disabled = true;
+                        return;
+                    }
+                    try {
+                        ajax('assignments/validateAndCheckLinkAccessibility', {
+                            solutionUrl: solutionUrlValue
+                        }, function (res) {
+                            if (res.status === 200) {
+                                solutionInputFeedback.textContent = 'Link on valideeritud ja kättesaadav.';
+                                solutionInputFeedback.style.color = 'green';
+                                isValidUrl = true;
+                                updateButtonState();
+                            }
+                        }, function (error) {
+                            solutionInputFeedback.textContent = error || 'Link on vigane või kättesaamatu.';
+                            solutionInputFeedback.style.color = 'red';
+                            isValidUrl = false;
                             updateButtonState();
-                        }
-                    }, function (error) {
-                        solutionInputFeedback.textContent = error || 'Link on vigane või kättesaamatu.';
+                        });
+                    } catch (error) {
+                        solutionInputFeedback.textContent = 'Tekkis viga URL-i valideerimisel';
                         solutionInputFeedback.style.color = 'red';
                         isValidUrl = false;
                         updateButtonState();
-                    });
-                } catch (error) {
-                    solutionInputFeedback.textContent = 'Tekkis viga URL-i valideerimisel';
-                    solutionInputFeedback.style.color = 'red';
-                    isValidUrl = false;
+                    }
+
                     updateButtonState();
                 }
 
-                updateButtonState();
-            }
+                function updateButtonState() {
+                    const allChecked = Array.from(document.querySelectorAll('#checkboxesContainer input[type="checkbox"]'))
+                        .every(cb => cb.checked);
 
-            function updateButtonState() {
-                const allChecked = Array.from(document.querySelectorAll('#checkboxesContainer input[type="checkbox"]'))
-                    .every(cb => cb.checked);
-
-                submitButton.disabled = !(allChecked && isValidUrl && student.isDisabledStudentActionButton === '');
-            }
-
-        } else {
-            const gradeSection = document.getElementById('gradeSection');
-            const commentSection = document.getElementById('commentSection');
-            modalTitle.textContent = student.studentName;
-            gradeSection.style.display = 'block';
-            commentSection.style.display = 'block';
-            solutionInputContainer.style.display = 'none';
-            submitButton.textContent = 'Salvesta';
-            submitButton.disabled = false;
-
-            if (student.grade) {
-                document.querySelector(`#gradeRadioGroup input[value="${student.grade}"]`).checked = true;
+                    submitButton.disabled = !(allChecked && isValidUrl && data.isDisabledStudentActionButton === '');
+                }
             } else {
-                document.querySelectorAll('#gradeRadioGroup input[type="radio"]').forEach(rb => {
-                    rb.checked = false;
-                });
+                if (gradeSection) gradeSection.style.display = 'block';
+                commentSection.style.display = 'block';
+                submitButton.textContent = 'Salvesta';
+                submitButton.disabled = false;
+
+                if (data.userGrade && gradeSection) {
+                    document.querySelector(`#gradeRadioGroup input[value="${data.userGrade}"]`).checked = true;
+                } else if (gradeSection) {
+                    document.querySelectorAll('#gradeRadioGroup input[type="radio"]').forEach(rb => {
+                        rb.checked = false;
+                    });
+                }
+
+                if (data.comment) {
+                    document.getElementById('studentComment').value = data.comment;
+                } else {
+                    document.getElementById('studentComment').value = '';
+                }
             }
 
-            if (student.comment) {
-                document.getElementById('studentComment').value = student.comment;
+            if (data.solutionUrl) {
+                solutionUrlContainer.innerHTML = `
+                <?php if ($isStudent): ?>
+                    <p class="pt-2 mb-0">Juba esitatud lahendus:</p>
+                <?php endif?>
+                <a href="${data.solutionUrl}" id="solutionUrl" target="_blank" rel="noopener noreferrer">${data.solutionUrl}</a>`;
             } else {
-                document.getElementById('studentComment').value = '';
+                solutionUrlContainer.innerHTML = 'Link puudub';  // Display plain text if no link
             }
+
+            data.criteria.forEach(criterion => {
+                const isCompleted = criterion.fulfilled;
+                criteriaContainer.innerHTML += `
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="criterion_${criterion.criterionId}" ${isCompleted ? 'checked' : ''}>
+                    <label class="form-check-label" for="criterion_${criterion.criterionId}">
+                        ${criterion.criterionName}
+                    </label>
+                </div>
+            `;
+            });
+
+            // Populate comments
+            data.comments.forEach(comment => {
+                commentList.innerHTML += `
+                <div class="comment-item">
+                    <p>${comment.comment}</p>
+                    <small>${comment.assignmentCommentCreatedAt}</small>
+                </div>
+            `;
+            });
+
+            const modal = new bootstrap.Modal(document.getElementById('studentModal'));
+            modal.show();
         }
-
-        if (student.solutionUrl) {
-            solutionUrlContainer.innerHTML = `
-            <?php if ($isStudent): ?>
-                <p class="pt-2 mb-0">Juba esitatud lahendus:</p>
-            <?php endif?>
-            <a href="${student.solutionUrl}" id="solutionUrl" target="_blank" rel="noopener noreferrer">${student.solutionUrl}</a>`;
-        } else {
-            solutionUrlContainer.innerHTML = 'Link puudub';  // Display plain text if no link
-        }
-
-        criteriaContainer.innerHTML = '';
-
-
-        Object.keys(assignment.criteria).forEach(criteriaId => {
-            const criterion = assignment.criteria[criteriaId];
-            const isCompleted = assignment.students[studentId]?.userDoneCriteria[criteriaId]?.completed;
-
-
-            criteriaContainer.innerHTML += `
-            <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="criterion_${criteriaId}" ${isCompleted ? 'checked' : ''}>
-                <label class="form-check-label" for="criterion_${criteriaId}">
-                    ${criterion.criteriaName}
-                </label>
-            </div>
-        `;
-        });
-
-        const modal = new bootstrap.Modal(document.getElementById('studentModal'));
-        modal.show();
-    }
-
-    function saveStudentCriteria() {
+    }, function (error) {
+        alert(error ?? 'Tekkis viga serveriga suhtlemisel.');
+    });
+}    function saveStudentCriteria() {
         const criteria = getCriteriaList('#requiredCriteria input[type="checkbox"]');
         ajax(`assignments/saveStudentCriteria`, {
                 assignmentId: assignment.assignmentId,
