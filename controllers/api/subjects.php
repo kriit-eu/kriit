@@ -14,7 +14,7 @@ class subjects extends Controller
         if ($existingSubject) {
             Db::update('subjects', [
                 'isSynchronized' => 1
-            ],'tahvelSubjectId = ?', [$tahvelSubjectId]);
+            ], 'tahvelSubjectId = ?', [$tahvelSubjectId]);
             stop(200, 'Subject is synchronized');
         } else {
             stop(400, 'Subject not found');
@@ -23,24 +23,42 @@ class subjects extends Controller
 
     function subjectsSynchronizeData(): void
     {
-        $tahvelSubjectsIds = $_POST['tahvelSubjectIds'];
-        $data = [];
+        // Get IDs from POST data and convert to integers
+        $subjectIds = array_map('intval', $_POST['tahvelSubjectIds'] ?? []);
 
-        $existingSubjects = Db::getAll("SELECT tahvelSubjectId, isSynchronized FROM subjects WHERE tahvelSubjectId IN (" . implode(',', array_map('intval', $tahvelSubjectsIds)) . ")");
-
-        $existingSubjectsMap = [];
-        foreach ($existingSubjects as $subject) {
-            $existingSubjectsMap[$subject['tahvelSubjectId']] = $subject['isSynchronized'];
+        // If no IDs provided, return empty array
+        if (!$subjectIds) {
+            stop(200, []);
         }
 
-        foreach ($tahvelSubjectsIds as $tahvelSubjectId) {
-            $isSynchronized = $existingSubjectsMap[$tahvelSubjectId] ?? false;
+        // Create placeholders for parameterized query
+        $placeholders = implode(',', array_fill(0, count($subjectIds), '?'));
+
+        // SQL query to fetch subjects
+        // Execute query with IDs as parameters
+        $subjects = Db::getAll("
+            SELECT tahvelSubjectId, isSynchronized, subjectName, groupName
+            FROM subjects
+            JOIN `groups` USING (groupId)
+            WHERE tahvelSubjectId IN ($placeholders)
+        ", $subjectIds);
+
+        // Map subjects by their IDs for easy access
+        $subjectsById = array_column($subjects, null, 'tahvelSubjectId');
+
+        // Prepare the data to return
+        $data = [];
+        foreach ($subjectIds as $id) {
+            $subject = $subjectsById[$id] ?? [];
             $data[] = [
-                'tahvelSubjectId' => $tahvelSubjectId,
-                'isSynchronized' => (bool)$isSynchronized
+                'tahvelSubjectId' => $id,
+                'subjectName'     => $subject['subjectName'] ?? '',
+                'groupName'       => $subject['groupName'] ?? '',
+                'isSynchronized'  => !empty($subject['isSynchronized']),
             ];
         }
 
+        // Return the data with HTTP status 200
         stop(200, $data);
     }
 }
