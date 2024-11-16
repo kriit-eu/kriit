@@ -130,10 +130,11 @@ function ajax(url, options, callback_or_redirect_url, error_callback) {
 
         })
         .done(function (response) {
-            let json = tryToParseJSON(response);
+            // debugger;
+            let parsedResponse = (typeof response === 'object' && response !== null) ? response : tryToParseJSON(response);
 
             console.log('.done');
-            if (json === false) {
+            if (parsedResponse === false) {
 
                 // Send error report
                 $.post('email/send_error_report', {
@@ -145,35 +146,35 @@ function ajax(url, options, callback_or_redirect_url, error_callback) {
                 return false;
 
 
-            } else if (json.status === 500) {
+            } else if (parsedResponse.status === 500) {
 
                 // Send error report
                 $.post('email/send_error_report', {
-                    javascript_received_json_payload_that_caused_the_error: json
+                    javascript_received_json_payload_that_caused_the_error: parsedResponse
                 });
 
 
                 if (typeof error_callback === 'function') {
-                    error_callback(json);
+                    error_callback(parsedResponse);
                 } else {
-                    show_error_modal(json.data);
+                    show_error_modal(parsedResponse.data);
                 }
 
                 return false;
 
 
-            } else if (json.status.toString()[0] !== '2') {
+            } else if (parsedResponse.status.toString()[0] !== '2') {
 
                 if (typeof error_callback === 'function') {
-                    error_callback(json);
+                    error_callback(parsedResponse);
                 } else {
-                    show_error_modal(json.data);
+                    show_error_modal(parsedResponse.data);
                 }
 
             } else {
 
                 if (typeof callback_or_redirect_url === 'function') {
-                    callback_or_redirect_url(json);
+                    callback_or_redirect_url(parsedResponse);
                 } else if (typeof callback_or_redirect_url === 'string') {
                     location.href = callback_or_redirect_url;
                 } else if (callback_or_redirect_url === RELOAD) {
