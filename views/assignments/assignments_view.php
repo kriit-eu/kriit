@@ -345,7 +345,7 @@
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="editAssignmentModalLabel">Muuta ülesanne</h5>
+                        <h5 class="modal-title" id="editAssignmentModalLabel">Ülesande muutmine</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
@@ -369,7 +369,7 @@
 
                             <!-- Block for criteria management -->
                             <div class="mb-3">
-                                <h5>Kriteeriumid</h5>
+                                <h5>Ülesande kriteeriumid</h5>
                                 <div id="editCriteriaContainer">
                                     <?php foreach ($assignment['criteria'] as $criterion): ?>
                                         <div class="criteria-row">
@@ -486,16 +486,16 @@
                         </div>
                     <?php endif; ?>
                     <div id="studentGradeCriteriaContainer">
-                        <h6 class="fw-bold">Kriteeriumid</h6>
+                        <h6 class="fw-bold">Täidetud kriteeriumid</h6>
                         <div id="checkboxesContainer">
                         </div>
                     </div>
                     <div id="commentSection" class="mb-3">
-                        <label for="studentComment" class="form-label fw-bold">Suhtlus</label>
+                        <label for="studentComment" class="form-label fw-bold">Kommentaarid</label>
                         <div id="commentList"></div>
                         <br />
                         <textarea class="form-control" id="studentComment" rows="3"
-                                  placeholder="Lisa kommentaar siia..."></textarea>
+                                  placeholder="Sinu kommentaar"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">

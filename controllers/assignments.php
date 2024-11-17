@@ -161,29 +161,29 @@ class assignments extends Controller
         $this->assignment = $assignment;
     }
 
-function ajax_getUserAssignmentDetails(): void
-{
-    $assignmentId = $_POST['assignmentId'];
-    $userId = $_POST['userId'];
+    function ajax_getUserAssignmentDetails(): void
+    {
+        $assignmentId = $_POST['assignmentId'];
+        $userId = $_POST['userId'];
 
-    $this->checkIfUserHasPermissionForAction($assignmentId) || stop(403, 'You do not have permission for this action.');
+        $this->checkIfUserHasPermissionForAction($assignmentId) || stop(403, 'You do not have permission for this action.');
 
-    // Get the user's solution URL
-    $solutionUrl = Db::getOne('SELECT solutionUrl FROM userAssignments WHERE userId = ? AND assignmentId = ?', [$userId, $assignmentId]);
+        // Get the user's solution URL
+        $solutionUrl = Db::getOne('SELECT solutionUrl FROM userAssignments WHERE userId = ? AND assignmentId = ?', [$userId, $assignmentId]);
 
-    // Get the user's grade
-    $userGrade = Db::getOne('SELECT userGrade FROM userAssignments WHERE userId = ? AND assignmentId = ?', [$userId, $assignmentId]);
+        // Get the user's grade
+        $userGrade = Db::getOne('SELECT userGrade FROM userAssignments WHERE userId = ? AND assignmentId = ?', [$userId, $assignmentId]);
 
-    // Get the list of criteria with their fulfilled/unfulfilled state
-    $criteria = Db::getAll('
+        // Get the list of criteria with their fulfilled/unfulfilled state
+        $criteria = Db::getAll('
         SELECT c.criterionId, c.criterionName, IF(udc.criterionId IS NULL, 0, 1) AS fulfilled
         FROM criteria c
         LEFT JOIN userDoneCriteria udc ON c.criterionId = udc.criterionId AND udc.userId = ?
         WHERE c.assignmentId = ?
     ', [$userId, $assignmentId]);
 
-    // Get all comments related to the user from the assignmentComments table
-    $comments = Db::getAll('
+        // Get all comments related to the user from the assignmentComments table
+        $comments = Db::getAll('
         SELECT userName, comment, assignmentCommentCreatedAt
         FROM assignmentComments
         JOIN users USING(userId)
@@ -191,21 +191,22 @@ function ajax_getUserAssignmentDetails(): void
         ORDER BY assignmentCommentCreatedAt ASC
     ', [$userId, $assignmentId]);
 
-    // Return the data as a JSON response
-    stop(200, [
-        'solutionUrl' => $solutionUrl,
-        'userGrade' => $userGrade,
-        'criteria' => $criteria,
-        'comments' => $comments
-    ]);
-}
-function ajax_checkCriterionNameSize()
+        // Return the data as a JSON response
+        stop(200, [
+            'solutionUrl' => $solutionUrl,
+            'userGrade' => $userGrade,
+            'criteria' => $criteria,
+            'comments' => $comments
+        ]);
+    }
+
+    function ajax_checkCriterionNameSize()
     {
         $criterionName = $_POST['criterionName'];
 
         $lengthInBytes = mb_strlen($criterionName, '8bit');
 
-        $maxBytes = (int) Db::getOne("
+        $maxBytes = (int)Db::getOne("
             SELECT CHARACTER_MAXIMUM_LENGTH
             FROM INFORMATION_SCHEMA.COLUMNS
             WHERE TABLE_NAME = 'criteria'
@@ -406,19 +407,16 @@ function ajax_checkCriterionNameSize()
 
         if ($existAssignment['assignmentName'] !== $assignmentName) {
             $message = "$_POST[teacherName] muutis ülesande nimeks '$assignmentName'.";
-            $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
             Activity::create(ACTIVITY_UPDATE_ASSIGNMENT, $this->auth->userId, $assignmentId, "Changed assignment from '$existAssignment[assignmentName]' to '$assignmentName'");
         }
         if ($existAssignment['assignmentInstructions'] !== $assignmentInstructions) {
             $message = "$_POST[teacherName] muutis ülesande juhendiks '$assignmentInstructions'.";
-            $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
             Activity::create(ACTIVITY_UPDATE_ASSIGNMENT, $this->auth->userId, $assignmentId, "Changed assignment instructions from '$existAssignment[assignmentInstructions]' to '$assignmentInstructions'");
         }
 
         if ($existAssignment['assignmentDueAt'] !== $assignmentDueAt) {
             $date = date('d.m.Y', strtotime($assignmentDueAt));
             $message = "$_POST[teacherName] muutis ülesande tähtajaks '$date'.";
-            $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
             Activity::create(ACTIVITY_UPDATE_ASSIGNMENT, $this->auth->userId, $assignmentId, "Changed assignment due date from '$existAssignment[assignmentDueAt]' to '$assignmentDueAt'");
         }
 
@@ -446,14 +444,12 @@ function ajax_checkCriterionNameSize()
             if (!$existCriterion && $completed === 'true') {
                 Db::insert('userDoneCriteria', ['userId' => $studentId, 'criterionId' => $criterionId]);
                 if ($this->auth->userIsAdmin || $this->auth->userId == $_POST['teacherId']) {
-                    $message = "$_POST[teacherName] märkis õpilasele $_POST[studentName] kriteeriumi '$criterionName' tehtuks.";
-                    $this->saveMessage($_POST['assignmentId'], $_POST['teacherId'], $message, true);
+                    Activity::create(ACTIVITY_TOGGLE_CRITERION, $this->auth->userId, $_POST['assignmentId'], "Set criterion '$criterionName' as completed for $_POST[studentName]");
                 }
             } elseif ($existCriterion && $completed === 'false') {
                 Db::delete('userDoneCriteria', 'userId = ? AND criterionId = ?', [$studentId, $criterionId]);
                 if ($this->auth->userIsAdmin || $this->auth->userId == $_POST['teacherId']) {
-                    $message = "$_POST[teacherName] märkis õpilasele $_POST[studentName] kriteeriumi '$criterionName' mittetehtuks.";
-                    $this->saveMessage($_POST['assignmentId'], $_POST['teacherId'], $message, true);
+                    Activity::create(ACTIVITY_TOGGLE_CRITERION, $this->auth->userId, $_POST['assignmentId'], "Set criterion '$criterionName' as not completed for $_POST[studentName]");
                 }
 
             }
@@ -462,23 +458,39 @@ function ajax_checkCriterionNameSize()
 
     private function saveOrUpdateUserAssignment($studentId, $assignmentId, $grade, $comment): bool
     {
-        $existUserAssignment = Db::getFirst('SELECT * FROM userAssignments WHERE userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
+        $exisingData = Db::getFirst('SELECT * FROM userAssignments JOIN users USING(userId) WHERE userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
         $isUpdated = false;
 
-        if (!$existUserAssignment) {
-            Db::insert('userAssignments', ['userId' => $studentId, 'assignmentId' => $assignmentId, 'userGrade' => $grade, 'assignmentStatusId' => $grade ? 3 : 1, 'comment' => $comment]);
-            $message = "$_POST[teacherName] lisas õpilasele $_POST[studentName] hindeks: $grade";
-            $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
-        } else {
-            Db::update('userAssignments', ['userGrade' => $grade, 'assignmentStatusId' => $grade ? 3 : $existUserAssignment['assignmentStatusId'], 'comment' => $existUserAssignment['userGrade'] !== $grade ? "" : $comment], 'userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
-            if ($existUserAssignment['userGrade'] !== $grade) {
-                $message = "$_POST[teacherName] muutis õpilase $_POST[studentName] hinnet: $existUserAssignment[userGrade] -> $grade";
-                $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
+        if ($exisingData) {
+
+            Db::update('userAssignments',
+                [
+                    'userGrade' => $grade,
+                    'assignmentStatusId' => $grade ? 3 : $exisingData['assignmentStatusId'],
+                    'comment' => $exisingData['userGrade'] !== $grade ? "" : $comment],
+                'userId = ? AND assignmentId = ?',
+                [$studentId, $assignmentId]);
+
+            if ($exisingData['userGrade'] !== $grade) {
+                Activity::create(ACTIVITY_UPDATE_GRADE, $this->auth->userId, $assignmentId,
+                    "Changed grade from $exisingData[userGrade] to $grade for $exisingData[userName]");
             }
 
             $isUpdated = true;
-        }
 
+        } else {
+
+            $student = Db::getFirst('SELECT userName FROM users WHERE userId = ?', [$studentId]);
+
+            Db::insert('userAssignments', [
+                'userId' => $studentId,
+                'assignmentId' => $assignmentId,
+                'userGrade' => $grade,
+                'assignmentStatusId' => $grade ? 3 : 1, 'comment' => $comment]);
+
+            Activity::create(ACTIVITY_ADD_GRADE, $this->auth->userId, $assignmentId,
+                "Added grade $grade for $student[userName]");
+        }
         return $isUpdated;
     }
 
@@ -578,10 +590,9 @@ function ajax_checkCriterionNameSize()
         if (count($oldCriteria) > 0) {
             foreach ($criteria as $criterion) {
                 if (!array_key_exists($criterion['criterionId'], $oldCriteria)) {
-                    $message = "$_POST[teacherName] eemaldas kriteeriumi '$criterion[criterionName]'.";
-                    $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
                     Db::delete('userDoneCriteria', 'criterionId = ?', [$criterion['criterionId']]);
                     Db::delete('criteria', 'criterionId = ?', [$criterion['criterionId']]);
+                    Activity::create(ACTIVITY_DELETE_CRITERION, $this->auth->userId, $assignmentId, "Deleted criterion '$criterion[criterionName]'");
                 }
             }
         }
@@ -589,8 +600,7 @@ function ajax_checkCriterionNameSize()
         if (count($newCriteria) > 0) {
             foreach ($newCriteria as $criterionName) {
                 Db::insert('criteria', ['assignmentId' => $assignmentId, 'criterionName' => $criterionName]);
-                $message = "$_POST[teacherName] lisas uue kriteeriumi '$criterionName'.";
-                $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
+                Activity::create(ACTIVITY_ADD_CRITERION, $this->auth->userId, $assignmentId, "Added criterion '$criterionName'");
             }
         }
     }
@@ -625,7 +635,6 @@ function ajax_checkCriterionNameSize()
         $path = $parsedUrl['path'] ?? '';
 
 
-
         if ($host === 'github.com') {
             $githubCommitUrl = '/\/commit\/[0-9a-fA-F]{40}/';
             $githubRepoUrl = '/\/[a-zA-Z0-9-]+\/[a-zA-Z0-9-]+/';
@@ -657,7 +666,7 @@ function ajax_checkCriterionNameSize()
 
     private function saveMessage($assignmentId, $studentId, $userId, $content, $isNotification = false): void
     {
-         Db::insert('assignmentComments', [
+        Db::insert('assignmentComments', [
             'assignmentId' => $assignmentId,
             'userId' => $studentId,
             'assignmentCommentAuthorId' => $userId,
@@ -665,6 +674,7 @@ function ajax_checkCriterionNameSize()
             'assignmentCommentCreatedAt' => date('Y-m-d H:i:s')
         ]);
     }
+
     private function sendNotificationToEmail($receiverEmail, $subject, $content): void
     {
         Mail::send(

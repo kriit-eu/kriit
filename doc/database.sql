@@ -95,10 +95,10 @@ CREATE TABLE `assignmentComments` (
   `userId` int unsigned NOT NULL,
   `assignmentId` int unsigned NOT NULL,
   `comment` text,
-  PRIMARY KEY (`userId`,`assignmentId`),
-  KEY `assignmentComments_assignments_assignmentId_fk` (`assignmentId`),
-  CONSTRAINT `assignmentComments_assignments_assignmentId_fk` FOREIGN KEY (`assignmentId`) REFERENCES `assignments` (`assignmentId`),
-  CONSTRAINT `assignmentComments_users_userId_fk` FOREIGN KEY (`userId`) REFERENCES `users` (`userId`)
+  `assignmentCommentId` int unsigned NOT NULL AUTO_INCREMENT,
+  `assignmentCommentCreatedAt` datetime DEFAULT NULL,
+  PRIMARY KEY (`assignmentCommentId`),
+  KEY `assignmentComments_assignments_assignmentId_fk` (`assignmentId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
@@ -404,8 +404,8 @@ CREATE TABLE `settings` (
 LOCK TABLES `settings` WRITE;
 /*!40000 ALTER TABLE `settings` DISABLE KEYS */;
 INSERT INTO `settings` VALUES
-('projectVersion','84b9b5f'),
-('translationUpdateLastRun','2024-08-14 14:29:55');
+('projectVersion','96a6c4a'),
+('translationUpdateLastRun','2024-11-17 11:05:14');
 /*!40000 ALTER TABLE `settings` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -827,4 +827,4 @@ UNLOCK TABLES;
 /*!50503 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-11-17 11:19:35
+-- Dump completed on 2024-11-17 12:25:01

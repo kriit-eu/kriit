@@ -1,10 +1,18 @@
--- Add the new column assignmentCommentId
+-- Add the new column assignmentCommentId if it does not exist
 ALTER TABLE assignmentComments
-    ADD assignmentCommentId INT UNSIGNED;
+    ADD COLUMN IF NOT EXISTS assignmentCommentId INT UNSIGNED;
 
--- Prepopulate assignmentCommentId with increasing integers
-SET @count = 0;
-UPDATE assignmentComments SET assignmentCommentId = (@count := @count + 1) WHERE TRUE;
+ALTER TABLE assignmentComments
+    ADD COLUMN IF NOT EXISTS assignmentCommentCreatedAt DATETIME;
+
+-- Prepopulate assignmentCommentId with increasing integers if it is not already populated
+SET @count = (SELECT COALESCE(MAX(assignmentCommentId), 0) FROM assignmentComments);
+select @count;
+-- Check if there are rows with assignmentCommentId set to NULL
+IF EXISTS (SELECT 1 FROM assignmentComments WHERE assignmentCommentId IS NULL) THEN
+    -- Prepopulate assignmentCommentId with increasing integers if it is not already populated
+    UPDATE assignmentComments SET assignmentCommentId = (@count := @count + 1) WHERE assignmentCommentId IS NULL;
+END IF;
 
 -- Drop the procedure if it exists
 DROP PROCEDURE IF EXISTS DropForeignKeys;
@@ -45,12 +53,12 @@ DELIMITER ;
 -- Call the stored procedure to drop foreign keys
 CALL DropForeignKeys();
 
--- Remove the existing primary key
+-- Remove the existing primary key if it is not already set to assignmentCommentId
 ALTER TABLE assignmentComments DROP PRIMARY KEY;
 
--- Modify assignmentCommentId to be auto_increment and set it as the primary key
+-- Modify assignmentCommentId to be auto_increment and set it as the primary key if it is not already
 ALTER TABLE assignmentComments
-    MODIFY assignmentCommentId INT UNSIGNED AUTO_INCREMENT PRIMARY KEY;
+    MODIFY COLUMN assignmentCommentId INT UNSIGNED AUTO_INCREMENT PRIMARY KEY;
 
 -- Optionally, recreate the foreign key constraints if needed
 -- ALTER TABLE assignmentComments ADD CONSTRAINT fk_assignmentComments_assignments FOREIGN KEY (assignmentId) REFERENCES assignments(assignmentId);
