@@ -157,7 +157,7 @@ CREATE TABLE `assignments` (
   PRIMARY KEY (`assignmentId`),
   KEY `assignments_subjectId_fk` (`subjectId`),
   CONSTRAINT `assignments_subjectId_fk` FOREIGN KEY (`subjectId`) REFERENCES `subjects` (`subjectId`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -166,6 +166,8 @@ CREATE TABLE `assignments` (
 
 LOCK TABLES `assignments` WRITE;
 /*!40000 ALTER TABLE `assignments` DISABLE KEYS */;
+INSERT INTO `assignments` VALUES
+(1,'Aatomi lõhustamine','### **Aatomi lõhestamise juhised**\n\n1. **Valmistu suurteks muutusteks!**  \n   Enne töö alustamist veendu, et oled varustatud kaitseprillide, laborikitli ja julge südamega. Me pole kindlad, kas siin toimub suur pauk või lihtsalt pisike sähvatus.\n\n2. **Leia lõhestamiseks sobiv aatom.**  \n   Soovitame valida suurema aatomi, näiteks uraani (U). Kui sul on ainult süsinikku (C) käepärast, proovi, aga ära oota ilutulestikku.\n\n3. **Pane aatom pingesse.**  \n   Loo kontrollitud keskkond, kus aatom tunneb end piisavalt ebamugavalt, et mõra tekkida võiks. Mõtle termotuumasünteesi vastandile – see peab jahtuma, mitte kuumenema.\n\n4. **Vabasta neutronid.**  \n   Sihi täpselt – aatomi tuum ei anna alla lihtsalt! Lase neutroneid, kuni üks neist tabab märki ja vallandab reaktsiooni.\n\n5. **Jälgi ahelreaktsiooni.**  \n   Kui midagi toimub, peaksid nägema, kuidas aatomid hakkavad lõhenema ja kiirgama energiat. Kui midagi ei juhtu, oled leidnud universumi kõige laisema aatomi.\n\n6. **Energia kogumine.**  \n   Kui õnnestus, seadista süsteem (või vähemalt sule süda) energia turvaliseks püüdmiseks. Ära lase naabritel märgata, et sul kodus mini-tuumaelektrijaam töötab.\n\n7. **Puhasta segadus.**  \n   Lõhestatud aatomid võivad jätta radioaktiivseid jäätmeid. Palun ära viska neid prügikasti ega loputa kraanikausist alla – see tekitab halbu kommentaare naabruskonnas.\n\n8. **Raporteeri tulemused.**  \n   Kui sul õnnestus lõhestada aatom, jäta endast jälg ajalukku – keemiaõpikud vajavad kindlasti värskendust.\n\n---\n\n### **Hoiatus**  \n*Ära ürita seda katset kodus ilma täiskasvanu järelvalveta. Kui oled täiskasvanu, kutsu igaks juhuks teine täiskasvanu appi. Ja võib-olla tuumafüüsik.*',1,NULL,'2024-11-30','','');
 /*!40000 ALTER TABLE `assignments` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -336,7 +338,7 @@ CREATE TABLE `groups` (
   `groupId` int unsigned NOT NULL AUTO_INCREMENT COMMENT 'Autocreated',
   `groupName` varchar(50) NOT NULL COMMENT 'Autocreated',
   PRIMARY KEY (`groupId`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -345,6 +347,8 @@ CREATE TABLE `groups` (
 
 LOCK TABLES `groups` WRITE;
 /*!40000 ALTER TABLE `groups` DISABLE KEYS */;
+INSERT INTO `groups` VALUES
+(1,'TAK99');
 /*!40000 ALTER TABLE `groups` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -424,7 +428,7 @@ CREATE TABLE `subjects` (
   KEY `subjects_users_userId_fk` (`teacherId`),
   CONSTRAINT `subjects_groups_groupId_fk` FOREIGN KEY (`groupId`) REFERENCES `groups` (`groupId`),
   CONSTRAINT `subjects_users_userId_fk` FOREIGN KEY (`teacherId`) REFERENCES `users` (`userId`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -433,6 +437,8 @@ CREATE TABLE `subjects` (
 
 LOCK TABLES `subjects` WRITE;
 /*!40000 ALTER TABLE `subjects` DISABLE KEYS */;
+INSERT INTO `subjects` VALUES
+(1,'Keemia',1,1,1,0);
 /*!40000 ALTER TABLE `subjects` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -808,7 +814,7 @@ LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
 INSERT INTO `users` VALUES
 (1,'Kati Maasikas','41111111115',1,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo',NULL,1,NULL,NULL),
-(2,'Mati Vaarikas','31111111114',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo2',NULL,0,NULL,NULL);
+(2,'Mati Vaarikas','31111111114',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo2',1,0,'',NULL);
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -821,4 +827,4 @@ UNLOCK TABLES;
 /*!50503 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-10-20 16:10:01
+-- Dump completed on 2024-11-17 11:19:35
