@@ -18,7 +18,7 @@ class assignments extends Controller
                     a.assignmentId, a.assignmentName, a.assignmentInstructions, a.assignmentDueAt,
                     c.criterionId, c.criterionName,
                     u.userId AS studentId, u.userName AS studentName, u.groupId,
-                    ua.userGrade, ua.assignmentStatusId, ua.solutionUrl, ua.comment,
+                    ua.userGrade, ua.assignmentStatusId, ua.solutionUrl, ua.comments,
                     ast.statusName AS assignmentStatusName,
                     udc.criterionId AS userDoneCriterionId,
                     subj.teacherId AS teacherId,
@@ -81,7 +81,7 @@ class assignments extends Controller
                     'assignmentStatusName' => $row['assignmentStatusName'] ?? 'Esitamata',
                     'initials' => isset($row['studentName']) ? mb_substr($row['studentName'], 0, 1) . mb_substr($row['studentName'], mb_strrpos($row['studentName'], ' ') + 1, 1) : '',
                     'solutionUrl' => isset($row['solutionUrl']) ? trim($row['solutionUrl']) : '',
-                    'comment' => $row['comment'],
+                    'comments' => json_decode($row['comments'], true) ?? [],
                     'userDoneCriteria' => [],
                     'userDoneCriteriaCount' => 0,
                     'class' => '',
@@ -214,15 +214,8 @@ class assignments extends Controller
 
         if ($comment) {
             $existUserAssignment = Db::getFirst('SELECT * FROM userAssignments WHERE userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
-
-            if ($existUserAssignment && !$existUserAssignment['comment']) {
-                $message = "$_POST[teacherName] lisas õpilasele $_POST[studentName] tagasisideks: '$comment'";
-                $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
-            } elseif ($existUserAssignment && $existUserAssignment['comment'] !== $comment) {
-                $message = "$_POST[teacherName] muutis õpilase $_POST[studentName] tagasisidet: '$existUserAssignment[comment]' -> '$comment'";
-                $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
-            }
-
+            $message = "$_POST[teacherName] lisas õpilasele $_POST[studentName] tagasisideks: '$comment'";
+            $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
         }
 
         $isUpdated = $this->saveOrUpdateUserAssignment($studentId, $assignmentId, $grade, $comment);
@@ -265,22 +258,16 @@ class assignments extends Controller
         }
 
         if ($commentForTeacher) {
-            $existingComments = Db::getOne('SELECT comment FROM assignmentComments WHERE userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
-            if(empty($existingComments) {
-                $existingComments = [];
-            }
+            $existingComments = Db::getOne('SELECT comments FROM userAssignments WHERE userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
+            $comments = $existingComments ? json_decode($existingComments, true) : [];
 
-            // Convert existing comment from JSON to array
-            if ($existingComments) {
-                $existingComments = json_decode($existingComments, true);
-            }
+            $comments[] = [
+                'name' => Db::getOne('SELECT userName FROM users WHERE userId = ?', [$studentId]),
+                'comment' => trim($commentForTeacher),
+                'createdAt' => date('Y-m-d H:i:s')
+            ];
 
-            // Append new comment to existing comments
-            if (!$existingComments) {
-                Db::insert('assignmentComments', ['userId' => $studentId, 'assignmentId' => $assignmentId, 'comment' => $commentForTeacher]);
-            } elseif ($existingComments !== $commentForTeacher) {
-                Db::update('assignmentComments', ['comment' => $commentForTeacher], 'userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
-            }
+            Db::update('userAssignments', ['comments' => json_encode($comments)], 'userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
         }
 
         $mailData = $this->getSenderNameAndReceiverEmail($studentId, $_POST['teacherId']);
@@ -447,11 +434,14 @@ class assignments extends Controller
         $isUpdated = false;
 
         if (!$existUserAssignment) {
-            Db::insert('userAssignments', ['userId' => $studentId, 'assignmentId' => $assignmentId, 'userGrade' => $grade, 'assignmentStatusId' => $grade ? 3 : 1, 'comment' => $comment]);
+            Db::insert('userAssignments', ['userId' => $studentId, 'assignmentId' => $assignmentId, 'userGrade' => $grade, 'assignmentStatusId' => $grade ? 3 : 1, 'comments' => '[]']);
             $message = "$_POST[teacherName] lisas õpilasele $_POST[studentName] hindeks: $grade";
             $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
         } else {
-            Db::update('userAssignments', ['userGrade' => $grade, 'assignmentStatusId' => $grade ? 3 : $existUserAssignment['assignmentStatusId'], 'comment' => $existUserAssignment['userGrade'] !== $grade ? "" : $comment], 'userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
+            Db::update('userAssignments', [
+                'userGrade' => $grade,
+                'assignmentStatusId' => $grade ? 3 : $existUserAssignment['assignmentStatusId']
+            ], 'userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
             if ($existUserAssignment['userGrade'] !== $grade) {
                 $message = "$_POST[teacherName] muutis õpilase $_POST[studentName] hinnet: $existUserAssignment[userGrade] -> $grade";
                 $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);

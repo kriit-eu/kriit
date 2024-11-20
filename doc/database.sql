@@ -1,8 +1,8 @@
--- MariaDB dump 10.19  Distrib 10.11.9-MariaDB, for osx10.19 (arm64)
+-- MariaDB dump 10.19  Distrib 10.11.8-MariaDB, for debian-linux-gnu (x86_64)
 --
 -- Host: 127.0.0.1    Database: kriit
 -- ------------------------------------------------------
--- Server version	10.11.9-MariaDB
+-- Server version	10.11.8-MariaDB-0ubuntu0.24.04.1
 
 /*!50503 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!50503 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -87,38 +87,9 @@ CREATE TABLE `activityLog` (
 LOCK TABLES `activityLog` WRITE;
 /*!40000 ALTER TABLE `activityLog` DISABLE KEYS */;
 INSERT INTO `activityLog` VALUES
-('2024-11-19 18:52:42',2,1,1,NULL,NULL);
+('2024-11-19 18:52:42',2,1,1,NULL,NULL),
+('2024-11-20 12:55:28',3,2,17,1,NULL);
 /*!40000 ALTER TABLE `activityLog` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `assignmentComments`
---
-
-DROP TABLE IF EXISTS `assignmentComments`;
-/*!50503 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `assignmentComments` (
-  `userId` int unsigned NOT NULL,
-  `assignmentId` int unsigned NOT NULL,
-  `comment` text,
-  `assignmentCommentId` int unsigned NOT NULL AUTO_INCREMENT,
-  `assignmentCommentCreatedAt` datetime DEFAULT NULL,
-  PRIMARY KEY (`assignmentCommentId`),
-  KEY `assignmentComments_assignments_assignmentId_fk` (`assignmentId`),
-  KEY `fk_assignmentComments_userId` (`userId`),
-  CONSTRAINT `fk_assignmentComments_assignmentId` FOREIGN KEY (`assignmentId`) REFERENCES `assignments` (`assignmentId`),
-  CONSTRAINT `fk_assignmentComments_userId` FOREIGN KEY (`userId`) REFERENCES `users` (`userId`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-/*!50503 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `assignmentComments`
---
-
-LOCK TABLES `assignmentComments` WRITE;
-/*!40000 ALTER TABLE `assignmentComments` DISABLE KEYS */;
-/*!40000 ALTER TABLE `assignmentComments` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -658,7 +629,7 @@ CREATE TABLE `userAssignments` (
   `assignmentStatusId` tinyint unsigned NOT NULL,
   `userGrade` varchar(191) DEFAULT NULL,
   `solutionUrl` text,
-  `comment` text,
+  `comments` text NOT NULL DEFAULT '[]',
   `userAssignmentCreatedAt` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
   `userAssignmentEditedAt` datetime DEFAULT NULL,
   PRIMARY KEY (`assignmentId`,`userId`),
@@ -676,6 +647,8 @@ CREATE TABLE `userAssignments` (
 
 LOCK TABLES `userAssignments` WRITE;
 /*!40000 ALTER TABLE `userAssignments` DISABLE KEYS */;
+INSERT INTO `userAssignments` VALUES
+(1,2,2,NULL,'https://www.google.com/','[{\"comment\":\"Kommentaar\",\"createdAt\":\"2024-11-20 12:55:28\"}]','1970-01-01 00:00:00',NULL);
 /*!40000 ALTER TABLE `userAssignments` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -764,6 +737,8 @@ CREATE TABLE `userDoneCriteria` (
 
 LOCK TABLES `userDoneCriteria` WRITE;
 /*!40000 ALTER TABLE `userDoneCriteria` DISABLE KEYS */;
+INSERT INTO `userDoneCriteria` VALUES
+(1,2);
 /*!40000 ALTER TABLE `userDoneCriteria` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -842,4 +817,4 @@ UNLOCK TABLES;
 /*!50503 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-11-19 19:00:21
+-- Dump completed on 2024-11-20 13:02:52
