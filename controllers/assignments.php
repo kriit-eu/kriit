@@ -265,10 +265,20 @@ class assignments extends Controller
         }
 
         if ($commentForTeacher) {
-            $existingComment = Db::getOne('SELECT comment FROM assignmentComments WHERE userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
-            if (!$existingComment) {
+            $existingComments = Db::getOne('SELECT comment FROM assignmentComments WHERE userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
+            if(empty($existingComments) {
+                $existingComments = [];
+            }
+
+            // Convert existing comment from JSON to array
+            if ($existingComments) {
+                $existingComments = json_decode($existingComments, true);
+            }
+
+            // Append new comment to existing comments
+            if (!$existingComments) {
                 Db::insert('assignmentComments', ['userId' => $studentId, 'assignmentId' => $assignmentId, 'comment' => $commentForTeacher]);
-            } elseif ($existingComment !== $commentForTeacher) {
+            } elseif ($existingComments !== $commentForTeacher) {
                 Db::update('assignmentComments', ['comment' => $commentForTeacher], 'userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
             }
         }
