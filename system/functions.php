@@ -56,8 +56,8 @@ function get_translation_strings($lang)
 /**
  * Translates the text into currently selected language
  * @param $translationPhrase string The text to be translated
- * @param null $dynamic_source
- * @return string Translated text
+ * @param null $dynamic_source string The source of the translation
+ * @return string|null Translated text
  */
 function __(string $translationPhrase, $dynamic_source = null): ?string
 {

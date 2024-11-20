@@ -255,7 +255,7 @@ class admin extends Controller
 
     function AJAX_deleteAssignment()
     {
-        if (empty($_POST['assignmentId'])) {
+        if (empty($_POST['assignmentId']) || (int)$_POST['assignmentId'] <= 0) {
             stop(400, 'Invalid assignmentId');
         }
 
@@ -291,7 +291,7 @@ class admin extends Controller
     function AJAX_deleteStudent()
     {
 
-        if (empty($_POST['userId']) || !is_numeric($_POST['userId'])) {
+        if (empty($_POST['userId']) || (int)$_POST['userId'] <= 0) {
             stop(400, 'Invalid userId');
         }
 

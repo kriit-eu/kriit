@@ -9,7 +9,9 @@
 class Auth
 {
 
-    public $logged_in = FALSE;
+    public int $userId;
+    public bool $logged_in = FALSE;
+    public bool $userIsAdmin;
 
     function __construct()
     {
