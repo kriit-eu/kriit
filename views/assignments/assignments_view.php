@@ -255,6 +255,28 @@
         white-space: pre-wrap;
         text-align: left;
     }
+
+    .comment-row {
+        border: 1px solid #ddd;
+        padding: 5px;
+        margin-bottom: 5px;
+        border-radius: 3px;
+        background-color: #f9f9f9;
+    }
+    .comment-name {
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 2px;
+    }
+    .comment-text {
+        margin-top: 2px;
+        color: #555;
+    }
+    .comment-date {
+        margin-top: 2px;
+        font-size: 0.8em;
+        color: #999;
+    }
 </style>
 
 <div>
@@ -474,6 +496,7 @@
                     </div>
                     <div id="commentSection" class="mb-3">
                         <label for="studentComment" class="form-label fw-bold">Kommentaar</label>
+                        <div id="commentsContainer"></div>
                         <textarea class="form-control" id="studentComment" rows="3"
                                   placeholder="Lisa kommentaar siia..."></textarea>
                     </div>
@@ -530,8 +553,16 @@
             </div>
             <?php if ($isStudent): ?>
                 <div class="assignment-item">
-                    <div class="header-item">Kommentaar</div>
-                    <div class="body-item pre-wrap"><?= $s['comment'] ?></div>
+                    <div class="header-item">Kommentaarid</div>
+                    <div>
+                        <?php foreach ($s['comments'] as $comment): ?>
+                            <div class="comment-row p-2 border rounded bg-light mb-2">
+                                <div class="comment-name fw-bold text-dark mb-1"><?= isset($comment['name']) ? $comment['name'] : 'Tundmatu' ?></div>
+                                <div class="comment-text text-muted"><?= nl2br(htmlspecialchars($comment['comment'])) ?></div>
+                                <div class="comment-date text-secondary small"><?= $comment['createdAt'] ?></div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
                 </div>
 
             <?php endif; ?>
@@ -778,15 +809,46 @@
         const solutionUrlContainer = document.getElementById('solutionUrlContainer');
         const submitButton = document.getElementById('submitButton');
         const criteriaContainer = document.getElementById('checkboxesContainer');
+        const commentsContainer = document.getElementById('commentsContainer'); // Container for comments
         const student = assignment.students[studentId];
         currentStudentId = studentId;
+
+        // Reset comments container to ensure it's cleared before populating with new comments
+        commentsContainer.innerHTML = '';
+
+        // Populate comments section with Bootstrap cards
+        if (student && student.comments && student.comments.length > 0) {
+            student.comments.forEach(comment => {
+                const card = document.createElement('div');
+                card.classList.add('card', 'mb-3'); // Add Bootstrap card classes
+
+                // Card body
+                const cardBody = document.createElement('div');
+                cardBody.classList.add('card-body');
+
+                // Add comment content inside the card body
+                const commentContent = document.createElement('p');
+                commentContent.innerHTML = `
+                    ${comment.createdAt} <strong>${comment.name || 'Tundmatu'}</strong><br>
+                    <em>${comment.comment}</em>
+                `;
+                cardBody.appendChild(commentContent);
+
+                // Append the card body to the card
+                card.appendChild(cardBody);
+
+                // Append the card to the comments container
+                commentsContainer.appendChild(card);
+            });
+        } else {
+            commentsContainer.innerHTML = '<p>Kommentaare pole.</p>';
+        }
 
         if (isStudent) {
             modalTitle.textContent = 'Sisesta Lahendus';
             solutionInputContainer.style.display = 'block'; // Show the input for students to enter a link
             submitButton.textContent = student.studentActionButtonName;
             submitButton.disabled = true; // Initially disable the "Esita" button
-
 
             solutionInput.addEventListener('input', updateSubmitButtonState);
 
@@ -879,11 +941,9 @@
 
         criteriaContainer.innerHTML = '';
 
-
         Object.keys(assignment.criteria).forEach(criteriaId => {
             const criterion = assignment.criteria[criteriaId];
             const isCompleted = assignment.students[studentId]?.userDoneCriteria[criteriaId]?.completed;
-
 
             criteriaContainer.innerHTML += `
             <div class="form-check">

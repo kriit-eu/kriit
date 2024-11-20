@@ -9,18 +9,21 @@
 class Auth
 {
 
-    public $logged_in = FALSE;
+    public int $userId;
+    public bool $logged_in = FALSE;
+    public bool $userIsAdmin;
+    public string $userName;
 
     function __construct()
     {
 
-// Get the base path from BASE_URL
+        // Get the base path from BASE_URL
         $basePath = rtrim(parse_url(BASE_URL, PHP_URL_PATH), '/');
 
-// Remove the base path from REQUEST_URI to get the relative URI
+        // Remove the base path from REQUEST_URI to get the relative URI
         $relativeUri = substr($_SERVER['REQUEST_URI'], strlen($basePath));
 
-// Now check if the relative URI starts with '/api/'
+        // Now check if the relative URI starts with '/api/'
         if (str_starts_with($relativeUri, '/api/')) {
             if (!isset($_SERVER['HTTP_AUTHORIZATION'])) {
                 stop(400, 'No API key provided');

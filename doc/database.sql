@@ -1,8 +1,8 @@
--- MariaDB dump 10.19  Distrib 10.11.9-MariaDB, for osx10.19 (arm64)
+-- MariaDB dump 10.19  Distrib 10.11.8-MariaDB, for debian-linux-gnu (x86_64)
 --
 -- Host: 127.0.0.1    Database: kriit
 -- ------------------------------------------------------
--- Server version	10.11.9-MariaDB
+-- Server version	10.11.8-MariaDB-0ubuntu0.24.04.1
 
 /*!50503 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!50503 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -71,8 +71,13 @@ CREATE TABLE `activityLog` (
   `activityId` int unsigned NOT NULL COMMENT 'Autocreated',
   `id` int unsigned DEFAULT NULL,
   `details` text,
-  PRIMARY KEY (`activityLogId`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  PRIMARY KEY (`activityLogId`),
+  KEY `fk_activityLog_userId` (`userId`),
+  KEY `fk_activityLog_activityId` (`activityId`),
+  KEY `idx_activityLog_id` (`id`),
+  CONSTRAINT `fk_activityLog_activityId` FOREIGN KEY (`activityId`) REFERENCES `activities` (`activityId`),
+  CONSTRAINT `fk_activityLog_userId` FOREIGN KEY (`userId`) REFERENCES `users` (`userId`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -81,34 +86,10 @@ CREATE TABLE `activityLog` (
 
 LOCK TABLES `activityLog` WRITE;
 /*!40000 ALTER TABLE `activityLog` DISABLE KEYS */;
+INSERT INTO `activityLog` VALUES
+('2024-11-19 18:52:42',2,1,1,NULL,NULL),
+('2024-11-20 12:55:28',3,2,17,1,NULL);
 /*!40000 ALTER TABLE `activityLog` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `assignmentComments`
---
-
-DROP TABLE IF EXISTS `assignmentComments`;
-/*!50503 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `assignmentComments` (
-  `userId` int unsigned NOT NULL,
-  `assignmentId` int unsigned NOT NULL,
-  `comment` text,
-  PRIMARY KEY (`userId`,`assignmentId`),
-  KEY `assignmentComments_assignments_assignmentId_fk` (`assignmentId`),
-  CONSTRAINT `assignmentComments_assignments_assignmentId_fk` FOREIGN KEY (`assignmentId`) REFERENCES `assignments` (`assignmentId`),
-  CONSTRAINT `assignmentComments_users_userId_fk` FOREIGN KEY (`userId`) REFERENCES `users` (`userId`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-/*!50503 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `assignmentComments`
---
-
-LOCK TABLES `assignmentComments` WRITE;
-/*!40000 ALTER TABLE `assignmentComments` DISABLE KEYS */;
-/*!40000 ALTER TABLE `assignmentComments` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -156,8 +137,9 @@ CREATE TABLE `assignments` (
   `assignmentValidationFunction` text,
   PRIMARY KEY (`assignmentId`),
   KEY `assignments_subjectId_fk` (`subjectId`),
+  KEY `idx_assignments_tahvelJournalEntryId` (`tahvelJournalEntryId`),
   CONSTRAINT `assignments_subjectId_fk` FOREIGN KEY (`subjectId`) REFERENCES `subjects` (`subjectId`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -166,6 +148,8 @@ CREATE TABLE `assignments` (
 
 LOCK TABLES `assignments` WRITE;
 /*!40000 ALTER TABLE `assignments` DISABLE KEYS */;
+INSERT INTO `assignments` VALUES
+(1,'Aatomi lõhustamine','### **Aatomi lõhestamise juhised**\n\n1. **Valmistu suurteks muutusteks!**  \n   Enne töö alustamist veendu, et oled varustatud kaitseprillide, laborikitli ja julge südamega. Me pole kindlad, kas siin toimub suur pauk või lihtsalt pisike sähvatus.\n\n2. **Leia lõhestamiseks sobiv aatom.**  \n   Soovitame valida suurema aatomi, näiteks uraani (U). Kui sul on ainult süsinikku (C) käepärast, proovi, aga ära oota ilutulestikku.\n\n3. **Pane aatom pingesse.**  \n   Loo kontrollitud keskkond, kus aatom tunneb end piisavalt ebamugavalt, et mõra tekkida võiks. Mõtle termotuumasünteesi vastandile – see peab jahtuma, mitte kuumenema.\n\n4. **Vabasta neutronid.**  \n   Sihi täpselt – aatomi tuum ei anna alla lihtsalt! Lase neutroneid, kuni üks neist tabab märki ja vallandab reaktsiooni.\n\n5. **Jälgi ahelreaktsiooni.**  \n   Kui midagi toimub, peaksid nägema, kuidas aatomid hakkavad lõhenema ja kiirgama energiat. Kui midagi ei juhtu, oled leidnud universumi kõige laisema aatomi.\n\n6. **Energia kogumine.**  \n   Kui õnnestus, seadista süsteem (või vähemalt sule süda) energia turvaliseks püüdmiseks. Ära lase naabritel märgata, et sul kodus mini-tuumaelektrijaam töötab.\n\n7. **Puhasta segadus.**  \n   Lõhestatud aatomid võivad jätta radioaktiivseid jäätmeid. Palun ära viska neid prügikasti ega loputa kraanikausist alla – see tekitab halbu kommentaare naabruskonnas.\n\n8. **Raporteeri tulemused.**  \n   Kui sul õnnestus lõhestada aatom, jäta endast jälg ajalukku – keemiaõpikud vajavad kindlasti värskendust.\n\n---\n\n### **Hoiatus**  \n*Ära ürita seda katset kodus ilma täiskasvanu järelvalveta. Kui oled täiskasvanu, kutsu igaks juhuks teine täiskasvanu appi. Ja võib-olla tuumafüüsik.*',1,NULL,'2024-11-30','','');
 /*!40000 ALTER TABLE `assignments` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -183,7 +167,7 @@ CREATE TABLE `criteria` (
   PRIMARY KEY (`criterionId`),
   KEY `criteria_assignments_assignmentId_fk` (`assignmentId`),
   CONSTRAINT `criteria_assignments_assignmentId_fk` FOREIGN KEY (`assignmentId`) REFERENCES `assignments` (`assignmentId`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -192,6 +176,8 @@ CREATE TABLE `criteria` (
 
 LOCK TABLES `criteria` WRITE;
 /*!40000 ALTER TABLE `criteria` DISABLE KEYS */;
+INSERT INTO `criteria` VALUES
+(1,'Aatom peab olema lõhustatud',1);
 /*!40000 ALTER TABLE `criteria` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -336,7 +322,7 @@ CREATE TABLE `groups` (
   `groupId` int unsigned NOT NULL AUTO_INCREMENT COMMENT 'Autocreated',
   `groupName` varchar(50) NOT NULL COMMENT 'Autocreated',
   PRIMARY KEY (`groupId`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -345,6 +331,8 @@ CREATE TABLE `groups` (
 
 LOCK TABLES `groups` WRITE;
 /*!40000 ALTER TABLE `groups` DISABLE KEYS */;
+INSERT INTO `groups` VALUES
+(1,'TAK99');
 /*!40000 ALTER TABLE `groups` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -422,9 +410,10 @@ CREATE TABLE `subjects` (
   PRIMARY KEY (`subjectId`),
   KEY `subjects_groups_groupId_fk` (`groupId`),
   KEY `subjects_users_userId_fk` (`teacherId`),
+  KEY `idx_subjects_tahvelSubjectId` (`tahvelSubjectId`),
   CONSTRAINT `subjects_groups_groupId_fk` FOREIGN KEY (`groupId`) REFERENCES `groups` (`groupId`),
   CONSTRAINT `subjects_users_userId_fk` FOREIGN KEY (`teacherId`) REFERENCES `users` (`userId`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -433,6 +422,8 @@ CREATE TABLE `subjects` (
 
 LOCK TABLES `subjects` WRITE;
 /*!40000 ALTER TABLE `subjects` DISABLE KEYS */;
+INSERT INTO `subjects` VALUES
+(1,'Keemia',1,1,1,0);
 /*!40000 ALTER TABLE `subjects` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -638,7 +629,7 @@ CREATE TABLE `userAssignments` (
   `assignmentStatusId` tinyint unsigned NOT NULL,
   `userGrade` varchar(191) DEFAULT NULL,
   `solutionUrl` text,
-  `comment` text,
+  `comments` text NOT NULL DEFAULT '[]',
   `userAssignmentCreatedAt` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
   `userAssignmentEditedAt` datetime DEFAULT NULL,
   PRIMARY KEY (`assignmentId`,`userId`),
@@ -656,6 +647,8 @@ CREATE TABLE `userAssignments` (
 
 LOCK TABLES `userAssignments` WRITE;
 /*!40000 ALTER TABLE `userAssignments` DISABLE KEYS */;
+INSERT INTO `userAssignments` VALUES
+(1,2,2,NULL,'https://www.google.com/','[{\"comment\":\"Kommentaar\",\"createdAt\":\"2024-11-20 12:55:28\"}]','1970-01-01 00:00:00',NULL);
 /*!40000 ALTER TABLE `userAssignments` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -744,6 +737,8 @@ CREATE TABLE `userDoneCriteria` (
 
 LOCK TABLES `userDoneCriteria` WRITE;
 /*!40000 ALTER TABLE `userDoneCriteria` DISABLE KEYS */;
+INSERT INTO `userDoneCriteria` VALUES
+(1,2);
 /*!40000 ALTER TABLE `userDoneCriteria` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -796,6 +791,7 @@ CREATE TABLE `users` (
   `tahvelStudentId` int unsigned DEFAULT NULL,
   PRIMARY KEY (`userId`),
   KEY `users_groups_groupId_fk` (`groupId`),
+  KEY `idx_users_tahvelStudentId` (`tahvelStudentId`),
   CONSTRAINT `users_groups_groupId_fk` FOREIGN KEY (`groupId`) REFERENCES `groups` (`groupId`)
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
@@ -808,7 +804,7 @@ LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
 INSERT INTO `users` VALUES
 (1,'Kati Maasikas','41111111115',1,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo',NULL,1,NULL,NULL),
-(2,'Mati Vaarikas','31111111114',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo2',NULL,0,NULL,NULL);
+(2,'Mati Vaarikas','31111111114',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo2',1,0,'',NULL);
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -821,4 +817,4 @@ UNLOCK TABLES;
 /*!50503 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-10-20 16:10:01
+-- Dump completed on 2024-11-20 13:02:52
