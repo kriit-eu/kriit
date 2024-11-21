@@ -159,19 +159,27 @@ class cron extends Controller
     {
         $students = [];
         $data = Db::getAll("
-            SELECT
-                a.assignmentId, a.assignmentName, a.assignmentInstructions, a.assignmentDueAt,
-                subj.subjectName, t.userName AS teacherName,
-                u.userId AS studentId, u.userName AS studentName, u.groupId, u.userEmail AS studentEmail,
-                ua.assignmentStatusId
-            FROM assignments a
-            JOIN subjects subj ON a.subjectId = subj.subjectId
-            JOIN users t ON subj.teacherId = t.userId
-            LEFT JOIN groups g ON subj.groupId = g.groupId
-            LEFT JOIN users u ON u.groupId = g.groupId
-            LEFT JOIN userAssignments ua ON ua.assignmentId = a.assignmentId AND ua.userId = u.userId
-            WHERE a.assignmentDueAt < CURDATE() AND ua.assignmentStatusId IS NULL OR ua.assignmentStatusId = 1
-        ");
+            SELECT 
+                s.userName AS studentName,
+                s.userEmail AS studentEmail,
+                a.assignmentId,
+                a.assignmentName,
+                a.assignmentDueAt,
+                sub.subjectName,
+                t.userName AS teacherName
+            FROM users s
+            JOIN subjects sub ON s.groupId = sub.groupId
+            JOIN users t ON t.userId = sub.teacherId
+            JOIN assignments a ON a.subjectId = sub.subjectId
+            LEFT JOIN userAssignments ua 
+                ON ua.assignmentId = a.assignmentId AND ua.userId = s.userId
+            WHERE 
+                a.assignmentDueAt < CURDATE()
+                AND (
+                    ua.assignmentStatusId IS NULL
+                    OR ua.userGrade = 'MA'
+                    OR ua.userGrade < 3
+                );");
 
         if (!empty($data)) {
             foreach ($data as $entry) {
@@ -191,7 +199,6 @@ class cron extends Controller
                 $students[$studentId]['advertisements'][] = [
                     'assignmentId' => $entry['assignmentId'],
                     'assignmentName' => $entry['assignmentName'],
-                    'assignmentInstructions' => $entry['assignmentInstructions'],
                     'assignmentDueAt' => $entry['assignmentDueAt'],
                     'subjectName' => $entry['subjectName'],
                     'teacherName' => $entry['teacherName']
