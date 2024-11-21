@@ -10,7 +10,7 @@
 
     .modal-body {
         word-wrap: break-word;
-        word-break: break-all;
+        word-break: break-word;
     }
 
     #solutionUrl {
@@ -947,19 +947,20 @@
 
         criteriaContainer.innerHTML = '';
 
-        Object.keys(assignment.criteria).forEach(criteriaId => {
+        Object.keys(assignment.criteria).forEach((criteriaId, index) => {
             const criterion = assignment.criteria[criteriaId];
             const isCompleted = assignment.students[studentId]?.userDoneCriteria[criteriaId]?.completed;
 
             criteriaContainer.innerHTML += `
-            <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="criterion_${criteriaId}" ${isCompleted ? 'checked' : ''}>
-                <label class="form-check-label" for="criterion_${criteriaId}">
-                    ${criterion.criteriaName}
-                </label>
-            </div>
-        `;
+    <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="criterion_${criteriaId}" ${isCompleted ? 'checked' : ''}>
+        <label class="form-check-label" for="criterion_${criteriaId}">
+            ${index + 1}. ${criterion.criteriaName}
+        </label>
+    </div>
+    `;
         });
+
 
         const modal = new bootstrap.Modal(document.getElementById('studentModal'));
         modal.show();
