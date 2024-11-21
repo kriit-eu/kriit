@@ -310,7 +310,7 @@
     </div>
 
 
-    <div class="adaptive-background p-3 mb-5 mt-5">
+    <div id="criterionDisplay" class="adaptive-background p-3 mb-5 mt-5">
         <h5 class="mb-3">Kriteeriumid</h5>
         <form id="studentCriteriaForm">
             <div id="requiredCriteria">
@@ -664,6 +664,12 @@
         });
     }
 
+    // If no criteria exists, display warning (add class 'warning-bg' to element of id 'criterionDisplay')
+    
+    if (Array.isArray(assignment['criteria']) && assignment['criteria'].length === 0 || assignment['criteria'] === null) {
+        document.getElementById('criterionDisplay').classList.add('bg-warning');
+        document.getElementById('requiredCriteria').innerHTML = '<p class="text-center">Kriteeriumid puuduvad</p>';
+    }
 
     document.getElementById('requiredCriteria').addEventListener('change', function (event) {
         if (event.target && event.target.type === 'checkbox') {
