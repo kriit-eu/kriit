@@ -671,7 +671,7 @@ class admin extends Controller
         ];
 
         if (!empty($_POST['userPassword'])) {
-            $data['userPassword'] = $_POST['userPassword'];
+            $data['userPassword'] = password_hash($_POST['userPassword'], PASSWORD_DEFAULT);
         }
 
         return $data;
