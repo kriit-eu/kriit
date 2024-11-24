@@ -345,7 +345,7 @@
                                value="1" <?= $isCompleted ? 'checked' : '' ?>
                             <?= $isStudent ? '' : 'disabled' ?>>
                         <label class="form-check-label" for="criterion_<?= $criterion['criteriaId'] ?>">
-                            <?= $criterion['criteriaName'] ?>
+                            <?= htmlspecialchars($criterion['criteriaName'], ENT_QUOTES, 'UTF-8') ?>
                         </label>
                     </div>
                 <?php endforeach; ?>
@@ -398,7 +398,7 @@
                                                        disabled>
                                                 <label class="form-check-label"
                                                        for="edit_criterion_<?= $criterion['criteriaId'] ?>">
-                                                    <?= $criterion['criteriaName'] ?>
+                                                    <?= htmlspecialchars($criterion['criteriaName'], ENT_QUOTES, 'UTF-8') ?>
                                                 </label>
                                             </div>
                                             <button type="button" class="btn btn-danger btn-sm"
