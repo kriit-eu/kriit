@@ -60,6 +60,11 @@
         max-width: 100%;
     }
 
+    .form-check-label {
+        word-wrap: break-word;
+        word-break: break-all;
+    }
+
     .context-menu ul {
         list-style: none;
         padding: 0;
