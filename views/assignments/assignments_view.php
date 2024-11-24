@@ -1025,10 +1025,16 @@
         });
     }
 
-    function getCriteriaList(selector) {
+    function getCriteriaList(selector = '#studentGradeCriteriaContainer input[type="checkbox"]') {
         const criteria = {};
         document.querySelectorAll(selector).forEach(cb => {
-            criteria[parseInt(cb.id.replace('criterion_', ''))] = cb.checked;
+            if (selector.startsWith('#edit')) {
+                criteria[parseInt(cb.id.replace('edit_criterion_', ''))] = cb.checked;
+            } else if (selector.startsWith('#context-menu') || selector.startsWith('#check')) {
+                criteria[parseInt(cb.id.replace('check_criterion_', ''))] = cb.checked;
+            } else {
+                criteria[parseInt(cb.id.replace('criterion_', ''))] = cb.checked;
+            }
         });
         return criteria;
     }
