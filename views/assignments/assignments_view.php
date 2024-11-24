@@ -278,11 +278,21 @@
         color: #999;
     }
 </style>
-
 <div>
     <div class="mb-3">
         <h2 class="mb-4"><?= $assignment['assignmentName'] ?></h2>
-        <p class="mb-0"><?= $assignment['assignmentInstructions'] ?></p>
+        <?php
+        $parsedown = new Parsedown();
+        $assignmentInstructions = $assignment['assignmentInstructions'];
+
+        // Check if the text contains Markdown syntax
+        if (strpos($assignmentInstructions, '#') !== false || strpos($assignmentInstructions, '*') !== false || strpos($assignmentInstructions, '-') !== false) {
+            $assignmentInstructionsHtml = $parsedown->text($assignmentInstructions);
+        } else {
+            $assignmentInstructionsHtml = nl2br(htmlspecialchars($assignmentInstructions));
+        }
+        ?>
+        <p class="mb-0"><?= $assignmentInstructionsHtml ?></p>
         <p class="mt-4 fw-bold">Tähtaeg: <?= $assignment['assignmentDueAt'] ?></p>
 
         <?php if ($isStudent): ?>
