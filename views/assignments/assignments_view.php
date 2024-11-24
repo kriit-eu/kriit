@@ -350,11 +350,6 @@
                     </div>
                 <?php endforeach; ?>
             </div>
-            <?php if ($isStudent): ?>
-                <button type="button" class="btn btn-primary mt-3" onclick="saveStudentCriteria()" hidden="hidden">
-                    Salvesta
-                </button>
-            <?php endif; ?>
         </form>
     </div>
 
@@ -670,6 +665,19 @@
     document.addEventListener('DOMContentLoaded', function () {
         initializeTooltips();
         scrollToBottom();
+
+        const criteriaForm = document.getElementById('studentCriteriaForm');
+        criteriaForm.addEventListener('change', function (event) {
+            if (event.target && event.target.type === 'checkbox') {
+                saveStudentCriteria();
+            }
+        });
+
+        const studentModal = document.getElementById('studentModal');
+        studentModal.addEventListener('shown.bs.modal', function () {
+            const criteria = getCriteriaList('#studentCriteriaForm input[type="checkbox"]');
+            updateModalCriteria(criteria);
+        });
     });
 
     function initializeTooltips() {
@@ -686,11 +694,11 @@
         document.getElementById('requiredCriteria').innerHTML = '<p class="text-center">Kriteeriumid puuduvad</p>';
     }
 
-    document.getElementById('requiredCriteria').addEventListener('change', function (event) {
-        if (event.target && event.target.type === 'checkbox') {
-            document.querySelector('#studentCriteriaForm .btn-primary').hidden = false;
-        }
-    });
+    // document.getElementById('requiredCriteria').addEventListener('change', function (event) {
+    //     if (event.target && event.target.type === 'checkbox') {
+    //         document.querySelector('#studentCriteriaForm .btn-primary').hidden = false;
+    //     }
+    // });
 
     document.getElementById('submitButton').addEventListener('click', function () {
         const gradeRadioGroup = document.querySelectorAll('#gradeRadioGroup input[type="radio"]');
@@ -982,7 +990,11 @@
     }
 
     function saveStudentCriteria() {
-        const criteria = getCriteriaList('#requiredCriteria input[type="checkbox"]');
+        const criteria = {};
+        document.querySelectorAll('#studentCriteriaForm input[type="checkbox"]').forEach(cb => {
+            criteria[parseInt(cb.id.replace('criterion_', ''))] = cb.checked;
+        });
+
         ajax(`assignments/saveStudentCriteria`, {
                 assignmentId: assignment.assignmentId,
                 studentId: <?= $this->auth->userId ?>,
@@ -992,7 +1004,7 @@
             },
             function (res) {
                 if (res.status === 200) {
-                    location.reload();
+                    console.log('Criteria saved successfully');
                 }
             },
             function (error) {
@@ -1000,16 +1012,23 @@
             });
     }
 
-    function getCriteriaList(selector = '#studentGradeCriteriaContainer input[type="checkbox"]') {
+    function updateModalCriteria(criteria) {
+        console.log('Updating modal criteria:', criteria);
+        Object.keys(criteria).forEach(criteriaId => {
+            const checkbox = document.querySelector(`#studentModal #criterion_${criteriaId}`);
+            if (checkbox) {
+                console.log(`Updating checkbox #criterion_${criteriaId} to`, criteria[criteriaId]);
+                checkbox.checked = criteria[criteriaId];
+            } else {
+                console.log(`Checkbox #criterion_${criteriaId} not found`);
+            }
+        });
+    }
+
+    function getCriteriaList(selector) {
         const criteria = {};
         document.querySelectorAll(selector).forEach(cb => {
-            if (selector.startsWith('#edit')) {
-                criteria[parseInt(cb.id.replace('edit_criterion_', ''))] = cb.checked;
-            } else if (selector.startsWith('#context-menu') || selector.startsWith('#check')) {
-                criteria[parseInt(cb.id.replace('check_criterion_', ''))] = cb.checked;
-            } else {
-                criteria[parseInt(cb.id.replace('criterion_', ''))] = cb.checked;
-            }
+            criteria[parseInt(cb.id.replace('criterion_', ''))] = cb.checked;
         });
         return criteria;
     }
