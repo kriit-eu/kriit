@@ -215,7 +215,7 @@ class assignments extends Controller
                 $result = !empty($result) ? reset($result) : null;
 
                 $assignmentData = Db::getFirst(
-                    "SELECT ua.userGrade, ua.comment, ua.userId
+                    "SELECT ua.userGrade, ua.comments, ua.userId
                  FROM users u
                  JOIN groups g ON u.groupId = g.groupId
                  JOIN userAssignments ua ON u.userId = ua.userId
@@ -226,7 +226,7 @@ class assignments extends Controller
                 if (!$assignmentData) continue;
 
                 $currentGrade = $assignmentData['userGrade'] ?? "puudub";
-                $currentComment = empty($assignmentData['comment']) ? '' : BASE_URL . 'assignments/' . $assignmentId . '/' . $assignmentData['userId'];
+                $currentComment = empty($assignmentData['comments']) ? '' : BASE_URL . 'assignments/' . $assignmentId . '/' . $assignmentData['userId'];
 
                 $tahvelGrade = $result ? str_replace("KUTSEHINDAMINE_", "", $result['gradeCode']) : "puudub";
                 $tahvelComment = $result['addInfo'] ?? '';
