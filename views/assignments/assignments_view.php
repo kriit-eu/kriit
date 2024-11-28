@@ -851,7 +851,7 @@
                 const commentContent = document.createElement('p');
                 commentContent.innerHTML = `
                     ${comment.createdAt} <strong>${comment.name || 'Tundmatu'}</strong><br>
-                    <em>${comment.comment}</em>
+                    <em>${comment.comment.replace(/\n/g, '<br>')}</em>
                 `;
                 cardBody.appendChild(commentContent);
 
