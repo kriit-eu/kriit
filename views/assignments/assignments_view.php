@@ -573,7 +573,7 @@
                         <?php foreach ($s['comments'] as $comment): ?>
                             <div class="comment-row p-2 border rounded bg-light mb-2">
                                 <div class="comment-name fw-bold text-dark mb-1"><?= isset($comment['name']) ? $comment['name'] : 'Tundmatu' ?></div>
-                                <div class="comment-text text-muted"><?= nl2br(htmlspecialchars($comment['comment'])) ?></div>
+                                <div class="comment-text text-muted"><?= $comment['comment'] ?></div>
                                 <div class="comment-date text-secondary small"><?= $comment['createdAt'] ?></div>
                             </div>
                         <?php endforeach; ?>
@@ -851,7 +851,7 @@
                 const commentContent = document.createElement('p');
                 commentContent.innerHTML = `
                     ${comment.createdAt} <strong>${comment.name || 'Tundmatu'}</strong><br>
-                    <em>${comment.comment.replace(/\n/g, '<br>')}</em>
+                    <em>${comment.comment}</em>
                 `;
                 cardBody.appendChild(commentContent);
 

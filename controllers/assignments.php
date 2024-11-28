@@ -1,5 +1,7 @@
 <?php namespace App;
 
+use Parsedown;
+
 class assignments extends Controller
 {
     public $template = 'master';
@@ -48,6 +50,8 @@ class assignments extends Controller
             'messages' => []
         ];
 
+        $parsedown = Parsedown::instance();
+
         foreach ($data as $row) {
             if (empty($assignment['assignmentName'])) {
                 $assignment['assignmentName'] = $row['assignmentName'];
@@ -74,6 +78,14 @@ class assignments extends Controller
             }
 
             if (!isset($assignment['students'][$studentId])) {
+                $comments = json_decode($row['comments'], true) ?? [];
+
+                // Parse Markdown comments to HTML
+                foreach ($comments as &$comment) {
+                    if (isset($comment['comment'])) {
+                        $comment['comment'] = $parsedown->setBreaksEnabled(true)->text($comment['comment']);
+                    }                }
+
                 $assignment['students'][$studentId] = [
                     'studentId' => $studentId,
                     'studentName' => $row['studentName'],
@@ -81,7 +93,7 @@ class assignments extends Controller
                     'assignmentStatusName' => $row['assignmentStatusName'] ?? 'Esitamata',
                     'initials' => isset($row['studentName']) ? mb_substr($row['studentName'], 0, 1) . mb_substr($row['studentName'], mb_strrpos($row['studentName'], ' ') + 1, 1) : '',
                     'solutionUrl' => isset($row['solutionUrl']) ? trim($row['solutionUrl']) : '',
-                    'comments' => json_decode($row['comments'], true) ?? [],
+                    'comments' => $comments,
                     'userDoneCriteria' => [],
                     'userDoneCriteriaCount' => 0,
                     'class' => '',
@@ -160,7 +172,6 @@ class assignments extends Controller
 
         $this->assignment = $assignment;
     }
-
 
     function ajax_checkCriterionNameSize()
     {
