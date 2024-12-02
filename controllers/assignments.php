@@ -161,6 +161,131 @@ class assignments extends Controller
         $this->assignment = $assignment;
     }
 
+    public function student_view(): void
+    {
+        $assignmentId = $this->getId();
+        $data = Db::getAll("
+        SELECT
+            a.assignmentId, a.assignmentName, a.assignmentInstructions, a.assignmentDueAt,
+            c.criterionId, c.criterionName,
+            ua.userGrade, ua.assignmentStatusId, ua.solutionUrl, ua.comments,
+            ast.statusName AS assignmentStatusName,
+            udc.criterionId AS userDoneCriterionId
+        FROM assignments a
+        LEFT JOIN criteria c ON c.assignmentId = a.assignmentId
+        LEFT JOIN userAssignments ua ON ua.assignmentId = a.assignmentId AND ua.userId = ?
+        LEFT JOIN assignmentStatuses ast ON ua.assignmentStatusId = ast.assignmentStatusId
+        LEFT JOIN userDoneCriteria udc ON udc.criterionId = c.criterionId AND udc.userId = ua.userId
+        WHERE a.assignmentId = ?
+        ORDER BY c.criterionId
+    ", [$this->auth->userId, $assignmentId]);
+
+        $assignment = [
+            'assignmentId' => $assignmentId,
+            'assignmentName' => null,
+            'assignmentInstructions' => null,
+            'assignmentDueAt' => null,
+            'criteria' => [],
+            'userGrade' => null,
+            'assignmentStatusName' => null,
+            'solutionUrl' => null,
+            'comments' => [],
+            'userDoneCriteria' => [],
+            'userDoneCriteriaCount' => 0
+        ];
+
+        foreach ($data as $row) {
+            if (empty($assignment['assignmentName'])) {
+                $assignment['assignmentName'] = $row['assignmentName'];
+                $assignment['assignmentInstructions'] = $row['assignmentInstructions'];
+                $assignment['assignmentDueAt'] = !empty($row['assignmentDueAt']) ? date('d.m.Y', strtotime($row['assignmentDueAt'])) : 'Pole määratud';
+                $assignment['userGrade'] = $row['userGrade'];
+                $assignment['assignmentStatusName'] = $row['assignmentStatusName'];
+                $assignment['solutionUrl'] = $row['solutionUrl'];
+                $assignment['comments'] = json_decode($row['comments'], true) ?? [];
+            }
+
+            $criteriaId = $row['criterionId'];
+            if (!empty($criteriaId)) {
+                if (!isset($assignment['criteria'][$criteriaId])) {
+                    $assignment['criteria'][$criteriaId] = [
+                        'criteriaId' => $criteriaId,
+                        'criteriaName' => $row['criterionName'],
+                        'completed' => $row['userDoneCriterionId'] !== null
+                    ];
+                }
+
+                if ($row['userDoneCriterionId'] !== null) {
+                    $assignment['userDoneCriteriaCount']++;
+                }
+            }
+        }
+
+        $this->assignment = $assignment;
+    }
+
+    public function teacher_view(): void
+    {
+        $assignmentId = $this->getId();
+        $data = Db::getAll("
+        SELECT
+            a.assignmentId, a.assignmentName, a.assignmentInstructions, a.assignmentDueAt,
+            c.criterionId, c.criterionName,
+            ua.userGrade, ua.assignmentStatusId, ua.solutionUrl, ua.comments,
+            ast.statusName AS assignmentStatusName,
+            udc.criterionId AS userDoneCriterionId
+        FROM assignments a
+        LEFT JOIN criteria c ON c.assignmentId = a.assignmentId
+        LEFT JOIN userAssignments ua ON ua.assignmentId = a.assignmentId
+        LEFT JOIN assignmentStatuses ast ON ua.assignmentStatusId = ast.assignmentStatusId
+        LEFT JOIN userDoneCriteria udc ON udc.criterionId = c.criterionId AND udc.userId = ua.userId
+        WHERE a.assignmentId = ?
+        ORDER BY c.criterionId
+    ", [$assignmentId]);
+
+        $assignment = [
+            'assignmentId' => $assignmentId,
+            'assignmentName' => null,
+            'assignmentInstructions' => null,
+            'assignmentDueAt' => null,
+            'criteria' => [],
+            'userGrade' => null,
+            'assignmentStatusName' => null,
+            'solutionUrl' => null,
+            'comments' => [],
+            'userDoneCriteria' => [],
+            'userDoneCriteriaCount' => 0
+        ];
+
+        foreach ($data as $row) {
+            if (empty($assignment['assignmentName'])) {
+                $assignment['assignmentName'] = $row['assignmentName'];
+                $assignment['assignmentInstructions'] = $row['assignmentInstructions'];
+                $assignment['assignmentDueAt'] = !empty($row['assignmentDueAt']) ? date('d.m.Y', strtotime($row['assignmentDueAt'])) : 'Pole määratud';
+                $assignment['userGrade'] = $row['userGrade'];
+                $assignment['assignmentStatusName'] = $row['assignmentStatusName'];
+                $assignment['solutionUrl'] = $row['solutionUrl'];
+                $assignment['comments'] = json_decode($row['comments'], true) ?? [];
+            }
+
+            $criteriaId = $row['criterionId'];
+            if (!empty($criteriaId)) {
+                if (!isset($assignment['criteria'][$criteriaId])) {
+                    $assignment['criteria'][$criteriaId] = [
+                        'criteriaId' => $criteriaId,
+                        'criteriaName' => $row['criterionName'],
+                        'completed' => $row['userDoneCriterionId'] !== null
+                    ];
+                }
+
+                if ($row['userDoneCriterionId'] !== null) {
+                    $assignment['userDoneCriteriaCount']++;
+                }
+            }
+        }
+
+        $this->assignment = $assignment;
+    }
 
     function ajax_checkCriterionNameSize()
     {

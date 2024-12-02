@@ -34,8 +34,8 @@ class Application
         $this->process_uri();
         $this->parse_json_request_pody();
         $this->update_settings();
-        $this->handle_routing();
         $this->auth = new Auth();
+        $this->handle_routing();
 
         // Instantiate controller
         $controller_fqn = '\App\\' . $this->controller;
@@ -228,18 +228,13 @@ class Application
         }
 
         if ($this->controller == 'api') {
-
             // Overwrite controller to actual controller
             $this->controller = $this->action;
-
             // Overwrite action to params[0]
             $this->action = $this->params[0] ?? 'index';
-
             // Remove params[0] from params array
             array_shift($this->params);
-
             $this->api = true;
-
         }
 
         // Custom routing for /admin/subjects/{id subject}
@@ -251,16 +246,28 @@ class Application
             $this->action = 'groups_view';
         }
 
+        // Custom routing for /assignments/{id}
+        if ($this->controller == 'assignments' && is_numeric($this->action)) {
+            $assignmentId = $this->action;
+            $userId = $this->auth->userId;
+
+            if (\App\Assignment::userIsTeacher($userId, $assignmentId) || $this->auth->userIsAdmin) {
+                $this->action = 'teacher_view';
+            } else {
+                $this->action = 'student_view';
+            }
+
+            // Prepend the assignment ID to params array
+            array_unshift($this->params, $assignmentId);
+        }
+
         // Allow shorter URLs (users/view/3 becomes users/3)
         if (is_numeric($this->action)) {
-
             // Prepend the number in action to params array
             array_unshift($this->params, $this->action);
-
             // Overwrite action to view
             $this->action = 'view';
         }
-
     }
 
     /**

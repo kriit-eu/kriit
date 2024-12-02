@@ -657,7 +657,53 @@
     </div>
 
 </div>
+<script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
 <script>
+
+    new Vue({
+        el: '#app',
+        data: {
+            criteria: [
+                <?php foreach ($assignment['criteria'] as $criterion): ?>
+                <?php
+                $isCompleted = true;
+                $studentId = $this->auth->userId;
+
+                if ($isStudent && isset($assignment['students'][$studentId]['userDoneCriteria'][$criterion['criteriaId']])) {
+                    $isCompleted = $assignment['students'][$studentId]['userDoneCriteria'][$criterion['criteriaId']]['completed'];
+                }
+                ?>
+                { id: <?= $criterion['criteriaId'] ?>, description: '<?= $criterion['criteriaName'] ?>', done: false },
+                <?php endforeach; ?>
+            ],
+            solutionUrl: '',
+        },
+        computed: {
+            canSubmitSolution() {
+                return (
+                    this.criteria.every((criterion) => criterion.done) &&
+                    this.solutionUrl.trim() !== ''
+                );
+            }
+        },
+        methods: {
+        updateCriterion(index) {
+            const criterion = this.criteria[index];
+            console.log(
+                `Sending update for criterion: "${criterion.description}" with state: ${
+                    criterion.done ? 'done' : 'not done'
+                }`
+            );
+            // Simulate an AJAX request with a delay
+            setTimeout(() => {
+                console.log(
+                    `Server has updated criterion: "${criterion.description}" to state: ${
+                        criterion.done ? 'done' : 'not done'
+                    }`
+                );
+            }, 500);
+        },
+    })
     const assignment = <?= json_encode($assignment) ?>;
     let currentStudentId = null;
     let newAddedCriteria = [];
@@ -688,7 +734,7 @@
     }
 
     // If no criteria exists, display warning (add class 'warning-bg' to element of id 'criterionDisplay')
-    
+
     if (Array.isArray(assignment['criteria']) && assignment['criteria'].length === 0 || assignment['criteria'] === null) {
         document.getElementById('criterionDisplay').classList.add('bg-warning');
         document.getElementById('requiredCriteria').innerHTML = '<p class="text-center">Kriteeriumid puuduvad</p>';
