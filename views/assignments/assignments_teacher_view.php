@@ -1,14 +1,15 @@
 Teacher
 <div id="app" class="container mt-5">
-    <h2>Assignment Criteria</h2>
+    <h2>{{ assignment.assignmentName }}</h2>
+    <p v-html="assignment.assignmentInstructions"></p>
     <ul class="list-group">
-        <li v-for="(criterion, index) in criteria" :key="index" class="list-group-item">
+        <li v-for="(criterion, index) in criteria" :key="criterion.criterionId" class="list-group-item">
             <label class="form-check-label">
                 <input
-                    type="checkbox"
-                    class="form-check-input me-2"
-                    v-model="criterion.done"
-                    @change="updateCriterion(index)"
+                        type="checkbox"
+                        class="form-check-input me-2"
+                        v-model="criterion.done"
+                        @change="updateCriterion(index)"
                 />
                 {{ criterion.description }}
             </label>
@@ -17,10 +18,10 @@ Teacher
 
     <!-- Button to trigger modal -->
     <button
-        type="button"
-        class="btn btn-primary mt-3"
-        data-bs-toggle="modal"
-        data-bs-target="#solutionModal"
+            type="button"
+            class="btn btn-primary mt-3"
+            data-bs-toggle="modal"
+            data-bs-target="#solutionModal"
     >
         Submit Solution
     </button>
@@ -38,32 +39,32 @@ Teacher
                         <div class="mb-3">
                             <label for="solutionUrl" class="form-label">Solution URL</label>
                             <input
-                                type="url"
-                                id="solutionUrl"
-                                class="form-control"
-                                v-model="solutionUrl"
-                                placeholder="Enter solution URL"
-                                required
+                                    type="url"
+                                    id="solutionUrl"
+                                    class="form-control"
+                                    v-model="solutionUrl"
+                                    placeholder="Enter solution URL"
+                                    required
                             />
                         </div>
                         <p><strong>All criteria must be checked to submit:</strong></p>
                         <ul class="list-group">
-                            <li v-for="criterion in criteria" :key="criterion.description" class="list-group-item">
+                            <li v-for="criterion in criteria" :key="criterion.criterionId" class="list-group-item">
                                 <label>
                                     <input
-                                        type="checkbox"
-                                        class="form-check-input me-2"
-                                        v-model="criterion.done"
-                                        @change="updateCriterion(criteria.indexOf(criterion))"
+                                            type="checkbox"
+                                            class="form-check-input me-2"
+                                            v-model="criterion.done"
+                                            @change="updateCriterion(criteria.indexOf(criterion))"
                                     />
                                     {{ criterion.description }}
                                 </label>
                             </li>
                         </ul>
                         <button
-                            type="submit"
-                            class="btn btn-success mt-3"
-                            :disabled="!canSubmitSolution"
+                                type="submit"
+                                class="btn btn-success mt-3"
+                                :disabled="!canSubmitSolution"
                         >
                             Submit Solution
                         </button>
@@ -80,15 +81,39 @@ Teacher
 <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+    const assignment = <?= json_encode($assignment); ?>;
+
     new Vue({
         el: '#app',
         data: {
-            criteria: [
-                { description: 'Complete initial draft', done: false },
-                { description: 'Submit to peer review', done: false },
-                { description: 'Incorporate feedback', done: false },
-            ],
+            assignment: assignment,
+            criteria: [],
             solutionUrl: '',
+        },
+        created() {
+            // Get criteria from assignment
+            const assignmentCriteria = this.assignment.criteria; // Object with keys as criterion IDs
+
+            // Convert criteria object to array
+            const criteriaArray = Object.values(assignmentCriteria);
+
+            // Get user's done criteria
+            const studentData = this.assignment.students[Object.keys(this.assignment.students)[0]];
+            const userDoneCriteria = studentData.userDoneCriteria || {};
+
+            // Build criteria array with 'done' status
+            this.criteria = criteriaArray.map(criterion => {
+                const criterionId = criterion.criterionId;
+                const doneCriterion = userDoneCriteria[criterionId.toString()];
+                return {
+                    criterionId: criterionId,
+                    description: criterion.criterionName,
+                    done: doneCriterion ? doneCriterion.completed : false
+                };
+            });
+
+            // Get solution URL
+            this.solutionUrl = studentData.solutionUrl || '';
         },
         computed: {
             canSubmitSolution() {

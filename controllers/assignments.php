@@ -6,43 +6,49 @@ class assignments extends Controller
 
     public function view(): void
     {
+        if (!$this->checkIfUserHasPermissionForAction($this->getId())) {
+            $this->redirect('subjects');
+        }
+
+        $assignmentId = $this->getId();
+        $userId = $this->auth->userId;
+        $isTeacher = \App\Assignment::userIsTeacher($userId, $assignmentId) || $this->auth->userIsAdmin;
+        $isStudent = !$isTeacher;
+        $this->action = $isTeacher ? 'teacher_view' : 'student_view';
         $this->template = $this->auth->userIsAdmin ? 'admin' : 'master';
 
-        $this->checkIfUserHasPermissionForAction($this->getId()) || $this->redirect('subjects');
+        $params = [$assignmentId];
+        $query = "
+        SELECT
+            a.assignmentId, a.assignmentName, a.assignmentInstructions, a.assignmentDueAt,
+            c.criterionId, c.criterionName,
+            u.userId AS studentId, u.userName AS studentName, u.groupId,
+            ua.userGrade, ua.assignmentStatusId, ua.solutionUrl, ua.comments,
+            ast.statusName AS assignmentStatusName,
+            udc.criterionId AS userDoneCriterionId,
+            subj.teacherId AS teacherId,
+            t.userName AS teacherName
+        FROM assignments a
+        LEFT JOIN criteria c ON c.assignmentId = a.assignmentId
+        JOIN subjects subj ON a.subjectId = subj.subjectId
+        JOIN users t ON subj.teacherId = t.userId
+        LEFT JOIN groups g ON subj.groupId = g.groupId
+        LEFT JOIN users u ON u.groupId = g.groupId
+        LEFT JOIN userAssignments ua ON ua.assignmentId = a.assignmentId AND ua.userId = u.userId
+        LEFT JOIN assignmentStatuses ast ON ua.assignmentStatusId = ast.assignmentStatusId
+        LEFT JOIN userDoneCriteria udc ON udc.criterionId = c.criterionId AND udc.userId = u.userId
+        WHERE a.assignmentId = ?
+    ";
+        if ($isStudent) {
+            $query .= " AND u.userId = ?";
+            $params[] = $userId;
+        }
+        $query .= " ORDER BY u.userName, c.criterionId";
 
-        $this->isStudent = $this->auth->groupId && !$this->auth->userIsAdmin && !$this->auth->userIsTeacher;
-        $this->isTeacher = $this->auth->userIsTeacher;
-        $assignmentId = $this->getId();
-        $data = Db::getAll("
-                SELECT
-                    a.assignmentId, a.assignmentName, a.assignmentInstructions, a.assignmentDueAt,
-                    c.criterionId, c.criterionName,
-                    u.userId AS studentId, u.userName AS studentName, u.groupId,
-                    ua.userGrade, ua.assignmentStatusId, ua.solutionUrl, ua.comments,
-                    ast.statusName AS assignmentStatusName,
-                    udc.criterionId AS userDoneCriterionId,
-                    subj.teacherId AS teacherId,
-                    t.userName AS teacherName
-                FROM assignments a
-                LEFT JOIN criteria c ON c.assignmentId = a.assignmentId
-                JOIN subjects subj ON a.subjectId = subj.subjectId
-                JOIN users t ON subj.teacherId = t.userId
-                LEFT JOIN groups g ON subj.groupId = g.groupId
-                LEFT JOIN users u ON u.groupId = g.groupId
-                LEFT JOIN userAssignments ua ON ua.assignmentId = a.assignmentId AND ua.userId = u.userId
-                LEFT JOIN assignmentStatuses ast ON ua.assignmentStatusId = ast.assignmentStatusId
-                LEFT JOIN userDoneCriteria udc ON udc.criterionId = c.criterionId AND udc.userId = u.userId
-                WHERE a.assignmentId = ?
-                ORDER BY u.userName, c.criterionId
-            ", [$assignmentId]);
+        $data = Db::getAll($query, $params);
 
         $assignment = [
             'assignmentId' => $assignmentId,
-            'assignmentName' => null,
-            'assignmentInstructions' => null,
-            'assignmentDueAt' => null,
-            'teacherId' => null,
-            'teacherName' => null,
             'criteria' => [],
             'students' => [],
             'messages' => []
@@ -57,96 +63,74 @@ class assignments extends Controller
                 $assignment['teacherName'] = $row['teacherName'];
             }
 
-            $studentId = $row['studentId'];
-            $criteriaId = $row['criterionId'];
-
-            if ($this->isStudent && $this->auth->userId !== $studentId) {
+            if ($isStudent && $userId !== $row['studentId']) {
                 continue;
             }
 
-            if (!empty($criteriaId)) {
-                if (!isset($assignment['criteria'][$criteriaId])) {
-                    $assignment['criteria'][$criteriaId] = [
-                        'criteriaId' => $criteriaId,
-                        'criteriaName' => $row['criterionName']
-                    ];
-                }
+            $criterionId = $row['criterionId'];
+            if ($criterionId && !isset($assignment['criteria'][$criterionId])) {
+                $assignment['criteria'][$criterionId] = [
+                    'criterionId' => $criterionId,
+                    'criterionName' => $row['criterionName']
+                ];
             }
 
+            $studentId = $row['studentId'];
             if (!isset($assignment['students'][$studentId])) {
+                $grade = trim($row['userGrade'] ?? '');
+                $statusName = $row['assignmentStatusName'] ?? 'Esitamata';
                 $assignment['students'][$studentId] = [
                     'studentId' => $studentId,
                     'studentName' => $row['studentName'],
-                    'grade' => !empty($row['userGrade']) ? trim($row['userGrade']) : '',
-                    'assignmentStatusName' => $row['assignmentStatusName'] ?? 'Esitamata',
-                    'initials' => isset($row['studentName']) ? mb_substr($row['studentName'], 0, 1) . mb_substr($row['studentName'], mb_strrpos($row['studentName'], ' ') + 1, 1) : '',
-                    'solutionUrl' => isset($row['solutionUrl']) ? trim($row['solutionUrl']) : '',
+                    'grade' => $grade,
+                    'assignmentStatusName' => $statusName,
+                    'initials' => mb_substr($row['studentName'], 0, 1) . mb_substr($row['studentName'], mb_strrpos($row['studentName'], ' ') + 1, 1),
+                    'solutionUrl' => trim($row['solutionUrl'] ?? ''),
                     'comments' => json_decode($row['comments'], true) ?? [],
                     'userDoneCriteria' => [],
                     'userDoneCriteriaCount' => 0,
                     'class' => '',
                     'tooltipText' => '',
-                    'studentActionButtonName' => (isset($row['solutionUrl']) && !empty(trim($row['solutionUrl']))) ? 'Muuda' : 'Esita'
+                    'studentActionButtonName' => !empty(trim($row['solutionUrl'] ?? '')) ? 'Muuda' : 'Esita',
+                    'isAllCriteriaCompleted' => true
                 ];
             }
 
             $isCompleted = $row['userDoneCriterionId'] !== null;
-            $assignment['students'][$studentId]['userDoneCriteria'][$criteriaId] = [
-                'criterionId' => $criteriaId,
+            $assignment['students'][$studentId]['userDoneCriteria'][$criterionId] = [
+                'criterionId' => $criterionId,
                 'criterionName' => $row['criterionName'],
                 'completed' => $isCompleted
             ];
+            $assignment['students'][$studentId]['userDoneCriteriaCount'] += $isCompleted ? 1 : 0;
+            $assignment['students'][$studentId]['isAllCriteriaCompleted'] &= $isCompleted;
 
-            if ($isCompleted) {
-                $assignment['students'][$studentId]['userDoneCriteriaCount']++;
-            }
-
-            $statusName = $row['assignmentStatusName'] ?? 'Esitamata';
             $statusId = $row['assignmentStatusId'] ?? ASSIGNMENT_STATUS_NOT_SUBMITTED;
-            $grade = !empty($row['userGrade']) ? trim($row['userGrade']) : '';
-            $isNegativeGrade = $grade == 'MA' || (is_numeric($grade) && intval($grade) < 3);
-            $isEvaluated = isset($row['assignmentStatusName']) && $row['assignmentStatusName'] === 'Hinnatud';
+            $isNegativeGrade = $grade === 'MA' || (is_numeric($grade) && intval($grade) < 3);
+            $isEvaluated = $statusName === 'Hinnatud';
 
-            $isAllCriteriaCompleted = true;
-            foreach ($assignment['students'][$studentId]['userDoneCriteria'] as $criterion) {
-                if (!$criterion['completed']) {
-                    $isAllCriteriaCompleted = false;
-                    break;
-                }
-            }
-
-            $assignment['students'][$studentId]['isDisabledStudentActionButton'] =
-                (($isEvaluated && !$isNegativeGrade) || (!$isEvaluated && !$isAllCriteriaCompleted)) ? 'disabled' : '';
-
-            $assignment['students'][$studentId]['isAllCriteriaCompleted'] = $isAllCriteriaCompleted;
+            $assignment['students'][$studentId]['isDisabledStudentActionButton'] = (($isEvaluated && !$isNegativeGrade) || (!$isEvaluated && !$assignment['students'][$studentId]['isAllCriteriaCompleted'])) ? 'disabled' : '';
 
             $dueDate = !empty($row['assignmentDueAt']) ? new \DateTime($row['assignmentDueAt']) : null;
-            $daysRemaining = $dueDate ? (int)(new \DateTime())->diff($dueDate)->format('%r%a') : 1000;
+            $daysRemaining = $dueDate ? (new \DateTime())->diff($dueDate)->format('%r%a') : 1000;
 
-            $class = Assignment::cellColor(
-                $this->isStudent,
-                $this->isTeacher,
-                $isNegativeGrade,
-                $daysRemaining,
-                $statusId,
-                $statusName);
+            $class = Assignment::cellColor($isStudent, $isTeacher, $isNegativeGrade, (int)$daysRemaining, $statusId, $statusName);
+            $tooltipText = $statusName . ((($daysRemaining < 0) && ($statusName === 'Esitamata')) ? ' (Tähtaeg möödas)' : '');
 
-            $tooltipText = $statusName . (($daysRemaining < 0 && $statusName === 'Esitamata') ? ' (Tähtaeg möödas)' : '');
             $assignment['students'][$studentId]['class'] = $class;
             $assignment['students'][$studentId]['tooltipText'] = $tooltipText;
         }
 
-        // Separate query for fetching messages
+        // Fetch and add messages
         $messages = Db::getAll("
-            SELECT
-                m.messageId, m.content AS messageContent, m.userId AS messageUserId, mu.userName AS messageUserName, m.CreatedAt, m.isNotification
-            FROM messages m
-            LEFT JOIN users mu ON mu.userId = m.userId
-            WHERE m.assignmentId = ?
-            ORDER BY m.CreatedAt
-        ", [$assignmentId]);
+        SELECT
+            m.messageId, m.content AS messageContent, m.userId AS messageUserId, mu.userName AS messageUserName, m.CreatedAt, m.isNotification
+        FROM messages m
+        LEFT JOIN users mu ON mu.userId = m.userId
+        WHERE m.assignmentId = ?
+        ORDER BY m.CreatedAt
+    ", [$assignmentId]);
 
-        // Add the messages to the assignment
         foreach ($messages as $message) {
             $assignment['messages'][] = [
                 'messageId' => $message['messageId'],
@@ -161,131 +145,6 @@ class assignments extends Controller
         $this->assignment = $assignment;
     }
 
-    public function student_view(): void
-    {
-        $assignmentId = $this->getId();
-        $data = Db::getAll("
-        SELECT
-            a.assignmentId, a.assignmentName, a.assignmentInstructions, a.assignmentDueAt,
-            c.criterionId, c.criterionName,
-            ua.userGrade, ua.assignmentStatusId, ua.solutionUrl, ua.comments,
-            ast.statusName AS assignmentStatusName,
-            udc.criterionId AS userDoneCriterionId
-        FROM assignments a
-        LEFT JOIN criteria c ON c.assignmentId = a.assignmentId
-        LEFT JOIN userAssignments ua ON ua.assignmentId = a.assignmentId AND ua.userId = ?
-        LEFT JOIN assignmentStatuses ast ON ua.assignmentStatusId = ast.assignmentStatusId
-        LEFT JOIN userDoneCriteria udc ON udc.criterionId = c.criterionId AND udc.userId = ua.userId
-        WHERE a.assignmentId = ?
-        ORDER BY c.criterionId
-    ", [$this->auth->userId, $assignmentId]);
-
-        $assignment = [
-            'assignmentId' => $assignmentId,
-            'assignmentName' => null,
-            'assignmentInstructions' => null,
-            'assignmentDueAt' => null,
-            'criteria' => [],
-            'userGrade' => null,
-            'assignmentStatusName' => null,
-            'solutionUrl' => null,
-            'comments' => [],
-            'userDoneCriteria' => [],
-            'userDoneCriteriaCount' => 0
-        ];
-
-        foreach ($data as $row) {
-            if (empty($assignment['assignmentName'])) {
-                $assignment['assignmentName'] = $row['assignmentName'];
-                $assignment['assignmentInstructions'] = $row['assignmentInstructions'];
-                $assignment['assignmentDueAt'] = !empty($row['assignmentDueAt']) ? date('d.m.Y', strtotime($row['assignmentDueAt'])) : 'Pole määratud';
-                $assignment['userGrade'] = $row['userGrade'];
-                $assignment['assignmentStatusName'] = $row['assignmentStatusName'];
-                $assignment['solutionUrl'] = $row['solutionUrl'];
-                $assignment['comments'] = json_decode($row['comments'], true) ?? [];
-            }
-
-            $criteriaId = $row['criterionId'];
-            if (!empty($criteriaId)) {
-                if (!isset($assignment['criteria'][$criteriaId])) {
-                    $assignment['criteria'][$criteriaId] = [
-                        'criteriaId' => $criteriaId,
-                        'criteriaName' => $row['criterionName'],
-                        'completed' => $row['userDoneCriterionId'] !== null
-                    ];
-                }
-
-                if ($row['userDoneCriterionId'] !== null) {
-                    $assignment['userDoneCriteriaCount']++;
-                }
-            }
-        }
-
-        $this->assignment = $assignment;
-    }
-
-    public function teacher_view(): void
-    {
-        $assignmentId = $this->getId();
-        $data = Db::getAll("
-        SELECT
-            a.assignmentId, a.assignmentName, a.assignmentInstructions, a.assignmentDueAt,
-            c.criterionId, c.criterionName,
-            ua.userGrade, ua.assignmentStatusId, ua.solutionUrl, ua.comments,
-            ast.statusName AS assignmentStatusName,
-            udc.criterionId AS userDoneCriterionId
-        FROM assignments a
-        LEFT JOIN criteria c ON c.assignmentId = a.assignmentId
-        LEFT JOIN userAssignments ua ON ua.assignmentId = a.assignmentId
-        LEFT JOIN assignmentStatuses ast ON ua.assignmentStatusId = ast.assignmentStatusId
-        LEFT JOIN userDoneCriteria udc ON udc.criterionId = c.criterionId AND udc.userId = ua.userId
-        WHERE a.assignmentId = ?
-        ORDER BY c.criterionId
-    ", [$assignmentId]);
-
-        $assignment = [
-            'assignmentId' => $assignmentId,
-            'assignmentName' => null,
-            'assignmentInstructions' => null,
-            'assignmentDueAt' => null,
-            'criteria' => [],
-            'userGrade' => null,
-            'assignmentStatusName' => null,
-            'solutionUrl' => null,
-            'comments' => [],
-            'userDoneCriteria' => [],
-            'userDoneCriteriaCount' => 0
-        ];
-
-        foreach ($data as $row) {
-            if (empty($assignment['assignmentName'])) {
-                $assignment['assignmentName'] = $row['assignmentName'];
-                $assignment['assignmentInstructions'] = $row['assignmentInstructions'];
-                $assignment['assignmentDueAt'] = !empty($row['assignmentDueAt']) ? date('d.m.Y', strtotime($row['assignmentDueAt'])) : 'Pole määratud';
-                $assignment['userGrade'] = $row['userGrade'];
-                $assignment['assignmentStatusName'] = $row['assignmentStatusName'];
-                $assignment['solutionUrl'] = $row['solutionUrl'];
-                $assignment['comments'] = json_decode($row['comments'], true) ?? [];
-            }
-
-            $criteriaId = $row['criterionId'];
-            if (!empty($criteriaId)) {
-                if (!isset($assignment['criteria'][$criteriaId])) {
-                    $assignment['criteria'][$criteriaId] = [
-                        'criteriaId' => $criteriaId,
-                        'criteriaName' => $row['criterionName'],
-                        'completed' => $row['userDoneCriterionId'] !== null
-                    ];
-                }
-
-                if ($row['userDoneCriterionId'] !== null) {
-                    $assignment['userDoneCriteriaCount']++;
-                }
-            }
-        }
-
-        $this->assignment = $assignment;
-    }
 
     function ajax_checkCriterionNameSize()
     {

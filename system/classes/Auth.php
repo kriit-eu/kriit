@@ -40,11 +40,14 @@ class Auth
         }
 
         if (isset($_SESSION['userId'])) {
-            $this->logged_in = TRUE;
             $user = Db::getFirst("SELECT *
                                FROM users
                                WHERE userId = '{$_SESSION['userId']}'");
-            $this->load_user_data($user);
+
+            if (!empty($user) ) {
+                $this->load_user_data($user);
+                $this->logged_in = TRUE;
+            }
 
         }
     }
