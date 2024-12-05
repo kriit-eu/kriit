@@ -205,6 +205,21 @@ class assignments extends Controller
         stop(200, 'Grade saved');
     }
 
+    function saveStudentComment(): void
+    {
+        $assignmentId = $_POST['assignmentId'];
+        $this->checkIfUserHasPermissionForAction($assignmentId) || stop(403, 'Teil pole õigusi selle tegevusele.');
+
+        $studentId = $_POST['studentId'];
+        $comment = $_POST['comment'];
+
+        $this->addAssignmentCommentForStudent($studentId, $assignmentId, $comment, $_POST['teacherName']);
+
+        $this->saveMessage($assignmentId, $_POST['teacherId'], "$_POST[teacherName] lisas õpilasele $_POST[studentName] tagasisideks: '$comment'", true);
+
+        stop(200, 'Comment saved');
+    }
+
     function ajax_saveStudentSolutionUrl(): void
     {
         $assignmentId = $_POST['assignmentId'];
