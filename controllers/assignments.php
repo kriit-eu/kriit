@@ -303,16 +303,6 @@ class assignments extends Controller
         stop(200, 'Solution url saved');
     }
 
-    function ajax_saveStudentCriteria(): void
-    {
-        $assignmentId = $_POST['assignmentId'];
-        $this->checkIfUserHasPermissionForAction($assignmentId) || stop(403, 'Teil pole õigusi sellele tegevusele.');
-
-        $this->saveStudentCriteria();
-
-        stop(200, 'Criteria saved');
-    }
-
     function ajax_saveMessage(): void
     {
         $assignmentId = $_POST['assignmentId'];
@@ -405,30 +395,6 @@ class assignments extends Controller
         stop($response['code'], $response['message']);
     }
 
-    private function saveStudentCriteria(): void
-    {
-        $studentId = $_POST['studentId'];
-        $criteria = $_POST['criteria'];
-
-        foreach ($criteria as $criterionId => $completed) {
-            $existCriterion = Db::getOne('SELECT criterionId FROM userDoneCriteria WHERE userId = ? AND criterionId = ?', [$studentId, $criterionId]);
-            $criterionName = Db::getOne('SELECT criterionName FROM criteria WHERE criterionId = ?', [$criterionId]);
-            if (!$existCriterion && $completed === 'true') {
-                Db::insert('userDoneCriteria', ['userId' => $studentId, 'criterionId' => $criterionId]);
-                if ($this->auth->userIsAdmin || $this->auth->userId == $_POST['teacherId']) {
-                    $message = "$_POST[teacherName] märkis õpilasele $_POST[studentName] kriteeriumi '$criterionName' tehtuks.";
-                    $this->saveMessage($_POST['assignmentId'], $_POST['teacherId'], $message, true);
-                }
-            } elseif ($existCriterion && $completed === 'false') {
-                Db::delete('userDoneCriteria', 'userId = ? AND criterionId = ?', [$studentId, $criterionId]);
-                if ($this->auth->userIsAdmin || $this->auth->userId == $_POST['teacherId']) {
-                    $message = "$_POST[teacherName] märkis õpilasele $_POST[studentName] kriteeriumi '$criterionName' mittetehtuks.";
-                    $this->saveMessage($_POST['assignmentId'], $_POST['teacherId'], $message, true);
-                }
-
-            }
-        }
-    }
 
     private function saveOrUpdateUserAssignment($studentId, $assignmentId, $grade, $comment): bool
     {

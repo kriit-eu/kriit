@@ -17,28 +17,6 @@ class Auth
     function __construct()
     {
 
-        // Get the base path from BASE_URL
-        $basePath = rtrim(parse_url(BASE_URL, PHP_URL_PATH), '/');
-
-        // Remove the base path from REQUEST_URI to get the relative URI
-        $relativeUri = substr($_SERVER['REQUEST_URI'], strlen($basePath));
-
-        // Now check if the relative URI starts with '/api/'
-        if (str_starts_with($relativeUri, '/api/')) {
-            if (!isset($_SERVER['HTTP_AUTHORIZATION'])) {
-                stop(400, 'No API key provided');
-            }
-
-            $api_key = substr($_SERVER['HTTP_AUTHORIZATION'], 7);
-            $user = Db::getFirst("SELECT * FROM users WHERE userApiKey = ?", [$api_key]);
-
-            if (empty($user) || $user['userApiKey'] !== $api_key) {
-                stop(403, 'API key is invalid');
-            }
-
-            $_SESSION['userId'] = $user['userId'];
-        }
-
         if (isset($_SESSION['userId'])) {
             $user = Db::getFirst("SELECT *
                                FROM users
@@ -50,6 +28,32 @@ class Auth
             }
 
         }
+
+        if(empty($user)){
+
+            // Get the base path from BASE_URL
+            $basePath = rtrim(parse_url(BASE_URL, PHP_URL_PATH), '/');
+
+            // Remove the base path from REQUEST_URI to get the relative URI
+            $relativeUri = substr($_SERVER['REQUEST_URI'], strlen($basePath));
+
+            // Now check if the relative URI starts with '/api/'
+            if (str_starts_with($relativeUri, '/api/')) {
+                if (!isset($_SERVER['HTTP_AUTHORIZATION'])) {
+                    stop(400, 'No API key provided');
+                }
+
+                $api_key = substr($_SERVER['HTTP_AUTHORIZATION'], 7);
+                $user = Db::getFirst("SELECT * FROM users WHERE userApiKey = ?", [$api_key]);
+
+                if (empty($user) || $user['userApiKey'] !== $api_key) {
+                    stop(403, 'API key is invalid');
+                }
+
+                $_SESSION['userId'] = $user['userId'];
+            }
+        }
+
     }
 
     /**

@@ -298,4 +298,28 @@ class assignments extends Controller
 
     }
 
+    function saveUserDoneCriteria(): void
+    {
+        $studentId = $this->auth->userId;
+        $criterionId = $_POST['criterionId'];
+        $done = $_POST['done'];
+
+        // Check if the criterion exists
+        if (!Db::getOne('SELECT criterionId FROM criteria WHERE criterionId = ?', [$criterionId])) {
+            stop(400, 'Invalid criterionId');
+        }
+
+        // Delete the criterion first
+        Db::delete('userDoneCriteria', 'userId = ? AND criterionId = ?', [$studentId, $criterionId]);
+
+        // Mark criterion as completed if the checkbox was checked
+        if ($done === 'true') {
+            Db::insert('userDoneCriteria', ['userId' => $studentId, 'criterionId' => $criterionId]);
+        }
+
+        stop(200);
+
+    }
+
+
 }

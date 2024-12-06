@@ -60,7 +60,7 @@ Student
                         type="checkbox"
                         class="form-check-input me-2"
                         v-model="criterion.done"
-                        @change="updateCriterion(index)"/>
+                        @change="saveUserDoneCriteria(criterion.criterionId, criterion.done)"/>
                     {{ criterion.description }}
                 </label>
             </li>
@@ -167,29 +167,8 @@ Student
                         console.error('Error:', error);
                     });
             },
-            updateCriterion(index) {
-                const criterion = this.criteria[index];
-                console.log(
-                    `Sending update for criterion: "${criterion.description}" with state: ${
-                        criterion.done ? 'done' : 'not done'
-                    }`
-                );
-
-                // Send the updated criterion to /assignments/ajax_saveStudentCriteria
-                axios.post('/assignments/ajax_saveStudentCriteria', {
-                    assignmentId: this.assignment.assignmentId,
-                    studentId: this.userId,
-                    criteria: criterion,
-                    teacherId: this.assignment.teacherId,
-                    teacherName: this.assignment.teacherName,
-                })
-                    .then(response => {
-                        console.log(
-                            `Server has updated criterion: "${criterion.description}" to state: ${
-                                criterion.done ? 'done' : 'not done'
-                            }`
-                        )
-                    })
+            saveUserDoneCriteria: function (criterionId, done) {
+                ajax('api/assignments/saveUserDoneCriteria', {criterionId, done})
             },
         submitSolution() {
             axios.post('/assignments/saveStudentSolutionUrl', {
