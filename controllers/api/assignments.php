@@ -300,6 +300,7 @@ class assignments extends Controller
 
     function saveUserDoneCriteria(): void
     {
+        //stop(403, 'Not implemented');
         $studentId = $this->auth->userId;
         $criterionId = $_POST['criterionId'];
         $done = $_POST['done'];

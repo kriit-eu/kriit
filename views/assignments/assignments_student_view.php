@@ -2,6 +2,11 @@
     h2 {
         margin-top: 20px;
     }
+    .criterion-done {
+        background-color: #dff0d8;
+        color: #3c763d;
+        text-decoration: strikethrough;
+    }
 </style>
 
 Student
@@ -54,13 +59,16 @@ Student
             <li
                 v-for="(criterion, index) in criteria"
                 :key="criterion.criterionId"
-                class="list-group-item">
+                class="list-group-item"
+                :class="criterion.class"
+                data-bs-toggle="tooltip"
+                :title="criterion.tooltipText">
                 <label>
                     <input
                         type="checkbox"
                         class="form-check-input me-2"
                         v-model="criterion.done"
-                        @change="saveUserDoneCriteria(criterion.criterionId, criterion.done)"/>
+                        @change="saveUserDoneCriteria(criterion)"/>
                     {{ criterion.description }}
                 </label>
             </li>
@@ -97,90 +105,106 @@ Student
     const assignment = <?= json_encode($assignment); ?>;
     const userId = <?= json_encode($this->auth->userId); ?>;
 
-    new Vue({
-        el: '#app',
-        data: {
-            assignment: assignment,
-            criteria: [],
-            solutionUrl: '',
-            studentComment: '',
-            userId: userId
-        },
-        created() {
-            // Extract criteria from the assignment object
-            const assignmentCriteria = this.assignment.criteria;
-            const criteriaArray = Object.values(assignmentCriteria);
-
-            // Get student's data
-            const studentData = this.assignment.students[Object.keys(this.assignment.students)[0]];
-            const userDoneCriteria = studentData.userDoneCriteria || {};
-
-            // Build criteria array with 'done' status
-            this.criteria = criteriaArray.map((criterion) => {
-                const criterionId = criterion.criterionId;
-                const doneCriterion = userDoneCriteria[criterionId.toString()];
-                return {
-                    criterionId: criterionId,
-                    description: criterion.criterionName,
-                    done: doneCriterion ? doneCriterion.completed : false,
-                };
-            });
-
-            // Set the solution URL if it exists
-            this.solutionUrl = studentData.solutionUrl || '';
-
-            // Initialize comments
-            this.comments = studentData.comments || [];
-        },
-        computed: {
-            canSubmitSolution() {
-                return (
-                    this.criteria.every((criterion) => criterion.done) &&
-                    this.solutionUrl.trim() !== ''
-                );
+    const vue = new Vue({
+            el: '#app',
+            data: {
+                assignment: assignment,
+                criteria: [],
+                solutionUrl: '',
+                studentComment: '',
+                userId: userId
             },
-            renderedInstructions() {
-                // Convert Markdown to HTML
-                return marked.parse(this.assignment.assignmentInstructions || '');
+            created() {
+                // Extract criteria from the assignment object
+                const assignmentCriteria = this.assignment.criteria;
+                const criteriaArray = Object.values(assignmentCriteria);
+
+                // Get student's data
+                const studentData = this.assignment.students[Object.keys(this.assignment.students)[0]];
+                const userDoneCriteria = studentData.userDoneCriteria || {};
+
+                // Build criteria array with 'done' status
+                this.criteria = criteriaArray.map((criterion) => {
+                    const criterionId = criterion.criterionId;
+                    const doneCriterion = userDoneCriteria[criterionId.toString()];
+                    return {
+                        criterionId: criterionId,
+                        description: criterion.criterionName,
+                        done: doneCriterion ? doneCriterion.completed : false,
+                    };
+                });
+
+                // Set the solution URL if it exists
+                this.solutionUrl = studentData.solutionUrl || '';
+
+                // Initialize comments
+                this.comments = studentData.comments || [];
             },
-        },
-        methods: {
-            submitComment() {
-                axios.post('/assignments/saveStudentComment', {
-                    studentId: this.userId,
-                    studentName: this.assignment.students[this.userId].studentName,
-                    assignmentId: this.assignment.assignmentId,
-                    comment: this.studentComment,
-                    teacherName: this.assignment.teacherName,
-                    teacherId: this.assignment.teacherId,
-                })
-                    .then(response => {
-                        // Re-initialize comments and empty textarea after successful submission
-                        this.comments.push({
-                            createdAt: new Date().toLocaleString(),
-                            name: this.assignment.students[this.userId].studentName,
-                            comment: this.studentComment,
-                        });
-                        this.studentComment = '';
+            computed: {
+                canSubmitSolution() {
+                    return (
+                        this.criteria.every((criterion) => criterion.done) &&
+                        this.solutionUrl.trim() !== ''
+                    );
+                },
+                renderedInstructions() {
+                    // Convert Markdown to HTML
+                    return marked.parse(this.assignment.assignmentInstructions || '');
+                },
+            },
+            methods: {
+                submitComment() {
+                    axios.post('/assignments/saveStudentComment', {
+                        studentId: this.userId,
+                        studentName: this.assignment.students[this.userId].studentName,
+                        assignmentId: this.assignment.assignmentId,
+                        comment: this.studentComment,
+                        teacherName: this.assignment.teacherName,
+                        teacherId: this.assignment.teacherId,
                     })
-                    .catch(error => {
-                        console.error('Error:', error);
-                    });
+                        .then(response => {
+                            // Re-initialize comments and empty textarea after successful submission
+                            this.comments.push({
+                                createdAt: new Date().toLocaleString(),
+                                name: this.assignment.students[this.userId].studentName,
+                                comment: this.studentComment,
+                            });
+                            this.studentComment = '';
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                },
+                saveUserDoneCriteria: function (criterion) {
+                    ajax('api/assignments/saveUserDoneCriteria', {
+                            criterionId: criterion.criterionId,
+                            done: criterion.done
+                        },
+                        () => this.highlightDoneCriteria(criterion),
+                        () => this.highlightNotSavedCriteria(criterion)
+                    );
+                },
+                submitSolution() {
+                    axios.post('/assignments/saveStudentSolutionUrl', {
+                        studentId: this.userId,
+                        teacherId: this.assignment.teacherId,
+                        assignmentId: this.assignment.assignmentId,
+                        solutionUrl: this.solutionUrl,
+                        criteria: this.criteria,
+                        comment: this.studentComment,
+                    })
+                },
+                async highlightDoneCriteria(criterion) {
+                    // Update the criterion first
+                    criterion.class = 'criterion-done';
+                    criterion.tooltipText = 'Tingimus on salvestatud';
+                },
+                async highlightNotSavedCriteria(criterion) {
+                    criterion.class = 'bg-warning';
+                    criterion.tooltipText = '⚠️ Tõrge tingimuse salvestamisel';
+                    criterion.done = !criterion.done;
+                }
             },
-            saveUserDoneCriteria: function (criterionId, done) {
-                ajax('api/assignments/saveUserDoneCriteria', {criterionId, done})
-            },
-        submitSolution() {
-            axios.post('/assignments/saveStudentSolutionUrl', {
-                studentId: this.userId,
-                teacherId: this.assignment.teacherId,
-                assignmentId: this.assignment.assignmentId,
-                solutionUrl: this.solutionUrl,
-                criteria: this.criteria,
-                comment: this.studentComment,
-            })
-        }
-    },
-    })
+        })
     ;
 </script>
