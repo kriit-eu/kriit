@@ -174,25 +174,34 @@ Student
                         criterion.done ? 'done' : 'not done'
                     }`
                 );
-                // Simulate an AJAX request with a delay
-                setTimeout(() => {
-                    console.log(
-                        `Server has updated criterion: "${criterion.description}" to state: ${
-                            criterion.done ? 'done' : 'not done'
-                        }`
-                    );
-                }, 500);
+
+                // Send the updated criterion to /assignments/ajax_saveStudentCriteria
+                axios.post('/assignments/ajax_saveStudentCriteria', {
+                    assignmentId: this.assignment.assignmentId,
+                    studentId: this.userId,
+                    criteria: criterion,
+                    teacherId: this.assignment.teacherId,
+                    teacherName: this.assignment.teacherName,
+                })
+                    .then(response => {
+                        console.log(
+                            `Server has updated criterion: "${criterion.description}" to state: ${
+                                criterion.done ? 'done' : 'not done'
+                            }`
+                        )
+                    })
             },
-            submitSolution() {
-                console.log('Submitting solution...');
-                console.log('Solution URL:', this.solutionUrl);
-                console.log('Criteria:', this.criteria);
-                // Simulate an AJAX request with a delay
-                setTimeout(() => {
-                    alert('Solution submitted successfully!');
-                    this.solutionUrl = ''; // Reset solution URL after submission
-                }, 500);
-            },
-        },
-    });
+        submitSolution() {
+            axios.post('/assignments/saveStudentSolutionUrl', {
+                studentId: this.userId,
+                teacherId: this.assignment.teacherId,
+                assignmentId: this.assignment.assignmentId,
+                solutionUrl: this.solutionUrl,
+                criteria: this.criteria,
+                comment: this.studentComment,
+            })
+        }
+    },
+    })
+    ;
 </script>
