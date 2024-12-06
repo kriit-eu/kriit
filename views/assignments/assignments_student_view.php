@@ -1,9 +1,17 @@
+<style>
+    h2 {
+        margin-top: 20px;
+    }
+</style>
+
 Student
+
 <div id="app" class="container mt-5">
+
     <h2>{{ assignment.assignmentName }}</h2>
     <p v-html="renderedInstructions"></p>
 
-    <!-- For each comment, display a Bootstrap card -->
+    <!-- Comments -->
     <div v-if="comments.length > 0" style="max-height: 500px; overflow-y: auto;">
         <div v-for="comment in comments" class="card mb-3">
             <div class="card-body">
@@ -17,24 +25,21 @@ Student
     <div v-else>
         <p>Kommentaare pole.</p>
     </div>
-
     <div id="commentSection" class="mb-3">
         <div class="input-group my-3">
             <textarea
-                    id="studentComment"
-                    class="form-control"
-                    rows="3"
-                    placeholder="Lisa kommentaar siia..."
-                    v-model="studentComment"
-                    required
-            >
+                id="studentComment"
+                class="form-control"
+                rows="3"
+                placeholder="Lisa kommentaar siia..."
+                v-model="studentComment"
+                required>
             </textarea>
             <button
-                    type="button"
-                    class="btn btn-success"
-                    :disabled="!studentComment.trim()"
-                    @click="submitComment"
-            >
+                type="button"
+                class="btn btn-success"
+                :disabled="!studentComment.trim()"
+                @click="submitComment">
                 Esita
             </button>
         </div>
@@ -47,38 +52,34 @@ Student
             kriteeriumi kallale asumist.</p>
         <ul class="list-group">
             <li
-                    v-for="(criterion, index) in criteria"
-                    :key="criterion.criterionId"
-                    class="list-group-item"
-            >
+                v-for="(criterion, index) in criteria"
+                :key="criterion.criterionId"
+                class="list-group-item">
                 <label>
                     <input
-                            type="checkbox"
-                            class="form-check-input me-2"
-                            v-model="criterion.done"
-                            @change="updateCriterion(index)"
-                    />
+                        type="checkbox"
+                        class="form-check-input me-2"
+                        v-model="criterion.done"
+                        @change="updateCriterion(index)"/>
                     {{ criterion.description }}
                 </label>
             </li>
         </ul>
 
-        <h2>Esitamine</h2>
+        <h2><strong>Esitamine</strong></h2>
         <p>Olles kõik kriteeriumid ära täitnud, sisesta siia link, kust saab sinu tööd näha ja vajuta "Esita" nuppu.</p>
         <div class="input-group my-3">
             <input
-                    type="url"
-                    id="solutionUrl"
-                    class="form-control"
-                    v-model="solutionUrl"
-                    placeholder="Enter solution URL"
-                    required
-            />
+                type="url"
+                id="solutionUrl"
+                class="form-control"
+                v-model="solutionUrl"
+                placeholder="Enter solution URL"
+                required/>
             <button
-                    type="submit"
-                    class="btn btn-success"
-                    :disabled="!canSubmitSolution"
-            >
+                type="submit"
+                class="btn btn-success"
+                :disabled="!canSubmitSolution">
                 Esita
             </button>
         </div>
@@ -153,18 +154,18 @@ Student
                     teacherName: this.assignment.teacherName,
                     teacherId: this.assignment.teacherId,
                 })
-                .then(response => {
-                    // Re-initialize comments and empty textarea after successful submission
-                    this.comments.push({
-                        createdAt: new Date().toLocaleString(),
-                        name: this.assignment.students[this.userId].studentName,
-                        comment: this.studentComment,
+                    .then(response => {
+                        // Re-initialize comments and empty textarea after successful submission
+                        this.comments.push({
+                            createdAt: new Date().toLocaleString(),
+                            name: this.assignment.students[this.userId].studentName,
+                            comment: this.studentComment,
+                        });
+                        this.studentComment = '';
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
                     });
-                    this.studentComment = '';
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                });
             },
             updateCriterion(index) {
                 const criterion = this.criteria[index];
