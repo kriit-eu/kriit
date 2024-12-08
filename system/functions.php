@@ -180,16 +180,25 @@ function handleProductionError(\Exception $exception){
 
 function validate($var, $type = IS_ID, $must_not_be_empty = false): bool
 {
-    if (($must_not_be_empty && empty($var)) || ($type == IS_ID && !isValidID($var)
-            || $type == IS_ARRAY && !is_array($var)
-            || $type == IS_STRING && !is_string($var)
-            || $type == IS_DATE && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $var)
-            || $type == IS_0OR1 && !($var === 0 || $var === 1))) {
-        throw new \Exception('Invalid parameter value');
+    // Check if the variable must not be empty
+    if ($must_not_be_empty && empty($var) && $var !== '0' && $var !== 0) {
+        throw new \Exception('Invalid parameter value: Variable must not be empty.');
+    }
+
+    // Validate based on type
+    if (
+        ($type === IS_ID && !isValidID($var)) ||
+        ($type === IS_ARRAY && !is_array($var)) ||
+        ($type === IS_STRING && !is_string($var)) ||
+        ($type === IS_DATE && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $var)) ||
+        ($type === IS_0OR1 && !($var === 0 || $var === 1))
+    ) {
+        throw new \Exception('Invalid parameter value: Type mismatch.');
     }
 
     return true;
 }
+
 
 function isValidID($id): bool
 {

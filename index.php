@@ -57,5 +57,7 @@ try {
         exit();
     }
 
+    // Throw the exception to the screen for the developer to see
+    http_response_code(500);
     throw $e;
 }

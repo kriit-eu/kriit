@@ -1,7 +1,7 @@
 Teacher
 <div id="app" class="container mt-5">
     <h2>{{ assignment.assignmentName }}</h2>
-    <p v-html="assignment.assignmentInstructions"></p>
+    <p v-html="renderedInstructions"></p>
     <ul class="list-group">
         <li v-for="(criterion, index) in criteria" :key="criterion.criterionId" class="list-group-item">
             <label class="form-check-label">
@@ -78,7 +78,8 @@ Teacher
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     const assignment = <?= json_encode($assignment); ?>;
@@ -121,6 +122,10 @@ Teacher
                     this.criteria.every((criterion) => criterion.done) &&
                     this.solutionUrl.trim() !== ''
                 );
+            },
+            renderedInstructions() {
+                // Convert Markdown to HTML
+                return marked.parse(this.assignment.assignmentInstructions || '');
             },
         },
         methods: {

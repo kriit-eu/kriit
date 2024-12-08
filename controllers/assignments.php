@@ -19,26 +19,26 @@ class assignments extends Controller
 
         $params = [$assignmentId];
         $query = "
-        SELECT
-            a.assignmentId, a.assignmentName, a.assignmentInstructions, a.assignmentDueAt,
-            c.criterionId, c.criterionName,
-            u.userId AS studentId, u.userName AS studentName, u.groupId,
-            ua.userGrade, ua.assignmentStatusId, ua.solutionUrl, ua.comments,
-            ast.statusName AS assignmentStatusName,
-            udc.criterionId AS userDoneCriterionId,
-            subj.teacherId AS teacherId,
-            t.userName AS teacherName
-        FROM assignments a
-        LEFT JOIN criteria c ON c.assignmentId = a.assignmentId
-        JOIN subjects subj ON a.subjectId = subj.subjectId
-        JOIN users t ON subj.teacherId = t.userId
-        LEFT JOIN groups g ON subj.groupId = g.groupId
-        LEFT JOIN users u ON u.groupId = g.groupId
-        LEFT JOIN userAssignments ua ON ua.assignmentId = a.assignmentId AND ua.userId = u.userId
-        LEFT JOIN assignmentStatuses ast ON ua.assignmentStatusId = ast.assignmentStatusId
-        LEFT JOIN userDoneCriteria udc ON udc.criterionId = c.criterionId AND udc.userId = u.userId
-        WHERE a.assignmentId = ?
-    ";
+    SELECT
+        a.assignmentId, a.assignmentName, a.assignmentInstructions, a.assignmentDueAt,
+        c.criterionId, c.criterionName,
+        u.userId AS studentId, u.userName AS studentName, u.groupId,
+        ua.userGrade, ua.assignmentStatusId, ua.solutionUrl, ua.comments,
+        ast.statusName AS assignmentStatusName,
+        udc.criterionId AS userDoneCriterionId,
+        subj.teacherId AS teacherId,
+        t.userName AS teacherName
+    FROM assignments a
+    LEFT JOIN criteria c ON c.assignmentId = a.assignmentId
+    JOIN subjects subj ON a.subjectId = subj.subjectId
+    JOIN users t ON subj.teacherId = t.userId
+    LEFT JOIN groups g ON subj.groupId = g.groupId
+    LEFT JOIN users u ON u.groupId = g.groupId
+    LEFT JOIN userAssignments ua ON ua.assignmentId = a.assignmentId AND ua.userId = u.userId
+    LEFT JOIN assignmentStatuses ast ON ua.assignmentStatusId = ast.assignmentStatusId
+    LEFT JOIN userDoneCriteria udc ON udc.criterionId = c.criterionId AND udc.userId = u.userId
+    WHERE a.assignmentId = ?
+";
         if ($isStudent) {
             $query .= " AND u.userId = ?";
             $params[] = $userId;
@@ -121,25 +121,15 @@ class assignments extends Controller
             $assignment['students'][$studentId]['tooltipText'] = $tooltipText;
         }
 
-        // Fetch and add messages
-        $messages = Db::getAll("
-        SELECT
-            m.messageId, m.content AS messageContent, m.userId AS messageUserId, mu.userName AS messageUserName, m.CreatedAt, m.isNotification
-        FROM messages m
-        LEFT JOIN users mu ON mu.userId = m.userId
-        WHERE m.assignmentId = ?
-        ORDER BY m.CreatedAt
-    ", [$assignmentId]);
-
-        foreach ($messages as $message) {
-            $assignment['messages'][] = [
-                'messageId' => $message['messageId'],
-                'content' => $message['messageContent'],
-                'userId' => $message['messageUserId'],
-                'userName' => $message['messageUserName'],
-                'createdAt' => $this->formatMessageDate($message['CreatedAt']),
-                'isNotification' => $message['isNotification']
-            ];
+        // Kunstlikult palju kommentaare testimiseks
+        foreach ($assignment['students'] as &$student) {
+            for ($i = 1; $i <= 50; $i++) {
+                $student['comments'][] = [
+                    'createdAt' => date('Y-m-d H:i:s', strtotime("-{$i} hours")),
+                    'name' => "Test Kommentaar #{$i}",
+                    'comment' => "See on kunstlik kommentaar nr {$i}, mis on lisatud disaini testimiseks."
+                ];
+            }
         }
 
         $this->assignment = $assignment;

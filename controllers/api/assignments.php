@@ -322,5 +322,17 @@ class assignments extends Controller
 
     }
 
+    function addComment(){
+        // Validate parameters
+        validate($_POST['assignmentId']);
+        validate($_POST['comment']);
+        $authorId = $this->auth->userId;
+        Db::insert('comments',[
+                'assignmentId' => $_POST['assignmentId'],
+                'authorId' => $authorId,
+                'content' => $_POST['comment'],
+                'createdAt' => date('Y-m-d H:i:s')
+            ]);
+    }
 
 }

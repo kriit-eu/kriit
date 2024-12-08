@@ -105,81 +105,72 @@ function tryToParseJSON(jsonString) {
 
 
 function ajax(url, options, callback_or_redirect_url, error_callback) {
-
-
     $.post(url, options)
         .fail(function (jqXHR, textStatus, errorThrown) {
-            console.log('Xhr error: ', jqXHR, textStatus, errorThrown);
-            let error;
-            let json = tryToParseJSON(jqXHR.responseText);
-            if (json === false) {
-                error = jqXHR.responseText;
-            } else {
-                if (typeof json.data === 'undefined') {
-                    error = `<pre>${JSON.stringify(json, null, 2)}</pre>`;
+            console.error('XHR error:', jqXHR, textStatus, errorThrown);
+
+            let errorMessage = 'An error occurred while processing your request.';
+            let details = '';
+
+            const json = tryToParseJSON(jqXHR.responseText);
+            if (json) {
+                if (json.message) {
+                    errorMessage = json.message;
+                } else if (typeof json.data !== 'undefined') {
+                    errorMessage = json.data;
                 } else {
-                    error = json.data;
+                    details = `<pre>${JSON.stringify(json, null, 2)}</pre>`;
                 }
-            }
-
-            if (typeof error_callback === 'function') {
-                error_callback(error);
             } else {
-                show_error_modal(error, errorThrown);
+                details = jqXHR.responseText || errorThrown;
             }
 
+            // Fallback for HTTP status codes
+            if (jqXHR.status) {
+                const statusCode = jqXHR.status;
+                const statusText = jqXHR.statusText || '';
+                errorMessage = `${statusCode}: ${statusText}`;
+            }
+
+            // Execute error callback or show error modal
+            if (typeof error_callback === 'function') {
+                error_callback(errorMessage, details);
+            } else {
+                show_error_modal(errorMessage, details);
+            }
         })
         .done(function (response) {
-            // debugger;
-            let parsedResponse = (typeof response === 'object' && response !== null) ? response : tryToParseJSON(response);
+            let parsedResponse = typeof response === 'object' && response !== null ? response : tryToParseJSON(response);
 
-            console.log('.done');
-            if (parsedResponse === false) {
+            if (!parsedResponse) {
+                console.error('Invalid JSON response:', response);
 
-                // Send error report
+                // Send error report for invalid JSON
                 $.post('email/send_error_report', {
-                    javascript_received_json_payload_that_caused_the_error: response
+                    javascript_received_json_payload_that_caused_the_error: response,
                 });
 
-                show_error_modal(response);
-
+                show_error_modal('Invalid response format', response);
                 return false;
+            }
 
-
-            } else if (parsedResponse.status === 500) {
-
-                // Send error report
-                $.post('email/send_error_report', {
-                    javascript_received_json_payload_that_caused_the_error: parsedResponse
-                });
-
-
+            // Handle server-side errors
+            if (parsedResponse.status && parsedResponse.status.toString()[0] !== '2') {
                 if (typeof error_callback === 'function') {
-                    error_callback(parsedResponse);
+                    error_callback(parsedResponse.data || 'An error occurred.', parsedResponse);
                 } else {
-                    show_error_modal(parsedResponse.data);
+                    show_error_modal(parsedResponse.data || 'An error occurred.', parsedResponse);
                 }
-
                 return false;
+            }
 
-
-            } else if (parsedResponse.status.toString()[0] !== '2') {
-
-                if (typeof error_callback === 'function') {
-                    error_callback(parsedResponse);
-                } else {
-                    show_error_modal(parsedResponse.data);
-                }
-
-            } else {
-
-                if (typeof callback_or_redirect_url === 'function') {
-                    callback_or_redirect_url(parsedResponse);
-                } else if (typeof callback_or_redirect_url === 'string') {
-                    location.href = callback_or_redirect_url;
-                } else if (callback_or_redirect_url === RELOAD) {
-                    location.reload();
-                }
+            // Success logic
+            if (typeof callback_or_redirect_url === 'function') {
+                callback_or_redirect_url(parsedResponse);
+            } else if (typeof callback_or_redirect_url === 'string') {
+                location.href = callback_or_redirect_url;
+            } else if (callback_or_redirect_url === RELOAD) {
+                location.reload();
             }
         });
 }
