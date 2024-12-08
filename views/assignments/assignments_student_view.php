@@ -52,129 +52,144 @@
     <div class="row">
         <h1><strong>{{ assignment.assignmentName }}</strong></h1>
 
-        <div class="col-lg-8 col-md-7 col-sm-12">
-            <!-- Instructions -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h2 class="card-title d-flex justify-content-between align-items-center"><strong>Juhend</strong> <i class="fa fa-info-circle"></i></h2>
-                </div>
-                <div class="card-body">
-                    <p v-html="renderedInstructions"></p>
-                </div>
-            </div>
-
-            <!-- Criteria Section -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h2 class="card-title d-flex justify-content-between align-items-center">
-                        <strong>Lahendamine</strong> <i class="fa fa-puzzle-piece"></i>
-                    </h2>
-                </div>
-                <div class="card-body">
-                    <p>Loe järgmist loetelu ja märgi iga sammu juurde linnuke kohe, kui oled selle täitnud.</p>
-                    <ul class="list-group list-group-criteria">
-                        <li v-for="(criterion, index) in criteria"
-                            :key="criterion.criterionId"
-                            class="list-group-item"
-                            :class="criterion.done ? 'criterion-done' : ''"
-                            data-bs-toggle="tooltip">
-                            <label class="d-flex">
-                                <div class="flex-shrink-0">
-                                    <input type="checkbox"
-                                           class="form-check-input me-2"
-                                           v-model="criterion.done"
-                                           @change="saveUserDoneCriteria(criterion)"/>
-                                    <span class="me-2">{{ index + 1 }}.</span>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <span v-if="criterion.unsaved"
-                                          class="text-warning ms-2"
-                                          data-bs-toggle="tooltip"
-                                          v-tooltip="criterion.tooltipText">&#9888;</span>
-                                    {{ criterion.description }}
-                                </div>
-                            </label>
-                        </li>
-                    </ul>
+        <!-- Instruction and Solving Cards -->
+        <div class="row">
+            <div class="col-lg-6 col-md-6 col-sm-12">
+                <!-- Instructions -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h2 class="card-title d-flex justify-content-between align-items-center">
+                            <strong>Juhend</strong> <i class="fa fa-info-circle"></i>
+                        </h2>
+                    </div>
+                    <div class="card-body">
+                        <p v-html="renderedInstructions"></p>
+                    </div>
                 </div>
             </div>
 
-            <!-- Submission Section -->
-            <div class="card mb-4" v-if="canSubmitSolution">
-                <div class="card-header">
-                    <h2 class="card-title d-flex justify-content-between align-items-center">
-                        <strong>Esitamine</strong> <i class="fa fa-flag-checkered"></i>
-                    </h2>
-                </div>
-                <div class="card-body">
-                    <p>Sisesta siia link sinu tööst ja vajuta "Esita".</p>
-                    <div class="input-group my-3">
-                        <input type="url"
-                               id="solutionUrl"
-                               class="form-control"
-                               v-model="solutionUrl"
-                               placeholder="Enter solution URL"
-                               required>
-                        <button type="submit"
-                                class="btn btn-success"
-                                :disabled="!canSubmitSolution">
-                            Esita
-                        </button>
+            <div class="col-lg-6 col-md-6 col-sm-12">
+                <!-- Solving -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h2 class="card-title d-flex justify-content-between align-items-center">
+                            <strong>Lahendamine</strong> <i class="fa fa-puzzle-piece"></i>
+                        </h2>
+                    </div>
+                    <div class="card-body">
+                        <p>Loe järgmist loetelu ja märgi iga sammu juurde linnuke kohe, kui oled selle täitnud.</p>
+                        <ul class="list-group list-group-criteria">
+                            <li v-for="(criterion, index) in criteria"
+                                :key="criterion.criterionId"
+                                class="list-group-item"
+                                :class="criterion.done ? 'criterion-done' : ''"
+                                data-bs-toggle="tooltip">
+                                <label class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <input type="checkbox"
+                                               class="form-check-input me-2"
+                                               v-model="criterion.done"
+                                               @change="saveUserDoneCriteria(criterion)"/>
+                                        <span class="me-2">{{ index + 1 }}.</span>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <span v-if="criterion.unsaved"
+                                              class="text-warning ms-2"
+                                              data-bs-toggle="tooltip"
+                                              v-tooltip="criterion.tooltipText">&#9888;</span>
+                                        {{ criterion.description }}
+                                    </div>
+                                </label>
+                            </li>
+                        </ul>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Comments Section -->
-        <div class="col-lg-4 col-md-5 col-sm-12">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title d-flex justify-content-between align-items-center">
-                        <strong>Vestlus</strong><i class="fa fa-comment"></i>
-                    </h3>
-                </div>
-                <div class="card-body p-0">
-                    <div v-if="comments.length > 0" class="comment-section-container">
-                        <div v-for="comment in comments" class="comment-entry">
-                            <div class="card">
-                                <div class="card-body">
-                                    <p>
-                                        {{ comment.createdAt }}
-                                        <strong>{{ comment.name || 'Tundmatu' }}</strong><br>
-                                        <em>{{ comment.comment }}</em>
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
+        <!-- Submission Card -->
+        <div class="row" v-if="canSubmitSolution">
+            <div class="col-12">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h2 class="card-title d-flex justify-content-between align-items-center">
+                            <strong>Esitamine</strong> <i class="fa fa-flag-checkered"></i>
+                        </h2>
                     </div>
-                    <div v-else class="comment-section-empty">
-                        <p>Sõnumeid pole.</p>
-                    </div>
-                    <div id="commentSection" class="d-flex comment-submission">
-                        <div class="input-group">
-                            <textarea id="commentText"
-                                      class="form-control border-end-0"
-                                      :class="commentUnsaved ? 'is-invalid' : ''"
-                                      rows="3"
-                                      placeholder="Lisa sõnum siia..."
-                                      v-model="commentText"
-                                      style="border-radius: 0 0 0 4px;"
-                                      required></textarea>
-                            <button type="button"
+                    <div class="card-body">
+                        <p>Sisesta siia link oma tööst ja vajuta "Esita".</p>
+                        <div class="input-group my-3">
+                            <input type="url"
+                                   id="solutionUrl"
+                                   class="form-control"
+                                   v-model="solutionUrl"
+                                   placeholder="Enter solution URL"
+                                   required>
+                            <button type="submit"
                                     class="btn btn-success"
-                                    :disabled="!commentText.trim()"
-                                    style="border-radius: 0 0 4px 0;"
-                                    @click="submitComment">
+                                    :disabled="!canSubmitSolution">
                                 Esita
                             </button>
                         </div>
-                        <span v-if="commentUnsaved" class="text-danger">{{commentUnsavedReason}}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Card -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title d-flex justify-content-between align-items-center">
+                            <strong>Vestlus</strong><i class="fa fa-comment"></i>
+                        </h3>
+                    </div>
+                    <div class="card-body p-0">
+                        <div v-if="comments.length > 0" class="comment-section-container">
+                            <div v-for="comment in comments" class="comment-entry">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <p>
+                                            {{ comment.createdAt }}
+                                            <strong>{{ comment.name || 'Tundmatu' }}</strong><br>
+                                            <em>{{ comment.comment }}</em>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-else class="comment-section-empty">
+                            <p>Sõnumeid pole.</p>
+                        </div>
+                        <div id="commentSection" class="d-flex comment-submission">
+                            <div class="input-group">
+                                <textarea id="commentText"
+                                          class="form-control border-end-0"
+                                          :class="commentUnsaved ? 'is-invalid' : ''"
+                                          rows="3"
+                                          placeholder="Lisa sõnum siia..."
+                                          v-model="commentText"
+                                          style="border-radius: 0 0 0 4px;"
+                                          required></textarea>
+                                <button type="button"
+                                        class="btn btn-success"
+                                        :disabled="!commentText.trim()"
+                                        style="border-radius: 0 0 4px 0;"
+                                        @click="submitComment">
+                                    Esita
+                                </button>
+                            </div>
+                            <span v-if="commentUnsaved" class="text-danger">{{commentUnsavedReason}}</span>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+
 
 <!-- Dependencies -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -231,7 +246,7 @@
         },
         computed: {
             canSubmitSolution() {
-                return this.criteria.every(c => c.done) && this.solutionUrl.trim() !== '';
+                return this.criteria.every(c => c.done);
             },
             renderedInstructions() {
                 return marked.parse(this.assignment.assignmentInstructions || '');
