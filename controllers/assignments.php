@@ -121,17 +121,6 @@ class assignments extends Controller
             $assignment['students'][$studentId]['tooltipText'] = $tooltipText;
         }
 
-        // Kunstlikult palju kommentaare testimiseks
-        foreach ($assignment['students'] as &$student) {
-            for ($i = 1; $i <= 50; $i++) {
-                $student['comments'][] = [
-                    'createdAt' => date('Y-m-d H:i:s', strtotime("-{$i} hours")),
-                    'name' => "Test Kommentaar #{$i}",
-                    'comment' => "See on kunstlik kommentaar nr {$i}, mis on lisatud disaini testimiseks."
-                ];
-            }
-        }
-
         $this->assignment = $assignment;
     }
 
@@ -167,33 +156,6 @@ class assignments extends Controller
         }
     }
 
-
-    function ajax_saveAssignmentGrade(): void
-    {
-        $assignmentId = $_POST['assignmentId'];
-        $this->checkIfUserHasPermissionForAction($assignmentId) || stop(403, 'Teil pole õigusi sellele tegevusele.');
-
-        $studentId = $_POST['studentId'];
-        $grade = $_POST['grade'] ?? null;
-        $criteria = $_POST['criteria'] ?? [];
-        $comment = $_POST['comment'] ?? null;
-
-        if ($grade !== null && !in_array($grade, ['1', '2', '3', '4', '5', 'A', 'MA'])) {
-            stop(400, 'Invalid grade');
-        }
-
-        if (count($criteria) !== 0) {
-            $this->saveStudentCriteria();
-        }
-
-
-        $isUpdated = $this->saveOrUpdateUserAssignment($studentId, $assignmentId, $grade, $comment);
-
-
-        $this->sendGradeNotification($assignmentId, $studentId, $_POST['teacherId'], $isUpdated);
-
-        stop(200, 'Grade saved');
-    }
 
     function saveStudentComment(): void
     {

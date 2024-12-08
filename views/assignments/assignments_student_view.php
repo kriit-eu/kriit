@@ -11,7 +11,13 @@
     .criterion-done {
         background-color: #dff0d8;
         color: #3c763d;
-        text-decoration: strikethrough;
+        text-decoration: line-through;
+    }
+
+    .criterion-unsaved {
+        background-color: #f2dede;
+        color: #a94442;
+        text-decoration: line-through;
     }
 </style>
 
@@ -42,18 +48,23 @@ Student
                     </p>
                     <ul class="list-group">
                         <li
-                                v-for="(criterion, index) in criteria"
-                                :key="criterion.criterionId"
-                                class="list-group-item"
-                                :class="criterion.class"
-                                data-bs-toggle="tooltip"
-                                :title="criterion.tooltipText">
+                            v-for="(criterion, index) in criteria"
+                            :key="criterion.criterionId"
+                            class="list-group-item"
+                            :class="criterion.done ? 'criterion-done' : ''"
+                            data-bs-toggle="tooltip">
                             <label>
                                 <input
-                                        type="checkbox"
-                                        class="form-check-input me-2"
-                                        v-model="criterion.done"
-                                        @change="saveUserDoneCriteria(criterion)" />
+                                    type="checkbox"
+                                    class="form-check-input me-2"
+                                    v-model="criterion.done"
+                                    @change="saveUserDoneCriteria(criterion)"/>
+                                <span
+                                    v-if="criterion.unsaved"
+                                    class="text-warning ms-2"
+                                    data-bs-toggle="tooltip"
+                                    v-tooltip="criterion.tooltipText"
+                                >&#9888;</span>
                                 {{ criterion.description }}
                             </label>
                         </li>
@@ -67,20 +78,21 @@ Student
                     <h2 class="card-title"><strong>Esitamine</strong></h2>
                 </div>
                 <div class="card-body">
-                    <p>Olles kõik kriteeriumid ära täitnud, sisesta siia link, kust saab sinu tööd näha ja vajuta "Esita"
+                    <p>Olles kõik kriteeriumid ära täitnud, sisesta siia link, kust saab sinu tööd näha ja vajuta
+                        "Esita"
                         nuppu.</p>
                     <div class="input-group my-3">
                         <input
-                                type="url"
-                                id="solutionUrl"
-                                class="form-control"
-                                v-model="solutionUrl"
-                                placeholder="Enter solution URL"
-                                required />
+                            type="url"
+                            id="solutionUrl"
+                            class="form-control"
+                            v-model="solutionUrl"
+                            placeholder="Enter solution URL"
+                            required/>
                         <button
-                                type="submit"
-                                class="btn btn-success"
-                                :disabled="!canSubmitSolution">
+                            type="submit"
+                            class="btn btn-success"
+                            :disabled="!canSubmitSolution">
                             Esita
                         </button>
                     </div>
@@ -113,18 +125,18 @@ Student
                     <div id="commentSection" class="mt-3">
                         <div class="input-group">
                             <textarea
-                                    id="studentComment"
-                                    class="form-control"
-                                    rows="3"
-                                    placeholder="Lisa kommentaar siia..."
-                                    v-model="studentComment"
-                                    required>
+                                id="studentComment"
+                                class="form-control"
+                                rows="3"
+                                placeholder="Lisa kommentaar siia..."
+                                v-model="studentComment"
+                                required>
                             </textarea>
                             <button
-                                    type="button"
-                                    class="btn btn-success"
-                                    :disabled="!studentComment.trim()"
-                                    @click="submitComment">
+                                type="button"
+                                class="btn btn-success"
+                                :disabled="!studentComment.trim()"
+                                @click="submitComment">
                                 Esita
                             </button>
                         </div>
@@ -136,7 +148,6 @@ Student
 </div>
 
 
-
 <!-- Include required dependencies via CDN -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
@@ -146,6 +157,18 @@ Student
 <script>
     const assignment = <?= json_encode($assignment); ?>;
     const userId = <?= json_encode($this->auth->userId); ?>;
+
+    Vue.directive('tooltip', {
+        inserted(el, binding) {
+            new bootstrap.Tooltip(el, {
+                title: binding.value,
+                placement: 'top', // You can customize the placement
+            });
+        },
+        update(el, binding) {
+            el.setAttribute('data-bs-original-title', binding.value);
+        }
+    });
 
     const vue = new Vue({
             el: '#app',
@@ -220,8 +243,9 @@ Student
                         () => criterion.done
                             ? this.setCriterionState(criterion, 'criterion-done', 'Tingimus on salvestatud')
                             : this.setCriterionState(criterion, '', ''),
-                        () => {
-                            this.setCriterionState(criterion, 'bg-warning', '⚠️ Tõrge tingimuse salvestamisel');
+                        (res) => {
+                            this.setCriterionState(criterion, 'bg-warning', '⚠️ Tõrge tingimuse salvestamisel: ' + JSON.stringify(res));
+                            criterion.unsaved = true;
                             criterion.done = !criterion.done;
                         }
                     );

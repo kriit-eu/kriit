@@ -300,7 +300,6 @@ class assignments extends Controller
 
     function saveUserDoneCriteria(): void
     {
-        //stop(403, 'Not implemented');
         $studentId = $this->auth->userId;
         $criterionId = $_POST['criterionId'];
         $done = $_POST['done'];
@@ -325,7 +324,7 @@ class assignments extends Controller
     function addComment(){
         // Validate parameters
         validate($_POST['assignmentId']);
-        validate($_POST['comment']);
+        validate($_POST['comment'], IS_STRING);
         $authorId = $this->auth->userId;
         Db::insert('comments',[
                 'assignmentId' => $_POST['assignmentId'],
