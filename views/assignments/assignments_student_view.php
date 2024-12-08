@@ -14,6 +14,12 @@
         text-decoration: line-through;
     }
 
+    #commentText.form-control:focus {
+        border-color: #80bdff;
+        /* inverse shadow */
+        box-shadow: inset 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+    }
+
     .criterion-unsaved {
         background-color: #f2dede;
         color: #a94442;
@@ -48,22 +54,22 @@ Student
                     </p>
                     <ul class="list-group">
                         <li
-                            v-for="(criterion, index) in criteria"
-                            :key="criterion.criterionId"
-                            class="list-group-item"
-                            :class="criterion.done ? 'criterion-done' : ''"
-                            data-bs-toggle="tooltip">
+                                v-for="(criterion, index) in criteria"
+                                :key="criterion.criterionId"
+                                class="list-group-item"
+                                :class="criterion.done ? 'criterion-done' : ''"
+                                data-bs-toggle="tooltip">
                             <label>
                                 <input
-                                    type="checkbox"
-                                    class="form-check-input me-2"
-                                    v-model="criterion.done"
-                                    @change="saveUserDoneCriteria(criterion)"/>
+                                        type="checkbox"
+                                        class="form-check-input me-2"
+                                        v-model="criterion.done"
+                                        @change="saveUserDoneCriteria(criterion)"/>
                                 <span
-                                    v-if="criterion.unsaved"
-                                    class="text-warning ms-2"
-                                    data-bs-toggle="tooltip"
-                                    v-tooltip="criterion.tooltipText"
+                                        v-if="criterion.unsaved"
+                                        class="text-warning ms-2"
+                                        data-bs-toggle="tooltip"
+                                        v-tooltip="criterion.tooltipText"
                                 >&#9888;</span>
                                 {{ criterion.description }}
                             </label>
@@ -83,16 +89,16 @@ Student
                         nuppu.</p>
                     <div class="input-group my-3">
                         <input
-                            type="url"
-                            id="solutionUrl"
-                            class="form-control"
-                            v-model="solutionUrl"
-                            placeholder="Enter solution URL"
-                            required/>
+                                type="url"
+                                id="solutionUrl"
+                                class="form-control"
+                                v-model="solutionUrl"
+                                placeholder="Enter solution URL"
+                                required/>
                         <button
-                            type="submit"
-                            class="btn btn-success"
-                            :disabled="!canSubmitSolution">
+                                type="submit"
+                                class="btn btn-success"
+                                :disabled="!canSubmitSolution">
                             Esita
                         </button>
                     </div>
@@ -125,21 +131,23 @@ Student
                     <div id="commentSection" class="mt-3">
                         <div class="input-group">
                             <textarea
-                                id="studentComment"
-                                class="form-control"
-                                rows="3"
-                                placeholder="Lisa kommentaar siia..."
-                                v-model="studentComment"
-                                required>
+                                    id="commentText"
+                                    class="form-control"
+                                    :class="commentUnsaved ? 'is-invalid' : ''"
+                                    rows="3"
+                                    placeholder="Lisa kommentaar siia..."
+                                    v-model="commentText"
+                                    required>
                             </textarea>
                             <button
-                                type="button"
-                                class="btn btn-success"
-                                :disabled="!studentComment.trim()"
-                                @click="submitComment">
+                                    type="button"
+                                    class="btn btn-success"
+                                    :disabled="!commentText.trim()"
+                                    @click="submitComment">
                                 Esita
                             </button>
                         </div>
+                        <span v-if="commentUnsaved" class="text-danger">{{commentUnsavedReason}}</span>
                     </div>
                 </div>
             </div>
@@ -176,8 +184,10 @@ Student
                 assignment: assignment,
                 criteria: [],
                 solutionUrl: '',
-                studentComment: '',
-                userId: userId
+                userId: userId,
+                commentText: '',
+                commentUnsaved: false,
+                commentUnsavedReason: '',
             },
             created() {
                 // Extract criteria from the assignment object
@@ -225,14 +235,27 @@ Student
                     try {
                         ajax('api/assignments/addComment', {
                             assignmentId: this.assignment.assignmentId,
-                            comment: this.studentComment,
+                            comment: this.commentText,
+                        }, (res) => {
+                            this.commentUnsaved = false;
+                            this.comments.push({
+                                createdAt: new Date().toLocaleString('et-EE', {
+                                    timeZone: 'Europe/Tallinn',
+                                    year: 'numeric',
+                                    month: '2-digit',
+                                    day: '2-digit',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                }).replace(',', ''),
+                                name: this.assignment.students[this.userId].studentName,
+                                comment: this.commentText,
+                            });
+                            this.commentText = '';
+                        }, (res) => {
+                            this.commentUnsaved = true;
+                            this.commentUnsavedReason = '⚠️ Tõrge kommentaari salvestamisel: ' + JSON.stringify(res);
                         });
-                        this.comments.push({
-                            createdAt: new Date().toISOString().replace('T', ' ').split('.')[0],
-                            name: this.assignment.students[this.userId].studentName,
-                            comment: this.studentComment,
-                        });
-                        this.studentComment = '';
+
                     } catch (error) {
                         console.error('Error:', error);
                     }
@@ -258,7 +281,7 @@ Student
                         assignmentId: this.assignment.assignmentId,
                         solutionUrl: this.solutionUrl,
                         criteria: this.criteria,
-                        comment: this.studentComment,
+                        comment: this.commentText,
                     });
                 },
 

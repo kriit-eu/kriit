@@ -23,11 +23,12 @@ class assignments extends Controller
         a.assignmentId, a.assignmentName, a.assignmentInstructions, a.assignmentDueAt,
         c.criterionId, c.criterionName,
         u.userId AS studentId, u.userName AS studentName, u.groupId,
-        ua.userGrade, ua.assignmentStatusId, ua.solutionUrl, ua.comments,
+        ua.userGrade, ua.assignmentStatusId, ua.solutionUrl,
         ast.statusName AS assignmentStatusName,
         udc.criterionId AS userDoneCriterionId,
         subj.teacherId AS teacherId,
-        t.userName AS teacherName
+        t.userName AS teacherName,
+        ac.assignmentCommentId, ac.assignmentComment, DATE_FORMAT(ac.assignmentCommentCreatedAt, '%d.%m.%Y %H:%i') AS assignmentCommentCreatedAt, uc.userName AS commentUserName
     FROM assignments a
     LEFT JOIN criteria c ON c.assignmentId = a.assignmentId
     JOIN subjects subj ON a.subjectId = subj.subjectId
@@ -37,13 +38,15 @@ class assignments extends Controller
     LEFT JOIN userAssignments ua ON ua.assignmentId = a.assignmentId AND ua.userId = u.userId
     LEFT JOIN assignmentStatuses ast ON ua.assignmentStatusId = ast.assignmentStatusId
     LEFT JOIN userDoneCriteria udc ON udc.criterionId = c.criterionId AND udc.userId = u.userId
+    LEFT JOIN assignmentComments ac ON ac.assignmentId = a.assignmentId
+    LEFT JOIN users uc ON ac.userId = uc.userId
     WHERE a.assignmentId = ?
 ";
         if ($isStudent) {
             $query .= " AND u.userId = ?";
             $params[] = $userId;
         }
-        $query .= " ORDER BY u.userName, c.criterionId";
+        $query .= " ORDER BY u.userName, c.criterionId, ac.assignmentCommentCreatedAt";
 
         $data = Db::getAll($query, $params);
 
@@ -86,13 +89,23 @@ class assignments extends Controller
                     'assignmentStatusName' => $statusName,
                     'initials' => mb_substr($row['studentName'], 0, 1) . mb_substr($row['studentName'], mb_strrpos($row['studentName'], ' ') + 1, 1),
                     'solutionUrl' => trim($row['solutionUrl'] ?? ''),
-                    'comments' => json_decode($row['comments'], true) ?? [],
+                    'comments' => [],
                     'userDoneCriteria' => [],
                     'userDoneCriteriaCount' => 0,
                     'class' => '',
                     'tooltipText' => '',
                     'studentActionButtonName' => !empty(trim($row['solutionUrl'] ?? '')) ? 'Muuda' : 'Esita',
                     'isAllCriteriaCompleted' => true
+                ];
+            }
+
+            // Handle comments
+            if (!empty($row['assignmentComment'])) {
+                $assignment['students'][$studentId]['comments'][] = [
+                    'id' => $row['assignmentCommentId'],
+                    'comment' => $row['assignmentComment'],
+                    'createdAt' => $row['assignmentCommentCreatedAt'],
+                    'name' => $row['commentUserName']
                 ];
             }
 

@@ -1,8 +1,8 @@
--- MariaDB dump 10.19  Distrib 10.11.8-MariaDB, for debian-linux-gnu (x86_64)
+-- MariaDB dump 10.19  Distrib 10.4.32-MariaDB, for Win64 (AMD64)
 --
 -- Host: 127.0.0.1    Database: kriit
 -- ------------------------------------------------------
--- Server version	10.11.8-MariaDB-0ubuntu0.24.04.1
+-- Server version	10.4.32-MariaDB
 
 /*!50503 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!50503 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -77,7 +77,7 @@ CREATE TABLE `activityLog` (
   KEY `idx_activityLog_id` (`id`),
   CONSTRAINT `fk_activityLog_activityId` FOREIGN KEY (`activityId`) REFERENCES `activities` (`activityId`),
   CONSTRAINT `fk_activityLog_userId` FOREIGN KEY (`userId`) REFERENCES `users` (`userId`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -90,6 +90,36 @@ INSERT INTO `activityLog` VALUES
 ('2024-11-19 18:52:42',2,1,1,NULL,NULL),
 ('2024-11-20 12:55:28',3,2,17,1,NULL);
 /*!40000 ALTER TABLE `activityLog` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `assignmentComments`
+--
+
+DROP TABLE IF EXISTS `assignmentComments`;
+/*!50503 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `assignmentComments` (
+  `assignmentCommentId` int unsigned NOT NULL AUTO_INCREMENT,
+  `userId` int unsigned DEFAULT NULL,
+  `assignmentId` int unsigned DEFAULT NULL,
+  `assignmentComment` text,
+  `assignmentCommentCreatedAt` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`assignmentCommentId`),
+  KEY `fk_assignmentcomments_assignmentId` (`assignmentId`),
+  KEY `fk_assignmentcomments_userId` (`userId`),
+  CONSTRAINT `fk_assignmentcomments_assignmentId` FOREIGN KEY (`assignmentId`) REFERENCES `assignments` (`assignmentId`),
+  CONSTRAINT `fk_assignmentcomments_userId` FOREIGN KEY (`userId`) REFERENCES `users` (`userId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+/*!50503 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `assignmentComments`
+--
+
+LOCK TABLES `assignmentComments` WRITE;
+/*!40000 ALTER TABLE `assignmentComments` DISABLE KEYS */;
+/*!40000 ALTER TABLE `assignmentComments` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -817,4 +847,4 @@ UNLOCK TABLES;
 /*!50503 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-11-20 13:02:52
+-- Dump completed on 2024-12-08 20:02:45

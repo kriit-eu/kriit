@@ -23,7 +23,7 @@ This PHP script performs a linting process on a MySQL/MariaDB database to ensure
 
 Run the script:
 ```bash
-php lint_database.php
+php database_linter.php
 ```
 
 ## Output

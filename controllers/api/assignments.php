@@ -325,13 +325,14 @@ class assignments extends Controller
         // Validate parameters
         validate($_POST['assignmentId']);
         validate($_POST['comment'], IS_STRING);
-        $authorId = $this->auth->userId;
-        Db::insert('comments',[
+        $userId = $this->auth->userId;
+        Db::insert('assignmentComments',[
                 'assignmentId' => $_POST['assignmentId'],
-                'authorId' => $authorId,
-                'content' => $_POST['comment'],
-                'createdAt' => date('Y-m-d H:i:s')
+                'userId' => $userId,
+                'assignmentComment' => $_POST['comment'],
+                'assignmentCommentCreatedAt' => date('Y-m-d H:i:s')
             ]);
+        stop(200);
     }
 
 }
