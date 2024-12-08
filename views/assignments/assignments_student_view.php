@@ -1,4 +1,8 @@
 <style>
+    [v-cloak] {
+        display: none;
+    }
+
     h2 {
         margin-top: 20px;
     }
@@ -11,13 +15,6 @@
     .criterion-done {
         background-color: #dff0d8;
         color: #3c763d;
-        text-decoration: line-through;
-    }
-
-    #commentText.form-control:focus {
-        border-color: #80bdff;
-        /* inverse shadow */
-        box-shadow: inset 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
     }
 
     .criterion-unsaved {
@@ -25,78 +22,100 @@
         color: #a94442;
         text-decoration: line-through;
     }
+
+    #commentText.form-control:focus {
+        border-color: #80bdff;
+        box-shadow: inset 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+    }
+
+    .list-group-criteria {
+        margin: 0 -17px -17px;
+        border-top-left-radius: 0;
+        border-top-right-radius: 0;
+    }
+
+    .comment-section-container,
+    .comment-section-empty {
+        padding: 17px;
+    }
+
+    .comment-entry {
+        margin-bottom: 1rem;
+    }
+
+    .comment-submission {
+        margin: -1px;
+    }
 </style>
 
-Student
-
-<div id="app" class="container mt-5">
+<div id="app" class="container mt-5" v-cloak>
     <div class="row">
-        <!-- Lahenduse pealkiri ja juhised -->
+        <h1><strong>{{ assignment.assignmentName }}</strong></h1>
+
         <div class="col-lg-8 col-md-7 col-sm-12">
+            <!-- Instructions -->
             <div class="card mb-4">
                 <div class="card-header">
-                    <h2 class="card-title">{{ assignment.assignmentName }}</h2>
+                    <h2 class="card-title d-flex justify-content-between align-items-center"><strong>Juhend</strong> <i class="fa fa-info-circle"></i></h2>
                 </div>
                 <div class="card-body">
                     <p v-html="renderedInstructions"></p>
                 </div>
             </div>
 
-            <!-- Lahendamise sektsioon -->
+            <!-- Criteria Section -->
             <div class="card mb-4">
                 <div class="card-header">
-                    <h2 class="card-title"><strong>Lahendamine</strong></h2>
+                    <h2 class="card-title d-flex justify-content-between align-items-center">
+                        <strong>Lahendamine</strong> <i class="fa fa-puzzle-piece"></i>
+                    </h2>
                 </div>
                 <div class="card-body">
-                    <p>
-                        Loe järgmist loetelu ja märgi iga kriteeriumi juurde linnuke kohe, kui oled selle täitnud, enne
-                        järgmise kriteeriumi kallale asumist.
-                    </p>
-                    <ul class="list-group">
-                        <li
-                                v-for="(criterion, index) in criteria"
-                                :key="criterion.criterionId"
-                                class="list-group-item"
-                                :class="criterion.done ? 'criterion-done' : ''"
-                                data-bs-toggle="tooltip">
-                            <label>
-                                <input
-                                        type="checkbox"
-                                        class="form-check-input me-2"
-                                        v-model="criterion.done"
-                                        @change="saveUserDoneCriteria(criterion)"/>
-                                <span
-                                        v-if="criterion.unsaved"
-                                        class="text-warning ms-2"
-                                        data-bs-toggle="tooltip"
-                                        v-tooltip="criterion.tooltipText"
-                                >&#9888;</span>
-                                {{ criterion.description }}
+                    <p>Loe järgmist loetelu ja märgi iga sammu juurde linnuke kohe, kui oled selle täitnud.</p>
+                    <ul class="list-group list-group-criteria">
+                        <li v-for="(criterion, index) in criteria"
+                            :key="criterion.criterionId"
+                            class="list-group-item"
+                            :class="criterion.done ? 'criterion-done' : ''"
+                            data-bs-toggle="tooltip">
+                            <label class="d-flex">
+                                <div class="flex-shrink-0">
+                                    <input type="checkbox"
+                                           class="form-check-input me-2"
+                                           v-model="criterion.done"
+                                           @change="saveUserDoneCriteria(criterion)"/>
+                                    <span class="me-2">{{ index + 1 }}.</span>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <span v-if="criterion.unsaved"
+                                          class="text-warning ms-2"
+                                          data-bs-toggle="tooltip"
+                                          v-tooltip="criterion.tooltipText">&#9888;</span>
+                                    {{ criterion.description }}
+                                </div>
                             </label>
                         </li>
                     </ul>
                 </div>
             </div>
 
-            <!-- Esitamise sektsioon -->
-            <div class="card mb-4">
+            <!-- Submission Section -->
+            <div class="card mb-4" v-if="canSubmitSolution">
                 <div class="card-header">
-                    <h2 class="card-title"><strong>Esitamine</strong></h2>
+                    <h2 class="card-title d-flex justify-content-between align-items-center">
+                        <strong>Esitamine</strong> <i class="fa fa-flag-checkered"></i>
+                    </h2>
                 </div>
                 <div class="card-body">
-                    <p>Olles kõik kriteeriumid ära täitnud, sisesta siia link, kust saab sinu tööd näha ja vajuta
-                        "Esita"
-                        nuppu.</p>
+                    <p>Sisesta siia link sinu tööst ja vajuta "Esita".</p>
                     <div class="input-group my-3">
-                        <input
-                                type="url"
-                                id="solutionUrl"
-                                class="form-control"
-                                v-model="solutionUrl"
-                                placeholder="Enter solution URL"
-                                required/>
-                        <button
-                                type="submit"
+                        <input type="url"
+                               id="solutionUrl"
+                               class="form-control"
+                               v-model="solutionUrl"
+                               placeholder="Enter solution URL"
+                               required>
+                        <button type="submit"
                                 class="btn btn-success"
                                 :disabled="!canSubmitSolution">
                             Esita
@@ -106,43 +125,45 @@ Student
             </div>
         </div>
 
-        <!-- Kommentaarium -->
+        <!-- Comments Section -->
         <div class="col-lg-4 col-md-5 col-sm-12">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Kommentaarid</h3>
+                    <h3 class="card-title d-flex justify-content-between align-items-center">
+                        <strong>Vestlus</strong><i class="fa fa-comment"></i>
+                    </h3>
                 </div>
-                <div class="card-body">
-                    <div v-if="comments.length > 0">
-                        <div v-for="comment in comments" class="mb-3">
+                <div class="card-body p-0">
+                    <div v-if="comments.length > 0" class="comment-section-container">
+                        <div v-for="comment in comments" class="comment-entry">
                             <div class="card">
                                 <div class="card-body">
                                     <p>
-                                        {{ comment.createdAt }} <strong>{{ comment.name || 'Tundmatu' }}</strong><br>
+                                        {{ comment.createdAt }}
+                                        <strong>{{ comment.name || 'Tundmatu' }}</strong><br>
                                         <em>{{ comment.comment }}</em>
                                     </p>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div v-else>
-                        <p>Kommentaare pole.</p>
+                    <div v-else class="comment-section-empty">
+                        <p>Sõnumeid pole.</p>
                     </div>
-                    <div id="commentSection" class="mt-3">
+                    <div id="commentSection" class="d-flex comment-submission">
                         <div class="input-group">
-                            <textarea
-                                    id="commentText"
-                                    class="form-control"
-                                    :class="commentUnsaved ? 'is-invalid' : ''"
-                                    rows="3"
-                                    placeholder="Lisa kommentaar siia..."
-                                    v-model="commentText"
-                                    required>
-                            </textarea>
-                            <button
-                                    type="button"
+                            <textarea id="commentText"
+                                      class="form-control border-end-0"
+                                      :class="commentUnsaved ? 'is-invalid' : ''"
+                                      rows="3"
+                                      placeholder="Lisa sõnum siia..."
+                                      v-model="commentText"
+                                      style="border-radius: 0 0 0 4px;"
+                                      required></textarea>
+                            <button type="button"
                                     class="btn btn-success"
                                     :disabled="!commentText.trim()"
+                                    style="border-radius: 0 0 4px 0;"
                                     @click="submitComment">
                                 Esita
                             </button>
@@ -155,10 +176,13 @@ Student
     </div>
 </div>
 
-
-<!-- Include required dependencies via CDN -->
+<!-- Dependencies -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<?php if (ENV == ENV_PRODUCTION): ?>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+<?php else: ?>
 <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+<?php endif; ?>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
@@ -168,128 +192,99 @@ Student
 
     Vue.directive('tooltip', {
         inserted(el, binding) {
-            new bootstrap.Tooltip(el, {
-                title: binding.value,
-                placement: 'top', // You can customize the placement
-            });
+            new bootstrap.Tooltip(el, { title: binding.value, placement: 'top' });
         },
         update(el, binding) {
             el.setAttribute('data-bs-original-title', binding.value);
         }
     });
 
-    const vue = new Vue({
-            el: '#app',
-            data: {
-                assignment: assignment,
-                criteria: [],
-                solutionUrl: '',
-                userId: userId,
-                commentText: '',
-                commentUnsaved: false,
-                commentUnsavedReason: '',
+    new Vue({
+        el: '#app',
+        data: {
+            assignment: assignment,
+            criteria: [],
+            solutionUrl: '',
+            userId: userId,
+            commentText: '',
+            commentUnsaved: false,
+            commentUnsavedReason: '',
+            comments: []
+        },
+        created() {
+            const assignmentCriteria = Object.values(this.assignment.criteria || {});
+            const studentData = Object.values(this.assignment.students || {})[0] || {};
+            const userDoneCriteria = studentData.userDoneCriteria || {};
+
+            this.criteria = assignmentCriteria.map(criterion => {
+                const done = userDoneCriteria[criterion.criterionId]?.completed || false;
+                return {
+                    criterionId: criterion.criterionId,
+                    description: criterion.criterionName,
+                    done: done,
+                    tooltipText: done ? 'Tingimus on salvestatud' : ''
+                };
+            });
+
+            this.solutionUrl = studentData.solutionUrl || '';
+            this.comments = studentData.comments || [];
+        },
+        computed: {
+            canSubmitSolution() {
+                return this.criteria.every(c => c.done) && this.solutionUrl.trim() !== '';
             },
-            created() {
-                // Extract criteria from the assignment object
-                const assignmentCriteria = this.assignment.criteria;
-                const criteriaArray = Object.values(assignmentCriteria);
-
-                // Get student's data
-                const studentData = this.assignment.students[Object.keys(this.assignment.students)[0]];
-                const userDoneCriteria = studentData.userDoneCriteria || {};
-
-                // Build criteria array with 'done' status and set the appropriate class
-                this.criteria = criteriaArray.map((criterion) => {
-                    const criterionId = criterion.criterionId;
-                    const doneCriterion = userDoneCriteria[criterionId.toString()];
-                    const done = doneCriterion ? doneCriterion.completed : false;
-                    return {
-                        criterionId: criterionId,
-                        description: criterion.criterionName,
-                        done: done,
-                        class: done ? 'criterion-done' : '',
-                        tooltipText: done ? 'Tingimus on salvestatud' : ''
-                    };
-                });
-
-                // Set the solution URL if it exists
-                this.solutionUrl = studentData.solutionUrl || '';
-
-                // Initialize comments
-                this.comments = studentData.comments || [];
-            },
-            computed: {
-                canSubmitSolution() {
-                    return (
-                        this.criteria.every((criterion) => criterion.done) &&
-                        this.solutionUrl.trim() !== ''
-                    );
-                },
-                renderedInstructions() {
-                    // Convert Markdown to HTML
-                    return marked.parse(this.assignment.assignmentInstructions || '');
-                },
-            },
-            methods: {
-                async submitComment() {
-                    try {
-                        ajax('api/assignments/addComment', {
-                            assignmentId: this.assignment.assignmentId,
-                            comment: this.commentText,
-                        }, (res) => {
-                            this.commentUnsaved = false;
-                            this.comments.push({
-                                createdAt: new Date().toLocaleString('et-EE', {
-                                    timeZone: 'Europe/Tallinn',
-                                    year: 'numeric',
-                                    month: '2-digit',
-                                    day: '2-digit',
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                }).replace(',', ''),
-                                name: this.assignment.students[this.userId].studentName,
-                                comment: this.commentText,
-                            });
-                            this.commentText = '';
-                        }, (res) => {
-                            this.commentUnsaved = true;
-                            this.commentUnsavedReason = '⚠️ Tõrge kommentaari salvestamisel: ' + JSON.stringify(res);
-                        });
-
-                    } catch (error) {
-                        console.error('Error:', error);
-                    }
-                },
-
-                saveUserDoneCriteria(criterion) {
-                    ajax('api/assignments/saveUserDoneCriteria', {criterionId: criterion.criterionId, done: criterion.done},
-                        () => criterion.done
-                            ? this.setCriterionState(criterion, 'criterion-done', 'Tingimus on salvestatud')
-                            : this.setCriterionState(criterion, '', ''),
-                        (res) => {
-                            this.setCriterionState(criterion, 'bg-warning', '⚠️ Tõrge tingimuse salvestamisel: ' + JSON.stringify(res));
-                            criterion.unsaved = true;
-                            criterion.done = !criterion.done;
-                        }
-                    );
-                },
-
-                async submitSolution() {
-                    await axios.post('/assignments/saveStudentSolutionUrl', {
-                        studentId: this.userId,
-                        teacherId: this.assignment.teacherId,
-                        assignmentId: this.assignment.assignmentId,
-                        solutionUrl: this.solutionUrl,
-                        criteria: this.criteria,
+            renderedInstructions() {
+                return marked.parse(this.assignment.assignmentInstructions || '');
+            }
+        },
+        methods: {
+            submitComment() {
+                ajax('api/assignments/addComment', {
+                    assignmentId: this.assignment.assignmentId,
+                    comment: this.commentText,
+                }, res => {
+                    this.commentUnsaved = false;
+                    this.comments.push({
+                        createdAt: new Date().toLocaleString('et-EE', {
+                            timeZone: 'Europe/Tallinn',
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        }).replace(',', ''),
+                        name: this.assignment.students[this.userId].studentName,
                         comment: this.commentText,
                     });
-                },
-
-                setCriterionState(criterion, className, tooltipText) {
-                    this.$set(criterion, 'class', className);
-                    this.$set(criterion, 'tooltipText', tooltipText);
-                }
+                    this.commentText = '';
+                }, res => {
+                    this.commentUnsaved = true;
+                    this.commentUnsavedReason = '⚠️ Tõrge kommentaari salvestamisel: ' + JSON.stringify(res);
+                });
             },
-        })
-    ;
+            saveUserDoneCriteria(criterion) {
+                ajax('api/assignments/saveUserDoneCriteria', {
+                    criterionId: criterion.criterionId,
+                    done: criterion.done
+                }, () => {
+                    criterion.tooltipText = criterion.done ? 'Tingimus on salvestatud' : '';
+                    criterion.unsaved = false;
+                }, res => {
+                    criterion.unsaved = true;
+                    criterion.done = !criterion.done;
+                    criterion.tooltipText = '⚠️ Tõrge tingimuse salvestamisel: ' + JSON.stringify(res);
+                });
+            },
+            async submitSolution() {
+                await axios.post('/assignments/saveStudentSolutionUrl', {
+                    studentId: this.userId,
+                    teacherId: this.assignment.teacherId,
+                    assignmentId: this.assignment.assignmentId,
+                    solutionUrl: this.solutionUrl,
+                    criteria: this.criteria,
+                    comment: this.commentText,
+                });
+            }
+        },
+    });
 </script>
