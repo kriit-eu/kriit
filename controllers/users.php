@@ -12,7 +12,7 @@ class users extends Controller
 
     function check()
     {
-        validate($_POST['userPersonalCode'], 'Personal code must be numeric.', IS_INT);
+        validate($_POST['userPersonalCode'], 'Isikukood peab koosnema 11st numberist.', '/^\d{11}$/');
         $userPersonalCode = $_POST['userPersonalCode'];
         $user = Db::getFirst("SELECT userIsAdmin, userIsTeacher, groupId, userPassword
                           FROM users

@@ -324,33 +324,34 @@ class assignments extends Controller
 
     function addComment()
     {
-        // Validate parameters
-        validate($_POST['assignmentId'], 'Invalid assignment ID.');
         validate($_POST['comment'], 'Invalid comment. It must be a string.', IS_STRING);
-        $userId = $this->auth->userId;
+        validate($_POST['assignmentId'], 'Invalid assignmentId.');
+
         Db::insert('assignmentComments', [
             'assignmentId' => $_POST['assignmentId'],
-            'userId' => $userId,
+            'userId' => $this->auth->userId,
             'assignmentComment' => $_POST['comment'],
             'assignmentCommentCreatedAt' => date('Y-m-d H:i:s')
         ]);
+
         stop(200);
     }
 
     function submitSolution()
     {
-        $solutionUrl = $_POST['solutionUrl'];
-        $assignmentId = $_POST['assignmentId'];
-        Assignment::userIsStudent($this->auth->userId, $assignmentId) || stop(403, 'Teil pole õigusi sellele tegevusele.');
+        validate($_POST['solutionUrl'], 'Invalid solutionUrl.');
+        validate($_POST['assignmentId'], 'Invalid assignmentId.');
+
+        Assignment::userIsStudent($this->auth->userId, $_POST['assignmentId']) || stop(403, 'Teil pole õigusi sellele tegevusele.');
 
         $existAssignment = Db::getFirst('SELECT * FROM userAssignments JOIN users USING(userId) WHERE userId = ? AND assignmentId = ? ', [$this->auth->userId, $assignmentId]);
         if (!$existAssignment) {
-            Db::insert('userAssignments', ['userId' => $this->auth->userId, 'assignmentId' => $assignmentId, 'assignmentStatusId' => 2, 'solutionUrl' => $solutionUrl]);
-            Activity::create(ACTIVITY_SUBMIT_ASSIGNMENT, $this->auth->userId, $assignmentId, "esitas ülesande lahenduse");
+            Db::insert('userAssignments', ['userId' => $this->auth->userId, 'assignmentId' => $_POST['assignmentId'], 'assignmentStatusId' => 2, 'solutionUrl' => $_POST['solutionUrl']]);
+            Activity::create(ACTIVITY_SUBMIT_ASSIGNMENT, $this->auth->userId, $_POST['assignmentId'], "esitas ülesande lahenduse");
             $studentName = Db::getOne('SELECT userName FROM users WHERE userId = ?', [$this->auth->userId]);
         } else {
-            Db::update('userAssignments', ['assignmentStatusId' => 2, 'solutionUrl' => $solutionUrl], 'userId = ? AND assignmentId = ?', [$this->auth->userId, $assignmentId]);
-            Activity::create(ACTIVITY_SUBMIT_ASSIGNMENT, $this->auth->userId, $assignmentId, "esitas ülesande lahenduse uuesti");
+            Db::update('userAssignments', ['assignmentStatusId' => 2, 'solutionUrl' => $_POST['solutionUrl']], 'userId = ? AND assignmentId = ?', [$this->auth->userId, $assignmentId]);
+            Activity::create(ACTIVITY_SUBMIT_ASSIGNMENT, $this->auth->userId, $_POST['assignmentId'], "esitas ülesande lahenduse uuesti");
             $studentName = $existAssignment['userName'];
         }
 
@@ -366,15 +367,15 @@ class assignments extends Controller
                     $studentName,
                     $assignment['assignmentId'],
                     $assignment['assignmentName'],
-                    $solutionUrl,
-                    $solutionUrl
+                    $_POST['solutionUrl'],
+                    $_POST['solutionUrl']
                 ) :
                 sprintf(
                     "Õpilane <strong>%s</strong> esitas lahenduse ülesandele '<a href=\"" . BASE_URL . "assignments/%s\"><strong>%s</strong></a>'.<br><br>Lahenduse link: <a href='%s'>%s</a><br>", $studentName,
                     $assignment['assignmentId'],
                     $assignment['assignmentName'],
-                    $solutionUrl,
-                    $solutionUrl
+                    $_POST['solutionUrl'],
+                    $_POST['solutionUrl']
                 ) :
 
                 $subject = $existAssignment['userGrade'] ? ($existAssignment['userGrade'] === 'MA' || is_numeric(intval($existAssignment['userGrade']) < 3)) ?

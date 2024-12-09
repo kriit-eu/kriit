@@ -182,6 +182,14 @@ function validate($param, $message = 'Invalid parameter value.', $rule = IS_ID, 
 {
     if (!$required && empty($param)) return; // Skip validation if not required and empty
 
+    // If rule is a string, treat it as regex pattern
+    if (is_string($rule)) {
+        if (!preg_match($rule, $param)) {
+            stop(400, $message);
+        }
+        return $param;
+    }
+
     if (($rule === IS_ID && (!is_numeric($param) || intval($param) <= 0)) ||
         ($rule === IS_INT && !is_numeric($param)) ||
         ($rule === IS_0OR1 && ($param !== '0' && $param !== '1' && $param !== 0 && $param !== 1)) ||
@@ -190,6 +198,7 @@ function validate($param, $message = 'Invalid parameter value.', $rule = IS_ID, 
         ($rule === IS_DATE && !strtotime($param))) {
         stop(400, $message);
     }
+    return $param;
 }
 
 function isValidID($id): bool

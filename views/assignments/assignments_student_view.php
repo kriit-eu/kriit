@@ -29,14 +29,13 @@
     }
 
     .list-group-criteria {
-        margin: 0 -15px -15px;
         border-top-left-radius: 0;
         border-top-right-radius: 0;
     }
 
     .comment-section-container,
     .comment-section-empty {
-        padding: 17px;
+        padding: 1rem;
     }
 
     .comment-entry {
@@ -45,6 +44,20 @@
 
     .m--1 {
         margin: -1px;
+    }
+
+    ul.list-group.list-group-criteria li:last-child {
+        border-radius: 0 0 4px 4px;
+    }
+    ul.list-group.list-group-criteria li:first-child {
+        border-top: 0;
+    }
+
+    ul.list-group.list-group-criteria li {
+        border-top: 1px solid #d5d9dc;
+        border-left: 0;
+        border-right: 0;
+        border-bottom: 0;
     }
 </style>
 
@@ -71,13 +84,12 @@
             <div class="col-lg-12 col-md-12 col-sm-12">
                 <!-- Solving -->
                 <div class="card mb-4">
-                    <div class="card-header">
+                    <div class="card-header" data-bs-toggle="tooltip" v-tooltip="criteriaTooltip">
                         <h2 class="card-title d-flex justify-content-between align-items-center">
                             <strong>Lahendamine</strong> <i class="fa fa-puzzle-piece"></i>
                         </h2>
                     </div>
-                    <div class="card-body">
-                        <p>Loe järgmist loetelu ja märgi iga sammu juurde linnuke kohe, kui oled selle täitnud.</p>
+                    <div class="card-body" style="padding: 0;">
                         <ul class="list-group list-group-criteria">
                             <li v-for="(criterion, index) in criteria"
                                 :key="criterion.criterionId"
@@ -101,20 +113,6 @@
                                     </div>
                                 </label>
                             </li>
-                            <div class="input-group mt-3" v-if="canSubmitSolution">
-                                <input type="url"
-                                       id="solutionUrl"
-                                       class="form-control"
-                                       v-model="solutionUrl"
-                                       placeholder="Enter solution URL"
-                                       required>
-                                <button type="submit"
-                                        class="btn btn-success"
-                                        :disabled="!canSubmitSolution"
-                                        @click="submitSolution">
-                                    Esita
-                                </button>
-                            </div>
                         </ul>
                     </div>
                 </div>
@@ -201,6 +199,11 @@
     new Vue({
         el: '#app',
         data: {
+            tooltips: {
+                criteria: 'Loe järgmist loetelu ja märgi iga sammu juurde linnuke kohe, kui oled selle täitnud.',
+
+
+            },
             assignment: assignment,
             criteria: [],
             solutionUrl: '',
