@@ -1,6 +1,7 @@
 <?php namespace App\api;
 
 use App\Activity;
+use App\Assignment;
 use App\Controller;
 use App\Db;
 
@@ -321,25 +322,26 @@ class assignments extends Controller
 
     }
 
-    function addComment(){
+    function addComment()
+    {
         // Validate parameters
-        validate($_POST['assignmentId']);
-        validate($_POST['comment'], IS_STRING);
+        validate($_POST['assignmentId'], 'Invalid assignment ID.');
+        validate($_POST['comment'], 'Invalid comment. It must be a string.', IS_STRING);
         $userId = $this->auth->userId;
-        Db::insert('assignmentComments',[
-                'assignmentId' => $_POST['assignmentId'],
-                'userId' => $userId,
-                'assignmentComment' => $_POST['comment'],
-                'assignmentCommentCreatedAt' => date('Y-m-d H:i:s')
-            ]);
+        Db::insert('assignmentComments', [
+            'assignmentId' => $_POST['assignmentId'],
+            'userId' => $userId,
+            'assignmentComment' => $_POST['comment'],
+            'assignmentCommentCreatedAt' => date('Y-m-d H:i:s')
+        ]);
         stop(200);
     }
 
     function submitSolution()
     {
-        $assignmentId = $_POST['assignmentId'];
-        $this->checkIfUserHasPermissionForAction($assignmentId) || stop(403, 'Teil pole õigusi sellele tegevusele.');
         $solutionUrl = $_POST['solutionUrl'];
+        $assignmentId = $_POST['assignmentId'];
+        Assignment::userIsStudent($this->auth->userId, $assignmentId) || stop(403, 'Teil pole õigusi sellele tegevusele.');
 
         $existAssignment = Db::getFirst('SELECT * FROM userAssignments JOIN users USING(userId) WHERE userId = ? AND assignmentId = ? ', [$this->auth->userId, $assignmentId]);
         if (!$existAssignment) {
@@ -373,11 +375,12 @@ class assignments extends Controller
                     $assignment['assignmentName'],
                     $solutionUrl,
                     $solutionUrl
-                );
+                ) :
 
-            $subject = $existAssignment['userGrade'] ? ($existAssignment['userGrade'] === 'MA' || is_numeric(intval($existAssignment['userGrade']) < 3)) ?
-                $assignment['subjectName'] . ": $studentName parandas ülesande '" . $assignment['assignmentName'] . "' lahendust" :
-                $assignment['subjectName'] . ": $studentName esitas lahenduse ülesandele '" . $assignment['assignmentName'] . "'";
+                $subject = $existAssignment['userGrade'] ? ($existAssignment['userGrade'] === 'MA' || is_numeric(intval($existAssignment['userGrade']) < 3)) ?
+                    $assignment['subjectName'] . ": $studentName parandas ülesande '" . $assignment['assignmentName'] . "' lahendust" :
+                    $assignment['subjectName'] . ": $studentName esitas lahenduse ülesandele '" . $assignment['assignmentName'] . "'" :
+                    $assignment['subjectName'] . ": $studentName esitas lahenduse ülesandele '" . $assignment['assignmentName'] . "'";
 
             if ($existAssignment['userGrade']) {
                 $this->sendNotificationToEmail($existAssignment['userEmail'], $subject, $emailBody);

@@ -29,7 +29,7 @@
     }
 
     .list-group-criteria {
-        margin: 0 -17px -17px;
+        margin: 0 -15px -15px;
         border-top-left-radius: 0;
         border-top-right-radius: 0;
     }
@@ -101,50 +101,21 @@
                                     </div>
                                 </label>
                             </li>
+                            <div class="input-group mt-3" v-if="canSubmitSolution">
+                                <input type="url"
+                                       id="solutionUrl"
+                                       class="form-control"
+                                       v-model="solutionUrl"
+                                       placeholder="Enter solution URL"
+                                       required>
+                                <button type="submit"
+                                        class="btn btn-success"
+                                        :disabled="!canSubmitSolution"
+                                        @click="submitSolution">
+                                    Esita
+                                </button>
+                            </div>
                         </ul>
-                        <div class="input-group my-3">
-                            <input type="url"
-                                   id="solutionUrl"
-                                   class="form-control"
-                                   v-model="solutionUrl"
-                                   placeholder="Enter solution URL"
-                                   required>
-                            <button type="submit"
-                                    class="btn btn-success"
-                                    :disabled="!canSubmitSolution">
-                                Esita
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Submission Card -->
-        <div class="row" v-if="canSubmitSolution">
-            <div class="col-12">
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h2 class="card-title d-flex justify-content-between align-items-center">
-                            <strong>Esitamine</strong> <i class="fa fa-flag-checkered"></i>
-                        </h2>
-                    </div>
-                    <div class="card-body">
-                        <p>Sisesta siia link oma tööst ja vajuta "Esita".</p>
-
-                        <div class="input-group my-3">
-                            <input type="url"
-                                   id="solutionUrl"
-                                   class="form-control"
-                                   v-model="solutionUrl"
-                                   placeholder="Enter solution URL"
-                                   required>
-                            <button type="submit"
-                                    class="btn btn-success"
-                                    :disabled="!canSubmitSolution">
-                                Esita
-                            </button>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -204,13 +175,12 @@
 </div>
 
 
-
 <!-- Dependencies -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <?php if (ENV == ENV_PRODUCTION): ?>
     <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
 <?php else: ?>
-<script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
 <?php endif; ?>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
@@ -221,7 +191,7 @@
 
     Vue.directive('tooltip', {
         inserted(el, binding) {
-            new bootstrap.Tooltip(el, { title: binding.value, placement: 'top' });
+            new bootstrap.Tooltip(el, {title: binding.value, placement: 'top'});
         },
         update(el, binding) {
             el.setAttribute('data-bs-original-title', binding.value);

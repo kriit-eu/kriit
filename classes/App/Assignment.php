@@ -16,6 +16,11 @@ class Assignment
         return !!Db::getOne('SELECT teacherId FROM assignments JOIN subjects USING (subjectId) WHERE assignmentId = ? AND teacherId = ?', [$assignmentId, $userId]);
     }
 
+    public static function userIsStudent($userId, $assignmentId) {
+
+        return !!Db::getOne('SELECT userId FROM assignments JOIN subjects USING (subjectId) JOIN users USING (groupId) WHERE assignmentId = ? AND userId = ?', [$assignmentId, $userId]);
+    }
+
     public static function cellColor($isStudent, $isTeacher, $isNegGrade, $daysLeft, $statusId, $statusName): string
     {
         if ($isStudent && $isNegGrade) return 'red-cell';
