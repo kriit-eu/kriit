@@ -49,6 +49,7 @@
     ul.list-group.list-group-criteria li:last-child {
         border-radius: 0 0 4px 4px;
     }
+
     ul.list-group.list-group-criteria li:first-child {
         border-top: 0;
     }
@@ -70,7 +71,7 @@
             <div class="col-lg-12 col-md-12 col-sm-12">
                 <!-- Instructions -->
                 <div class="card mb-4">
-                    <div class="card-header">
+                    <div class="card-header" v-tooltip="tooltips.criteria">
                         <h2 class="card-title d-flex justify-content-between align-items-center">
                             <strong>Juhend</strong> <i class="fa fa-info-circle"></i>
                         </h2>
@@ -84,7 +85,7 @@
             <div class="col-lg-12 col-md-12 col-sm-12">
                 <!-- Solving -->
                 <div class="card mb-4">
-                    <div class="card-header" data-bs-toggle="tooltip" v-tooltip="criteriaTooltip">
+                    <div class="card-header" data-bs-toggle="tooltip" v-tooltip="tooltips.criteria">
                         <h2 class="card-title d-flex justify-content-between align-items-center">
                             <strong>Lahendamine</strong> <i class="fa fa-puzzle-piece"></i>
                         </h2>
@@ -113,6 +114,20 @@
                                     </div>
                                 </label>
                             </li>
+                            <div class="input-group mt-3" v-if="canSubmitSolution">
+                                <input type="url"
+                                       id="solutionUrl"
+                                       class="form-control"
+                                       v-model="solutionUrl"
+                                       placeholder="Enter solution URL"
+                                       required>
+                                <button type="submit"
+                                        class="btn btn-success"
+                                        :disabled="!canSubmitSolution"
+                                        @click="submitSolution">
+                                    Esita
+                                </button>
+                            </div>
                         </ul>
                     </div>
                 </div>
@@ -123,7 +138,7 @@
         <div class="row">
             <div class="col-12">
                 <div class="card">
-                    <div class="card-header">
+                    <div class="card-header" v-tooltip="tooltips.comments">
                         <h3 class="card-title d-flex justify-content-between align-items-center">
                             <strong>Vestlus</strong><i class="fa fa-comment"></i>
                         </h3>
@@ -172,7 +187,6 @@
     </div>
 </div>
 
-
 <!-- Dependencies -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <?php if (ENV == ENV_PRODUCTION): ?>
@@ -200,9 +214,9 @@
         el: '#app',
         data: {
             tooltips: {
+                instructions: 'Loe järgmist juhendit ja lahenda ülesanne vastavalt sellele.',
                 criteria: 'Loe järgmist loetelu ja märgi iga sammu juurde linnuke kohe, kui oled selle täitnud.',
-
-
+                comments: 'Küsi küsimusi, jaga mõtteid ja arutle õpetajaga.'
             },
             assignment: assignment,
             criteria: [],
@@ -280,7 +294,7 @@
             async submitSolution() {
                 ajax('api/assignments/submitSolution', {
                     assignmentId: this.assignment.assignmentId,
-                    solutionUrl: this.newSolutionUrl,
+                    solutionUrl: this.solutionUrl,
                 });
             }
 

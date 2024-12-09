@@ -339,18 +339,18 @@ class assignments extends Controller
 
     function submitSolution()
     {
-        validate($_POST['solutionUrl'], 'Invalid solutionUrl.');
+        validate($_POST['solutionUrl'], 'Invalid solutionUrl.', IS_STRING);
         validate($_POST['assignmentId'], 'Invalid assignmentId.');
 
         Assignment::userIsStudent($this->auth->userId, $_POST['assignmentId']) || stop(403, 'Teil pole õigusi sellele tegevusele.');
 
-        $existAssignment = Db::getFirst('SELECT * FROM userAssignments JOIN users USING(userId) WHERE userId = ? AND assignmentId = ? ', [$this->auth->userId, $assignmentId]);
+        $existAssignment = Db::getFirst('SELECT * FROM userAssignments JOIN users USING(userId) WHERE userId = ? AND assignmentId = ? ', [$this->auth->userId, $_POST['assignmentId']]);
         if (!$existAssignment) {
             Db::insert('userAssignments', ['userId' => $this->auth->userId, 'assignmentId' => $_POST['assignmentId'], 'assignmentStatusId' => 2, 'solutionUrl' => $_POST['solutionUrl']]);
             Activity::create(ACTIVITY_SUBMIT_ASSIGNMENT, $this->auth->userId, $_POST['assignmentId'], "esitas ülesande lahenduse");
             $studentName = Db::getOne('SELECT userName FROM users WHERE userId = ?', [$this->auth->userId]);
         } else {
-            Db::update('userAssignments', ['assignmentStatusId' => 2, 'solutionUrl' => $_POST['solutionUrl']], 'userId = ? AND assignmentId = ?', [$this->auth->userId, $assignmentId]);
+            Db::update('userAssignments', ['assignmentStatusId' => 2, 'solutionUrl' => $_POST['solutionUrl']], 'userId = ? AND assignmentId = ?', [$this->auth->userId, $_POST['solutionUrl']]);
             Activity::create(ACTIVITY_SUBMIT_ASSIGNMENT, $this->auth->userId, $_POST['assignmentId'], "esitas ülesande lahenduse uuesti");
             $studentName = $existAssignment['userName'];
         }
@@ -359,7 +359,7 @@ class assignments extends Controller
             $mailData = $this->getSenderNameAndReceiverEmail($this->auth->userId, $existAssignment['userId']);
             $studentName = $mailData['senderName'];
             $teacherMail = $mailData['receiverMail'];
-            $assignment = $this->getAssignmentDetails($assignmentId);
+            $assignment = $this->getAssignmentDetails($_POST['solutionUrl']);
 
             $emailBody = $existAssignment['userGrade'] ? ($existAssignment['userGrade'] === 'MA' || is_numeric(intval($existAssignment['userGrade']) < 3)) ?
                 sprintf(
@@ -387,6 +387,6 @@ class assignments extends Controller
                 $this->sendNotificationToEmail($existAssignment['userEmail'], $subject, $emailBody);
             }
         }
-
+        stop(200);
     }
 }
