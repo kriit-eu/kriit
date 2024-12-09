@@ -43,7 +43,7 @@
         margin-bottom: 1rem;
     }
 
-    .comment-submission {
+    .m--1 {
         margin: -1px;
     }
 </style>
@@ -54,7 +54,7 @@
 
         <!-- Instruction and Solving Cards -->
         <div class="row">
-            <div class="col-lg-6 col-md-6 col-sm-12">
+            <div class="col-lg-12 col-md-12 col-sm-12">
                 <!-- Instructions -->
                 <div class="card mb-4">
                     <div class="card-header">
@@ -68,7 +68,7 @@
                 </div>
             </div>
 
-            <div class="col-lg-6 col-md-6 col-sm-12">
+            <div class="col-lg-12 col-md-12 col-sm-12">
                 <!-- Solving -->
                 <div class="card mb-4">
                     <div class="card-header">
@@ -102,6 +102,19 @@
                                 </label>
                             </li>
                         </ul>
+                        <div class="input-group my-3">
+                            <input type="url"
+                                   id="solutionUrl"
+                                   class="form-control"
+                                   v-model="solutionUrl"
+                                   placeholder="Enter solution URL"
+                                   required>
+                            <button type="submit"
+                                    class="btn btn-success"
+                                    :disabled="!canSubmitSolution">
+                                Esita
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -118,6 +131,7 @@
                     </div>
                     <div class="card-body">
                         <p>Sisesta siia link oma tööst ja vajuta "Esita".</p>
+
                         <div class="input-group my-3">
                             <input type="url"
                                    id="solutionUrl"
@@ -162,7 +176,7 @@
                         <div v-else class="comment-section-empty">
                             <p>Sõnumeid pole.</p>
                         </div>
-                        <div id="commentSection" class="d-flex comment-submission">
+                        <div id="commentSection" class="d-flex m--1">
                             <div class="input-group">
                                 <textarea id="commentText"
                                           class="form-control border-end-0"
@@ -291,15 +305,12 @@
                 });
             },
             async submitSolution() {
-                await axios.post('/assignments/saveStudentSolutionUrl', {
-                    studentId: this.userId,
-                    teacherId: this.assignment.teacherId,
+                ajax('api/assignments/submitSolution', {
                     assignmentId: this.assignment.assignmentId,
-                    solutionUrl: this.solutionUrl,
-                    criteria: this.criteria,
-                    comment: this.commentText,
+                    solutionUrl: this.newSolutionUrl,
                 });
             }
+
         },
     });
 </script>

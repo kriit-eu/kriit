@@ -335,4 +335,54 @@ class assignments extends Controller
         stop(200);
     }
 
+    function submitSolution()
+    {
+        $assignmentId = $_POST['assignmentId'];
+        $this->checkIfUserHasPermissionForAction($assignmentId) || stop(403, 'Teil pole õigusi sellele tegevusele.');
+        $solutionUrl = $_POST['solutionUrl'];
+
+        $existAssignment = Db::getFirst('SELECT * FROM userAssignments JOIN users USING(userId) WHERE userId = ? AND assignmentId = ? ', [$this->auth->userId, $assignmentId]);
+        if (!$existAssignment) {
+            Db::insert('userAssignments', ['userId' => $this->auth->userId, 'assignmentId' => $assignmentId, 'assignmentStatusId' => 2, 'solutionUrl' => $solutionUrl]);
+            Activity::create(ACTIVITY_SUBMIT_ASSIGNMENT, $this->auth->userId, $assignmentId, "esitas ülesande lahenduse");
+            $studentName = Db::getOne('SELECT userName FROM users WHERE userId = ?', [$this->auth->userId]);
+        } else {
+            Db::update('userAssignments', ['assignmentStatusId' => 2, 'solutionUrl' => $solutionUrl], 'userId = ? AND assignmentId = ?', [$this->auth->userId, $assignmentId]);
+            Activity::create(ACTIVITY_SUBMIT_ASSIGNMENT, $this->auth->userId, $assignmentId, "esitas ülesande lahenduse uuesti");
+            $studentName = $existAssignment['userName'];
+        }
+
+        if ($existAssignment['assignmentStatusId'] !== 2) {
+            $mailData = $this->getSenderNameAndReceiverEmail($this->auth->userId, $existAssignment['userId']);
+            $studentName = $mailData['senderName'];
+            $teacherMail = $mailData['receiverMail'];
+            $assignment = $this->getAssignmentDetails($assignmentId);
+
+            $emailBody = $existAssignment['userGrade'] ? ($existAssignment['userGrade'] === 'MA' || is_numeric(intval($existAssignment['userGrade']) < 3)) ?
+                sprintf(
+                    "Õpilane <strong>%s</strong> parandas ülesande '<a href=\"" . BASE_URL . "assignments/%s\"><strong>%s</strong></a> lahendust.<br><br>Lahenduse link: <a href='%s'>%s</a><br>",
+                    $studentName,
+                    $assignment['assignmentId'],
+                    $assignment['assignmentName'],
+                    $solutionUrl,
+                    $solutionUrl
+                ) :
+                sprintf(
+                    "Õpilane <strong>%s</strong> esitas lahenduse ülesandele '<a href=\"" . BASE_URL . "assignments/%s\"><strong>%s</strong></a>'.<br><br>Lahenduse link: <a href='%s'>%s</a><br>", $studentName,
+                    $assignment['assignmentId'],
+                    $assignment['assignmentName'],
+                    $solutionUrl,
+                    $solutionUrl
+                );
+
+            $subject = $existAssignment['userGrade'] ? ($existAssignment['userGrade'] === 'MA' || is_numeric(intval($existAssignment['userGrade']) < 3)) ?
+                $assignment['subjectName'] . ": $studentName parandas ülesande '" . $assignment['assignmentName'] . "' lahendust" :
+                $assignment['subjectName'] . ": $studentName esitas lahenduse ülesandele '" . $assignment['assignmentName'] . "'";
+
+            if ($existAssignment['userGrade']) {
+                $this->sendNotificationToEmail($existAssignment['userEmail'], $subject, $emailBody);
+            }
+        }
+
+    }
 }
