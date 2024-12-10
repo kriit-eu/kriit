@@ -39,7 +39,7 @@ class assignments extends Controller
     LEFT JOIN assignmentStatuses ast ON ua.assignmentStatusId = ast.assignmentStatusId
     LEFT JOIN userDoneCriteria udc ON udc.criterionId = c.criterionId AND udc.userId = u.userId
     LEFT JOIN assignmentComments ac ON ac.assignmentId = a.assignmentId
-    LEFT JOIN users uc ON ac.userId = uc.userId
+    LEFT JOIN users uc ON ac.studentId = uc.userId
     WHERE a.assignmentId = ?
 ";
         if ($isStudent) {

@@ -65,6 +65,12 @@
         border-left: 0;
         border-right: 0;
     }
+
+    /* Add a shadow to the .card */
+    .card {
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
 </style>
 
 <div id="app" class="container mt-5" v-cloak>
@@ -211,7 +217,7 @@
             tooltips: {
                 instructions: 'Loe juhendit ja lahenda ülesanne vastavalt.',
                 criteria: 'Loe loetelu ja märgi, kui tingimus on täidetud.',
-                comments: 'Küsi, arutle, jaga mõtteid õpetajaga.'
+                comments: 'Küsi, arutle, jaga mõtteid õpetajaga.',
             },
             assignment: assignmentData,
             criteria: [],
@@ -231,7 +237,6 @@
                 criterionId: criterion.criterionId,
                 description: criterion.criterionName,
                 done: userDoneCriteria[criterion.criterionId]?.completed || false,
-                tooltipText: userDoneCriteria[criterion.criterionId]?.completed ? 'Tingimus on salvestatud' : '',
                 unsaved: false
             }));
 
@@ -252,7 +257,7 @@
                     criterionId: criterion.criterionId,
                     done: criterion.done
                 }, () => {
-                    criterion.tooltipText = criterion.done ? 'Tingimus on salvestatud' : '';
+                    criterion.tooltipText = '';
                     criterion.unsaved = false;
                 }, err => {
                     criterion.unsaved = true;

@@ -1,8 +1,8 @@
--- MariaDB dump 10.19  Distrib 10.4.32-MariaDB, for Win64 (AMD64)
+-- MariaDB dump 10.19  Distrib 10.11.9-MariaDB, for osx10.19 (arm64)
 --
 -- Host: 127.0.0.1    Database: kriit
 -- ------------------------------------------------------
--- Server version	10.4.32-MariaDB
+-- Server version	10.11.9-MariaDB
 
 /*!50503 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!50503 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -101,15 +101,19 @@ DROP TABLE IF EXISTS `assignmentComments`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `assignmentComments` (
   `assignmentCommentId` int unsigned NOT NULL AUTO_INCREMENT,
-  `userId` int unsigned DEFAULT NULL,
+  `studentId` int unsigned DEFAULT NULL,
+  `authorId` int unsigned DEFAULT NULL,
   `assignmentId` int unsigned DEFAULT NULL,
+  `isSolution` tinyint NOT NULL DEFAULT 0,
   `assignmentComment` text,
   `assignmentCommentCreatedAt` timestamp NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`assignmentCommentId`),
   KEY `fk_assignmentcomments_assignmentId` (`assignmentId`),
-  KEY `fk_assignmentcomments_userId` (`userId`),
+  KEY `fk_assignmentcomments_userId` (`studentId`),
+  KEY `fk_assignmentcomments_authorId` (`authorId`),
   CONSTRAINT `fk_assignmentcomments_assignmentId` FOREIGN KEY (`assignmentId`) REFERENCES `assignments` (`assignmentId`),
-  CONSTRAINT `fk_assignmentcomments_userId` FOREIGN KEY (`userId`) REFERENCES `users` (`userId`)
+  CONSTRAINT `fk_assignmentcomments_authorId` FOREIGN KEY (`authorId`) REFERENCES `users` (`userId`),
+  CONSTRAINT `fk_assignmentcomments_userId` FOREIGN KEY (`studentId`) REFERENCES `users` (`userId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
@@ -197,7 +201,7 @@ CREATE TABLE `criteria` (
   PRIMARY KEY (`criterionId`),
   KEY `criteria_assignments_assignmentId_fk` (`assignmentId`),
   CONSTRAINT `criteria_assignments_assignmentId_fk` FOREIGN KEY (`assignmentId`) REFERENCES `assignments` (`assignmentId`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -207,7 +211,8 @@ CREATE TABLE `criteria` (
 LOCK TABLES `criteria` WRITE;
 /*!40000 ALTER TABLE `criteria` DISABLE KEYS */;
 INSERT INTO `criteria` VALUES
-(1,'Aatom peab olema lõhustatud',1);
+(1,'Aatom peab olema lõhustatud',1),
+(2,'Inimesed peavad terveks jääma',1);
 /*!40000 ALTER TABLE `criteria` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -847,4 +852,4 @@ UNLOCK TABLES;
 /*!50503 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-12-08 20:02:45
+-- Dump completed on 2024-12-10 16:34:54

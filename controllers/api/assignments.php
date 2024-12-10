@@ -4,6 +4,7 @@ use App\Activity;
 use App\Assignment;
 use App\Controller;
 use App\Db;
+use App\Mail;
 
 // add /api/groups to the URL
 
@@ -216,7 +217,7 @@ class assignments extends Controller
                 $result = !empty($result) ? reset($result) : null;
 
                 $assignmentData = Db::getFirst(
-                    "SELECT ua.userGrade, ua.comment, ua.userId
+                    "SELECT ua.userGrade, 1 comment, ua.userId
                  FROM users u
                  JOIN groups g ON u.groupId = g.groupId
                  JOIN userAssignments ua ON u.userId = ua.userId
@@ -322,22 +323,6 @@ class assignments extends Controller
 
     }
 
-    function addComment($isSolution = false)
-    {
-        validate($_POST['comment'], 'Invalid comment. It must be a string.', IS_STRING);
-        validate($_POST['assignmentId'], 'Invalid assignmentId.');
-
-        Db::insert('assignmentComments', [
-            'assignmentId' => $_POST['assignmentId'],
-            'userId' => $this->auth->userId,
-            'isSolution' => $isSolution,
-            'assignmentComment' => $_POST['comment'],
-            'assignmentCommentCreatedAt' => date('Y-m-d H:i:s')
-        ]);
-
-        stop(200);
-    }
-
     function submitSolution()
     {
         validate($_POST['solutionUrl'], 'Invalid solutionUrl.', IS_STRING);
@@ -345,56 +330,52 @@ class assignments extends Controller
 
         Assignment::userIsStudent($this->auth->userId, $_POST['assignmentId']) || stop(403, 'Teil pole õigusi sellele tegevusele.');
 
-        $existAssignment = Db::getFirst('SELECT * FROM userAssignments JOIN users USING(userId) WHERE userId = ? AND assignmentId = ? ', [$this->auth->userId, $_POST['assignmentId']]);
-        if (!$existAssignment) {
-            Db::insert('userAssignments', ['userId' => $this->auth->userId, 'assignmentId' => $_POST['assignmentId'], 'assignmentStatusId' => 2, 'solutionUrl' => $_POST['solutionUrl']]);
-            Activity::create(ACTIVITY_SUBMIT_ASSIGNMENT, $this->auth->userId, $_POST['assignmentId'], "esitas ülesande lahenduse");
-            $studentName = Db::getOne('SELECT userName FROM users WHERE userId = ?', [$this->auth->userId]);
-        } else {
-            Db::update('userAssignments', ['assignmentStatusId' => 2, 'solutionUrl' => $_POST['solutionUrl']], 'userId = ? AND assignmentId = ?', [$this->auth->userId, $_POST['solutionUrl']]);
-            Activity::create(ACTIVITY_SUBMIT_ASSIGNMENT, $this->auth->userId, $_POST['assignmentId'], "esitas ülesande lahenduse uuesti");
-            $studentName = $existAssignment['userName'];
-        }
+        $data = ['assignmentStatusId' => 2, 'solutionUrl' => $_POST['solutionUrl']];
 
-        // Add comment that includes assignment link
-        if (empty($_POST['comment'])) {
-            $_POST['comment'] = "<br><br>Lahenduse link: <a href='$_POST[solutionUrl]'>$_POST[solutionUrl]</a><br>";
-        }
-        Assignment::addComment($assignmentId, $this->auth->userId, $this->auth->userId, $_POST['comment'], true);
+        $assignmentExisted = Db::getFirst(
+            'SELECT * FROM userAssignments JOIN users USING(userId) WHERE userId = ? AND assignmentId = ?',
+            [$this->auth->userId, $_POST['assignmentId']]);
 
+        $assignmentExisted
+            ? Db::update('userAssignments', $data, 'userId = ? AND assignmentId = ?', [$this->auth->userId, $_POST['assignmentId']])
+            : Db::insert('userAssignments', $data + ['userId' => $this->auth->userId, 'assignmentId' => $_POST['assignmentId']]);
 
-        if ($existAssignment['assignmentStatusId'] !== 2) {
-            $mailData = $this->getSenderNameAndReceiverEmail($this->auth->userId, $existAssignment['userId']);
-            $studentName = $mailData['senderName'];
-            $teacherMail = $mailData['receiverMail'];
-            $assignment = $this->getAssignmentDetails($_POST['solutionUrl']);
+        Activity::create(
+            ACTIVITY_SUBMIT_ASSIGNMENT,
+            $this->auth->userId,
+            $_POST['assignmentId'],
+            "esitas ülesande lahenduse" . ($assignmentExisted ? " uuesti" : ""));
 
-            $emailBody = $existAssignment['userGrade'] ? ($existAssignment['userGrade'] === 'MA' || is_numeric(intval($existAssignment['userGrade']) < 3)) ?
-                sprintf(
-                    "Õpilane <strong>%s</strong> parandas ülesande '<a href=\"" . BASE_URL . "assignments/%s\"><strong>%s</strong></a> lahendust.<br><br>Lahenduse link: <a href='%s'>%s</a><br>",
-                    $studentName,
-                    $assignment['assignmentId'],
-                    $assignment['assignmentName'],
-                    $_POST['solutionUrl'],
-                    $_POST['solutionUrl']
-                ) :
-                sprintf(
-                    "Õpilane <strong>%s</strong> esitas lahenduse ülesandele '<a href=\"" . BASE_URL . "assignments/%s\"><strong>%s</strong></a>'.<br><br>Lahenduse link: <a href='%s'>%s</a><br>", $studentName,
-                    $assignment['assignmentId'],
-                    $assignment['assignmentName'],
-                    $_POST['solutionUrl'],
-                    $_POST['solutionUrl']
-                ) :
+        Assignment::addComment(
+            $_POST['assignmentId'],
+            $this->auth->userId,
+            $this->auth->userId,
+            "[$_POST[solutionUrl]]($_POST[solutionUrl])",
+            true);
 
-                $subject = $existAssignment['userGrade'] ? ($existAssignment['userGrade'] === 'MA' || is_numeric(intval($existAssignment['userGrade']) < 3)) ?
-                    $assignment['subjectName'] . ": $studentName parandas ülesande '" . $assignment['assignmentName'] . "' lahendust" :
-                    $assignment['subjectName'] . ": $studentName esitas lahenduse ülesandele '" . $assignment['assignmentName'] . "'" :
-                    $assignment['subjectName'] . ": $studentName esitas lahenduse ülesandele '" . $assignment['assignmentName'] . "'";
+        $subject = Db::getFirst(
+            'SELECT u.userEmail teacherEmail, s.subjectName, a.assignmentName 
+             FROM users u
+             JOIN subjects s ON u.userId = s.teacherId
+             JOIN assignments a ON s.subjectId = a.subjectId
+             WHERE a.assignmentId = ?',
+            [$_POST['assignmentId']]);
 
-            if ($existAssignment['userGrade']) {
-                $this->sendNotificationToEmail($existAssignment['userEmail'], $subject, $emailBody);
-            }
+        if (!empty($subject['teacherEmail'])) {
+            $verb = $assignmentExisted ? 'parandas' : 'esitas';
+            $body = sprintf(
+                'Õpilane <strong>%s</strong> %s ülesande <a href="%s/assignments/%d"><strong>%s</strong></a> lahenduse.<br><br>Lahenduse link: <a href="%s">%s</a>',
+                $this->auth->userName,
+                $verb,
+                BASE_URL,
+                $_POST['assignmentId'],
+                $subject['title'],
+                $_POST['solutionUrl'],
+                $_POST['solutionUrl']
+            );
+            Mail::send($subject['teacherEmail'], $subject['subjectName'], $body);
         }
         stop(200);
     }
+
 }
