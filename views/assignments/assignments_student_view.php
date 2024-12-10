@@ -4,7 +4,7 @@
     }
 
     h2 {
-        margin-top: 20px;
+        margin-top: 10px;
     }
 
     .comments-section {
@@ -60,16 +60,42 @@
 
     .comment-entry .card {
         border-radius: 0;
-        border: 1px solid #d5d9dc;
-        border-top: 0;
-        border-left: 0;
-        border-right: 0;
+        border: 0 solid #d5d9dc;
+        border-bottom-width: 1px;
     }
 
     /* Add a shadow to the .card */
     .card {
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     }
+
+    ul.list-group.list-group-criteria li:last-child {
+        border-radius: 0 0 4px 4px;
+    }
+
+    ul.list-group.list-group-criteria li:first-child {
+        border-top: 0;
+    }
+
+    #solutionUrl {
+        border-radius: 0 0 4px 4px;
+        border-bottom: 0;
+        border-left: 0;
+        border-right: 0;
+        padding-left: 15px
+    }
+    #submitSolutionButton {
+        border-radius: 0 0 4px 0;
+    }
+
+    #commentText {
+        border-radius: 0 0 4px 4px;
+        border-bottom: 0;
+        border-left: 0;
+        border-right: 0;
+        padding-left: 16px
+    }
+
 
 </style>
 
@@ -118,14 +144,15 @@
                                       v-tooltip="criterion.tooltipText">&#9888;</span>
                             </label>
                         </li>
-                        <div class="input-group mt-3" v-if="canSubmitSolution">
+                        <div class="input-group" v-if="canSubmitSolution">
                             <input type="url"
                                    id="solutionUrl"
                                    class="form-control"
                                    v-model="solutionUrl"
-                                   placeholder="Enter solution URL"
+                                   placeholder="Sisesta lahenduse URL"
                                    required>
                             <button type="submit"
+                                    id="submitSolutionButton"
                                     class="btn btn-success"
                                     :disabled="!canSubmitSolution"
                                     @click="submitSolution">
