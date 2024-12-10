@@ -325,8 +325,8 @@ class assignments extends Controller
 
     function submitSolution()
     {
-        validate($_POST['solutionUrl'], 'Invalid solutionUrl.', IS_STRING);
-        validate($_POST['assignmentId'], 'Invalid assignmentId.');
+        @validate($_POST['solutionUrl'], 'Invalid solutionUrl.', IS_STRING);
+        @validate($_POST['assignmentId'], 'Invalid assignmentId.');
 
         Assignment::userIsStudent($this->auth->userId, $_POST['assignmentId']) || stop(403, 'Teil pole õigusi sellele tegevusele.');
 
@@ -376,6 +376,27 @@ class assignments extends Controller
             Mail::send($subject['teacherEmail'], $subject['subjectName'], $body);
         }
         stop(200);
+    }
+
+    function addComment()
+    {
+        stop(500);
+        @validate($_POST['assignmentId'], 'Invalid assignmentId.');
+        @validate($_POST['comment'], 'Invalid comment.', IS_STRING);
+        @validate($_POST['studentId'], 'Invalid studentId.', IS_ID, false);
+
+        // Read studentId from POST or use auth->userId
+        $studentId = $_POST['studentId'] ?? $this->auth->userId;
+
+        Assignment::addComment(
+            $_POST['assignmentId'],
+            $studentId,
+            $this->auth->userId,
+            $_POST['comment']
+        );
+
+        stop(200);
+
     }
 
 }

@@ -43,8 +43,8 @@ class Assignment
 
     static function addComment($assignmentId, $studentId, $authorId, $comment, $isSolution = false): void
     {
-        validate($_POST['comment'], 'Invalid comment. It must be a string.', IS_STRING);
-        validate($_POST['assignmentId'], 'Invalid assignmentId.');
+        @validate($_POST['comment'], 'Invalid comment. It must be a string.', IS_STRING);
+        @validate($_POST['assignmentId'], 'Invalid assignmentId.');
 
         Db::insert('assignmentComments', [
             'assignmentId' => $assignmentId,

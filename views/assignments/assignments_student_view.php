@@ -88,14 +88,39 @@
         border-radius: 0 0 4px 0;
     }
 
-    #commentText {
-        border-radius: 0 0 4px 4px;
-        border-bottom: 0;
+    #commentText{
+        border-radius: 0 0 0 4px;
         border-left: 0;
         border-right: 0;
-        padding-left: 16px
+        padding-left: 16px;
+    }
+    #commentText.is-invalid {
+        margin-top: 15px !important;
+        border-radius: 0 !important;
+        border: 1px solid #dc3545;
+        margin-left: 15px;
+
     }
 
+    .gray-background {
+        background-color: #f8f9fa;
+    }
+
+    .card-header {
+        /* Linear gradient suble grayish blue */
+        background: linear-gradient(180deg, rgba(193, 193, 193, 0.0) 0%, rgba(193, 193, 193, 0.3) 100%);
+    }
+
+    #commentUnsavedReason {
+        margin-left: 15px;
+        margin-bottom: 15px;
+    }
+
+    #submitCommentButton.is-invalid {
+        margin-top: 15px !important;
+        margin-right: 15px !important;
+        border-radius: 0 4px 4px 0 !important;
+    }
 
 </style>
 
@@ -171,7 +196,7 @@
                     </h2>
                 </div>
                 <div class="card-body p-0">
-                    <div v-if="comments.length > 0" class="comment-section-container p-0">
+                    <div v-if="comments.length > 0" class="comment-section-container gray-background p-0">
                         <div v-for="comment in comments" class="comment-entry mb-0">
                             <div class="card">
                                 <div class="card-body">
@@ -184,12 +209,12 @@
                             </div>
                         </div>
                     </div>
-                    <div v-else class="comment-section-empty">
+                    <div v-else class="comment-section-empty gray-background">
                         <p>Sõnumeid pole.</p>
                     </div>
-                    <div id="commentSection" class="d-flex m--1">
+                    <div id="commentSection" class="d-flex flex-column">
                         <div class="input-group">
-                        <textarea id="commentText"
+                            <textarea id="commentText"
                                   class="form-control border-end-0"
                                   :class="{ 'is-invalid': commentUnsaved }"
                                   rows="3"
@@ -197,14 +222,16 @@
                                   v-model="commentText"
                                   required></textarea>
                             <button type="button"
+                                    id="submitCommentButton"
                                     class="btn btn-success"
+                                    :class="{ 'is-invalid': commentUnsaved }"
                                     :disabled="!commentText.trim()"
                                     style="border-radius: 0 0 4px 0;"
                                     @click="submitComment">
                                 Esita
                             </button>
                         </div>
-                        <span v-if="commentUnsaved" class="text-danger">{{ commentUnsavedReason }}</span>
+                        <div v-if="commentUnsaved" id="commentUnsavedReason" class="text-danger mt-2">{{ commentUnsavedReason }}</div>
                     </div>
                 </div>
             </div>
@@ -325,6 +352,10 @@
                 }, res => {
                     this.commentUnsaved = true;
                     this.commentUnsavedReason = '⚠️ Tõrge kommentaari salvestamisel: ' + JSON.stringify(res);
+                    // Scroll to the bottom of the page after 100ms to make the error visible
+                    setTimeout(() => {
+                        window.scrollTo(0, document.body.scrollHeight);
+                    }, 100);
                 });
             }
         }
