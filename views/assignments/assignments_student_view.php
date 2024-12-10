@@ -166,6 +166,7 @@
                             <button type="button"
                                     class="btn btn-success"
                                     :disabled="!commentText.trim()"
+                                    style="border-radius: 0 0 4px 0;"
                                     @click="submitComment">
                                 Esita
                             </button>
@@ -247,7 +248,7 @@
         },
         methods: {
             saveUserDoneCriteria(criterion) {
-                this.ajax('api/assignments/saveUserDoneCriteria', {
+                ajax('api/assignments/saveUserDoneCriteria', {
                     criterionId: criterion.criterionId,
                     done: criterion.done
                 }, () => {
@@ -261,7 +262,7 @@
             },
 
             submitSolution() {
-                this.ajax('api/assignments/submitSolution', {
+                ajax('api/assignments/submitSolution', {
                     assignmentId: this.assignment.assignmentId,
                     solutionUrl: this.solutionUrl
                 }, () => {
@@ -270,10 +271,10 @@
                     // error handling if needed
                 });
             },
-            submitComment(commentText) {
+            submitComment() {
                 ajax('api/assignments/addComment', {
                     assignmentId: this.assignment.assignmentId,
-                    comment: commentText,
+                    comment: this.commentText,
                 }, () => {
                     this.commentUnsaved = false;
                     this.comments.push({
@@ -286,7 +287,7 @@
                             minute: '2-digit'
                         }).replace(',', ''),
                         name: this.assignment.students[this.userId].studentName,
-                        comment: commentText
+                        comment: this.commentText
                     });
                     this.commentText = '';
                 }, res => {

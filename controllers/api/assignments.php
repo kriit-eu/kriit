@@ -322,7 +322,7 @@ class assignments extends Controller
 
     }
 
-    function addComment()
+    function addComment($isSolution = false)
     {
         validate($_POST['comment'], 'Invalid comment. It must be a string.', IS_STRING);
         validate($_POST['assignmentId'], 'Invalid assignmentId.');
@@ -330,6 +330,7 @@ class assignments extends Controller
         Db::insert('assignmentComments', [
             'assignmentId' => $_POST['assignmentId'],
             'userId' => $this->auth->userId,
+            'isSolution' => $isSolution,
             'assignmentComment' => $_POST['comment'],
             'assignmentCommentCreatedAt' => date('Y-m-d H:i:s')
         ]);
@@ -354,6 +355,13 @@ class assignments extends Controller
             Activity::create(ACTIVITY_SUBMIT_ASSIGNMENT, $this->auth->userId, $_POST['assignmentId'], "esitas ülesande lahenduse uuesti");
             $studentName = $existAssignment['userName'];
         }
+
+        // Add comment that includes assignment link
+        if (empty($_POST['comment'])) {
+            $_POST['comment'] = "<br><br>Lahenduse link: <a href='$_POST[solutionUrl]'>$_POST[solutionUrl]</a><br>";
+        }
+        Assignment::addComment($assignmentId, $this->auth->userId, $this->auth->userId, $_POST['comment'], true);
+
 
         if ($existAssignment['assignmentStatusId'] !== 2) {
             $mailData = $this->getSenderNameAndReceiverEmail($this->auth->userId, $existAssignment['userId']);
