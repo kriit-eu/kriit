@@ -42,16 +42,8 @@
         margin-bottom: 1rem;
     }
 
-    .m--1 {
-        margin: -1px;
-    }
-
     ul.list-group.list-group-criteria li:last-child {
         border-radius: 0 0 4px 4px;
-    }
-
-    ul.list-group.list-group-criteria li:first-child {
-        border-top: 0;
     }
 
     ul.list-group.list-group-criteria li {
@@ -60,131 +52,133 @@
         border-right: 0;
         border-bottom: 0;
     }
+
+    .comment-section {
+        border-top: 1px solid #d5d9dc;
+        border-radius: 0;
+    }
+
+    .comment-entry .card {
+        border-radius: 0;
+        border: 1px solid #d5d9dc;
+        border-top: 0;
+        border-left: 0;
+        border-right: 0;
+    }
 </style>
 
 <div id="app" class="container mt-5" v-cloak>
+
+
+    <h1><strong>{{ assignment.assignmentName }}</strong></h1>
+    <!-- Instruction and Solving Cards -->
     <div class="row">
-        <h1><strong>{{ assignment.assignmentName }}</strong></h1>
+        <div class="col-lg-12 col-md-12 col-sm-12">
 
-        <!-- Instruction and Solving Cards -->
-        <div class="row">
-            <div class="col-lg-12 col-md-12 col-sm-12">
-                <!-- Instructions -->
-                <div class="card mb-4">
-                    <div class="card-header" v-tooltip="tooltips.criteria">
-                        <h2 class="card-title d-flex justify-content-between align-items-center">
-                            <strong>Juhend</strong> <i class="fa fa-info-circle"></i>
-                        </h2>
-                    </div>
-                    <div class="card-body">
-                        <p v-html="renderedInstructions"></p>
-                    </div>
+            <!-- Instructions -->
+            <div class="card mb-4">
+                <div class="card-header" v-tooltip="tooltips.criteria">
+                    <h2 class="card-title d-flex justify-content-between align-items-center">
+                        <strong>Juhend</strong> <i class="fa fa-info-circle"></i>
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <p v-html="renderedInstructions"></p>
                 </div>
             </div>
 
-            <div class="col-lg-12 col-md-12 col-sm-12">
-                <!-- Solving -->
-                <div class="card mb-4">
-                    <div class="card-header" data-bs-toggle="tooltip" v-tooltip="tooltips.criteria">
-                        <h2 class="card-title d-flex justify-content-between align-items-center">
-                            <strong>Lahendamine</strong> <i class="fa fa-puzzle-piece"></i>
-                        </h2>
-                    </div>
-                    <div class="card-body" style="padding: 0;">
-                        <ul class="list-group list-group-criteria">
-                            <li v-for="(criterion, index) in criteria"
-                                :key="criterion.criterionId"
-                                class="list-group-item"
-                                :class="criterion.done ? 'criterion-done' : ''"
-                                data-bs-toggle="tooltip">
-                                <label class="d-flex">
-                                    <div class="flex-shrink-0">
-                                        <input type="checkbox"
-                                               class="form-check-input me-2"
-                                               v-model="criterion.done"
-                                               @change="saveUserDoneCriteria(criterion)"/>
-                                        <span class="me-2">{{ index + 1 }}.</span>
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <span v-if="criterion.unsaved"
-                                              class="text-warning ms-2"
-                                              data-bs-toggle="tooltip"
-                                              v-tooltip="criterion.tooltipText">&#9888;</span>
-                                        {{ criterion.description }}
-                                    </div>
-                                </label>
-                            </li>
-                            <div class="input-group mt-3" v-if="canSubmitSolution">
-                                <input type="url"
-                                       id="solutionUrl"
-                                       class="form-control"
-                                       v-model="solutionUrl"
-                                       placeholder="Enter solution URL"
-                                       required>
-                                <button type="submit"
-                                        class="btn btn-success"
-                                        :disabled="!canSubmitSolution"
-                                        @click="submitSolution">
-                                    Esita
-                                </button>
-                            </div>
-                        </ul>
-                    </div>
+            <!-- Solving -->
+            <div class="card mb-4">
+                <div class="card-header" v-tooltip="tooltips.criteria">
+                    <h2 class="card-title d-flex justify-content-between align-items-center">
+                        <strong>Lahendamine</strong> <i class="fa fa-puzzle-piece"></i>
+                    </h2>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-criteria">
+                        <li v-for="(criterion, index) in criteria"
+                            :key="criterion.criterionId"
+                            class="list-group-item"
+                            :class="criterion.done ? 'criterion-done' : ''">
+                            <label class="d-flex align-items-center">
+                                <input type="checkbox"
+                                       class="form-check-input me-2"
+                                       v-model="criterion.done"
+                                       @change="saveUserDoneCriteria(criterion)"/>
+                                <span class="me-2">{{ index + 1 }}.</span>
+                                <span>{{ criterion.description }}</span>
+                                <span v-if="criterion.unsaved"
+                                      class="text-warning ms-2"
+                                      v-tooltip="criterion.tooltipText">&#9888;</span>
+                            </label>
+                        </li>
+                        <div class="input-group mt-3" v-if="canSubmitSolution">
+                            <input type="url"
+                                   id="solutionUrl"
+                                   class="form-control"
+                                   v-model="solutionUrl"
+                                   placeholder="Enter solution URL"
+                                   required>
+                            <button type="submit"
+                                    class="btn btn-success"
+                                    :disabled="!canSubmitSolution"
+                                    @click="submitSolution">
+                                Esita
+                            </button>
+                        </div>
+                    </ul>
                 </div>
             </div>
-        </div>
 
-        <!-- Chat Card -->
-        <div class="row">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header" v-tooltip="tooltips.comments">
-                        <h3 class="card-title d-flex justify-content-between align-items-center">
-                            <strong>Vestlus</strong><i class="fa fa-comment"></i>
-                        </h3>
-                    </div>
-                    <div class="card-body p-0">
-                        <div v-if="comments.length > 0" class="comment-section-container">
-                            <div v-for="comment in comments" class="comment-entry">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <p>
-                                            {{ comment.createdAt }}
-                                            <strong>{{ comment.name || 'Tundmatu' }}</strong><br>
-                                            <em>{{ comment.comment }}</em>
-                                        </p>
-                                    </div>
+            <!-- Comments -->
+            <div class="card mb-4">
+                <div class="card-header" v-tooltip="tooltips.comments">
+                    <h2 class="card-title d-flex justify-content-between align-items-center">
+                        <strong>Vestlus</strong> <i class="fa fa-comment"></i>
+                    </h2>
+                </div>
+                <div class="card-body p-0">
+                    <div v-if="comments.length > 0" class="comment-section-container p-0">
+                        <div v-for="comment in comments" class="comment-entry mb-0">
+                            <div class="card">
+                                <div class="card-body">
+                                    <p>
+                                        {{ comment.createdAt }}
+                                        <strong>{{ comment.name || 'Tundmatu' }}</strong><br>
+                                        <em>{{ comment.comment }}</em>
+                                    </p>
                                 </div>
                             </div>
                         </div>
-                        <div v-else class="comment-section-empty">
-                            <p>Sõnumeid pole.</p>
+                    </div>
+                    <div v-else class="comment-section-empty">
+                        <p>Sõnumeid pole.</p>
+                    </div>
+                    <div id="commentSection" class="d-flex m--1">
+                        <div class="input-group">
+                        <textarea id="commentText"
+                                  class="form-control border-end-0"
+                                  :class="{ 'is-invalid': commentUnsaved }"
+                                  rows="3"
+                                  placeholder="Lisa sõnum siia..."
+                                  v-model="commentText"
+                                  required></textarea>
+                            <button type="button"
+                                    class="btn btn-success"
+                                    :disabled="!commentText.trim()"
+                                    @click="submitComment">
+                                Esita
+                            </button>
                         </div>
-                        <div id="commentSection" class="d-flex m--1">
-                            <div class="input-group">
-                                <textarea id="commentText"
-                                          class="form-control border-end-0"
-                                          :class="commentUnsaved ? 'is-invalid' : ''"
-                                          rows="3"
-                                          placeholder="Lisa sõnum siia..."
-                                          v-model="commentText"
-                                          style="border-radius: 0 0 0 4px;"
-                                          required></textarea>
-                                <button type="button"
-                                        class="btn btn-success"
-                                        :disabled="!commentText.trim()"
-                                        style="border-radius: 0 0 4px 0;"
-                                        @click="submitComment">
-                                    Esita
-                                </button>
-                            </div>
-                            <span v-if="commentUnsaved" class="text-danger">{{commentUnsavedReason}}</span>
-                        </div>
+                        <span v-if="commentUnsaved" class="text-danger">{{ commentUnsavedReason }}</span>
                     </div>
                 </div>
             </div>
         </div>
+
+
     </div>
+
 </div>
 
 <!-- Dependencies -->
@@ -198,7 +192,7 @@
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
 <script>
-    const assignment = <?= json_encode($assignment); ?>;
+    const assignmentData = <?= json_encode($assignment); ?>;
     const userId = <?= json_encode($this->auth->userId); ?>;
 
     Vue.directive('tooltip', {
@@ -214,11 +208,11 @@
         el: '#app',
         data: {
             tooltips: {
-                instructions: 'Loe järgmist juhendit ja lahenda ülesanne vastavalt sellele.',
-                criteria: 'Loe järgmist loetelu ja märgi iga sammu juurde linnuke kohe, kui oled selle täitnud.',
-                comments: 'Küsi küsimusi, jaga mõtteid ja arutle õpetajaga.'
+                instructions: 'Loe juhendit ja lahenda ülesanne vastavalt.',
+                criteria: 'Loe loetelu ja märgi, kui tingimus on täidetud.',
+                comments: 'Küsi, arutle, jaga mõtteid õpetajaga.'
             },
-            assignment: assignment,
+            assignment: assignmentData,
             criteria: [],
             solutionUrl: '',
             userId: userId,
@@ -232,15 +226,13 @@
             const studentData = Object.values(this.assignment.students || {})[0] || {};
             const userDoneCriteria = studentData.userDoneCriteria || {};
 
-            this.criteria = assignmentCriteria.map(criterion => {
-                const done = userDoneCriteria[criterion.criterionId]?.completed || false;
-                return {
-                    criterionId: criterion.criterionId,
-                    description: criterion.criterionName,
-                    done: done,
-                    tooltipText: done ? 'Tingimus on salvestatud' : ''
-                };
-            });
+            this.criteria = assignmentCriteria.map(criterion => ({
+                criterionId: criterion.criterionId,
+                description: criterion.criterionName,
+                done: userDoneCriteria[criterion.criterionId]?.completed || false,
+                tooltipText: userDoneCriteria[criterion.criterionId]?.completed ? 'Tingimus on salvestatud' : '',
+                unsaved: false
+            }));
 
             this.solutionUrl = studentData.solutionUrl || '';
             this.comments = studentData.comments || [];
@@ -254,11 +246,35 @@
             }
         },
         methods: {
-            submitComment() {
+            saveUserDoneCriteria(criterion) {
+                this.ajax('api/assignments/saveUserDoneCriteria', {
+                    criterionId: criterion.criterionId,
+                    done: criterion.done
+                }, () => {
+                    criterion.tooltipText = criterion.done ? 'Tingimus on salvestatud' : '';
+                    criterion.unsaved = false;
+                }, err => {
+                    criterion.unsaved = true;
+                    criterion.done = !criterion.done; // revert
+                    criterion.tooltipText = '⚠️ Viga salvestamisel: ' + JSON.stringify(err);
+                });
+            },
+
+            submitSolution() {
+                this.ajax('api/assignments/submitSolution', {
+                    assignmentId: this.assignment.assignmentId,
+                    solutionUrl: this.solutionUrl
+                }, () => {
+                    // success handling if needed
+                }, err => {
+                    // error handling if needed
+                });
+            },
+            submitComment(commentText) {
                 ajax('api/assignments/addComment', {
                     assignmentId: this.assignment.assignmentId,
-                    comment: this.commentText,
-                }, res => {
+                    comment: commentText,
+                }, () => {
                     this.commentUnsaved = false;
                     this.comments.push({
                         createdAt: new Date().toLocaleString('et-EE', {
@@ -270,34 +286,14 @@
                             minute: '2-digit'
                         }).replace(',', ''),
                         name: this.assignment.students[this.userId].studentName,
-                        comment: this.commentText,
+                        comment: commentText
                     });
                     this.commentText = '';
                 }, res => {
                     this.commentUnsaved = true;
                     this.commentUnsavedReason = '⚠️ Tõrge kommentaari salvestamisel: ' + JSON.stringify(res);
                 });
-            },
-            saveUserDoneCriteria(criterion) {
-                ajax('api/assignments/saveUserDoneCriteria', {
-                    criterionId: criterion.criterionId,
-                    done: criterion.done
-                }, () => {
-                    criterion.tooltipText = criterion.done ? 'Tingimus on salvestatud' : '';
-                    criterion.unsaved = false;
-                }, res => {
-                    criterion.unsaved = true;
-                    criterion.done = !criterion.done;
-                    criterion.tooltipText = '⚠️ Tõrge tingimuse salvestamisel: ' + JSON.stringify(res);
-                });
-            },
-            async submitSolution() {
-                ajax('api/assignments/submitSolution', {
-                    assignmentId: this.assignment.assignmentId,
-                    solutionUrl: this.solutionUrl,
-                });
             }
-
-        },
+        }
     });
 </script>
