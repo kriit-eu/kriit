@@ -19,40 +19,58 @@ class assignments extends Controller
 
         $params = [$assignmentId];
         $query = "
-    SELECT
-        a.assignmentId, a.assignmentName, a.assignmentInstructions, a.assignmentDueAt,
-        c.criterionId, c.criterionName,
-        u.userId AS studentId, u.userName AS studentName, u.groupId,
-        ua.userGrade, ua.assignmentStatusId, ua.solutionUrl,
-        ast.statusName AS assignmentStatusName,
-        udc.criterionId AS userDoneCriterionId,
-        subj.teacherId AS teacherId,
-        t.userName AS teacherName,
-        ac.assignmentCommentId, ac.assignmentComment, DATE_FORMAT(ac.assignmentCommentCreatedAt, '%d.%m.%Y %H:%i') AS assignmentCommentCreatedAt, uc.userName AS commentUserName
-    FROM assignments a
-    LEFT JOIN criteria c ON c.assignmentId = a.assignmentId
-    JOIN subjects subj ON a.subjectId = subj.subjectId
-    JOIN users t ON subj.teacherId = t.userId
-    LEFT JOIN groups g ON subj.groupId = g.groupId
-    LEFT JOIN users u ON u.groupId = g.groupId
-    LEFT JOIN userAssignments ua ON ua.assignmentId = a.assignmentId AND ua.userId = u.userId
-    LEFT JOIN assignmentStatuses ast ON ua.assignmentStatusId = ast.assignmentStatusId
-    LEFT JOIN userDoneCriteria udc ON udc.criterionId = c.criterionId AND udc.userId = u.userId
-    LEFT JOIN assignmentComments ac ON ac.assignmentId = a.assignmentId
-    LEFT JOIN users uc ON ac.studentId = uc.userId
-    WHERE a.assignmentId = ?
-";
+            SELECT
+                a.assignmentId, a.assignmentName, a.assignmentInstructions, a.assignmentDueAt,
+                u.userId AS studentId, u.userName AS studentName, u.groupId,
+                ua.userGrade, ua.assignmentStatusId, ua.solutionUrl,
+                ast.statusName AS assignmentStatusName,
+                subj.teacherId AS teacherId,
+                t.userName AS teacherName,
+                JSON_ARRAYAGG(
+                    DISTINCT
+                    JSON_OBJECT(
+                        'criterionId', c.criterionId,
+                        'criterionName', c.criterionName,
+                        'completed', udc.criterionId IS NOT NULL
+                    )
+                ) AS criteria,
+                JSON_ARRAYAGG(
+                    DISTINCT
+                    IF(ac.assignmentCommentId IS NOT NULL,
+                        JSON_OBJECT(
+                            'id', ac.assignmentCommentId,
+                            'comment', ac.assignmentComment,
+                            'createdAt', DATE_FORMAT(ac.assignmentCommentCreatedAt, '%d.%m.%Y %H:%i'),
+                            'name', uc.userName
+                        ),
+                        NULL
+                    )
+                ) AS comments
+            FROM assignments a
+            LEFT JOIN criteria c ON c.assignmentId = a.assignmentId
+            JOIN subjects subj ON a.subjectId = subj.subjectId
+            JOIN users t ON subj.teacherId = t.userId
+            LEFT JOIN groups g ON subj.groupId = g.groupId
+            LEFT JOIN users u ON u.groupId = g.groupId
+            LEFT JOIN userAssignments ua ON ua.assignmentId = a.assignmentId AND ua.userId = u.userId
+            LEFT JOIN assignmentStatuses ast ON ua.assignmentStatusId = ast.assignmentStatusId
+            LEFT JOIN userDoneCriteria udc ON udc.criterionId = c.criterionId AND udc.userId = u.userId
+            LEFT JOIN assignmentComments ac ON ac.assignmentId = a.assignmentId AND ac.studentId = u.userId
+            LEFT JOIN users uc ON ac.studentId = uc.userId
+            WHERE a.assignmentId = ?
+        ";
+
         if ($isStudent) {
             $query .= " AND u.userId = ?";
             $params[] = $userId;
         }
-        $query .= " ORDER BY u.userName, c.criterionId, ac.assignmentCommentCreatedAt";
+        $query .= " GROUP BY a.assignmentId, u.userId";
 
         $data = Db::getAll($query, $params);
 
         $assignment = [
             'assignmentId' => $assignmentId,
-            'criteria' => [],
+            'criteria' => Db::getAll("SELECT * FROM criteria WHERE assignmentId = ?", [$assignmentId]),
             'students' => [],
             'messages' => []
         ];
@@ -66,22 +84,22 @@ class assignments extends Controller
                 $assignment['teacherName'] = $row['teacherName'];
             }
 
-            if ($isStudent && $userId !== $row['studentId']) {
-                continue;
-            }
-
-            $criterionId = $row['criterionId'];
-            if ($criterionId && !isset($assignment['criteria'][$criterionId])) {
-                $assignment['criteria'][$criterionId] = [
-                    'criterionId' => $criterionId,
-                    'criterionName' => $row['criterionName']
-                ];
-            }
-
             $studentId = $row['studentId'];
             if (!isset($assignment['students'][$studentId])) {
                 $grade = trim($row['userGrade'] ?? '');
                 $statusName = $row['assignmentStatusName'] ?? 'Esitamata';
+
+                // Decode JSON arrays
+                $criteria = json_decode($row['criteria'], true) ?: [];
+                $comments = json_decode($row['comments'], true) ?: [];
+
+                // Filter out null values from comments
+                $comments = array_filter($comments, fn($comment) => !is_null($comment['id']));
+
+                // Calculate criteria completion
+                $userDoneCriteriaCount = count(array_filter($criteria, fn($c) => $c['completed']));
+                $isAllCriteriaCompleted = count($criteria) > 0 && $userDoneCriteriaCount === count($criteria);
+
                 $assignment['students'][$studentId] = [
                     'studentId' => $studentId,
                     'studentName' => $row['studentName'],
@@ -89,49 +107,15 @@ class assignments extends Controller
                     'assignmentStatusName' => $statusName,
                     'initials' => mb_substr($row['studentName'], 0, 1) . mb_substr($row['studentName'], mb_strrpos($row['studentName'], ' ') + 1, 1),
                     'solutionUrl' => trim($row['solutionUrl'] ?? ''),
-                    'comments' => [],
-                    'userDoneCriteria' => [],
-                    'userDoneCriteriaCount' => 0,
-                    'class' => '',
-                    'tooltipText' => '',
-                    'studentActionButtonName' => !empty(trim($row['solutionUrl'] ?? '')) ? 'Muuda' : 'Esita',
-                    'isAllCriteriaCompleted' => true
+                    'comments' => $comments,
+                    'userDoneCriteria' => array_column($criteria, null, 'criterionId'),
+                    'userDoneCriteriaCount' => $userDoneCriteriaCount,
+                    'isAllCriteriaCompleted' => $isAllCriteriaCompleted,
+                    'studentActionButtonName' => !empty(trim($row['solutionUrl'] ?? '')) ? 'Muuda' : 'Esita'
                 ];
+
+
             }
-
-            // Handle comments
-            if (!empty($row['assignmentComment'])) {
-                $assignment['students'][$studentId]['comments'][] = [
-                    'id' => $row['assignmentCommentId'],
-                    'comment' => $row['assignmentComment'],
-                    'createdAt' => $row['assignmentCommentCreatedAt'],
-                    'name' => $row['commentUserName']
-                ];
-            }
-
-            $isCompleted = $row['userDoneCriterionId'] !== null;
-            $assignment['students'][$studentId]['userDoneCriteria'][$criterionId] = [
-                'criterionId' => $criterionId,
-                'criterionName' => $row['criterionName'],
-                'completed' => $isCompleted
-            ];
-            $assignment['students'][$studentId]['userDoneCriteriaCount'] += $isCompleted ? 1 : 0;
-            $assignment['students'][$studentId]['isAllCriteriaCompleted'] &= $isCompleted;
-
-            $statusId = $row['assignmentStatusId'] ?? ASSIGNMENT_STATUS_NOT_SUBMITTED;
-            $isNegativeGrade = $grade === 'MA' || (is_numeric($grade) && intval($grade) < 3);
-            $isEvaluated = $statusName === 'Hinnatud';
-
-            $assignment['students'][$studentId]['isDisabledStudentActionButton'] = (($isEvaluated && !$isNegativeGrade) || (!$isEvaluated && !$assignment['students'][$studentId]['isAllCriteriaCompleted'])) ? 'disabled' : '';
-
-            $dueDate = !empty($row['assignmentDueAt']) ? new \DateTime($row['assignmentDueAt']) : null;
-            $daysRemaining = $dueDate ? (new \DateTime())->diff($dueDate)->format('%r%a') : 1000;
-
-            $class = Assignment::cellColor($isStudent, $isTeacher, $isNegativeGrade, (int)$daysRemaining, $statusId, $statusName);
-            $tooltipText = $statusName . ((($daysRemaining < 0) && ($statusName === 'Esitamata')) ? ' (Tähtaeg möödas)' : '');
-
-            $assignment['students'][$studentId]['class'] = $class;
-            $assignment['students'][$studentId]['tooltipText'] = $tooltipText;
         }
 
         $this->assignment = $assignment;

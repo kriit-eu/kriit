@@ -42,6 +42,12 @@
         margin-bottom: 1rem;
     }
 
+    .comment-entry li {
+        margin-left: 0;
+        padding-left: 0;
+
+
+    }
     ul.list-group.list-group-criteria li:last-child {
         border-radius: 0 0 4px 4px;
     }
@@ -84,16 +90,18 @@
         border-right: 0;
         padding-left: 15px
     }
+
     #submitSolutionButton {
         border-radius: 0 0 4px 0;
     }
 
-    #commentText{
+    #commentText {
         border-radius: 0 0 0 4px;
         border-left: 0;
         border-right: 0;
         padding-left: 16px;
     }
+
     #commentText.is-invalid {
         margin-top: 15px !important;
         border-radius: 0 !important;
@@ -122,6 +130,22 @@
         border-radius: 0 4px 4px 0 !important;
     }
 
+    .comment-entry .card td, .comment-entry .card th {
+        border: 1px solid gray;
+    }
+
+    .comment-entry .card th {
+        background-color: #78787833
+
+
+    }
+
+    .comments-container {
+        max-height: 400px;
+        overflow-y: auto;
+        border-bottom: 1px solid #d5d9dc;
+    }
+
 </style>
 
 <div id="app" class="container mt-5" v-cloak>
@@ -140,7 +164,7 @@
                     </h2>
                 </div>
                 <div class="card-body">
-                    <p v-html="renderedInstructions"></p>
+                    <p v-html="renderMarkdown(assignment.assignmentInstructions)"></p>
                 </div>
             </div>
 
@@ -196,31 +220,33 @@
                     </h2>
                 </div>
                 <div class="card-body p-0">
-                    <div v-if="comments.length > 0" class="comment-section-container gray-background p-0">
-                        <div v-for="comment in comments" class="comment-entry mb-0">
-                            <div class="card">
-                                <div class="card-body">
-                                    <p>
-                                        {{ comment.createdAt }}
-                                        <strong>{{ comment.name || 'Tundmatu' }}</strong><br>
-                                        <em>{{ comment.comment }}</em>
-                                    </p>
+                    <div class="comments-container" ref="commentsContainer">
+                        <div v-if="comments.length > 0" class="comment-section-container gray-background p-0">
+                            <div v-for="comment in comments" class="comment-entry mb-0">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <p>
+                                            {{ comment.createdAt }}
+                                            <strong>{{ comment.name || 'Tundmatu' }}</strong><br>
+                                            <span v-html="renderMarkdown(comment.comment)"></span>
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div v-else class="comment-section-empty gray-background">
-                        <p>Sõnumeid pole.</p>
+                        <div v-else class="comment-section-empty gray-background">
+                            <p>Sõnumeid pole.</p>
+                        </div>
                     </div>
                     <div id="commentSection" class="d-flex flex-column">
                         <div class="input-group">
                             <textarea id="commentText"
-                                  class="form-control border-end-0"
-                                  :class="{ 'is-invalid': commentUnsaved }"
-                                  rows="3"
-                                  placeholder="Lisa sõnum siia..."
-                                  v-model="commentText"
-                                  required></textarea>
+                                      class="form-control border-end-0"
+                                      :class="{ 'is-invalid': commentUnsaved }"
+                                      rows="3"
+                                      placeholder="Lisa sõnum siia..."
+                                      v-model="commentText"
+                                      required></textarea>
                             <button type="button"
                                     id="submitCommentButton"
                                     class="btn btn-success"
@@ -231,7 +257,9 @@
                                 Esita
                             </button>
                         </div>
-                        <div v-if="commentUnsaved" id="commentUnsavedReason" class="text-danger mt-2">{{ commentUnsavedReason }}</div>
+                        <div v-if="commentUnsaved" id="commentUnsavedReason" class="text-danger mt-2">
+                            {{ commentUnsavedReason }}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -249,8 +277,7 @@
 <?php else: ?>
     <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
 <?php endif; ?>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
 
 <script>
     const assignmentData = <?= json_encode($assignment); ?>;
@@ -301,8 +328,8 @@
             canSubmitSolution() {
                 return this.criteria.every(c => c.done);
             },
-            renderedInstructions() {
-                return marked.parse(this.assignment.assignmentInstructions || '');
+            renderMarkdown() {
+                return text => window.marked.parse(text || '');
             }
         },
         methods: {
@@ -330,6 +357,14 @@
                     // error handling if needed
                 });
             },
+            scrollToBottom() {
+                if (this.$refs.commentsContainer) {
+                    this.$nextTick(() => {
+                        const container = this.$refs.commentsContainer;
+                        container.scrollTop = container.scrollHeight;
+                    });
+                }
+            },
             submitComment() {
                 ajax('api/assignments/addComment', {
                     assignmentId: this.assignment.assignmentId,
@@ -349,6 +384,7 @@
                         comment: this.commentText
                     });
                     this.commentText = '';
+                    this.scrollToBottom();
                 }, res => {
                     this.commentUnsaved = true;
                     this.commentUnsavedReason = '⚠️ Tõrge kommentaari salvestamisel: ' + JSON.stringify(res);
@@ -358,6 +394,9 @@
                     }, 100);
                 });
             }
+        },
+        mounted() {
+            this.scrollToBottom();
         }
     });
 </script>
