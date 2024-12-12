@@ -3,7 +3,7 @@
 <script src="assets/js/main.js?<?= COMMIT_HASH ?>"></script>
 
 <div class="container" id="container">
-    <nav class="nav nav-pills flex-column flex-sm-row" style="margin-bottom: 4em">
+    <nav class="nav nav-pills flex-column flex-sm-row" style="margin-bottom: 0em">
         <a class="flex-sm-fill text-sm-center nav-link <?= $this->setActive('subjects/index') ?>"
            aria-current="subjects" href="subjects">Ained</a>
     </nav>

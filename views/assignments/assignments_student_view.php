@@ -48,6 +48,7 @@
 
 
     }
+
     ul.list-group.list-group-criteria li:last-child {
         border-radius: 0 0 4px 4px;
     }
@@ -146,12 +147,34 @@
         border-bottom: 1px solid #d5d9dc;
     }
 
+    @media (max-width: 438px) {
+        .container {
+            padding: 4px;
+        }
+    }
+
 </style>
 
 <div id="app" class="container mt-5" v-cloak>
 
 
-    <h1><strong>{{ assignment.assignmentName }}</strong></h1>
+    <div class="position-relative">
+        <h1>
+            <span class="float-end ms-3 mt-1">
+                <div v-if="assignment.students[userId].grade" :class="gradeClass">
+                    {{ assignment.students[userId].grade }}
+                </div>
+
+            </span>
+
+            <strong>{{ assignment.assignmentName }}</strong>
+        </h1>
+    </div>
+    <div v-if="assignment.students[userId].grade" :class="gradeClass" class="mb-0">
+        {{ assignment.assignmentDueAt }}
+    </div>
+    <br>
+
     <!-- Instruction and Solving Cards -->
     <div class="row">
         <div class="col-lg-12 col-md-12 col-sm-12">
@@ -325,6 +348,18 @@
             this.comments = studentData.comments || [];
         },
         computed: {
+            gradeClass() {
+                const grade = this.assignment.students[this.userId].grade;
+                const assignmentStatusId = this.assignment.students[this.userId].assignmentStatusId;
+
+                if (assignmentStatusId === <?= ASSIGNMENT_STATUS_WAITING_FOR_REVIEW ?>) {
+                    return 'badge bg-warning text-white float-end';
+                } else if (['1', '2', 'MA'].includes(grade)) {
+                    return 'badge bg-danger text-white float-end';
+                } else {
+                    return 'badge bg-success text-white float-end';
+                }
+            },
             canSubmitSolution() {
                 return this.criteria.every(c => c.done);
             },

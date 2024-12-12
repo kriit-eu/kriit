@@ -88,6 +88,7 @@ class assignments extends Controller
             if (!isset($assignment['students'][$studentId])) {
                 $grade = trim($row['userGrade'] ?? '');
                 $statusName = $row['assignmentStatusName'] ?? 'Esitamata';
+                $statusId = $row['assignmentStatusId'] ?? 1;
 
                 // Decode JSON arrays
                 $criteria = json_decode($row['criteria'], true) ?: [];
@@ -105,6 +106,7 @@ class assignments extends Controller
                     'studentName' => $row['studentName'],
                     'grade' => $grade,
                     'assignmentStatusName' => $statusName,
+                    'assignmentStatusId' => $statusId,
                     'initials' => mb_substr($row['studentName'], 0, 1) . mb_substr($row['studentName'], mb_strrpos($row['studentName'], ' ') + 1, 1),
                     'solutionUrl' => trim($row['solutionUrl'] ?? ''),
                     'comments' => $comments,
