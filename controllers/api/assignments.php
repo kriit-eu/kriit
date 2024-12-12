@@ -216,6 +216,7 @@ class assignments extends Controller
                 $result = array_filter($entry['journalStudentResults'], fn($res) => $res['studentId'] === $studentData['id']);
                 $result = !empty($result) ? reset($result) : null;
 
+                // TODO:
                 $assignmentData = Db::getFirst(
                     "SELECT ua.userGrade, 1 comment, ua.userId
                  FROM users u
@@ -380,7 +381,6 @@ class assignments extends Controller
 
     function addComment()
     {
-        stop(500);
         @validate($_POST['assignmentId'], 'Invalid assignmentId.');
         @validate($_POST['comment'], 'Invalid comment.', IS_STRING);
         @validate($_POST['studentId'], 'Invalid studentId.', IS_ID, false);
