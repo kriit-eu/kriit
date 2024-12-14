@@ -153,6 +153,25 @@
         }
     }
 
+    @keyframes pulsate {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+
+    .pulsate {
+        animation: pulsate 1s ease-in-out infinite;
+        color: #dc3545;
+        font-weight: bold;
+        text-shadow: 0 0 8px rgba(220, 53, 69, 0.6);
+    }
+
+    @keyframes pulsate {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.15); }
+        100% { transform: scale(1); }
+    }
+
 </style>
 
 <div id="app" class="container mt-5" v-cloak>
@@ -161,18 +180,21 @@
     <div class="position-relative">
         <h1>
             <span class="float-end ms-3 mt-1">
-                <div v-if="assignment.students[userId].grade" :class="gradeClass">
-                    {{ assignment.students[userId].grade }}
+                <div v-if="isWaitingForReview" class="badge bg-warning text-black float-end">
+                    Kontrollimisel
                 </div>
 
+                <div v-else="assignment.students[userId].grade" :class="gradeClass">
+                    {{ assignment.students[userId].grade }}
+                </div>
+                <div v-else :class="dueAtClass">
+                    {{ assignment.assignmentDueAt }}
+                </div>
             </span>
-
-            <strong>{{ assignment.assignmentName }}</strong>
+            <strong>Lorem ipsum dolor sit amet, consectetur adipisicing elit. A culpa cupiditate, debitis ducimus eaque explicabo, fuga harum id illo inventore ipsam nesciunt nostrum qui, quos rem vel voluptate voluptatibus voluptatum?</strong>
         </h1>
     </div>
-    <div v-if="assignment.students[userId].grade" :class="gradeClass" class="mb-0">
-        {{ assignment.assignmentDueAt }}
-    </div>
+
     <br>
 
     <!-- Instruction and Solving Cards -->
@@ -239,7 +261,7 @@
             <div class="card mb-4">
                 <div class="card-header" v-tooltip="tooltips.comments">
                     <h2 class="card-title d-flex justify-content-between align-items-center">
-                        <strong>Vestlus</strong> <i class="fa fa-comment"></i>
+                        <strong>Küsimused-vastused ja kommentaarid</strong> <i class="fa fa-comment"></i>
                     </h2>
                 </div>
                 <div class="card-body p-0">
@@ -348,6 +370,9 @@
             this.comments = studentData.comments || [];
         },
         computed: {
+            positiveGrade() {
+                return this.assignment.students[this.userId].grade && this.assignment.students[this.userId].grade > 0;
+            },
             gradeClass() {
                 const grade = this.assignment.students[this.userId].grade;
                 const assignmentStatusId = this.assignment.students[this.userId].assignmentStatusId;
@@ -360,12 +385,37 @@
                     return 'badge bg-success text-white float-end';
                 }
             },
+            dueDate() {
+                const [day, month, year] = this.assignment.assignmentDueAt.split('.');
+                return new Date(year, month - 1, day); // month is 0-based in JS
+            },
+            isOneDayLeft() {
+                const today = new Date();
+                const diffTime = this.dueDate.getTime() - today.getTime();
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                return diffDays === 1;
+            },
+            isOverdue() {
+                return !this.assignment.students[this.userId].grade && this.dueDate < new Date();
+            },
             canSubmitSolution() {
                 return this.criteria.every(c => c.done);
             },
             renderMarkdown() {
                 return text => window.marked.parse(text || '');
-            }
+            },
+            dueAtClass() {
+                if (this.isOverdue) {
+                    return 'badge bg-danger text-white float-end pulsate';
+                } else if (this.isOneDayLeft) {
+                    return 'badge bg-warning text-black float-end';
+                } else {
+                    return 'badge bg-secondary text-white float-end';
+                }
+            },
+            isWaitingForReview() {
+                return this.assignment.students[this.userId].assignmentStatusId === <?= ASSIGNMENT_STATUS_WAITING_FOR_REVIEW ?>;
+            },
         },
         methods: {
             saveUserDoneCriteria(criterion) {

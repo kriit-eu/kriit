@@ -2,6 +2,7 @@
 /node_modules
 /vendor
 /config.php
-node_modules
 **/.DS_Store
 .certs/dkim_private_key.pem
+/.vscode
+/doc/database.live.sql
