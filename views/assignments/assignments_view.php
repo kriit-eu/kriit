@@ -233,9 +233,8 @@
     #assignments-container {
         flex: 1;
         max-width: 100%;
-        overflow-x: auto /* Set a max-width for the grades section */
-        border-radius: 8px
-
+        overflow-x: auto; /* Set a max-width for the grades section */
+        border-radius: 8px;
     }
 
     #messages-container {
