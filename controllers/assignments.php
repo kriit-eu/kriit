@@ -84,7 +84,8 @@ class assignments extends Controller
                 foreach ($comments as &$comment) {
                     if (isset($comment['comment'])) {
                         $comment['comment'] = $parsedown->setBreaksEnabled(true)->text($comment['comment']);
-                    }                }
+                    }
+                }
 
                 $assignment['students'][$studentId] = [
                     'studentId' => $studentId,
@@ -263,7 +264,7 @@ class assignments extends Controller
             Activity::create(ACTIVITY_SUBMIT_ASSIGNMENT, $this->auth->userId, $assignmentId, "esitas ülesande lahenduse");
             $studentName = Db::getOne('SELECT userName FROM users WHERE userId = ?', [$studentId]);
         } else {
-            Db::update('userAssignments', ['assignmentStatusId' => 2, 'solutionUrl' => $solutionUrl], 'userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
+            Db::update('userAssignments', ['assignmentStatusId' => 2, 'solutionUrl' => $solutionUrl, 'userGrade' => NULL], 'userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
             Activity::create(ACTIVITY_SUBMIT_ASSIGNMENT, $this->auth->userId, $assignmentId, "esitas ülesande lahenduse uuesti");
             $studentName = $existAssignment['userName'];
         }
