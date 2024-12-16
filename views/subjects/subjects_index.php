@@ -66,7 +66,7 @@
                                         data-grade="<?= is_numeric($status['grade']) ? intval($status['grade']) : '' ?>"
                                         data-is-student="<?= json_encode($isStudent) ?>"
                                         data-url="assignments/<?= $a['assignmentId'] ?>">
-                                        <?= $isStudent ? ($status['grade'] ?: $status['assignmentStatusName']) : $status['grade'] ?>
+                                        <?= $isStudent ? ($status['assignmentStatusName'] == 'Kontrollimisel' ? 'Kontrollimisel' : ($status['grade'] ?: $status['assignmentStatusName'])) : $status['grade'] ?>
                                     </td>
                                 <?php endforeach; ?>
                             </tr>

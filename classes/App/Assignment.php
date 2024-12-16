@@ -13,8 +13,9 @@ class Assignment
 
     public static function cellColor($isStudent, $isTeacher, $isNegGrade, $daysLeft, $statusId, $statusName): string
     {
-        if ($isStudent && $isNegGrade) return 'red-cell';
-
+        if ($isStudent && $isNegGrade) {
+            return $statusName == 'Kontrollimisel' ? 'yellow-cell' : 'red-cell';
+        }
         if ($daysLeft <= 0) {
             if (($isStudent && $statusId == ASSIGNMENT_STATUS_NOT_SUBMITTED) ||
                 ($isTeacher && $statusId == ASSIGNMENT_STATUS_WAITING_FOR_REVIEW))
