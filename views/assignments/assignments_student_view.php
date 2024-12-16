@@ -172,6 +172,17 @@
         100% { transform: scale(1); }
     }
 
+    .slide-enter-active, .slide-leave-active {
+        transition: all 0.3s ease;
+        max-height: 50px;
+        overflow: hidden;
+    }
+    
+    .slide-enter, .slide-leave-to {
+        max-height: 0;
+        opacity: 0;
+    }
+
 </style>
 
 <div id="app" class="container mt-5" v-cloak>
@@ -184,14 +195,17 @@
                     Kontrollimisel
                 </div>
 
-                <div v-else="assignment.students[userId].grade" :class="gradeClass">
+                <div v-else="assignment.students[userId].grade" 
+                     :class="gradeClass"
+                     v-tooltip="assignment.students[userId].grade === 'MA' ? 'Mittearvestatud. Paranda ja esita uuesti!' :
+                                assignment.students[userId].grade === 'A' ? 'Arvestatud' : null">
                     {{ assignment.students[userId].grade }}
                 </div>
                 <div v-else :class="dueAtClass">
                     {{ assignment.assignmentDueAt }}
                 </div>
             </span>
-            <strong>Lorem ipsum dolor sit amet, consectetur adipisicing elit. A culpa cupiditate, debitis ducimus eaque explicabo, fuga harum id illo inventore ipsam nesciunt nostrum qui, quos rem vel voluptate voluptatibus voluptatum?</strong>
+            <strong>{{ assignment.assignmentName }}</strong>
         </h1>
     </div>
 
@@ -238,21 +252,23 @@
                                       v-tooltip="criterion.tooltipText">&#9888;</span>
                             </label>
                         </li>
-                        <div class="input-group" v-if="canSubmitSolution">
-                            <input type="url"
-                                   id="solutionUrl"
-                                   class="form-control"
-                                   v-model="solutionUrl"
-                                   placeholder="Sisesta lahenduse URL"
-                                   required>
-                            <button type="submit"
-                                    id="submitSolutionButton"
-                                    class="btn btn-success"
-                                    :disabled="!canSubmitSolution"
-                                    @click="submitSolution">
-                                Esita
-                            </button>
-                        </div>
+                        <transition name="slide">
+                            <div class="input-group" v-if="canSubmitSolution">
+                                <input type="url"
+                                       id="solutionUrl"
+                                       class="form-control"
+                                       v-model="solutionUrl"
+                                       placeholder="Sisesta lahenduse URL"
+                                       required>
+                                <button type="submit"
+                                        id="submitSolutionButton"
+                                        class="btn btn-success"
+                                        :disabled="!canSubmitSolution"
+                                        @click="submitSolution">
+                                    Saada
+                                </button>
+                            </div>
+                        </transition>
                     </ul>
                 </div>
             </div>
@@ -261,7 +277,7 @@
             <div class="card mb-4">
                 <div class="card-header" v-tooltip="tooltips.comments">
                     <h2 class="card-title d-flex justify-content-between align-items-center">
-                        <strong>Küsimused-vastused ja kommentaarid</strong> <i class="fa fa-comment"></i>
+                        <strong>Küsimused, vastused ja kommentaarid</strong> <i class="fa fa-comment"></i>
                     </h2>
                 </div>
                 <div class="card-body p-0">
@@ -299,12 +315,14 @@
                                     :disabled="!commentText.trim()"
                                     style="border-radius: 0 0 4px 0;"
                                     @click="submitComment">
-                                Esita
+                                Saada
                             </button>
                         </div>
-                        <div v-if="commentUnsaved" id="commentUnsavedReason" class="text-danger mt-2">
-                            {{ commentUnsavedReason }}
-                        </div>
+                        <transition name="slide">
+                            <div v-if="commentUnsaved" id="commentUnsavedReason" class="text-danger mt-2">
+                                {{ commentUnsavedReason }}
+                            </div>
+                        </transition>
                     </div>
                 </div>
             </div>
