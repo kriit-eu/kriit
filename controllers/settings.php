@@ -14,29 +14,40 @@ class settings extends Controller
 
     public function updateEmail() {
         if (!$this->auth->userId) {
-            error_out('Not logged in', 401);
+            error_out('Pole sisse logitud', 401);
         }
 
         $email = filter_input(INPUT_POST, 'email', FILTER_VALIDATE_EMAIL);
         $password = filter_input(INPUT_POST, 'password');
 
         if (!$email) {
-            error_out('Invalid email format', 400);
+            error_out('Vigane e-posti formaat', 400);
         }
 
         if (!password_verify($password, $this->auth->userPassword)) {
-            error_out('Incorrect password', 401);
+            error_out('Vale parool', 401);
         }
+
+        // Get current email for logging
+        $oldEmail = $this->auth->userEmail;
 
         // Update the user's email
         Db::update('users', ['userEmail' => $email], 'userId = ?', [$this->auth->userId]);
 
-        stop(200, 'Email updated successfully');
+        // Log the email change
+        Activity::create(
+            ACTIVITY_UPDATE_USER,
+            $this->auth->userId,
+            $this->auth->userId,
+            "Muutis e-posti aadressi '$oldEmail' -> '$email'"
+        );
+
+        stop(200, 'E-posti aadress edukalt uuendatud');
     }
 
     public function updatePassword() {
         if (!$this->auth->userId) {
-            error_out('Not logged in', 401);
+            error_out('Pole sisse logitud', 401);
         }
 
         $currentPassword = filter_input(INPUT_POST, 'current_password');
@@ -44,20 +55,28 @@ class settings extends Controller
         $confirmPassword = filter_input(INPUT_POST, 'confirm_password');
 
         if ($newPassword !== $confirmPassword) {
-            error_out('Passwords do not match', 400);
+            error_out('Paroolid ei kattu', 400);
         }
 
         if (strlen($newPassword) < 8) {
-            error_out('Password must be at least 8 characters', 400);
+            error_out('Parool peab olema vähemalt 8 tähemärki pikk', 400);
         }
 
         if (!password_verify($currentPassword, $this->auth->userPassword)) {
-            error_out('Current password is incorrect', 401);
+            error_out('Vale parool', 401);
         }
 
         // Update the user's password
         Db::update('users', ['userPassword' => password_hash($newPassword, PASSWORD_DEFAULT)], 'userId = ?', [$this->auth->userId]);
 
-        stop(200, 'Password updated successfully');
+        // Log the password change
+        Activity::create(
+            ACTIVITY_UPDATE_USER,
+            $this->auth->userId,
+            $this->auth->userId,
+            'Muutis parooli'
+        );
+
+        stop(200, 'Parool edukalt uuendatud');
     }
 } 
