@@ -2,6 +2,7 @@
     <?php if($auth->userIsAdmin): ?>
         <button type="button" class="btn btn-warning admin-btn me-4" onclick="redirectToSubjects()">Admin</button>
     <?php endif; ?>
+    <?php require 'templates/partials/settings_button.php'; ?>
     <button type="button" class="btn btn-secondary logout-btn" onclick="redirectToLogout()">Logout</button>
 </div>
 
@@ -22,7 +23,7 @@
         z-index: 1000;
     }
     .admin-btn {
-        right: 80px;
+        right: 150px;
     }
     .logout-btn {
         right: 10px;

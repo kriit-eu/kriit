@@ -95,7 +95,7 @@ class assignments extends Controller
                 $comments = json_decode($row['comments'], true) ?: [];
 
                 // Filter out null values from comments
-                $comments = array_filter($comments, fn($comment) => !is_null($comment['id']));
+                $comments = array_filter($comments, fn($comment) => $comment !== null && isset($comment['id']) && !is_null($comment['id']));
 
                 // Calculate criteria completion
                 $userDoneCriteriaCount = count(array_filter($criteria, fn($c) => $c['completed']));

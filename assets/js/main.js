@@ -83,6 +83,61 @@ $(document).ready(function () {
     $passwordInput.on("input", () => {
         $submitButton.prop("disabled", !$passwordInput.val());
     });
+
+    // Settings page functionality
+    $(document).ready(function() {
+        $('#emailForm').on('submit', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const newEmail = $('#newEmail').val();
+            const $form = $(this);
+            
+            ajax('settings/updateEmail', 
+                $form.serialize(),
+                function(response) {
+                    // Update the displayed email
+                    $('#currentEmail').text(newEmail);
+                    
+                    // Clear the form inputs but not the displayed email
+                    $form.find('input').val('');
+
+                    // Show success toast
+                    const toast = new bootstrap.Toast(document.getElementById('settingsToast'));
+                    $('.toast-body').text('Email updated successfully');
+                    toast.show();
+                }
+            );
+            return false;
+        });
+
+        $('#passwordForm').on('submit', function(e) {
+            e.preventDefault();
+            
+            if ($('#newPassword').val() !== $('#confirmPassword').val()) {
+                alert('Passwords do not match');
+                return;
+            }
+
+            $.ajax({
+                url: '/settings/updatePassword',
+                method: 'POST',
+                data: $(this).serialize(),
+                success: function(response) {
+                    if (response.success) {
+                        alert(response.message);
+                        console.log("r3" + response.message);
+                        $('#passwordForm')[0].reset();
+                    } else {
+                        alert(response.message);
+                        console.log("r4" + response.message);
+                    }
+                },
+                error: function() {
+                    alert('An error occurred. Please try again.');
+                }
+            });
+        });
+    });
 });
 
 
