@@ -36,7 +36,7 @@ class settings extends Controller
 
         // Log the email change
         Activity::create(
-            ACTIVITY_UPDATE_USER,
+            \ACTIVITY_CHANGE_EMAIL,
             $this->auth->userId,
             $this->auth->userId,
             "Muutis e-posti aadressi '$oldEmail' -> '$email'"
@@ -71,7 +71,7 @@ class settings extends Controller
 
         // Log the password change
         Activity::create(
-            ACTIVITY_UPDATE_USER,
+            ACTIVITY_CHANGE_PASSWORD,
             $this->auth->userId,
             $this->auth->userId,
             'Muutis parooli'

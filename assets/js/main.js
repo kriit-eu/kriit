@@ -85,8 +85,12 @@ $(document).ready(function () {
     });
 
     // Settings page functionality
-    $(document).ready(function() {
-        $('#emailForm').on('submit', function(e) {
+    const $emailForm = $('#emailForm');
+    const $passwordForm = $('#passwordForm');
+    const $settingsToast = $('#settingsToast');
+
+    if ($emailForm.length) {
+        $emailForm.on('submit', function(e) {
             e.preventDefault();
             e.stopPropagation();
             const newEmail = $('#newEmail').val();
@@ -102,42 +106,81 @@ $(document).ready(function () {
                     $form.find('input').val('');
 
                     // Show success toast
-                    const toast = new bootstrap.Toast(document.getElementById('settingsToast'));
+                    const toast = new bootstrap.Toast($settingsToast[0]);
                     $('.toast-body').text('E-posti aadress edukalt uuendatud');
                     toast.show();
                 }
             );
             return false;
         });
+    }
 
-        $('#passwordForm').on('submit', function(e) {
-            e.preventDefault();
+    if ($passwordForm.length) {
+        console.log('Password form found, attaching handler');
+        
+        // Real-time password validation
+        $('#newPassword, #confirmPassword').on('input', function() {
+            const newPassword = $('#newPassword').val();
+            const confirmPassword = $('#confirmPassword').val();
+            const $confirmInput = $('#confirmPassword');
             
-            if ($('#newPassword').val() !== $('#confirmPassword').val()) {
-                alert('Passwords do not match');
-                return;
+            // Show password match feedback
+            if (confirmPassword) {
+                if (newPassword !== confirmPassword) {
+                    $confirmInput.addClass('is-invalid');
+                } else {
+                    $confirmInput.removeClass('is-invalid');
+                }
+            }
+        });
+
+        $passwordForm.on('submit', function(e) {
+            console.log('Password form submitted');
+            e.preventDefault();
+            e.stopPropagation();
+            const $form = $(this);
+            
+            const newPassword = $('#newPassword').val();
+            const confirmPassword = $('#confirmPassword').val();
+            const formData = $form.serialize();
+            
+            console.log('Validating passwords...');
+            if (newPassword !== confirmPassword) {
+                $('#confirmPassword').addClass('is-invalid');
+                return false;
             }
 
-            $.ajax({
-                url: '/settings/updatePassword',
-                method: 'POST',
-                data: $(this).serialize(),
-                success: function(response) {
-                    if (response.success) {
-                        alert(response.message);
-                        console.log("r3" + response.message);
-                        $('#passwordForm')[0].reset();
-                    } else {
-                        alert(response.message);
-                        console.log("r4" + response.message);
-                    }
+            if (newPassword.length < 8) {
+                $('#newPassword').addClass('is-invalid');
+                show_error_modal('Viga', 'Parool peab olema vähemalt 8 tähemärki pikk');
+                return false;
+            }
+            
+            console.log('Form data:', formData);
+            console.log('Sending password update request...');
+            
+            ajax('settings/updatePassword', 
+                formData,
+                function(response) {
+                    console.log('Password update response:', response);
+                    // Clear the form and validation states
+                    $form.find('input').val('').removeClass('is-invalid');
+
+                    // Show success toast
+                    const toast = new bootstrap.Toast($settingsToast[0]);
+                    $('.toast-body').text('Parool edukalt uuendatud');
+                    toast.show();
                 },
-                error: function() {
-                    alert('An error occurred. Please try again.');
+                function(error) {
+                    console.error('Password update error:', error);
+                    show_error_modal('Viga', error);
                 }
-            });
+            );
+            return false;
         });
-    });
+    } else {
+        console.log('Password form not found');
+    }
 });
 
 
