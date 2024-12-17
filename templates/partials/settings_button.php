@@ -18,24 +18,24 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="settingsModalLabel">Settings</h5>
+                    <h5 class="modal-title" id="settingsModalLabel">Seaded</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <form id="emailForm" class="mb-4" onsubmit="return false;">
                         <div class="mb-3">
-                            <label class="form-label">Current Email</label>
+                            <label class="form-label">Praegune e-post</label>
                             <div class="form-control-plaintext" id="currentEmail"><?= $auth->userEmail ?></div>
                         </div>
                         <div class="mb-3">
-                            <label for="newEmail" class="form-label">New Email</label>
+                            <label for="newEmail" class="form-label">Uus e-post</label>
                             <input type="email" class="form-control" id="newEmail" name="email" required>
                         </div>
                         <div class="mb-3">
-                            <label for="currentPassword" class="form-label">Current Password</label>
+                            <label for="currentPassword" class="form-label">Praegune parool</label>
                             <input type="password" class="form-control" id="currentPassword" name="password" required>
                         </div>
-                        <button type="submit" class="btn btn-primary">Update Email</button>
+                        <button type="submit" class="btn btn-primary">Uuenda e-posti</button>
                     </form>
                 </div>
             </div>

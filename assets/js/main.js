@@ -103,7 +103,7 @@ $(document).ready(function () {
 
                     // Show success toast
                     const toast = new bootstrap.Toast(document.getElementById('settingsToast'));
-                    $('.toast-body').text('Email updated successfully');
+                    $('.toast-body').text('E-posti aadress edukalt uuendatud');
                     toast.show();
                 }
             );
