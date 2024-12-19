@@ -49,7 +49,7 @@ try {
 
     exit();
 
-} catch (\Exception $e) { // General exception handling
+} catch (\Exception $e) {
     http_response_code(500);
 
     if (ENV == ENV_PRODUCTION) {
@@ -57,23 +57,66 @@ try {
         exit();
     }
 
-    // Custom error page for development environment
-    $errorFile = $e->getFile();
-    $errorLine = $e->getLine();
-    $errorMessage = $e->getMessage();
-    
-    // Get the code snippet around the error
-    $fileContent = file_exists($errorFile) ? file($errorFile) : [];
+    // Extract code context around the error location
     $snippet = [];
-    if ($fileContent) {
-        $start = max(0, $errorLine - 5);
-        $end = min(count($fileContent), $errorLine + 5);
+    if ($fileLines = file_exists($e->getFile()) ? file($e->getFile()) : []) {
+        $start = max(0, $e->getLine() - 5);
+        $end = min(count($fileLines), $e->getLine() + 5);
         for ($i = $start; $i < $end; $i++) {
-            $snippet[$i + 1] = $fileContent[$i];
+            $snippet[$i + 1] = $fileLines[$i];
         }
     }
 
-    // Display custom error page
+    // Process stack trace
+    $stackTrace = array_map(function($trace) {
+        $processedTrace = [
+            'callString' => '',
+            'file' => $trace['file'] ?? null,
+            'line' => $trace['line'] ?? null
+        ];
+
+        // Build the function call string
+        if (isset($trace['class'])) {
+            $processedTrace['callString'] .= $trace['class'] . $trace['type'];
+        }
+        $processedTrace['callString'] .= $trace['function'];
+
+        // Add function arguments if available
+        if (!empty($trace['args'])) {
+            $args = array_map(function ($arg) {
+                if (is_object($arg)) {
+                    return get_class($arg);
+                } elseif (is_array($arg)) {
+                    return 'array(' . count($arg) . ')';
+                } elseif (is_string($arg)) {
+                    return '"' . (strlen($arg) > 50 ? substr($arg, 0, 47) . '...' : $arg) . '"';
+                } elseif (is_bool($arg)) {
+                    return $arg ? 'true' : 'false';
+                } elseif (is_null($arg)) {
+                    return 'null';
+                }
+                return (string)$arg;
+            }, $trace['args']);
+            $processedTrace['callString'] .= '(' . implode(', ', $args) . ')';
+        } else {
+            $processedTrace['callString'] .= '()';
+        }
+
+        return $processedTrace;
+    }, $e->getTrace());
+
+    // Rest of the variables preparation
+    $localVariables = $GLOBALS['vars'] ?? [];
+    ksort($localVariables);
+    unset($localVariables['_SERVER']['HTTP_COOKIE']);
+    unset($localVariables['_ENV']);
+
+    $relativePath = str_replace(dirname(__DIR__) . '/', '', dirname($e->getFile()) . '/');
+    $relativeFullPath = str_replace(dirname(__DIR__) . '/', '', $e->getFile()) . ':' . $e->getLine();
+    $errorLine = $e->getLine();
+    $errorMessage = $e->getMessage();
+    $pathInfo = pathinfo($e->getFile());
+
     require 'templates/error_debug_template.php';
     exit();
 }

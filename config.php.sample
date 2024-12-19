@@ -1,7 +1,5 @@
 <?php
 
-const ENV = 'ENV_DEVELOPMENT';
-
 // Local configuration
 const DATABASE_HOSTNAME = 'mysql';
 const DATABASE_USERNAME = 'root';
