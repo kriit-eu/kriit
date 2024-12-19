@@ -355,14 +355,21 @@ class assignments extends Controller
             true);
 
         $subject = Db::getFirst(
-            'SELECT u.userEmail teacherEmail, s.subjectName, a.assignmentName 
+            'SELECT u.userEmail teacherEmail, s.subjectName, a.assignmentName, ua.userGrade 
              FROM users u
              JOIN subjects s ON u.userId = s.teacherId
              JOIN assignments a ON s.subjectId = a.subjectId
+             LEFT JOIN userAssignments ua ON a.assignmentId = ua.assignmentId AND ua.userId = ?
              WHERE a.assignmentId = ?',
-            [$_POST['assignmentId']]);
+            [$this->auth->userId, $_POST['assignmentId']]);
 
         if (!empty($subject['teacherEmail'])) {
+            $emailSubject = $subject['userGrade'] ? 
+                ($subject['userGrade'] === 'MA' || (is_numeric($subject['userGrade']) && intval($subject['userGrade']) < 3)) ?
+                    $subject['subjectName'] . ": {$this->auth->userName} parandas ülesande '{$subject['assignmentName']}' lahendust" :
+                    $subject['subjectName'] . ": {$this->auth->userName} esitas lahenduse ülesandele '{$subject['assignmentName']}'" :
+                $subject['subjectName'] . ": {$this->auth->userName} esitas lahenduse ülesandele '{$subject['assignmentName']}'";
+
             $verb = $assignmentExisted ? 'parandas' : 'esitas';
             $body = sprintf(
                 'Õpilane <strong>%s</strong> %s ülesande <a href="%s/assignments/%d"><strong>%s</strong></a> lahenduse.<br><br>Lahenduse link: <a href="%s">%s</a>',
@@ -370,11 +377,11 @@ class assignments extends Controller
                 $verb,
                 BASE_URL,
                 $_POST['assignmentId'],
-                $subject['title'],
+                $subject['assignmentName'],
                 $_POST['solutionUrl'],
                 $_POST['solutionUrl']
             );
-            Mail::send($subject['teacherEmail'], $subject['subjectName'], $body);
+            Mail::send($subject['teacherEmail'], $emailSubject, $body);
         }
         stop(200);
     }
