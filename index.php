@@ -50,14 +50,30 @@ try {
     exit();
 
 } catch (\Exception $e) { // General exception handling
+    http_response_code(500);
 
-    // To see the error message in dev
     if (ENV == ENV_PRODUCTION) {
         handleProductionError($e);
         exit();
     }
 
-    // Throw the exception to the screen for the developer to see
-    http_response_code(500);
-    throw $e;
+    // Custom error page for development environment
+    $errorFile = $e->getFile();
+    $errorLine = $e->getLine();
+    $errorMessage = $e->getMessage();
+    
+    // Get the code snippet around the error
+    $fileContent = file_exists($errorFile) ? file($errorFile) : [];
+    $snippet = [];
+    if ($fileContent) {
+        $start = max(0, $errorLine - 5);
+        $end = min(count($fileContent), $errorLine + 5);
+        for ($i = $start; $i < $end; $i++) {
+            $snippet[$i + 1] = $fileContent[$i];
+        }
+    }
+
+    // Display custom error page
+    require 'templates/error_debug_template.php';
+    exit();
 }
