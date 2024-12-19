@@ -76,6 +76,7 @@ class assignments extends Controller
         ];
 
         foreach ($data as $row) {
+            if ($row['comments'] === '[null]') {$row['comments'] = null;}
             if (empty($assignment['assignmentName'])) {
                 $assignment['assignmentName'] = $row['assignmentName'];
                 $assignment['assignmentInstructions'] = $row['assignmentInstructions'];
