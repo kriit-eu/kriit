@@ -220,6 +220,10 @@
     .copy-btn:hover {
         background-color: #e9ecef;
     }
+
+    #code-context .card-body {
+        background-color: #f8f9fa;
+    }
 </style>
 
 </body>
