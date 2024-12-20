@@ -72,7 +72,12 @@
                 <?php else: ?>
                     <h5 class="alert-heading">Kohalikud muutujad pole saadaval</h5>
                     <p>Et näha kohalikke muutujaid, lisa järgmine rida koodi, vahetult enne vea tekkimise kohta:</p>
-                    <pre class="mt-2 p-2 bg-light"><code>$GLOBALS['vars'] = get_defined_vars();</code></pre>
+                    <pre class="mt-2 p-2 bg-light d-inline"><code>$GLOBALS['vars'] = get_defined_vars();</code></pre>
+                    <button class="btn btn-sm btn-outline-secondary ms-2 copy-btn align-top"
+                            data-clipboard="$GLOBALS['vars'] = get_defined_vars();"
+                            title="Copy code">
+                        <i class="bi bi-clipboard"></i>
+                    </button>
                 <?php endif; ?>
             </div>
         </div>
