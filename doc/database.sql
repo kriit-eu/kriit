@@ -93,6 +93,34 @@ INSERT INTO `activityLog` VALUES
 UNLOCK TABLES;
 
 --
+-- Table structure for table `assignmentCommentTypes`
+--
+
+DROP TABLE IF EXISTS `assignmentCommentTypes`;
+/*!50503 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `assignmentCommentTypes` (
+  `assignmentCommentTypeId` int unsigned NOT NULL AUTO_INCREMENT,
+  `assignmentCommentTypeName` varchar(191) NOT NULL,
+  PRIMARY KEY (`assignmentCommentTypeId`)
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4;
+/*!50503 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `assignmentCommentTypes`
+--
+
+LOCK TABLES `assignmentCommentTypes` WRITE;
+/*!40000 ALTER TABLE `assignmentCommentTypes` DISABLE KEYS */;
+INSERT INTO `assignmentCommentTypes` VALUES
+(1,'Normal comment'),
+(2,'Proposed solution'),
+(3,'Accepted solution'),
+(4,'Rejected solution');
+/*!40000 ALTER TABLE `assignmentCommentTypes` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `assignmentComments`
 --
 
@@ -101,19 +129,19 @@ DROP TABLE IF EXISTS `assignmentComments`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `assignmentComments` (
   `assignmentCommentId` int unsigned NOT NULL AUTO_INCREMENT,
-  `studentId` int unsigned DEFAULT NULL,
-  `authorId` int unsigned DEFAULT NULL,
-  `assignmentId` int unsigned DEFAULT NULL,
-  `isSolution` tinyint NOT NULL DEFAULT 0,
-  `assignmentComment` text,
-  `assignmentCommentCreatedAt` timestamp NOT NULL DEFAULT current_timestamp(),
+  `userId` int unsigned NOT NULL,
+  `assignmentId` int unsigned NOT NULL,
+  `assignmentCommentText` text,
+  `assignmentCommentCreatedAt` timestamp NULL DEFAULT NULL,
+  `assignmentCommentAuthorId` int unsigned DEFAULT NULL,
+  `assignmentCommentTypeId` int unsigned NOT NULL DEFAULT 1,
   PRIMARY KEY (`assignmentCommentId`),
-  KEY `fk_assignmentcomments_assignmentId` (`assignmentId`),
-  KEY `fk_assignmentcomments_userId` (`studentId`),
-  KEY `fk_assignmentcomments_authorId` (`authorId`),
-  CONSTRAINT `fk_assignmentcomments_assignmentId` FOREIGN KEY (`assignmentId`) REFERENCES `assignments` (`assignmentId`),
-  CONSTRAINT `fk_assignmentcomments_authorId` FOREIGN KEY (`authorId`) REFERENCES `users` (`userId`),
-  CONSTRAINT `fk_assignmentcomments_userId` FOREIGN KEY (`studentId`) REFERENCES `users` (`userId`)
+  KEY `assignmentComments_assignments_assignmentId_fk` (`assignmentId`),
+  KEY `assignmentComments_ibfk_1` (`assignmentCommentTypeId`),
+  KEY `assignmentComments_users_userId_fk` (`userId`),
+  CONSTRAINT `assignmentComments_assignments_assignmentId_fk` FOREIGN KEY (`assignmentId`) REFERENCES `assignments` (`assignmentId`),
+  CONSTRAINT `assignmentComments_ibfk_1` FOREIGN KEY (`assignmentCommentTypeId`) REFERENCES `assignmentCommentTypes` (`assignmentCommentTypeId`),
+  CONSTRAINT `assignmentComments_users_userId_fk` FOREIGN KEY (`userId`) REFERENCES `users` (`userId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
@@ -683,7 +711,7 @@ CREATE TABLE `userAssignments` (
 LOCK TABLES `userAssignments` WRITE;
 /*!40000 ALTER TABLE `userAssignments` DISABLE KEYS */;
 INSERT INTO `userAssignments` VALUES
-(1,2,2,NULL,'https://www.google.com/','[{\"comment\":\"Kommentaar\",\"createdAt\":\"2024-11-20 12:55:28\"}]','1970-01-01 00:00:00',NULL);
+(1,2,2,NULL,'','[{\"comment\":\"Kommentaar\",\"createdAt\":\"2024-11-20 12:55:28\"}]','1970-01-01 00:00:00',NULL);
 /*!40000 ALTER TABLE `userAssignments` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -852,4 +880,4 @@ UNLOCK TABLES;
 /*!50503 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-12-10 16:34:54
+-- Dump completed on 2024-12-25 12:09:22
