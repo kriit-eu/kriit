@@ -724,20 +724,27 @@ UNLOCK TABLES;
 /*!50003 SET sql_mode              = 'IGNORE_SPACE,STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
 /*!50003 CREATE TRIGGER before_userAssignments_insert
-    BEFORE INSERT ON kriit.userAssignments
+    BEFORE INSERT ON userAssignments
     FOR EACH ROW
 BEGIN
-    DECLARE hinnatudStatusId TINYINT;
-
-
-    SELECT assignmentStatusId INTO hinnatudStatusId
-    FROM kriit.assignmentStatuses
-    WHERE statusName = 'Hinnatud' LIMIT 1;
-
-
-    IF NEW.assignmentStatusId = hinnatudStatusId AND NEW.userGrade IS NULL THEN
+    IF (NEW.assignmentStatusId = 1 AND NEW.solutionUrl IS NOT NULL) THEN
         SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Error: Cannot set status to "Hinnatud" without a grade.';
+            SET MESSAGE_TEXT = 'Esitamata ülesandel ei saa olla lahenduse URLi';
+    END IF;
+
+    IF (NEW.assignmentStatusId IN (2,3) AND NEW.solutionUrl IS NULL) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Esitatud ülesandel peab olema lahenduse URL';
+    END IF;
+
+    IF (NEW.assignmentStatusId = 3 AND NEW.userGrade IS NULL) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Hinnatud ülesandel peab olema hinne';
+    END IF;
+
+    IF (NEW.assignmentStatusId != 3 AND NEW.userGrade IS NOT NULL) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Hindamata ülesandel ei saa olla hinnet';
     END IF;
 END */;;
 DELIMITER ;
@@ -755,20 +762,27 @@ DELIMITER ;
 /*!50003 SET sql_mode              = 'IGNORE_SPACE,STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
 /*!50003 CREATE TRIGGER before_userAssignments_update
-    BEFORE UPDATE ON kriit.userAssignments
+    BEFORE UPDATE ON userAssignments
     FOR EACH ROW
 BEGIN
-    DECLARE hinnatudStatusId TINYINT;
-
-
-    SELECT assignmentStatusId INTO hinnatudStatusId
-    FROM kriit.assignmentStatuses
-    WHERE statusName = 'Hinnatud' LIMIT 1;
-
-
-    IF NEW.assignmentStatusId = hinnatudStatusId AND NEW.userGrade IS NULL THEN
+    IF (NEW.assignmentStatusId = 1 AND NEW.solutionUrl IS NOT NULL) THEN
         SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Error: Cannot set status to "Hinnatud" without a grade.';
+            SET MESSAGE_TEXT = 'Esitamata ülesandel ei saa olla lahenduse URLi';
+    END IF;
+
+    IF (NEW.assignmentStatusId IN (2,3) AND NEW.solutionUrl IS NULL) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Esitatud ülesandel peab olema lahenduse URL';
+    END IF;
+
+    IF (NEW.assignmentStatusId = 3 AND NEW.userGrade IS NULL) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Hinnatud ülesandel peab olema hinne';
+    END IF;
+
+    IF (NEW.assignmentStatusId != 3 AND NEW.userGrade IS NOT NULL) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Hindamata ülesandel ei saa olla hinnet';
     END IF;
 END */;;
 DELIMITER ;
@@ -880,4 +894,4 @@ UNLOCK TABLES;
 /*!50503 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-12-25 16:12:55
+-- Dump completed on 2024-12-27 21:50:01

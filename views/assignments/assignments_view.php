@@ -261,7 +261,7 @@
                                        :disabled="assignment.students[userId].grade === 'A'"
                                        placeholder="Sisesta lahenduse URL"
                                        required>
-                                <div class="d-inline-block" 
+                                <div class="d-inline-block"
                                      v-tooltip="buttonTooltip">
                                     <button type="submit"
                                             id="submitSolutionButton"
@@ -341,9 +341,9 @@
 <!-- Dependencies -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <?php if (ENV == ENV_PRODUCTION): ?>
-    <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
 <?php else: ?>
-    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 <?php endif; ?>
 
 
@@ -359,41 +359,25 @@
         });
     };
 
-    Vue.directive('tooltip', {
-        inserted: (el, { value }) => {
-            value && initTooltip(el, value);
-        },
-        update: (el, { value }) => {
-            if (!value) {
-                el._tooltip?.dispose();
-                el._tooltip = null;
-            } else {
-                el._tooltip
-                    ? el.setAttribute('data-bs-original-title', value)
-                    : initTooltip(el, value);
+    const app = Vue.createApp({
+        data() {
+            return {
+                tooltips: {
+                    instructions: 'Loe juhendit ja lahenda ülesanne vastavalt.',
+                    criteria: 'Loe loetelu ja märgi, kui tingimus on täidetud.',
+                    comments: 'Küsi, arutle, jaga mõtteid õpetajaga.',
+                },
+                assignment: assignmentData,
+                criteria: [],
+                solutionUrl: '',
+                originalSolutionUrl: '',
+                userId: userId,
+                commentText: '',
+                comments: [],
+                isSubmitting: false,
+                commentUnsaved: false,
+                commentUnsavedReason: ''
             }
-        },
-        unbind: el => el._tooltip?.dispose()
-    });
-
-    new Vue({
-        el: '#app',
-        data: {
-            tooltips: {
-                instructions: 'Loe juhendit ja lahenda ülesanne vastavalt.',
-                criteria: 'Loe loetelu ja märgi, kui tingimus on täidetud.',
-                comments: 'Küsi, arutle, jaga mõtteid õpetajaga.',
-            },
-            assignment: assignmentData,
-            criteria: [],
-            solutionUrl: '',
-            originalSolutionUrl: '',
-            userId: userId,
-            commentText: '',
-            comments: [],
-            isSubmitting: false,
-            commentUnsaved: false,
-            commentUnsavedReason: ''
         },
         created() {
             const assignmentCriteria = Object.values(this.assignment.criteria || {});
@@ -545,6 +529,26 @@
         },
         mounted() {
             this.scrollToBottom();
+        },
+        directives: {
+            tooltip: {
+                mounted: (el, { value }) => {
+                    value && initTooltip(el, value);
+                },
+                updated: (el, { value }) => {
+                    if (!value) {
+                        el._tooltip?.dispose();
+                        el._tooltip = null;
+                    } else {
+                        el._tooltip
+                            ? el.setAttribute('data-bs-original-title', value)
+                            : initTooltip(el, value);
+                    }
+                },
+                unmounted: el => el._tooltip?.dispose()
+            }
         }
     });
+
+    app.mount('#app');
 </script>
