@@ -1,5 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
 <head>
     <base href="<?= BASE_URL ?>">
     <meta charset="utf-8">

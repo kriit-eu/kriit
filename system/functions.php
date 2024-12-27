@@ -171,10 +171,10 @@ function convertWarningsToExceptions(): void
 
 function handleProductionError(\Exception $exception){
     $eventCode = send_error_report($exception);
-    echo "An error occurred.";
-    echo " To make it faster for us to fix this error, please send us a description of what happened";
+    echo "Juhtus viga.";
+    echo " Et saaksime selle viga kiiresti parandada, palun saata meile kirjeldus, mis juhtus.";
     if($eventCode){
-        echo " and this event id: <b>" .  $eventCode . "</b>";
+        echo " ja see event id: <b>" .  $eventCode . "</b>";
     }
 }
 

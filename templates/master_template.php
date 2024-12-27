@@ -1,3 +1,5 @@
+<!DOCTYPE html>
+<html lang="en">
 <?php require 'templates/partials/master_header.php'; ?>
 <body>
 <script src="assets/js/main.js?<?= COMMIT_HASH ?>"></script>
@@ -20,9 +22,6 @@
 </div>
 
 <?php require 'templates/partials/error_modal.php'; ?>
-
-
+<?php require 'system/error_translations.php' ?>
 </body>
 </html>
-
-<?php require 'system/error_translations.php' ?>

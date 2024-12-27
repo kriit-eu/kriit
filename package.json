@@ -6,9 +6,7 @@
   "directories": {
     "doc": "doc"
   },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "scripts": {},
   "repository": {
     "type": "git",
     "url": "git@bitbucket.org:diarainfra/sisseastumine.git"
@@ -21,5 +19,9 @@
     "bootstrap-icons": "^1.11.3",
     "jquery": "^3.7.1",
     "jsdom": "^24.1.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.1",
+    "@types/node": "^22.10.2"
   }
 }

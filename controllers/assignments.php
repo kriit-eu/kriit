@@ -14,7 +14,6 @@ class assignments extends Controller
         $userId = $this->auth->userId;
         $isTeacher = \App\Assignment::userIsTeacher($userId, $assignmentId) || $this->auth->userIsAdmin;
         $isStudent = !$isTeacher;
-        $this->action = $isTeacher ? 'teacher_view' : 'student_view';
         $this->template = $this->auth->userIsAdmin ? 'admin' : 'master';
 
         $params = [$assignmentId];
@@ -39,7 +38,7 @@ class assignments extends Controller
                     IF(ac.assignmentCommentId IS NOT NULL,
                         JSON_OBJECT(
                             'id', ac.assignmentCommentId,
-                            'comment', ac.assignmentComment,
+                            'comment', ac.assignmentCommentText,
                             'createdAt', DATE_FORMAT(ac.assignmentCommentCreatedAt, '%d.%m.%Y %H:%i'),
                             'name', uc.userName
                         ),
@@ -50,13 +49,13 @@ class assignments extends Controller
             LEFT JOIN criteria c ON c.assignmentId = a.assignmentId
             JOIN subjects subj ON a.subjectId = subj.subjectId
             JOIN users t ON subj.teacherId = t.userId
-            LEFT JOIN groups g ON subj.groupId = g.groupId
+            LEFT JOIN `groups` g ON subj.groupId = g.groupId
             LEFT JOIN users u ON u.groupId = g.groupId
             LEFT JOIN userAssignments ua ON ua.assignmentId = a.assignmentId AND ua.userId = u.userId
             LEFT JOIN assignmentStatuses ast ON ua.assignmentStatusId = ast.assignmentStatusId
             LEFT JOIN userDoneCriteria udc ON udc.criterionId = c.criterionId AND udc.userId = u.userId
-            LEFT JOIN assignmentComments ac ON ac.assignmentId = a.assignmentId AND ac.studentId = u.userId
-            LEFT JOIN users uc ON ac.studentId = uc.userId
+            LEFT JOIN assignmentComments ac ON ac.assignmentId = a.assignmentId AND ac.userId = u.userId
+            LEFT JOIN users uc ON ac.userId = uc.userId
             WHERE a.assignmentId = ?
         ";
 

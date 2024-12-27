@@ -1,3 +1,5 @@
+<!DOCTYPE html>
+<html lang="en">
 <?php require 'templates/partials/master_header.php'; ?>
 
 <body>

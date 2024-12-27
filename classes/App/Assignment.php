@@ -41,17 +41,17 @@ class Assignment
         return self::statusClassMap($isStudent, $isTeacher)[$statusName] ?? '';
     }
 
-    static function addComment($assignmentId, $studentId, $authorId, $comment, $isSolution = false): void
+    static function addComment($assignmentId, $userId, $authorId, $comment, $commentType = 1): void
     {
         @validate($comment, 'Invalid comment. It must be a string.', IS_STRING);
         @validate($assignmentId, 'Invalid assignmentId.');
 
         Db::insert('assignmentComments', [
             'assignmentId' => $assignmentId,
-            'studentId' => $studentId,
-            'authorId' => $authorId,
-            'assignmentComment' => $comment,
-            'isSolution' => $isSolution,
+            'userId' => $userId,
+            'assignmentCommentAuthorId' => $authorId,
+            'assignmentCommentText' => $comment,
+            'assignmentCommentTypeId' => $commentType,
             'assignmentCommentCreatedAt' => date('Y-m-d H:i:s')
         ]);
 

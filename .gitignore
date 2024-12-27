@@ -6,3 +6,8 @@
 .certs/dkim_private_key.pem
 /.vscode
 /doc/database.live.sql
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/

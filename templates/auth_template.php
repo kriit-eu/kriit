@@ -1,3 +1,5 @@
+<!DOCTYPE html>
+<html lang="en">
 <?php require 'templates/partials/master_header.php'; ?>
 <body>
 <style>
@@ -71,5 +73,111 @@
     </form>
 </div>
 <script src="assets/js/main.js?<?= COMMIT_HASH ?>"></script>
+<script>
+$(document).ready(function () {
+    const $userPersonalCodeInput = $("#userPersonalCode");
+    const $userPersonalCodeHelp = $("#userPersonalCodeHelp");
+    const $userPasswordHelp = $("#userPasswordHelp");
+    const $submitButton = $("#submitButton");
+    const $passwordField = $("#password-field");
+    const $passwordInput = $("#userPassword");
+
+    const userPersonalCodePattern = /^[1-9]\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{4}$/;
+
+    let userPersonalCodeValue = "";
+
+    function resetPasswordHelp() {
+        $userPasswordHelp.text("Sisesta parool").removeClass("text-danger text-success");
+    }
+
+    function showError(message) {
+        $userPersonalCodeHelp.text(message).addClass("text-danger").removeClass("text-success");
+        $passwordField.hide();
+        resetPasswordHelp();
+        $submitButton.prop("disabled", true);
+    }
+
+    function showSuccess(userHelpElement, message) {
+        userHelpElement.text(message).addClass("text-success").removeClass("text-danger");
+    }
+
+    function handleAjaxResponse(response, context) {
+        if (!response || !response.data || !response.data.user) {
+            const message = "Selle isikukoodiga isik ei ole registreeritud.";
+            if (context === 'applicant' || context === 'admin') {
+                showSuccess($userPersonalCodeHelp, message);
+            } else {
+                showError(message);
+            }
+            return;
+        }
+        if (response.data.user.userIsAdmin || response.data.user.userIsTeacher || response.data.user.groupId) {
+            if (!response.data.user.isPasswordSet) {
+                showSuccess($userPasswordHelp, "Isikukood on õige. Palun sisesta uus parool.");
+            }
+            $passwordField.show();
+        } else {
+            $submitButton.prop("disabled", false);
+        }
+    }
+
+    function validateUserPersonalCode(context) {
+        if (userPersonalCodeValue.length > 11) {
+            showError("Isikukood ei vasta mustrile");
+        } else if (userPersonalCodeValue.length === 11) {
+            if (userPersonalCodePattern.test(userPersonalCodeValue) && validateControlNumber(userPersonalCodeValue)) {
+                ajax("users/check", {userPersonalCode: userPersonalCodeValue}, function (response) {
+                    handleAjaxResponse(response, context);
+                });
+            } else {
+                $userPersonalCodeHelp.text("Isikukood ei vasta mustrile")
+                    .addClass("text-danger").removeClass("text-success");
+                $passwordField.hide();
+                $submitButton.prop("disabled", true);
+            }
+        } else {
+            const defaultText = context === 'admin' ? "Sisesta kasutaja isikukood" :
+                (context === 'applicant' ? "Sisesta kandidaadi isikukood" : "Sisesta enda isikukood");
+            $userPersonalCodeHelp.text(defaultText).removeClass("text-danger text-success");
+            $passwordField.hide();
+            resetPasswordHelp();
+            $submitButton.prop("disabled", true);
+        }
+    }
+
+    function validateControlNumber(code) {
+        if (code.length !== 11) return false;
+        
+        let sum = 0;
+        // First stage
+        for (let i = 0; i < 10; i++) {
+            sum += parseInt(code.charAt(i)) * ((i % 9) + 1);
+        }
+        let controlNumber = sum % 11;
+        
+        // Second stage if control number is 10
+        if (controlNumber === 10) {
+            sum = 0;
+            for (let i = 0; i < 10; i++) {
+                sum += parseInt(code.charAt(i)) * ((i % 8) + 3);
+            }
+            controlNumber = sum % 11;
+            if (controlNumber === 10) controlNumber = 0;
+        }
+        
+        return controlNumber === parseInt(code.charAt(10));
+    }
+
+    $userPersonalCodeInput.on("input", function () {
+        userPersonalCodeValue = $userPersonalCodeInput.val();
+        const context = $userPersonalCodeInput.data('context') || 'default';
+        validateUserPersonalCode(context);
+    });
+
+    $passwordInput.on("input", () => {
+        $submitButton.prop("disabled", !$passwordInput.val());
+    });
+});
+</script>
 </body>
 </html>

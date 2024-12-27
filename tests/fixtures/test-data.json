@@ -1,0 +1,10 @@
+{
+    "student": {
+        "personalCode": "31111111114",
+        "password": "demo"
+    },
+    "assignment": {
+        "name": "Aatomi lõhustamine",
+        "solutionUrl": "https://github.com/user/repo/commit/abc123"
+    }
+} 

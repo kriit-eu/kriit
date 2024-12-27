@@ -5,6 +5,7 @@ use App\Assignment;
 use App\Controller;
 use App\Db;
 use App\Mail;
+use App\Validate;
 
 // add /api/groups to the URL
 
@@ -151,7 +152,6 @@ class assignments extends Controller
         if (empty($_POST['subjectId']) && empty($_POST['subjectName'])) {
             return ['code' => 400, 'message' => 'subjectId or subjectName is required'];
         }
-
         if (!empty($_POST['subjectId']) && !empty($_POST['subjectName'])) {
             return ['code' => 400, 'message' => 'subjectId or subjectName is required but not both'];
         }
@@ -160,27 +160,17 @@ class assignments extends Controller
         if (empty($_POST['groupId']) && empty($_POST['groupName'])) {
             return ['code' => 400, 'message' => 'groupId or groupName is required'];
         }
-
         if (!empty($_POST['groupId']) && !empty($_POST['groupName'])) {
             return ['code' => 400, 'message' => 'groupId or groupName is required but not both'];
         }
 
-        // Check if tahvelSubjectId is provided
-        if (empty($_POST['tahvelSubjectId'])) {
-            return ['code' => 400, 'message' => 'tahvelSubjectId is required'];
-        }
+        // Validate required fields
+        @Validate::id($_POST['tahvelSubjectId'], 'tahvelSubjectId is required');
+        @Validate::id($_POST['tahvelJournalEntryId'], 'tahvelJournalEntryId is required');
 
-        // Check if tahvelJournalEntryId is provided
-        if (empty($_POST['tahvelJournalEntryId'])) {
-            return ['code' => 400, 'message' => 'tahvelJournalEntryId is required'];
-        }
-
-        // if assignmentDueAt is provided, check if it is a valid date
+        // Validate optional fields
         if (!empty($_POST['assignmentDueAt'])) {
-            $dateParts = explode('-', $_POST['assignmentDueAt']);
-            if (count($dateParts) !== 3 || !checkdate((int)$dateParts[1], (int)$dateParts[2], (int)$dateParts[0])) {
-                return ['code' => 400, 'message' => 'Invalid assignmentDueAt'];
-            }
+            @Validate::date($_POST['assignmentDueAt'], 'Invalid assignmentDueAt');
         }
 
         return null;
@@ -218,18 +208,29 @@ class assignments extends Controller
 
                 // TODO:
                 $assignmentData = Db::getFirst(
-                    "SELECT ua.userGrade, 1 comment, ua.userId
-                 FROM users u
-                 JOIN groups g ON u.groupId = g.groupId
-                 JOIN userAssignments ua ON u.userId = ua.userId
-                 WHERE u.userName = ? AND g.groupName = ? AND ua.assignmentId = ?",
+                    "SELECT ua.userGrade, ua.userId,
+                            IF(ua.userGrade = 'MA' OR ua.userGrade IN ('1', '2'),
+                                (SELECT ac.assignmentCommentText
+                                 FROM assignmentComments ac
+                                 WHERE ac.assignmentId = ua.assignmentId 
+                                 AND ac.userId = ua.userId
+                                 AND ac.assignmentCommentTypeId = 4
+                                 ORDER BY ac.assignmentCommentCreatedAt DESC
+                                 LIMIT 1),
+                                NULL
+                            ) as rejectionComment
+                     FROM users u
+                     JOIN groups g ON u.groupId = g.groupId
+                     JOIN userAssignments ua ON u.userId = ua.userId
+                     LEFT JOIN assignmentComments ac ON ua.assignmentId = ac.assignmentId AND ua.userId = ac.userId
+                     WHERE u.userName = ? AND g.groupName = ? AND ua.assignmentId = ?",
                     [$studentData['name'], $groupName, $assignmentId]
                 );
 
                 if (!$assignmentData) continue;
 
                 $currentGrade = $assignmentData['userGrade'] ?? "puudub";
-                $currentComment = empty($assignmentData['comment']) ? '' : BASE_URL . 'assignments/' . $assignmentId . '/' . $assignmentData['userId'];
+                $currentComment = $assignmentData['rejectionComment'];
 
                 $tahvelGrade = $result ? str_replace("KUTSEHINDAMINE_", "", $result['gradeCode']) : "puudub";
                 $tahvelComment = $result['addInfo'] ?? '';
@@ -268,9 +269,7 @@ class assignments extends Controller
 
     function deleteAssignmentByTahvelJournalId(): void
     {
-        if (empty($_POST['tahvelJournalEntryId'])) {
-            stop(400, 'Invalid tahvelJournalEntryId');
-        }
+        @Validate::id($_POST['tahvelJournalEntryId'], 'Invalid tahvelJournalEntryId.');
 
         $this->deleteAllAssignmentDependentData($_POST['tahvelJournalEntryId']);
 
@@ -303,21 +302,20 @@ class assignments extends Controller
 
     function saveUserDoneCriteria(): void
     {
-        $studentId = $this->auth->userId;
-        $criterionId = $_POST['criterionId'];
-        $done = $_POST['done'];
+        @Validate::id($_POST['criterionId'], 'Invalid criterionId.');
+        @Validate::string($_POST['done'], 'Invalid done parameter.');
 
         // Check if the criterion exists
-        if (!Db::getOne('SELECT criterionId FROM criteria WHERE criterionId = ?', [$criterionId])) {
+        if (!Db::getOne('SELECT criterionId FROM criteria WHERE criterionId = ?', [$_POST['criterionId']])) {
             stop(400, 'Invalid criterionId');
         }
 
         // Delete the criterion first
-        Db::delete('userDoneCriteria', 'userId = ? AND criterionId = ?', [$studentId, $criterionId]);
+        Db::delete('userDoneCriteria', 'userId = ? AND criterionId = ?', [$this->auth->userId, $_POST['criterionId']]);
 
         // Mark criterion as completed if the checkbox was checked
-        if ($done === 'true') {
-            Db::insert('userDoneCriteria', ['userId' => $studentId, 'criterionId' => $criterionId]);
+        if ($_POST['done'] === 'true') {
+            Db::insert('userDoneCriteria', ['userId' => $this->auth->userId, 'criterionId' => $_POST['criterionId']]);
         }
 
         stop(200);
@@ -326,10 +324,12 @@ class assignments extends Controller
 
     function submitSolution()
     {
-        @validate($_POST['solutionUrl'], 'Invalid solutionUrl.', IS_STRING);
-        @validate($_POST['assignmentId'], 'Invalid assignmentId.');
+        @Validate::string($_POST['solutionUrl'], 'Vigane lahenduse URL');
+        @Validate::id($_POST['assignmentId'], 'Vigane ülesande ID');
+        @Validate::url($_POST['solutionUrl']);
 
-        Assignment::userIsStudent($this->auth->userId, $_POST['assignmentId']) || stop(403, 'Teil pole õigusi sellele tegevusele.');
+        Assignment::userIsStudent($this->auth->userId, $_POST['assignmentId']) || 
+            stop(403, 'Teil pole õigusi sellele tegevusele.');
 
         $data = ['assignmentStatusId' => 2, 'solutionUrl' => $_POST['solutionUrl']];
 
@@ -352,7 +352,7 @@ class assignments extends Controller
             $this->auth->userId,
             $this->auth->userId,
             "[$_POST[solutionUrl]]($_POST[solutionUrl])",
-            true);
+            ASSIGNMENT_COMMENT_TYPE_PROPOSED_SOLUTION);
 
         $subject = Db::getFirst(
             'SELECT u.userEmail teacherEmail, s.subjectName, a.assignmentName, ua.userGrade 
@@ -388,9 +388,9 @@ class assignments extends Controller
 
     function addComment()
     {
-        @validate($_POST['assignmentId'], 'Invalid assignmentId.');
-        @validate($_POST['comment'], 'Invalid comment.', IS_STRING);
-        @validate($_POST['studentId'], 'Invalid studentId.', IS_ID, false);
+        @Validate::id($_POST['assignmentId'], 'Invalid assignmentId.');
+        @Validate::string($_POST['comment'], 'Invalid comment.');
+        @Validate::id($_POST['studentId'], 'Invalid studentId.', false); // false = pole kohustuslik
 
         // Read studentId from POST or use auth->userId
         $studentId = $_POST['studentId'] ?? $this->auth->userId;
