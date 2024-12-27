@@ -89,7 +89,14 @@
         border-bottom: 0;
         border-left: 0;
         border-right: 0;
-        padding-left: 15px
+        padding-left: 15px;
+        margin-right: 1px;
+    }
+
+    #solutionUrl:focus {
+        border-color: #80bdff;
+        box-shadow: inset 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+        border-radius: 0 0 0 4px;
     }
 
     #submitSolutionButton {
@@ -189,23 +196,23 @@
 
 
     <div class="position-relative">
-        <h1>
-            <span class="float-end ms-3 mt-1">
-                <div v-if="isWaitingForReview" class="badge bg-warning text-black float-end">
+        <h1 class="d-flex align-items-center">
+            <strong class="me-auto">{{ assignment.assignmentName }}</strong>
+
+            <div class="grade-badge">
+                <div v-if="isWaitingForReview" class="badge bg-warning text-black">
                     Kontrollimisel
                 </div>
-
-                <div v-else="assignment.students[userId].grade"
+                <div v-else-if="assignment.grade"
                      :class="gradeClass"
-                     v-tooltip="assignment.students[userId].grade === 'MA' ? 'Mittearvestatud. Paranda ja esita uuesti!' :
-                                assignment.students[userId].grade === 'A' ? 'Arvestatud' : null">
-                    {{ assignment.students[userId].grade }}
+                     v-tooltip="assignment.grade === 'MA' ? 'Mittearvestatud. Paranda ja esita uuesti!' :
+           assignment.grade === 'A' ? 'Arvestatud' : null">
+                    {{ assignment.grade }}
                 </div>
                 <div v-else :class="dueAtClass">
                     {{ assignment.assignmentDueAt }}
                 </div>
-            </span>
-            <strong>{{ assignment.assignmentName }}</strong>
+            </div>
         </h1>
     </div>
 
@@ -258,7 +265,7 @@
                                        id="solutionUrl"
                                        class="form-control"
                                        v-model="solutionUrl"
-                                       :disabled="assignment.students[userId].grade === 'A'"
+                                       :disabled="assignment.grade === 'A'"
                                        placeholder="Sisesta lahenduse URL"
                                        required>
                                 <div class="d-inline-block"
@@ -268,8 +275,14 @@
                                             class="btn"
                                             :class="originalSolutionUrl ? 'btn-warning' : 'btn-success'"
                                             :disabled="!canSubmitSolution"
+                                            v-show="isSolutionUrlChanged || (assignment.grade !== 'A' && assignment.assignmentStatusId === <?= ASSIGNMENT_STATUS_GRADED ?>)"
                                             @click="submitSolution">
-                                        {{ originalSolutionUrl ? 'Muuda' : 'Saada' }}
+                                        <template v-if="isSolutionUrlChanged">
+                                            {{ originalSolutionUrl ? 'Muuda lahenduse URL-i' : 'Esita' }}
+                                        </template>
+                                        <template v-else>
+                                            Esita sama URL lahendusena uuesti
+                                        </template>
                                     </button>
                                 </div>
                             </div>
@@ -381,8 +394,7 @@
         },
         created() {
             const assignmentCriteria = Object.values(this.assignment.criteria || {});
-            const studentData = Object.values(this.assignment.students || {})[0] || {};
-            const userDoneCriteria = studentData.userDoneCriteria || {};
+            const userDoneCriteria = this.assignment.userDoneCriteria || {};
 
             this.criteria = assignmentCriteria.map(criterion => ({
                 criterionId: criterion.criterionId,
@@ -391,17 +403,17 @@
                 unsaved: false
             }));
 
-            this.solutionUrl = studentData.solutionUrl || '';
-            this.originalSolutionUrl = studentData.solutionUrl || '';
-            this.comments = studentData.comments || [];
+            this.solutionUrl = this.assignment.solutionUrl || '';
+            this.originalSolutionUrl = this.assignment.solutionUrl || '';
+            this.comments = this.assignment.comments || [];
         },
         computed: {
             positiveGrade() {
-                return this.assignment.students[this.userId].grade && this.assignment.students[this.userId].grade > 0;
+                return this.assignment.grade && this.assignment.grade > 0;
             },
             gradeClass() {
-                const grade = this.assignment.students[this.userId].grade;
-                const assignmentStatusId = this.assignment.students[this.userId].assignmentStatusId;
+                const grade = this.assignment.grade;
+                const assignmentStatusId = this.assignment.assignmentStatusId;
 
                 if (assignmentStatusId === <?= ASSIGNMENT_STATUS_WAITING_FOR_REVIEW ?>) {
                     return 'badge bg-warning text-white float-end';
@@ -422,13 +434,16 @@
                 return diffDays === 1;
             },
             isOverdue() {
-                return !this.assignment.students[this.userId].grade && this.dueDate < new Date();
+                return !this.assignment.grade && this.dueDate < new Date();
             },
             isSolutionUrlChanged() {
                 return this.solutionUrl !== this.originalSolutionUrl;
             },
             canSubmitSolution() {
-                if (this.isWaitingForReview || this.assignment.students[this.userId].grade === 'A') {
+                if (this.assignment.grade === 'A') {
+                    return false;
+                }
+                if (this.isWaitingForReview && !this.isSolutionUrlChanged) {
                     return false;
                 }
                 return !this.isSubmitting;
@@ -446,11 +461,11 @@
                 }
             },
             isWaitingForReview() {
-                return this.assignment.students[this.userId].assignmentStatusId === <?= ASSIGNMENT_STATUS_WAITING_FOR_REVIEW ?>;
+                return this.assignment.assignmentStatusId === <?= ASSIGNMENT_STATUS_WAITING_FOR_REVIEW ?>;
             },
             buttonTooltip() {
-                if (this.assignment.students[this.userId].grade === 'A') {
-                    return 'Arvestatud ülesannet ei saa muuta';
+                if (this.assignment.grade === 'A' || +this.assignment.grade === 5) {
+                    return 'Selle hindega ülesannet ei saa enam muuta';
                 }
                 if (this.isWaitingForReview) {
                     return 'Ülesanne on kontrollimisel';
@@ -484,7 +499,7 @@
                 }, () => {
                     this.originalSolutionUrl = this.solutionUrl;
                     this.isSubmitting = false;
-                    this.assignment.students[this.userId].assignmentStatusId = <?= ASSIGNMENT_STATUS_WAITING_FOR_REVIEW ?>;
+                    this.assignment.assignmentStatusId = <?= ASSIGNMENT_STATUS_WAITING_FOR_REVIEW ?>;
                 }, err => {
                     this.isSubmitting = false;
                 });
@@ -501,6 +516,7 @@
                 ajax('api/assignments/addComment', {
                     assignmentId: this.assignment.assignmentId,
                     comment: this.commentText,
+                    studentId: this.assignment.studentId
                 }, () => {
                     this.commentUnsaved = false;
                     this.comments.push({
@@ -512,7 +528,7 @@
                             hour: '2-digit',
                             minute: '2-digit'
                         }).replace(',', ''),
-                        name: this.assignment.students[this.userId].studentName,
+                        name: this.assignment.studentName,
                         comment: this.commentText
                     });
                     this.commentText = '';

@@ -303,7 +303,7 @@ class assignments extends Controller
     function saveUserDoneCriteria(): void
     {
         @Validate::id($_POST['criterionId'], 'Invalid criterionId.');
-        @Validate::string($_POST['done'], 'Invalid done parameter.');
+        @Validate::bool($_POST['done'], 'Invalid done parameter.');
 
         // Check if the criterion exists
         if (!Db::getOne('SELECT criterionId FROM criteria WHERE criterionId = ?', [$_POST['criterionId']])) {
@@ -314,7 +314,7 @@ class assignments extends Controller
         Db::delete('userDoneCriteria', 'userId = ? AND criterionId = ?', [$this->auth->userId, $_POST['criterionId']]);
 
         // Mark criterion as completed if the checkbox was checked
-        if ($_POST['done'] === 'true') {
+        if ($_POST['done'] === true) {
             Db::insert('userDoneCriteria', ['userId' => $this->auth->userId, 'criterionId' => $_POST['criterionId']]);
         }
 
@@ -331,7 +331,7 @@ class assignments extends Controller
         Assignment::userIsStudent($this->auth->userId, $_POST['assignmentId']) || 
             stop(403, 'Teil pole õigusi sellele tegevusele.');
 
-        $data = ['assignmentStatusId' => 2, 'solutionUrl' => $_POST['solutionUrl']];
+        $data = ['assignmentStatusId' => 2, 'userGrade' => null, 'solutionUrl' => $_POST['solutionUrl']];
 
         $assignmentExisted = Db::getFirst(
             'SELECT * FROM userAssignments JOIN users USING(userId) WHERE userId = ? AND assignmentId = ?',

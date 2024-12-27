@@ -66,61 +66,36 @@ class assignments extends Controller
         $query .= " GROUP BY a.assignmentId, u.userId";
 
         $data = Db::getAll($query, $params);
+        $row = $data[0] ?? [];
 
-        $assignment = [
-            'assignmentId' => $assignmentId,
-            'criteria' => Db::getAll("SELECT * FROM criteria WHERE assignmentId = ?", [$assignmentId]),
-            'students' => [],
-            'messages' => []
-        ];
-
-        foreach ($data as $row) {
-            if ($row['comments'] === '[null]') {$row['comments'] = null;}
-            if (empty($assignment['assignmentName'])) {
-                $assignment['assignmentName'] = $row['assignmentName'];
-                $assignment['assignmentInstructions'] = $row['assignmentInstructions'];
-                $assignment['assignmentDueAt'] = !empty($row['assignmentDueAt']) ? date('d.m.Y', strtotime($row['assignmentDueAt'])) : 'Pole määratud';
-                $assignment['teacherId'] = $row['teacherId'];
-                $assignment['teacherName'] = $row['teacherName'];
-            }
-
-            $studentId = $row['studentId'];
-            if (!isset($assignment['students'][$studentId])) {
-                $grade = trim($row['userGrade'] ?? '');
-                $statusName = $row['assignmentStatusName'] ?? 'Esitamata';
-                $statusId = $row['assignmentStatusId'] ?? 1;
-
-                // Decode JSON arrays
-                $criteria = json_decode($row['criteria'], true) ?: [];
-                $comments = json_decode($row['comments'], true) ?: [];
-
-                // Filter out null values from comments
-                $comments = array_filter($comments, fn($comment) => !is_null($comment['id']));
-
-                // Calculate criteria completion
-                $userDoneCriteriaCount = count(array_filter($criteria, fn($c) => $c['completed']));
-                $isAllCriteriaCompleted = count($criteria) > 0 && $userDoneCriteriaCount === count($criteria);
-
-                $assignment['students'][$studentId] = [
-                    'studentId' => $studentId,
-                    'studentName' => $row['studentName'],
-                    'grade' => $grade,
-                    'assignmentStatusName' => $statusName,
-                    'assignmentStatusId' => $statusId,
-                    'initials' => mb_substr($row['studentName'], 0, 1) . mb_substr($row['studentName'], mb_strrpos($row['studentName'], ' ') + 1, 1),
-                    'solutionUrl' => trim($row['solutionUrl'] ?? ''),
-                    'comments' => $comments,
-                    'userDoneCriteria' => array_column($criteria, null, 'criterionId'),
-                    'userDoneCriteriaCount' => $userDoneCriteriaCount,
-                    'isAllCriteriaCompleted' => $isAllCriteriaCompleted,
-                    'studentActionButtonName' => !empty(trim($row['solutionUrl'] ?? '')) ? 'Muuda' : 'Esita'
-                ];
-
-
-            }
+        if ($row['comments'] === '[null]') {
+            $row['comments'] = null;
         }
 
-        $this->assignment = $assignment;
+        // Decode JSON arrays
+        $criteria = json_decode($row['criteria'], true) ?: [];
+        $comments = json_decode($row['comments'], true) ?: [];
+
+        // Filter out null values from comments
+        $comments = array_filter($comments, fn($comment) => !is_null($comment['id']));
+
+        $this->assignment = [
+            'assignmentId' => $assignmentId,
+            'assignmentName' => $row['assignmentName'],
+            'assignmentInstructions' => $row['assignmentInstructions'],
+            'assignmentDueAt' => !empty($row['assignmentDueAt']) ? date('d.m.Y', strtotime($row['assignmentDueAt'])) : 'Pole määratud',
+            'teacherId' => $row['teacherId'],
+            'teacherName' => $row['teacherName'],
+            'criteria' => Db::getAll("SELECT * FROM criteria WHERE assignmentId = ?", [$assignmentId]),
+            'studentId' => $row['studentId'],
+            'studentName' => $row['studentName'],
+            'grade' => trim($row['userGrade'] ?? ''),
+            'assignmentStatusName' => $row['assignmentStatusName'] ?? 'Esitamata',
+            'assignmentStatusId' => $row['assignmentStatusId'] ?? 1,
+            'solutionUrl' => trim($row['solutionUrl'] ?? ''),
+            'userDoneCriteria' => array_column($criteria, null, 'criterionId'),
+            'comments' => $comments
+        ];
     }
 
 

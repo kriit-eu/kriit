@@ -42,10 +42,28 @@ class Validate
             curl_close($ch);
 
             if ($httpCode < 200 || $httpCode > 299) {
-                stop(400, "URL ei ole kättesaadav (tagastas koodi $httpCode). Palun vaata, kas see on avalik.");
+                $httpMessage = match ($httpCode) {
+                    301 => '(püsiv ümbersuunamine). Kopeeri brauseri aadressirealt lõplik URL',
+                    302 => '(ajutine ümbersuunamine). Kopeeri brauseri aadressirealt lõplik URL',
+                    401 => '(autoriseerimine nõutud). Kontrolli, kas leht on avalik',
+                    403 => '(ligipääs keelatud). Kontrolli, kas leht on avalik',
+                    404 => '(lehte ei leitud). Kontrolli, kas leht on avalik, tegid aadressis vea või lehte enam ei eksisteeri',
+                    429 => '(liiga palju päringuid). Oota mõni aeg ja kontrolli uuesti',
+                    500 => '(serveri sisemine viga). Kontrolli aadressi või serveri olekut',
+                    503 => '(server on hetkel ülekoormatud või hoolduses). Oota mõni aeg ja kontrolli uuesti',
+                    default => '(tundmatu viga). Kontrolli aadressi'
+                };
+                stop(400, "URL ei ole kättesaadav. Server tagastas koodi $httpCode $httpMessage.");
             }
         } catch (\Exception $e) {
             stop(400, 'URL-i kontrollimisel tekkis viga');
+        }
+    }
+
+    public static function bool(mixed $value, string $string)
+    {
+        if (!is_bool($value)) {
+            stop(400, $string);
         }
     }
 }

@@ -692,8 +692,7 @@ CREATE TABLE `userAssignments` (
   `assignmentStatusId` tinyint unsigned NOT NULL,
   `userGrade` varchar(191) DEFAULT NULL,
   `solutionUrl` text,
-  `comments` text NOT NULL DEFAULT '[]',
-  `userAssignmentCreatedAt` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
+  `userAssignmentCreatedAt` datetime NOT NULL DEFAULT curtime(),
   `userAssignmentEditedAt` datetime DEFAULT NULL,
   PRIMARY KEY (`assignmentId`,`userId`),
   KEY `userAssignments_users_userId_fk` (`userId`),
@@ -711,7 +710,7 @@ CREATE TABLE `userAssignments` (
 LOCK TABLES `userAssignments` WRITE;
 /*!40000 ALTER TABLE `userAssignments` DISABLE KEYS */;
 INSERT INTO `userAssignments` VALUES
-(1,2,2,NULL,'','[{\"comment\":\"Kommentaar\",\"createdAt\":\"2024-11-20 12:55:28\"}]','1970-01-01 00:00:00',NULL);
+(1,2,3,'MA','http://www.google.com','1970-01-01 00:00:00',NULL);
 /*!40000 ALTER TABLE `userAssignments` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -815,7 +814,8 @@ CREATE TABLE `userDoneCriteria` (
 LOCK TABLES `userDoneCriteria` WRITE;
 /*!40000 ALTER TABLE `userDoneCriteria` DISABLE KEYS */;
 INSERT INTO `userDoneCriteria` VALUES
-(1,2);
+(1,2),
+(2,2);
 /*!40000 ALTER TABLE `userDoneCriteria` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -894,4 +894,4 @@ UNLOCK TABLES;
 /*!50503 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-12-27 21:50:01
+-- Dump completed on 2024-12-27 23:15:42
