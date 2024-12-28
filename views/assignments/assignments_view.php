@@ -45,8 +45,6 @@
     .comment-entry li {
         margin-left: 0;
         padding-left: 0;
-
-
     }
 
     ul.list-group.list-group-criteria li:last-child {
@@ -59,6 +57,8 @@
         border-right: 0;
         border-bottom: 0;
     }
+
+
 
     .comment-section {
         border-top: 1px solid #d5d9dc;
@@ -115,7 +115,6 @@
         border-radius: 0 !important;
         border: 1px solid #dc3545;
         margin-left: 15px;
-
     }
 
     .gray-background {
@@ -123,7 +122,7 @@
     }
 
     .card-header {
-        /* Linear gradient suble grayish blue */
+        /* Linear gradient subtle grayish blue */
         background: linear-gradient(180deg, rgba(193, 193, 193, 0.0) 0%, rgba(193, 193, 193, 0.3) 100%);
     }
 
@@ -138,14 +137,13 @@
         border-radius: 0 4px 4px 0 !important;
     }
 
-    .comment-entry .card td, .comment-entry .card th {
+    .comment-entry .card td,
+    .comment-entry .card th {
         border: 1px solid gray;
     }
 
     .comment-entry .card th {
-        background-color: #78787833
-
-
+        background-color: #78787833;
     }
 
     .comments-container {
@@ -160,20 +158,8 @@
         }
     }
 
-    @keyframes pulsate {
-        0% {
-            opacity: 1;
-        }
-        50% {
-            opacity: 0.5;
-        }
-        100% {
-            opacity: 1;
-        }
-    }
-
     .pulsate {
-        animation: pulsate 1s ease-in-out infinite;
+        animation: pulsate 1s ease-in-out 10 forwards;
         color: #dc3545;
         font-weight: bold;
         text-shadow: 0 0 8px rgba(220, 53, 69, 0.6);
@@ -191,15 +177,22 @@
         }
     }
 
-    .slide-enter-active, .slide-leave-active {
-        transition: all 0.3s ease;
-        max-height: 50px;
-        overflow: hidden;
-    }
-
-    .slide-enter, .slide-leave-to {
+    .slide-enter-from,
+    .slide-leave-to {
         max-height: 0;
         opacity: 0;
+    }
+
+    .slide-enter-to,
+    .slide-leave-from {
+        max-height: 50px; /* or some known max height */
+        opacity: 1;
+    }
+
+    .slide-enter-active,
+    .slide-leave-active {
+        transition: max-height 0.9s ease, opacity 0.9s ease;
+        overflow: hidden;
     }
 
     .grade-badge-floating {
@@ -207,8 +200,9 @@
         top: 20px;
         right: 20px;
         z-index: 9999;
-        box-shadow: 0 0 6px rgba(0, 0, 0, 0.2);
+        filter: drop-shadow(0 0 6px rgba(0, 0, 0, 0.2));
     }
+
 
 </style>
 
@@ -280,7 +274,7 @@
                             </label>
                         </li>
                         <transition name="slide">
-                            <div class="input-group" v-show="criteria.every(c => c.done)">
+                            <div class="input-group" v-if="criteria.every(c => c.done)">
                                 <input type="url"
                                        id="solutionUrl"
                                        class="form-control"
@@ -365,8 +359,6 @@
                 </div>
             </div>
         </div>
-
-
     </div>
 
 </div>
@@ -378,7 +370,6 @@
 <?php else: ?>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 <?php endif; ?>
-
 
 <script>
     const assignmentData = <?= json_encode($assignment); ?>;
@@ -510,7 +501,6 @@
                     criterion.tooltipText = '⚠️ Viga salvestamisel: ' + JSON.stringify(err);
                 });
             },
-
             submitSolution() {
                 this.isSubmitting = true;
                 ajax('api/assignments/submitSolution', {
@@ -576,10 +566,10 @@
         },
         directives: {
             tooltip: {
-                mounted: (el, {value}) => {
+                mounted: (el, { value }) => {
                     value && initTooltip(el, value);
                 },
-                updated: (el, {value}) => {
+                updated: (el, { value }) => {
                     if (!value) {
                         el._tooltip?.dispose();
                         el._tooltip = null;
