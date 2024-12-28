@@ -161,9 +161,15 @@
     }
 
     @keyframes pulsate {
-        0% { opacity: 1; }
-        50% { opacity: 0.5; }
-        100% { opacity: 1; }
+        0% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.5;
+        }
+        100% {
+            opacity: 1;
+        }
     }
 
     .pulsate {
@@ -174,9 +180,15 @@
     }
 
     @keyframes pulsate {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.15); }
-        100% { transform: scale(1); }
+        0% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.15);
+        }
+        100% {
+            transform: scale(1);
+        }
     }
 
     .slide-enter-active, .slide-leave-active {
@@ -190,23 +202,32 @@
         opacity: 0;
     }
 
+    .grade-badge-floating {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        box-shadow: 0 0 6px rgba(0, 0, 0, 0.2);
+    }
+
 </style>
 
 <div id="app" class="container mt-5" v-cloak>
-
 
     <div class="position-relative">
         <h1 class="d-flex align-items-center">
             <strong class="me-auto">{{ assignment.assignmentName }}</strong>
 
-            <div class="grade-badge">
+            <div class="grade-badge" ref="gradeBadge">
                 <div v-if="isWaitingForReview" class="badge bg-warning text-black">
                     Kontrollimisel
                 </div>
                 <div v-else-if="assignment.grade"
                      :class="gradeClass"
-                     v-tooltip="assignment.grade === 'MA' ? 'Mittearvestatud. Paranda ja esita uuesti!' :
-           assignment.grade === 'A' ? 'Arvestatud' : null">
+                     v-tooltip="
+                         assignment.grade === 'MA' ? 'Mittearvestatud. Paranda ja esita uuesti!'
+                      : +assignment.grade  <  '3'  ? 'Paranda ja esita uuesti!'
+                      :  assignment.grade === 'A'  ? 'Arvestatud' : null">
                     {{ assignment.grade }}
                 </div>
                 <div v-else :class="dueAtClass">
@@ -215,7 +236,6 @@
             </div>
         </h1>
     </div>
-
     <br>
 
     <!-- Instruction and Solving Cards -->
@@ -541,17 +561,25 @@
                         window.scrollTo(0, document.body.scrollHeight);
                     }, 100);
                 });
+            },
+            handleScroll() {
+                const scrolled = (window.scrollY || document.documentElement.scrollTop) > 100;
+                this.$refs.gradeBadge.classList.toggle('grade-badge-floating', scrolled);
             }
         },
         mounted() {
             this.scrollToBottom();
+            window.addEventListener('scroll', this.handleScroll);
+        },
+        unmounted() {
+            window.removeEventListener('scroll', this.handleScroll);
         },
         directives: {
             tooltip: {
-                mounted: (el, { value }) => {
+                mounted: (el, {value}) => {
                     value && initTooltip(el, value);
                 },
-                updated: (el, { value }) => {
+                updated: (el, {value}) => {
                     if (!value) {
                         el._tooltip?.dispose();
                         el._tooltip = null;
