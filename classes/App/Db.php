@@ -3,7 +3,6 @@
 use Doctrine\SqlFormatter\SqlFormatter;
 use JetBrains\PhpStorm\NoReturn;
 
-
 class Db
 {
     private static ?Db $instance = null;
@@ -12,6 +11,8 @@ class Db
 
     const GET_RESULT = 1;
     const AFFECTED_ROWS = 2;
+    // If you want a specialized mode for getOne() or getFirst(), you could define:
+    // const GET_ONE = 3; // etc.
 
     private function __construct(string $host, string $user, string $password, string $dbname)
     {
@@ -39,53 +40,93 @@ class Db
                 die("Database connection error: " . $e->getMessage());
             }
         }
-
         return self::$instance;
     }
 
-    private function debugQuery($query, $params)
+    /**
+     * Debug function to produce a human-readable version of the query
+     * with placeholders substituted by parameter values (for logs).
+     *
+     * Supports both question marks and named placeholders.
+     */
+    private function debugQuery(string $query, array $params): string
     {
-        foreach ($params as $param) {
-            if ($param === null) {
-                $query = preg_replace('/\?/', 'NULL', $query, 1);
+        // If no params, nothing to replace
+        if (empty($params)) {
+            // If it's a new query, add it once to the debug log
+            if (!isset($this->debugLog[$query])) {
+                $this->debugLog[$query] = [
+                    'query' => $query,
+                    'count' => 1,
+                    'cumulative_time' => 0.0
+                ];
             } else {
-                $query = preg_replace('/\?/', "'{$this->conn->real_escape_string($param)}'", $query, 1);
+                // If it already exists, just increment the count
+                $this->debugLog[$query]['count'] += 1;
+
+                // Move the entry to the end of $debugLog
+                $existing = $this->debugLog[$query];
+                unset($this->debugLog[$query]);
+                $this->debugLog[$query] = $existing;
+            }
+            return $query;
+        }
+
+        $hasQuestionMarks = str_contains($query, '?');
+        preg_match_all('/:[a-zA-Z0-9_]+/', $query, $namedMatches);
+        $hasNamed = !empty($namedMatches[0]);
+
+        if ($hasQuestionMarks && $hasNamed) {
+            throw new \Exception("Cannot mix named placeholders and question marks in the same query.");
+        }
+
+        $debugQuery = $query;
+
+        // If we are using named placeholders
+        if ($hasNamed) {
+            foreach ($namedMatches[0] as $placeholder) {
+                $key = ltrim($placeholder, ':');
+                $value = $params[$key] ?? null;
+                $escapedValue = ($value === null)
+                    ? 'NULL'
+                    : "'" . $this->conn->real_escape_string($value) . "'";
+                $debugQuery = str_replace($placeholder, $escapedValue, $debugQuery);
+            }
+        } else {
+            // question-mark placeholders
+            foreach ($params as $param) {
+                $escapedValue = ($param === null)
+                    ? 'NULL'
+                    : "'" . $this->conn->real_escape_string($param) . "'";
+                // Replace only the *first* occurrence:
+                $debugQuery = preg_replace('/\?/', $escapedValue, $debugQuery, 1);
             }
         }
 
-        // If this query already exists in the debug log, update its count
-        if (isset($this->debugLog[$query])) {
-
-            $this->debugLog[$query]['count'] += 1;
-
-            // Store the existing debug info
-            $existingDebugInfo = $this->debugLog[$query];
-
-            // Remove the existing debug info to move it to the end
-            unset($this->debugLog[$query]);
-
-            // Re-add the debug info to move it to the end
-            $this->debugLog[$query] = $existingDebugInfo;
-
+        if (isset($this->debugLog[$debugQuery])) {
+            $this->debugLog[$debugQuery]['count'] += 1;
+            $existing = $this->debugLog[$debugQuery];
+            unset($this->debugLog[$debugQuery]);
+            $this->debugLog[$debugQuery] = $existing;
         } else {
-            // If it's a new query, append to debug log
-            $this->debugLog[$query] = [
-                'query' => $query,
-                'count' => 1,  // Initialize counter
-                'cumulative_time' => 0.0  // Initialize cumulative time
+            $this->debugLog[$debugQuery] = [
+                'query' => $debugQuery,
+                'count' => 1,
+                'cumulative_time' => 0.0
             ];
         }
 
-        return $query;
+        return $debugQuery;
     }
 
-    #[NoReturn] public static function displayError($e): void
+    #[NoReturn]
+    public static function displayError($e): void
     {
         // Remove previous output
         ob_clean();
 
         // Get the last query from the debug log
-        $lastQuery = end(self::getInstance()->debugLog)['query'];
+        $lastQuery = end(self::getInstance()->debugLog)['query'] ?? '(none)';
 
         // Get debug log
         $highlightedQuery = (new SqlFormatter())->format($lastQuery);
@@ -93,16 +134,14 @@ class Db
 
         // Show full stack trace (HTML formatted)
         $trace = $e->getTrace();
-
-        // Get the directory of the project root
         $rootDir = dirname(__DIR__, 2);
 
-        // Remove the root directory from the file paths
         $trace = array_map(function ($item) use ($rootDir) {
-            $item['file'] = str_replace($rootDir, '', $item['file']);
+            if (!empty($item['file'])) {
+                $item['file'] = str_replace($rootDir, '', $item['file']);
+            }
             return $item;
         }, $trace);
-
 
         echo '<br><br><strong>Stack trace:</strong><br>';
         echo '<pre>';
@@ -116,115 +155,151 @@ class Db
         }
         echo '</pre>';
 
-        // Display debug log
         echo '<br><br><strong>Debug log:</strong><br>';
-
         foreach (self::getDebugLog() as $logItem) {
             echo $logItem . '<br>';
         }
 
-        // Display total query time
         echo '<br><strong>Aggregate Query Execution Time:</strong> ' . self::getTotalQueryTime() . ' seconds<br>';
-
     }
 
+    /**
+     * Given a set of parameter values, build a corresponding type string
+     * for mysqli bind_param (i, d, s)
+     */
     private static function getTypeString(array $params): string
     {
         return implode('', array_map(function ($param) {
             $type = gettype($param);
-            switch ($type) {
-                case 'boolean':
-                case 'integer':
-                    return 'i';
-                case 'double':
-                    return 'd';
-                case 'NULL':
-                case 'string':
-                    return 's';
-                default:
-                    throw new \Exception("Unsupported data type: {$type}");
-            }
+            return match ($type) {
+                'boolean', 'integer' => 'i',
+                'double' => 'd',
+                'NULL', 'string' => 's',
+                default => throw new \Exception("Unsupported data type: {$type}"),
+            };
         }, $params));
     }
 
-    private function executePrepared($query, $params = [], $returnType = self::GET_RESULT): bool|\mysqli_result
+    /**
+     * Main function that executes prepared statements.
+     */
+    private function executePrepared(string $query, array $params = [], int $returnType = self::GET_RESULT): bool|\mysqli_result
     {
-        $types = self::getTypeString($params);
+        if (empty($params)) {
+            $debugQuery = $this->debugQuery($query, []);
+            $startTime = microtime(true);
+            $res = $this->conn->query($query);
+            $timeTaken = microtime(true) - $startTime;
+            $this->debugLog[$debugQuery]['cumulative_time'] += $timeTaken;
+            return ($returnType === self::AFFECTED_ROWS) ? $this->conn->affected_rows : $res;
+        }
+
+        $hasQuestionMarks = str_contains($query, '?');
+        preg_match_all('/:[a-zA-Z0-9_]+/', $query, $namedMatches);
+        $namedPlaceholders = $namedMatches[0] ?? [];
+
+        if ($hasQuestionMarks && !empty($namedPlaceholders)) {
+            throw new \Exception("Cannot mix named placeholders and question marks in the same query.");
+        }
+
         $debugQuery = $this->debugQuery($query, $params);
 
-        // Adjust query for NULL values
-        $newParams = [];
-        $newTypes = '';
-        $placeholderIndex = 0;
-
-        for ($i = 0, $len = strlen($types); $i < $len; ++$i) {
-            if ($params[$i] === NULL) {
-                // Locate the correct placeholder
-                $placeholderIndex = strpos($query, '?', $placeholderIndex);
-                if ($placeholderIndex !== false) {
-                    // Replace the specific placeholder with NULL
-                    $query = substr_replace($query, 'NULL', $placeholderIndex, 1);
-                    $placeholderIndex += 4; // Move past the inserted 'NULL'
+        // Named placeholders:
+        if (!empty($namedPlaceholders)) {
+            $orderedParams = [];
+            foreach ($namedPlaceholders as $ph) {
+                $key = ltrim($ph, ':');
+                if (!array_key_exists($key, $params)) {
+                    throw new \Exception("Missing named parameter :{$key}");
                 }
-            } else {
-                $newParams[] = $params[$i];
-                $newTypes .= $types[$i];
-                $placeholderIndex = strpos($query, '?', $placeholderIndex) + 1;
+                $orderedParams[] = $params[$key];
             }
+            $queryForMysqli = preg_replace('/:[a-zA-Z0-9_]+/', '?', $query);
+            $types = self::getTypeString($orderedParams);
+            $stmt = $this->conn->prepare($queryForMysqli);
+            if (!empty($orderedParams)) {
+                $stmt->bind_param($types, ...$orderedParams);
+            }
+            $startTime = microtime(true);
+            $stmt->execute();
+            $timeTaken = microtime(true) - $startTime;
+            $this->debugLog[$debugQuery]['cumulative_time'] += $timeTaken;
+
+            return ($returnType === self::AFFECTED_ROWS)
+                ? $stmt->affected_rows
+                : $stmt->get_result();
+        } // Question marks:
+        else {
+            $types = self::getTypeString($params);
+            $stmt = $this->conn->prepare($query);
+            if (!empty($params)) {
+                $stmt->bind_param($types, ...$params);
+            }
+            $startTime = microtime(true);
+            $stmt->execute();
+            $timeTaken = microtime(true) - $startTime;
+            $this->debugLog[$debugQuery]['cumulative_time'] += $timeTaken;
+
+            return ($returnType === self::AFFECTED_ROWS)
+                ? $stmt->affected_rows
+                : $stmt->get_result();
         }
-
-        // Prepare the query
-        $stmt = $this->conn->prepare($query);
-
-        // Bind params if there are any
-        if ($newTypes) {
-            $stmt->bind_param($newTypes, ...$newParams);
-        }
-
-        // Start timer
-        $startTime = microtime(true);
-
-        // Execute the query
-        $stmt->execute();
-
-        // Stop timer
-        $timeTaken = microtime(true) - $startTime;
-
-        // Log the time taken
-        $this->debugLog[$debugQuery]['cumulative_time'] += $timeTaken;
-
-        // Return the affected rows if requested, else return the result
-        return $returnType === self::AFFECTED_ROWS ? $stmt->affected_rows : $stmt->get_result();
     }
 
+    /**
+     * Returns the first column of the first row, or null.
+     * Changed 3rd param to self::GET_RESULT instead of $callingFunction
+     */
     public static function getOne($query, array $params = [])
     {
         $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
         $callingFunction = $backtrace[1]['function'] ?? 'Global Scope';
-        return self::getInstance()->executePrepared($query, $params, $callingFunction)->fetch_array(MYSQLI_NUM)[0] ?? null;
+
+        // Important fix: pass an integer constant (e.g. self::GET_RESULT)
+        // rather than the string $callingFunction.
+        $res = self::getInstance()->executePrepared($query, $params, self::GET_RESULT);
+        $row = $res->fetch_array(MYSQLI_NUM);
+        return $row[0] ?? null;
     }
 
+    /**
+     * Returns an array of the first column of all rows.
+     */
     public static function getCol($query, $params = [])
     {
-        $result = self::getInstance()->executePrepared($query, $params);
+        $result = self::getInstance()->executePrepared($query, $params, self::GET_RESULT);
         $output = [];
-        while ($row = $result->fetch_array(MYSQLI_NUM)) $output[] = $row[0];
+        while ($row = $result->fetch_array(MYSQLI_NUM)) {
+            $output[] = $row[0];
+        }
         return $output;
     }
 
+    /**
+     * Returns the first row as an associative array, or null if none.
+     */
     public static function getFirst($query, $params = [])
     {
-        return self::getInstance()->executePrepared($query, $params)->fetch_assoc();
+        $result = self::getInstance()->executePrepared($query, $params, self::GET_RESULT);
+        return $result->fetch_assoc() ?: null;
     }
 
+    /**
+     * Returns all rows (assoc arrays).
+     */
     public static function getAll($query, $params = [])
     {
-        $result = self::getInstance()->executePrepared($query, $params);
+        $result = self::getInstance()->executePrepared($query, $params, self::GET_RESULT);
         $output = [];
-        while ($row = $result->fetch_assoc()) $output[] = $row;
+        while ($row = $result->fetch_assoc()) {
+            $output[] = $row;
+        }
         return $output;
     }
 
+    /**
+     * Executes a query that modifies data; returns affected rows.
+     */
     public static function q($query, $params = [])
     {
         return self::getInstance()->executePrepared($query, $params, self::AFFECTED_ROWS);
@@ -232,40 +307,29 @@ class Db
 
     public static function insert($table, $data)
     {
-        // Build field and placeholder lists
         $fields = implode(", ", array_keys($data));
         $placeholders = implode(", ", array_fill(0, count($data), "?"));
-
-        // Prepare query
         $query = "INSERT INTO {$table} ({$fields}) VALUES ({$placeholders})";
 
-        self::getInstance()->executePrepared($query, array_values($data));
+        self::getInstance()->executePrepared($query, array_values($data), self::GET_RESULT);
         return self::getInstance()->conn->insert_id;  // Return last insert ID
     }
 
     public static function delete($table, $whereClause, $whereParams = [])
     {
-        // Prepare query
         $query = "DELETE FROM {$table} WHERE {$whereClause}";
-
-        self::getInstance()->executePrepared($query, $whereParams);
-        return self::getInstance()->conn->affected_rows;  // Return the number of affected rows
+        self::getInstance()->executePrepared($query, $whereParams, self::AFFECTED_ROWS);
+        return self::getInstance()->conn->affected_rows;
     }
 
     public static function update($table, $data, $whereClause, $whereParams = [])
     {
-        // Building field updates
         $fields = array_keys($data);
         $fieldPlaceholders = implode(" = ?, ", $fields) . " = ?";
-
-        // Prepare query
         $query = "UPDATE {$table} SET {$fieldPlaceholders} WHERE {$whereClause}";
-
-        // Merging all values
         $values = array_merge(array_values($data), $whereParams);
-
-        self::getInstance()->executePrepared($query, $values);
-        return self::getInstance()->conn->affected_rows;  // Return the number of affected rows
+        self::getInstance()->executePrepared($query, $values, self::AFFECTED_ROWS);
+        return self::getInstance()->conn->affected_rows;
     }
 
     public static function getDebugLog(): array
@@ -274,13 +338,11 @@ class Db
         $debugLog = self::getInstance()->debugLog;
         foreach ($debugLog as $item) {
             $time = number_format($item['cumulative_time'], 4);
-            $item['query'] = preg_replace('/\s+/', ' ', $item['query']);
-            $result[] = "$item[count] x  $time $item[query]";
+            $oneLineQuery = preg_replace('/\s+/', ' ', $item['query']);
+            $result[] = "{$item['count']} x  $time  $oneLineQuery";
         }
-
-        // Reverse sort result array so that the last query is on top
+        // Reverse sort so the last query is on top
         krsort($result);
-
         return $result;
     }
 
@@ -289,7 +351,6 @@ class Db
         // Query the schema to determine the unique or primary key fields
         $describeQuery = "SHOW INDEX FROM {$table} WHERE Key_name = 'PRIMARY' OR Non_unique = 0";
         $uniqueFields = [];
-
         $columns = self::getAll($describeQuery);
         foreach ($columns as $column) {
             $uniqueFields[] = $column['Column_name'];
@@ -304,17 +365,13 @@ class Db
                 $whereParams[] = $data[$field];
             }
         }
-
         $whereClause = implode(' OR ', $whereClauseParts);
         $selectQuery = "SELECT COUNT(*) FROM {$table} WHERE {$whereClause}";
-
         $existingRowCount = self::getOne($selectQuery, $whereParams);
 
         if ($existingRowCount === 0) {
             return self::insert($table, $data);
         } else {
-            // We'll use the first unique field for the where clause. For more complex
-            // scenarios, custom logic will be needed to determine which row(s) to update.
             return self::update($table, $data, "{$uniqueFields[0]} = ?", [$data[$uniqueFields[0]]]);
         }
     }

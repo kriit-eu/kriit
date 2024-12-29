@@ -72,8 +72,8 @@
                         </tbody>
                     </table>
                 <?php else: ?>
-                    <h5 class="alert-heading">Kohalikud muutujad pole saadaval</h5>
-                    <p>Et näha kohalikke muutujaid, lisa järgmine rida koodi, vahetult enne vea tekkimise kohta:</p>
+                    <h5 class="alert-heading">Local variables not available</h5>
+                    <p>To see local variables, add the following line of code before the error:</p>
                     <pre class="mt-2 p-2 bg-light d-inline"><code>$GLOBALS['vars'] = get_defined_vars();</code></pre>
                     <button class="btn btn-sm btn-outline-secondary ms-2 copy-btn align-top"
                             data-clipboard="$GLOBALS['vars'] = get_defined_vars();"

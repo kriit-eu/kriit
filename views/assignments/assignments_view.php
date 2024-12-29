@@ -185,7 +185,7 @@
 
     .slide-enter-to,
     .slide-leave-from {
-        max-height: 50px; /* or some known max height */
+        max-height: 50px;
         opacity: 1;
     }
 
@@ -373,7 +373,7 @@
 
 <script>
     const assignmentData = <?= json_encode($assignment); ?>;
-    const userId = <?= json_encode($this->auth->userId); ?>;
+
 
     const initTooltip = (el, value) => {
         el._tooltip = new bootstrap.Tooltip(el, {
@@ -395,7 +395,6 @@
                 criteria: [],
                 solutionUrl: '',
                 originalSolutionUrl: '',
-                userId: userId,
                 commentText: '',
                 comments: [],
                 isSubmitting: false,
@@ -405,12 +404,11 @@
         },
         created() {
             const assignmentCriteria = Object.values(this.assignment.criteria || {});
-            const userDoneCriteria = this.assignment.userDoneCriteria || {};
-
+            
             this.criteria = assignmentCriteria.map(criterion => ({
                 criterionId: criterion.criterionId,
                 description: criterion.criterionName,
-                done: userDoneCriteria[criterion.criterionId]?.completed || false,
+                done: criterion.done === 1,
                 unsaved: false
             }));
 

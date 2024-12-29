@@ -6,98 +6,24 @@ class assignments extends Controller
 
     public function view(): void
     {
-        if (!$this->checkIfUserHasPermissionForAction($this->getId())) {
-            $this->redirect('subjects');
+        $this->assignmentId = $this->getId();
+        $this->isTeacher = Assignment::userIsTeacher($this->auth->userId, $this->assignmentId) || $this->auth->userIsAdmin;
+        $this->studentId = ($this->isTeacher && isset($this->params[1])) ? $this->params[1] : $this->auth->userId;
+
+        if($this->isTeacher && isset($this->params[1]) && !isset($this->params[2])) {
+            $studentName = Db::getOne('SELECT userName FROM users WHERE userId = ?', [$this->params[1]]);
+            $studentName = slugify($studentName);
+            $this->redirect('assignments/' . $this->assignmentId . '/' . $this->params[1] . '/' . $studentName);
         }
 
-        $assignmentId = $this->getId();
-        $userId = $this->auth->userId;
-        $isTeacher = \App\Assignment::userIsTeacher($userId, $assignmentId) || $this->auth->userIsAdmin;
-        $isStudent = !$isTeacher;
+        $this->assignment = Assignment::get($this->assignmentId, $this->studentId);
+
+        if (Request::isAjax()) {
+            stop(200, $this->assignment);
+        }
+
         $this->template = $this->auth->userIsAdmin ? 'admin' : 'master';
-
-        $params = [$assignmentId];
-        $query = "
-            SELECT
-                a.assignmentId, a.assignmentName, a.assignmentInstructions, a.assignmentDueAt,
-                u.userId AS studentId, u.userName AS studentName, u.groupId,
-                ua.userGrade, ua.assignmentStatusId, ua.solutionUrl,
-                ast.statusName AS assignmentStatusName,
-                subj.teacherId AS teacherId,
-                t.userName AS teacherName,
-                JSON_ARRAYAGG(
-                    DISTINCT
-                    JSON_OBJECT(
-                        'criterionId', c.criterionId,
-                        'criterionName', c.criterionName,
-                        'completed', udc.criterionId IS NOT NULL
-                    )
-                ) AS criteria,
-                JSON_ARRAYAGG(
-                    DISTINCT
-                    IF(ac.assignmentCommentId IS NOT NULL,
-                        JSON_OBJECT(
-                            'id', ac.assignmentCommentId,
-                            'comment', ac.assignmentCommentText,
-                            'createdAt', DATE_FORMAT(ac.assignmentCommentCreatedAt, '%d.%m.%Y %H:%i'),
-                            'name', uc.userName
-                        ),
-                        NULL
-                    )
-                ) AS comments
-            FROM assignments a
-            LEFT JOIN criteria c ON c.assignmentId = a.assignmentId
-            JOIN subjects subj ON a.subjectId = subj.subjectId
-            JOIN users t ON subj.teacherId = t.userId
-            LEFT JOIN `groups` g ON subj.groupId = g.groupId
-            LEFT JOIN users u ON u.groupId = g.groupId
-            LEFT JOIN userAssignments ua ON ua.assignmentId = a.assignmentId AND ua.userId = u.userId
-            LEFT JOIN assignmentStatuses ast ON ua.assignmentStatusId = ast.assignmentStatusId
-            LEFT JOIN userDoneCriteria udc ON udc.criterionId = c.criterionId AND udc.userId = u.userId
-            LEFT JOIN assignmentComments ac ON ac.assignmentId = a.assignmentId AND ac.userId = u.userId
-            LEFT JOIN users uc ON ac.userId = uc.userId
-            WHERE a.assignmentId = ?
-        ";
-
-        if ($isStudent) {
-            $query .= " AND u.userId = ?";
-            $params[] = $userId;
-        }
-        $query .= " GROUP BY a.assignmentId, u.userId";
-
-        $data = Db::getAll($query, $params);
-        $row = $data[0] ?? [];
-
-        if ($row['comments'] === '[null]') {
-            $row['comments'] = null;
-        }
-
-        // Decode JSON arrays
-        $criteria = json_decode($row['criteria'], true) ?: [];
-        $comments = json_decode($row['comments'], true) ?: [];
-
-        // Filter out null values from comments
-        $comments = array_filter($comments, fn($comment) => !is_null($comment['id']));
-
-        $this->assignment = [
-            'assignmentId' => $assignmentId,
-            'assignmentName' => $row['assignmentName'],
-            'assignmentInstructions' => $row['assignmentInstructions'],
-            'assignmentDueAt' => !empty($row['assignmentDueAt']) ? date('d.m.Y', strtotime($row['assignmentDueAt'])) : 'Pole määratud',
-            'teacherId' => $row['teacherId'],
-            'teacherName' => $row['teacherName'],
-            'criteria' => Db::getAll("SELECT * FROM criteria WHERE assignmentId = ?", [$assignmentId]),
-            'studentId' => $row['studentId'],
-            'studentName' => $row['studentName'],
-            'grade' => trim($row['userGrade'] ?? ''),
-            'assignmentStatusName' => $row['assignmentStatusName'] ?? 'Esitamata',
-            'assignmentStatusId' => $row['assignmentStatusId'] ?? 1,
-            'solutionUrl' => trim($row['solutionUrl'] ?? ''),
-            'userDoneCriteria' => array_column($criteria, null, 'criterionId'),
-            'comments' => $comments
-        ];
     }
-
 
     function ajax_checkCriterionNameSize()
     {
@@ -593,5 +519,7 @@ class assignments extends Controller
 
         Db::update('userAssignments', ['comments' => json_encode($comments)], 'userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
     }
+
+
 
 }

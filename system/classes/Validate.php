@@ -3,22 +3,34 @@
 class Validate
 {
 
-    public static function id($value, $message = 'Vale ID formaat'): void
+    public static function id($value, $message = 'Vale ID formaat', $optional = false): void
     {
+        if ($optional && empty($value)) {
+            return;
+        }
+        
         if (!is_numeric($value) || intval($value) <= 0) {
             stop(400, $message);
         }
     }
 
-    public static function string($value, $message = 'Vale teksti formaat'): void
+    public static function string($value, $message = 'Vale teksti formaat', $optional = false): void
     {
+        if ($optional && empty($value)) {
+            return;
+        }
+        
         if (!is_string($value)) {
             stop(400, $message);
         }
     }
 
-    public static function url(string $url, string $message = 'Vigane URL'): void
+    public static function url(string $url, string $message = 'Vigane URL', $optional = false): void
     {
+        if ($optional && empty($url)) {
+            return;
+        }
+        
         if (!filter_var($url, FILTER_VALIDATE_URL)) {
             stop(400, 'Vigane URL');
         }

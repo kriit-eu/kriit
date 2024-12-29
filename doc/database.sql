@@ -211,7 +211,8 @@ CREATE TABLE `assignments` (
 LOCK TABLES `assignments` WRITE;
 /*!40000 ALTER TABLE `assignments` DISABLE KEYS */;
 INSERT INTO `assignments` VALUES
-(1,'Aatomi lõhustamine','### **Aatomi lõhestamise juhised**\n\n1. **Valmistu suurteks muutusteks!**  \n   Enne töö alustamist veendu, et oled varustatud kaitseprillide, laborikitli ja julge südamega. Me pole kindlad, kas siin toimub suur pauk või lihtsalt pisike sähvatus.\n\n2. **Leia lõhestamiseks sobiv aatom.**  \n   Soovitame valida suurema aatomi, näiteks uraani (U). Kui sul on ainult süsinikku (C) käepärast, proovi, aga ära oota ilutulestikku.\n\n3. **Pane aatom pingesse.**  \n   Loo kontrollitud keskkond, kus aatom tunneb end piisavalt ebamugavalt, et mõra tekkida võiks. Mõtle termotuumasünteesi vastandile – see peab jahtuma, mitte kuumenema.\n\n4. **Vabasta neutronid.**  \n   Sihi täpselt – aatomi tuum ei anna alla lihtsalt! Lase neutroneid, kuni üks neist tabab märki ja vallandab reaktsiooni.\n\n5. **Jälgi ahelreaktsiooni.**  \n   Kui midagi toimub, peaksid nägema, kuidas aatomid hakkavad lõhenema ja kiirgama energiat. Kui midagi ei juhtu, oled leidnud universumi kõige laisema aatomi.\n\n6. **Energia kogumine.**  \n   Kui õnnestus, seadista süsteem (või vähemalt sule süda) energia turvaliseks püüdmiseks. Ära lase naabritel märgata, et sul kodus mini-tuumaelektrijaam töötab.\n\n7. **Puhasta segadus.**  \n   Lõhestatud aatomid võivad jätta radioaktiivseid jäätmeid. Palun ära viska neid prügikasti ega loputa kraanikausist alla – see tekitab halbu kommentaare naabruskonnas.\n\n8. **Raporteeri tulemused.**  \n   Kui sul õnnestus lõhestada aatom, jäta endast jälg ajalukku – keemiaõpikud vajavad kindlasti värskendust.\n\n---\n\n### **Hoiatus**  \n*Ära ürita seda katset kodus ilma täiskasvanu järelvalveta. Kui oled täiskasvanu, kutsu igaks juhuks teine täiskasvanu appi. Ja võib-olla tuumafüüsik.*',1,NULL,'2024-11-30','','');
+(1,'Aatomi lõhustamine','### **Aatomi lõhestamise juhised**\n\n1. **Valmistu suurteks muutusteks!**  \n   Enne töö alustamist veendu, et oled varustatud kaitseprillide, laborikitli ja julge südamega. Me pole kindlad, kas siin toimub suur pauk või lihtsalt pisike sähvatus.\n\n2. **Leia lõhestamiseks sobiv aatom.**  \n   Soovitame valida suurema aatomi, näiteks uraani (U). Kui sul on ainult süsinikku (C) käepärast, proovi, aga ära oota ilutulestikku.\n\n3. **Pane aatom pingesse.**  \n   Loo kontrollitud keskkond, kus aatom tunneb end piisavalt ebamugavalt, et mõra tekkida võiks. Mõtle termotuumasünteesi vastandile – see peab jahtuma, mitte kuumenema.\n\n4. **Vabasta neutronid.**  \n   Sihi täpselt – aatomi tuum ei anna alla lihtsalt! Lase neutroneid, kuni üks neist tabab märki ja vallandab reaktsiooni.\n\n5. **Jälgi ahelreaktsiooni.**  \n   Kui midagi toimub, peaksid nägema, kuidas aatomid hakkavad lõhenema ja kiirgama energiat. Kui midagi ei juhtu, oled leidnud universumi kõige laisema aatomi.\n\n6. **Energia kogumine.**  \n   Kui õnnestus, seadista süsteem (või vähemalt sule süda) energia turvaliseks püüdmiseks. Ära lase naabritel märgata, et sul kodus mini-tuumaelektrijaam töötab.\n\n7. **Puhasta segadus.**  \n   Lõhestatud aatomid võivad jätta radioaktiivseid jäätmeid. Palun ära viska neid prügikasti ega loputa kraanikausist alla – see tekitab halbu kommentaare naabruskonnas.\n\n8. **Raporteeri tulemused.**  \n   Kui sul õnnestus lõhestada aatom, jäta endast jälg ajalukku – keemiaõpikud vajavad kindlasti värskendust.\n\n---\n\n### **Hoiatus**  \n*Ära ürita seda katset kodus ilma täiskasvanu järelvalveta. Kui oled täiskasvanu, kutsu igaks juhuks teine täiskasvanu appi. Ja võib-olla tuumafüüsik.*',1,NULL,'2024-11-30','',''),
+(3,'Munaralli Newtoni moodi','### **Munaralli Newtoni moodi juhised**\n\n1. **Valmista katse tarvikud ette.**\n   Sul on vaja ühte toores muna, paar õhupalli, mõned kummikud (eelistatavalt värvilised) ja tükike nööri. Lisaks vali koht, kus sul on palju ruumi kukkumiseks – mitte ise, vaid muna!\n\n2. **Ehita kaitsesüsteem.**\n   Loo süsteem, mis kaitseb muna kukkumisel. Näiteks võid täis puhuda õhupallid ja siduda need muna ümber, kasutades nööri ja kummikuid. Kui eelistad lihtsamat lähenemist, mässi muna hunniku vatipallide või villaste sokkide sisse.\n\n3. **Leia kukkumiskoht.**\n   Leia turvaline kõrgus, kust muna kukutada. Soovitame alustada madalamalt, näiteks toolilt, ja liikuda järk-järgult kõrgemale. Lõppeesmärk on tõestada, et muna jääb terveks ka suurelt kõrguselt.\n\n4. **Katseta!**\n   Kukkuta muna ehitatud kaitsesüsteemiga ja jälgi, kas muna jääb terveks. Kui muna katki läheb, pead konstruktsiooni täiustama – Newton ei andestaks laiskust.\n\n5. **Mõtle füüsika peale.**\n   Kui muna kukub, rakendub sellele gravitatsioon. Kaitsesüsteem peab pehmendama kukkumist ja jaotama löögijõudu ühtlasemalt. Analüüsi, kuidas sinu lahendus töötab – kas õhupallid olid piisavad või vajas muna rohkem \"turvapadju\"?\n\n6. **Raporteeri tulemused.**\n   Kirjuta kokkuvõte, kuidas sinu kaitsesüsteem töötas. Kas muna jäi terveks? Kui ei, siis mitu muna sul selle katse lõpuks jäi? Võib-olla oled just sina leiutanud parima meetodi muna transpordiks kosmoses!\n\n---\n\n### **Hoiatus**\n*Munad on habras vara – kui katse ebaõnnestub, ole valmis koristama ja südamest naerma. Ära unusta ka Newtoni seadust: kui muna lendab, siis kukub ta ka alla.*',1,NULL,'2024-12-31','','');
 /*!40000 ALTER TABLE `assignments` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -470,13 +471,14 @@ CREATE TABLE `subjects` (
   `groupId` int unsigned NOT NULL,
   `teacherId` int unsigned NOT NULL,
   `isSynchronized` tinyint DEFAULT 0,
+  `gradingSystem` enum('numeric_1_5','numeric_2_5','non_numeric') NOT NULL DEFAULT 'non_numeric',
   PRIMARY KEY (`subjectId`),
   KEY `subjects_groups_groupId_fk` (`groupId`),
   KEY `subjects_users_userId_fk` (`teacherId`),
   KEY `idx_subjects_tahvelSubjectId` (`tahvelSubjectId`),
   CONSTRAINT `subjects_groups_groupId_fk` FOREIGN KEY (`groupId`) REFERENCES `groups` (`groupId`),
   CONSTRAINT `subjects_users_userId_fk` FOREIGN KEY (`teacherId`) REFERENCES `users` (`userId`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -486,7 +488,9 @@ CREATE TABLE `subjects` (
 LOCK TABLES `subjects` WRITE;
 /*!40000 ALTER TABLE `subjects` DISABLE KEYS */;
 INSERT INTO `subjects` VALUES
-(1,'Keemia',1,1,1,0);
+(1,'Keemia',1,1,1,0,'non_numeric'),
+(2,'Füüsika',2,1,1,0,'non_numeric'),
+(3,'Matemaatika',3,2,1,0,'non_numeric');
 /*!40000 ALTER TABLE `subjects` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -710,7 +714,7 @@ CREATE TABLE `userAssignments` (
 LOCK TABLES `userAssignments` WRITE;
 /*!40000 ALTER TABLE `userAssignments` DISABLE KEYS */;
 INSERT INTO `userAssignments` VALUES
-(1,2,3,'MA','http://www.google.com','1970-01-01 00:00:00',NULL);
+(1,2,3,'5','http://www.google.com/','2024-12-28 13:15:33',NULL);
 /*!40000 ALTER TABLE `userAssignments` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -870,7 +874,7 @@ CREATE TABLE `users` (
   KEY `users_groups_groupId_fk` (`groupId`),
   KEY `idx_users_tahvelStudentId` (`tahvelStudentId`),
   CONSTRAINT `users_groups_groupId_fk` FOREIGN KEY (`groupId`) REFERENCES `groups` (`groupId`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=126 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -880,8 +884,24 @@ CREATE TABLE `users` (
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
 INSERT INTO `users` VALUES
-(1,'Kati Maasikas','41111111115',1,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo',NULL,1,'kati@miskikool.ee',NULL),
-(2,'Mati Vaarikas','31111111114',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo2',1,0,'mati@miskikool.ee',NULL);
+(1,'Kati Maasikas','41111111115',1,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo',1,1,'kati@miskikool.ee',NULL),
+(2,'Mati Vaarikas','31111111114',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo2',1,0,'mati@miskikool.ee',NULL),
+(3,'Mari Riisikas','51111111116',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo2',1,0,'mari@miskikool.ee',NULL),
+(101,'Liis Tamm','50112131234',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'st101',1,0,'liis.tamm@miskikool.ee',NULL),
+(102,'Mart Kask','50203041235',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'st102',1,0,'mart.kask@miskikool.ee',NULL),
+(103,'Anne Lepp','50304051236',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'st103',1,0,'anne.lepp@miskikool.ee',NULL),
+(104,'Peeter Kuusk','50405061237',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'st104',1,0,'peeter.kuusk@miskikool.ee',NULL),
+(105,'Kadri Vaher','50506071238',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'st105',1,0,'kadri.vaher@miskikool.ee',NULL),
+(106,'Toomas Saar','50607081239',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'st106',1,0,'toomas.saar@miskikool.ee',NULL),
+(107,'Eva Mänd','50708091240',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'st107',2,0,'eva.mand@miskikool.ee',NULL),
+(108,'Siim Kaasik','50809101241',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'st108',2,0,'siim.kaasik@miskikool.ee',NULL),
+(109,'Laura Lepik','50910111242',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'st109',2,0,'laura.lepik@miskikool.ee',NULL),
+(110,'Karl Kivi','51011121243',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'st110',1,0,'karl.kivi@miskikool.ee',NULL),
+(111,'Maria Oja','51112131244',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'st111',1,0,'maria.oja@miskikool.ee',NULL),
+(122,'Raul Järv','52223241255',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'st122',1,0,'raul.jarv@miskikool.ee',NULL),
+(123,'Marika Põld','52324251256',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'st123',1,0,'marika.pold@miskikool.ee',NULL),
+(124,'Urmas Org','52425261257',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'st124',1,0,'urmas.org@miskikool.ee',NULL),
+(125,'Katrin Salu','52526271258',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'st125',1,0,'katrin.salu@miskikool.ee',NULL);
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -894,4 +914,4 @@ UNLOCK TABLES;
 /*!50503 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-12-27 23:15:42
+-- Dump completed on 2024-12-29 11:44:02

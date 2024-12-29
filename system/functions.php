@@ -205,3 +205,8 @@ function isValidID($id): bool
 {
     return !!filter_var($id, FILTER_VALIDATE_INT) && $id > 0;
 }
+
+function slugify(mixed $studentName)
+{
+    return mb_strtolower(preg_replace('/[^a-zA-Z0-9]+/', '-', $studentName));
+}

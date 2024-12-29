@@ -304,6 +304,12 @@ class assignments extends Controller
     {
         @Validate::id($_POST['criterionId'], 'Invalid criterionId.');
         @Validate::bool($_POST['done'], 'Invalid done parameter.');
+        @Validate::id($_POST['studentId'], 'Invalid studentId.', true);
+
+        // If the user is not an admin and not the teacher teaching the subject that the assignment belongs to and studentID is not the same as the current user, return an error
+        if (!$this->auth->userIsAdmin && !Assignment::userIsTeacher($this->auth->userId, $_POST['assignmentId']) && $_POST['studentId'] !== $this->auth->userId) {
+            stop(403, 'You are not authorized to change this criterion.');
+        }
 
         // Check if the criterion exists
         if (!Db::getOne('SELECT criterionId FROM criteria WHERE criterionId = ?', [$_POST['criterionId']])) {
@@ -390,7 +396,7 @@ class assignments extends Controller
     {
         @Validate::id($_POST['assignmentId'], 'Invalid assignmentId.');
         @Validate::string($_POST['comment'], 'Invalid comment.');
-        @Validate::id($_POST['studentId'], 'Invalid studentId.', false); // false = pole kohustuslik
+        @Validate::id($_POST['studentId'], 'Invalid studentId.', false);
 
         // Read studentId from POST or use auth->userId
         $studentId = $_POST['studentId'] ?? $this->auth->userId;
