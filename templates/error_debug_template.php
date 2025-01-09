@@ -4,11 +4,12 @@
 <body>
 <div class="container">
     <div class="error-debug-container mt-4">
-        <h2 class="text-danger mb-4">Application Error</h2>
-
         <div class="card mb-4">
-            <div class="card-header bg-danger text-white">
-                Error
+            <div class="modal-header bg-orange text-dark border-bottom-0" style="background-color: #f8a14d;">
+                <h5 class="modal-title d-flex align-items-center gap-2">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Application Error
+                </h5>
             </div>
             <div class="card-body">
                 <p class="card-text"><?= htmlspecialchars($errorMessage) ?></p>
@@ -16,7 +17,7 @@
                 <p class="card-text d-flex align-items-center">
                     <?= htmlspecialchars($relativePath) ?><strong><?= htmlspecialchars($pathInfo['basename']) ?></strong>:<strong><?= $errorLine ?></strong>
                     <button class="btn btn-sm btn-outline-secondary ms-2 copy-btn"
-                            data-clipboard="<?= $relativeFullPath ?>"
+                            onclick="copyToClipboard('<?= htmlspecialchars(addslashes($relativeFullPath)) ?>')"
                             title="Copy path">
                         <i class="bi bi-clipboard"></i>
                     </button>
@@ -91,28 +92,28 @@
             <div class="card-body">
                 <table class="table table-hover stack-trace-table">
                     <thead>
-                        <tr>
-                            <th scope="col" width="50">#</th>
-                            <th scope="col">Function Call</th>
-                            <th scope="col">Location</th>
-                        </tr>
+                    <tr>
+                        <th scope="col" width="50">#</th>
+                        <th scope="col">Function Call</th>
+                        <th scope="col">Location</th>
+                    </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($stackTrace as $index => $trace): ?>
-                            <tr>
-                                <td class="frame-number">#<?= $index ?></td>
-                                <td>
-                                    <div class="<?= str_contains($trace['callString'], '::') ? 'frame-class' : 'frame-function' ?>">
-                                        <?= htmlspecialchars($trace['callString']) ?>
-                                    </div>
-                                </td>
-                                <td class="frame-file">
-                                    <?php if (isset($trace['file'])): ?>
-                                        <?= htmlspecialchars($trace['file']) ?>:<?= $trace['line'] ?>
-                                    <?php endif; ?>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
+                    <?php foreach ($stackTrace as $index => $trace): ?>
+                        <tr>
+                            <td class="frame-number">#<?= $index ?></td>
+                            <td>
+                                <div class="<?= str_contains($trace['callString'], '::') ? 'frame-class' : 'frame-function' ?>">
+                                    <?= htmlspecialchars($trace['callString']) ?>
+                                </div>
+                            </td>
+                            <td class="frame-file">
+                                <?php if (isset($trace['file'])): ?>
+                                    <?= htmlspecialchars($trace['file']) ?>:<?= $trace['line'] ?>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
                     </tbody>
                 </table>
             </div>
@@ -121,19 +122,27 @@
 </div>
 
 <script>
-    document.querySelectorAll('.copy-btn').forEach(button => {
-        button.addEventListener('click', function () {
-            const textToCopy = this.getAttribute('data-clipboard');
-            navigator.clipboard.writeText(textToCopy).then(() => {
-                // Optional: Visual feedback
-                const originalText = this.innerHTML;
-                this.innerHTML = '<i class="bi bi-check"></i>';
-                setTimeout(() => {
-                    this.innerHTML = originalText;
-                }, 1000);
-            });
-        });
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = event.currentTarget;
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = '<i class="bi bi-check"></i>';
+        setTimeout(() => {
+            btn.innerHTML = originalHtml;
+        }, 1000);
+    }).catch(err => {
+        console.error('Failed to copy text: ', err);
     });
+}
+
+document.querySelectorAll('.copy-btn:not([onclick])').forEach(button => {
+    button.addEventListener('click', function() {
+        const textToCopy = this.getAttribute('data-clipboard');
+        if (textToCopy) {
+            copyToClipboard(textToCopy);
+        }
+    });
+});
 </script>
 
 <style>

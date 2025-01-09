@@ -5,6 +5,7 @@ use App\Assignment;
 use App\Controller;
 use App\Db;
 use App\Mail;
+use App\Notify;
 use App\Validate;
 
 // add /api/groups to the URL
@@ -208,13 +209,13 @@ class assignments extends Controller
 
                 // TODO:
                 $assignmentData = Db::getFirst(
-                    "SELECT ua.userGrade, ua.userId,
-                            IF(ua.userGrade = 'MA' OR ua.userGrade IN ('1', '2'),
+                    "SELECT ua.grade, ua.userId,
+                            IF(ua.grade = 'MA' OR ua.grade IN ('1', '2'),
                                 (SELECT ac.assignmentCommentText
                                  FROM assignmentComments ac
                                  WHERE ac.assignmentId = ua.assignmentId 
                                  AND ac.userId = ua.userId
-                                 AND ac.assignmentCommentTypeId = 4
+                                 AND ac.assignmentCommentGrade IN ('MA', '1', '2')
                                  ORDER BY ac.assignmentCommentCreatedAt DESC
                                  LIMIT 1),
                                 NULL
@@ -229,7 +230,7 @@ class assignments extends Controller
 
                 if (!$assignmentData) continue;
 
-                $currentGrade = $assignmentData['userGrade'] ?? "puudub";
+                $currentGrade = $assignmentData['grade'] ?? "puudub";
                 $currentComment = $assignmentData['rejectionComment'];
 
                 $tahvelGrade = $result ? str_replace("KUTSEHINDAMINE_", "", $result['gradeCode']) : "puudub";
@@ -334,15 +335,17 @@ class assignments extends Controller
         @Validate::id($_POST['assignmentId'], 'Vigane ülesande ID');
         @Validate::url($_POST['solutionUrl']);
 
-        Assignment::userIsStudent($this->auth->userId, $_POST['assignmentId']) || 
-            stop(403, 'Teil pole õigusi sellele tegevusele.');
+        Assignment::userIsStudent($this->auth->userId, $_POST['assignmentId']) ||
+        stop(403, 'Teil pole õigusi sellele tegevusele.');
 
-        $data = ['assignmentStatusId' => 2, 'userGrade' => null, 'solutionUrl' => $_POST['solutionUrl']];
+        $data = ['assignmentStatusId' => 2, 'grade' => null, 'solutionUrl' => $_POST['solutionUrl']];
 
+        // Check if the assignment already exists
         $assignmentExisted = Db::getFirst(
             'SELECT * FROM userAssignments JOIN users USING(userId) WHERE userId = ? AND assignmentId = ?',
             [$this->auth->userId, $_POST['assignmentId']]);
 
+        // Update or insert the assignment status
         $assignmentExisted
             ? Db::update('userAssignments', $data, 'userId = ? AND assignmentId = ?', [$this->auth->userId, $_POST['assignmentId']])
             : Db::insert('userAssignments', $data + ['userId' => $this->auth->userId, 'assignmentId' => $_POST['assignmentId']]);
@@ -353,15 +356,24 @@ class assignments extends Controller
             $_POST['assignmentId'],
             "esitas ülesande lahenduse" . ($assignmentExisted ? " uuesti" : ""));
 
+        // Remove the 'proposed' status from all previous comments
+        Db::update(
+            'assignmentComments',
+            ['assignmentCommentText' => null],
+            'assignmentCommentIsProposedSolution = 1 AND assignmentId = ? AND userId = ?',
+            [$_POST['assignmentId'], $this->auth->userId]);
+
+        // Add new comment with the solution URL and the 'proposed' status
         Assignment::addComment(
             $_POST['assignmentId'],
             $this->auth->userId,
             $this->auth->userId,
             "[$_POST[solutionUrl]]($_POST[solutionUrl])",
-            ASSIGNMENT_COMMENT_TYPE_PROPOSED_SOLUTION);
+            true);
 
+        // Get data for email notification
         $subject = Db::getFirst(
-            'SELECT u.userEmail teacherEmail, s.subjectName, a.assignmentName, ua.userGrade 
+            'SELECT u.userEmail teacherEmail, s.subjectName, a.assignmentName, ua.grade 
              FROM users u
              JOIN subjects s ON u.userId = s.teacherId
              JOIN assignments a ON s.subjectId = a.subjectId
@@ -369,9 +381,10 @@ class assignments extends Controller
              WHERE a.assignmentId = ?',
             [$this->auth->userId, $_POST['assignmentId']]);
 
+        // Send email notification
         if (!empty($subject['teacherEmail'])) {
-            $emailSubject = $subject['userGrade'] ? 
-                ($subject['userGrade'] === 'MA' || (is_numeric($subject['userGrade']) && intval($subject['userGrade']) < 3)) ?
+            $emailSubject = $subject['grade'] ?
+                ($subject['grade'] === 'MA' || (is_numeric($subject['grade']) && intval($subject['grade']) < 3)) ?
                     $subject['subjectName'] . ": {$this->auth->userName} parandas ülesande '{$subject['assignmentName']}' lahendust" :
                     $subject['subjectName'] . ": {$this->auth->userName} esitas lahenduse ülesandele '{$subject['assignmentName']}'" :
                 $subject['subjectName'] . ": {$this->auth->userName} esitas lahenduse ülesandele '{$subject['assignmentName']}'";
@@ -395,21 +408,84 @@ class assignments extends Controller
     function addComment()
     {
         @Validate::id($_POST['assignmentId'], 'Invalid assignmentId.');
-        @Validate::string($_POST['comment'], 'Invalid comment.');
+        @Validate::string($_POST['assignmentCommentText'], 'Invalid comment.');
         @Validate::id($_POST['studentId'], 'Invalid studentId.', false);
 
         // Read studentId from POST or use auth->userId
         $studentId = $_POST['studentId'] ?? $this->auth->userId;
 
-        Assignment::addComment(
+        $assignmentCommentId = Assignment::addComment(
             $_POST['assignmentId'],
             $studentId,
             $this->auth->userId,
-            $_POST['comment']
+            $_POST['assignmentCommentText']
+        );
+
+        stop(200, Assignment::getComment($assignmentCommentId));
+
+    }
+
+    /**
+     * @throws \Exception
+     */
+    function gradeComment()
+    {
+        @Validate::id($_POST['assignmentId'], 'Invalid assignmentId.');
+        @Validate::id($_POST['assignmentCommentId'], 'Invalid commentId.');
+        @Validate::grade($_POST['grade'], 'Invalid grade.');
+        @Validate::string($_POST['feedback'], 'Invalid feedback.', true);
+        @Validate::id($_POST['studentId'], 'Invalid studentId.');
+
+        // Check if the user is an admin or the teacher teaching the subject that the assignment belongs to
+        if (!$this->auth->userIsAdmin && !Assignment::userIsTeacher($this->auth->userId, $_POST['assignmentId'])) {
+            stop(403, 'You are not authorized to grade assignments.');
+        }
+
+        // Check if the comment exists
+        $comment = Db::getFirst(
+            "SELECT * FROM assignmentComments WHERE assignmentCommentId = ?",
+            [$_POST['assignmentCommentId']]
+        );
+
+        if (!$comment) {
+            stop(404, 'Comment not found');
+        }
+
+        // Add feedback to the comment
+        $updatedText = $comment['assignmentCommentText'];
+        if ($_POST['feedback']) {
+            $updatedText .= "\n\n### Õpetaja tagasiside\n" . $_POST['feedback'];
+        }
+
+        // Update the comment
+        Db::update('assignmentComments',
+            [
+                'assignmentCommentText' => $updatedText,
+                'assignmentCommentGrade' => $_POST['grade']
+            ],
+            'assignmentCommentId = ?',
+            [$_POST['assignmentCommentId']]
+        );
+
+        // Update the assignment status and grade
+        Db::update('userAssignments',
+            [
+                'grade' => $_POST['grade'],
+                'assignmentStatusId' => 3
+            ],
+            'assignmentId = ? AND userId = ?',
+            [$_POST['assignmentId'], $_POST['studentId']]
+        );
+
+        // Send email notification
+        Notify::studentAboutGrade(
+            $_POST['studentId'],
+            $_POST['assignmentId'],
+            $_POST['grade'],
+            $_POST['feedback']
         );
 
         stop(200);
-
     }
 
 }

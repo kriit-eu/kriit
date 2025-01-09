@@ -4,7 +4,7 @@
 <div class="text-end me-6 mt-2">
     <button type="button" class="btn btn-secondary logout-btn"
             style="position: fixed; top: 10px; right: 10px;"
-            onclick="window.location.href = 'logout'">Logout</button>
+            onclick="window.location.href = 'logout'">Logout <?= $this->auth->userName ?></button>
 </div>
 
 <div class="container" id="container">

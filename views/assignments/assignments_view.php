@@ -207,11 +207,13 @@
 </style>
 
 <div id="app" class="container mt-5" v-cloak>
-
     <div class="position-relative">
         <h1 class="d-flex align-items-center">
+
+            <!-- Assignment name -->
             <strong class="me-auto">{{ assignment.assignmentName }}</strong>
 
+            <!-- Grade badge -->
             <div class="grade-badge" ref="gradeBadge">
                 <div v-if="isWaitingForReview" class="badge bg-warning text-black">
                     Kontrollimisel
@@ -279,7 +281,7 @@
                                        id="solutionUrl"
                                        class="form-control"
                                        v-model="solutionUrl"
-                                       :disabled="assignment.grade === 'A'"
+                                       :disabled="assignment.grade === 'A' || assignment.grade === '5'"
                                        placeholder="Sisesta lahenduse URL"
                                        required>
                                 <div class="d-inline-block"
@@ -289,7 +291,7 @@
                                             class="btn"
                                             :class="originalSolutionUrl ? 'btn-warning' : 'btn-success'"
                                             :disabled="!canSubmitSolution"
-                                            v-show="isSolutionUrlChanged || (assignment.grade !== 'A' && assignment.assignmentStatusId === <?= ASSIGNMENT_STATUS_GRADED ?>)"
+                                            v-show="isSolutionUrlChanged || (assignment.grade !== '5' && assignment.grade !== 'A' && assignment.assignmentStatusId === <?= ASSIGNMENT_STATUS_GRADED ?>)"
                                             @click="submitSolution">
                                         <template v-if="isSolutionUrlChanged">
                                             {{ originalSolutionUrl ? 'Muuda lahenduse URL-i' : 'Esita' }}
@@ -360,7 +362,6 @@
             </div>
         </div>
     </div>
-
 </div>
 
 <!-- Dependencies -->
@@ -373,6 +374,7 @@
 
 <script>
     const assignmentData = <?= json_encode($assignment); ?>;
+
 
 
     const initTooltip = (el, value) => {
@@ -423,7 +425,6 @@
             gradeClass() {
                 const grade = this.assignment.grade;
                 const assignmentStatusId = this.assignment.assignmentStatusId;
-
                 if (assignmentStatusId === <?= ASSIGNMENT_STATUS_WAITING_FOR_REVIEW ?>) {
                     return 'badge bg-warning text-white float-end';
                 } else if (['1', '2', 'MA'].includes(grade)) {
@@ -500,6 +501,13 @@
                 });
             },
             submitSolution() {
+                // Add confirmation check for grades 3 and 4
+                if (['3', '4'].includes(this.assignment.grade)) {
+                    if (!confirm('Sul on juba positiivne hinne. Kas oled kindel, et soovid lahendust uuesti esitada?')) {
+                        return;
+                    }
+                }
+
                 this.isSubmitting = true;
                 ajax('api/assignments/submitSolution', {
                     assignmentId: this.assignment.assignmentId,
@@ -523,7 +531,7 @@
             submitComment() {
                 ajax('api/assignments/addComment', {
                     assignmentId: this.assignment.assignmentId,
-                    comment: this.commentText,
+                    assignmentCommentText: this.commentText,
                     studentId: this.assignment.studentId
                 }, () => {
                     this.commentUnsaved = false;

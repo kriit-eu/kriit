@@ -72,89 +72,6 @@ class assignments extends Controller
         stop(200, 'Comment saved');
     }
 
-    function ajax_saveStudentSolutionUrl(): void
-    {
-        $assignmentId = $_POST['assignmentId'];
-        $this->checkIfUserHasPermissionForAction($assignmentId) || stop(403, 'Teil pole õigusi sellele tegevusele.');
-        $studentId = $_POST['studentId'];
-        $solutionUrl = $_POST['solutionUrl'];
-        $commentForTeacher = $_POST['comment'];
-
-        $ifStudentHasAllCriteria = $this->checkIfStudentHasAllCriteria();
-        $ifStudentHasPositiveGrade = $this->checkIfStudentHasPositiveGrade($studentId, $assignmentId);
-        $isValidUrl = $this->validateSolutionUrl($solutionUrl);
-
-        if (!$ifStudentHasAllCriteria) {
-            error_out('Teil pole täidetud kõiki kriteeriume.', 403);
-        }
-
-        if ($ifStudentHasPositiveGrade) {
-            error_out('Teil on juba positiivne hinne.', 403);
-        }
-
-        if ($isValidUrl['code'] !== 200) {
-            error_out($isValidUrl['message'], 400);
-        }
-
-
-        $existAssignment = Db::getFirst('SELECT * FROM userAssignments JOIN users USING(userId) WHERE userId = ? AND assignmentId = ? ', [$studentId, $assignmentId]);
-        if (!$existAssignment) {
-            Db::insert('userAssignments', ['userId' => $studentId, 'assignmentId' => $assignmentId, 'assignmentStatusId' => 2, 'solutionUrl' => $solutionUrl]);
-            Activity::create(ACTIVITY_SUBMIT_ASSIGNMENT, $this->auth->userId, $assignmentId, "esitas ülesande lahenduse");
-            $studentName = Db::getOne('SELECT userName FROM users WHERE userId = ?', [$studentId]);
-        } else {
-            Db::update('userAssignments', ['assignmentStatusId' => 2, 'solutionUrl' => $solutionUrl], 'userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
-            Activity::create(ACTIVITY_SUBMIT_ASSIGNMENT, $this->auth->userId, $assignmentId, "esitas ülesande lahenduse uuesti");
-            $studentName = $existAssignment['userName'];
-        }
-
-
-        if ($commentForTeacher) {
-
-            $this->addAssignmentCommentForStudent(
-                $studentId,
-                $assignmentId,
-                $commentForTeacher,
-                $studentName);
-
-            $this->saveMessage(
-                $assignmentId,
-                $studentId,
-                "$_POST[studentName] lisas kommentaari: '$commentForTeacher'",
-                true);
-        }
-
-        $mailData = $this->getSenderNameAndReceiverEmail($studentId, $_POST['teacherId']);
-        $studentName = $mailData['senderName'];
-        $teacherMail = $mailData['receiverMail'];
-        $assignment = $this->getAssignmentDetails($assignmentId);
-
-        $emailBody = $existAssignment && $existAssignment['userGrade'] && ($existAssignment['userGrade'] === 'MA' || is_numeric(intval($existAssignment['userGrade']) < 3)) ?
-            sprintf(
-                "Õpilane <strong>%s</strong> parandas ülesande '<a href=\"" . BASE_URL . "assignments/" . $assignmentId . "\"><strong>%s</strong></a> lahendust.<br><br>Lahenduse link: <a href='%s'>%s</a><br>",
-                $studentName,
-                $assignment['assignmentName'],
-                $solutionUrl,
-                $solutionUrl
-            ) :
-            sprintf(
-                "Õpilane <strong>%s</strong> esitas lahenduse ülesandele '<a href=\"" . BASE_URL . "assignments/" . $assignmentId . "\"><strong>%s</strong></a>'.<br><br>Lahenduse link: <a href='%s'>%s</a><br>", $studentName,
-                $assignment['assignmentName'],
-                $solutionUrl,
-                $solutionUrl
-            );
-
-        $subject = $existAssignment && $existAssignment['userGrade'] && ($existAssignment['userGrade'] === 'MA' || is_numeric(intval($existAssignment['userGrade']) < 3)) ?
-            $assignment['subjectName'] . ": $studentName parandas ülesande '" . $assignment['assignmentName'] . "' lahendust" :
-            $assignment['subjectName'] . ": $studentName esitas lahenduse ülesandele '" . $assignment['assignmentName'] . "'";
-
-        if ($teacherMail) {
-            $this->sendNotificationToEmail($teacherMail, $subject, $emailBody);
-        }
-
-        stop(200, 'Solution url saved');
-    }
-
     function ajax_saveMessage(): void
     {
         $assignmentId = $_POST['assignmentId'];
@@ -254,20 +171,20 @@ class assignments extends Controller
         $isUpdated = false;
 
         if (!$existUserAssignment) {
-            Db::insert('userAssignments', ['userId' => $studentId, 'assignmentId' => $assignmentId, 'userGrade' => $grade, 'assignmentStatusId' => $grade ? 3 : 1, 'comments' => '[]']);
+            Db::insert('userAssignments', ['userId' => $studentId, 'assignmentId' => $assignmentId, 'grade' => $grade, 'assignmentStatusId' => $grade ? 3 : 1, 'comments' => '[]']);
             $message = "$_POST[teacherName] lisas õpilasele $_POST[studentName] hindeks: $grade";
             $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
         } else {
             Db::update('userAssignments', [
-                'userGrade' => $grade,
+                'grade' => $grade,
                 'assignmentStatusId' => $grade ? 3 : $existUserAssignment['assignmentStatusId']
             ], 'userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
 
-            if ($existUserAssignment['userGrade'] !== $grade) {
+            if ($existUserAssignment['grade'] !== $grade) {
                 $this->saveMessage(
                     $assignmentId,
                     $_POST['teacherId'],
-                    "$_POST[teacherName] muutis õpilase $_POST[studentName] hinnet: $existUserAssignment[userGrade] -> $grade",
+                    "$_POST[teacherName] muutis õpilase $_POST[studentName] hinnet: $existUserAssignment[grade] -> $grade",
                     true);
             }
 
@@ -457,11 +374,11 @@ class assignments extends Controller
 
     private function checkIfStudentHasPositiveGrade($studentId, $assignmentId): bool
     {
-        $userGrade = Db::getOne('SELECT userGrade FROM userAssignments WHERE userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
+        $grade = Db::getOne('SELECT grade FROM userAssignments WHERE userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
 
-        return !empty($userGrade) &&
-            $userGrade !== 'MA' &&
-            (is_numeric($userGrade) && intval($userGrade) > 2);
+        return !empty($grade) &&
+            $grade !== 'MA' &&
+            (is_numeric($grade) && intval($grade) > 2);
     }
 
     private function saveMessage($assignmentId, $userId, $content, $isNotification = false): void

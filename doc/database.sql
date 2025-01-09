@@ -93,34 +93,6 @@ INSERT INTO `activityLog` VALUES
 UNLOCK TABLES;
 
 --
--- Table structure for table `assignmentCommentTypes`
---
-
-DROP TABLE IF EXISTS `assignmentCommentTypes`;
-/*!50503 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `assignmentCommentTypes` (
-  `assignmentCommentTypeId` int unsigned NOT NULL AUTO_INCREMENT,
-  `assignmentCommentTypeName` varchar(191) NOT NULL,
-  PRIMARY KEY (`assignmentCommentTypeId`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4;
-/*!50503 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `assignmentCommentTypes`
---
-
-LOCK TABLES `assignmentCommentTypes` WRITE;
-/*!40000 ALTER TABLE `assignmentCommentTypes` DISABLE KEYS */;
-INSERT INTO `assignmentCommentTypes` VALUES
-(1,'Normal comment'),
-(2,'Proposed solution'),
-(3,'Accepted solution'),
-(4,'Rejected solution');
-/*!40000 ALTER TABLE `assignmentCommentTypes` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `assignmentComments`
 --
 
@@ -132,15 +104,14 @@ CREATE TABLE `assignmentComments` (
   `userId` int unsigned NOT NULL,
   `assignmentId` int unsigned NOT NULL,
   `assignmentCommentText` text,
+  `assignmentCommentGrade` enum('MA','1','2','3','4','5','A') DEFAULT NULL,
   `assignmentCommentCreatedAt` timestamp NULL DEFAULT NULL,
   `assignmentCommentAuthorId` int unsigned DEFAULT NULL,
-  `assignmentCommentTypeId` int unsigned NOT NULL DEFAULT 1,
+  `assignmentCommentIsProposedSolution` tinyint NOT NULL DEFAULT 0,
   PRIMARY KEY (`assignmentCommentId`),
   KEY `assignmentComments_assignments_assignmentId_fk` (`assignmentId`),
-  KEY `assignmentComments_ibfk_1` (`assignmentCommentTypeId`),
   KEY `assignmentComments_users_userId_fk` (`userId`),
   CONSTRAINT `assignmentComments_assignments_assignmentId_fk` FOREIGN KEY (`assignmentId`) REFERENCES `assignments` (`assignmentId`),
-  CONSTRAINT `assignmentComments_ibfk_1` FOREIGN KEY (`assignmentCommentTypeId`) REFERENCES `assignmentCommentTypes` (`assignmentCommentTypeId`),
   CONSTRAINT `assignmentComments_users_userId_fk` FOREIGN KEY (`userId`) REFERENCES `users` (`userId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
@@ -201,7 +172,7 @@ CREATE TABLE `assignments` (
   KEY `assignments_subjectId_fk` (`subjectId`),
   KEY `idx_assignments_tahvelJournalEntryId` (`tahvelJournalEntryId`),
   CONSTRAINT `assignments_subjectId_fk` FOREIGN KEY (`subjectId`) REFERENCES `subjects` (`subjectId`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -694,7 +665,7 @@ CREATE TABLE `userAssignments` (
   `assignmentId` int unsigned NOT NULL,
   `userId` int unsigned NOT NULL,
   `assignmentStatusId` tinyint unsigned NOT NULL,
-  `userGrade` varchar(191) DEFAULT NULL,
+  `grade` varchar(191) DEFAULT NULL,
   `solutionUrl` text,
   `userAssignmentCreatedAt` datetime NOT NULL DEFAULT curtime(),
   `userAssignmentEditedAt` datetime DEFAULT NULL,
@@ -740,12 +711,12 @@ BEGIN
             SET MESSAGE_TEXT = 'Esitatud ülesandel peab olema lahenduse URL';
     END IF;
 
-    IF (NEW.assignmentStatusId = 3 AND NEW.userGrade IS NULL) THEN
+    IF (NEW.assignmentStatusId = 3 AND NEW.grade IS NULL) THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Hinnatud ülesandel peab olema hinne';
     END IF;
 
-    IF (NEW.assignmentStatusId != 3 AND NEW.userGrade IS NOT NULL) THEN
+    IF (NEW.assignmentStatusId != 3 AND NEW.grade IS NOT NULL) THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Hindamata ülesandel ei saa olla hinnet';
     END IF;
@@ -778,12 +749,12 @@ BEGIN
             SET MESSAGE_TEXT = 'Esitatud ülesandel peab olema lahenduse URL';
     END IF;
 
-    IF (NEW.assignmentStatusId = 3 AND NEW.userGrade IS NULL) THEN
+    IF (NEW.assignmentStatusId = 3 AND NEW.grade IS NULL) THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Hinnatud ülesandel peab olema hinne';
     END IF;
 
-    IF (NEW.assignmentStatusId != 3 AND NEW.userGrade IS NOT NULL) THEN
+    IF (NEW.assignmentStatusId != 3 AND NEW.grade IS NOT NULL) THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Hindamata ülesandel ei saa olla hinnet';
     END IF;
@@ -914,4 +885,4 @@ UNLOCK TABLES;
 /*!50503 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-12-29 11:44:02
+-- Dump completed on 2025-01-09 11:24:21

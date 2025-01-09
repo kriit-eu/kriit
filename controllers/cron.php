@@ -177,8 +177,8 @@ class cron extends Controller
                 a.assignmentDueAt < CURDATE()
                 AND (
                     ua.assignmentStatusId IS NULL
-                    OR ua.userGrade = 'MA'
-                    OR ua.userGrade < 3
+                    OR ua.grade = 'MA'
+                    OR ua.grade < 3
                 );");
 
         if (!empty($data)) {
@@ -229,7 +229,7 @@ class cron extends Controller
             a.assignmentId, a.assignmentName, a.assignmentInstructions, a.assignmentDueAt,
             subj.subjectName, subj.isSynchronized, subj.subjectId, t.userId AS teacherId, t.userName AS teacherName, t.userEmail AS teacherEmail,
             u.userId AS studentId, u.userName AS studentName, u.groupId,
-            ua.assignmentStatusId, ua.userGrade, ua.solutionUrl
+            ua.assignmentStatusId, ua.grade, ua.solutionUrl
         FROM assignments a
         JOIN subjects subj ON a.subjectId = subj.subjectId
         JOIN users t ON subj.teacherId = t.userId
@@ -422,7 +422,7 @@ class cron extends Controller
                     'assignmentId' => $student['assignmentId'],
                     'userId' => $student['studentId'],
                     'assignmentStatusId' => 3,
-                    'userGrade' => 'MA',
+                    'grade' => 'MA',
                 ]);
             }catch (\Exception $e){
                 stop(500, $e->getMessage());

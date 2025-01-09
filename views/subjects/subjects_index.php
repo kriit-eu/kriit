@@ -145,6 +145,28 @@
     .cursor-pointer {
         cursor: pointer;
     }
+
+    .slide-enter-active,
+    .slide-leave-active {
+        transition: all 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+        max-height: 2000px;
+        overflow: hidden;
+    }
+
+    .slide-enter-from,
+    .slide-leave-to {
+        max-height: 0;
+        opacity: 0;
+        padding: 0;
+    }
+
+    .toggle-link {
+        text-align: left;
+    }
+
+    .instructions-content {
+        margin-top: 10px;
+    }
 </style>
 <br>
 <br>
@@ -152,6 +174,7 @@
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
 <div id="app" v-cloak>
+    
     <div class="col text-end mb-3" v-if="isAdmin">
         <button class="btn btn-primary" @click="goToAdmin">Muuda</button>
     </div>
@@ -237,12 +260,19 @@
                         <!-- Instructions -->
                         <div class="card mb-4">
                             <div class="card-header">
-                                <h5 class="card-title mb-0">Juhend</h5>
-                                <span class="toggle-icon" 
-                                      :class="{ 'collapsed': !instructionsVisible }"
-                                      @click="toggleInstructions">
-                                    ��
-                                </span>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <h5 style="margin: 0;">{{ currentAssignment.assignmentName }}</h5>
+                                    <span class="toggle-link" 
+                                          @click="toggleInstructions"
+                                          style="cursor: pointer;">
+                                        {{ instructionsVisible ? 'Peida' : 'Näita' }}
+                                    </span>
+                                </div>
+                                <transition name="slide">
+                                    <div v-if="instructionsVisible" class="instructions-content">
+                                        <!-- sisu -->
+                                    </div>
+                                </transition>
                             </div>
                             <div class="card-body" v-show="instructionsVisible">
                                 <p v-html="renderMarkdown(currentAssignment.assignmentInstructions)"></p>
@@ -285,32 +315,50 @@
                                     <div v-if="currentComments.length" class="comment-section-container">
                                         <div v-for="comment in currentComments" 
                                              class="comment-entry"
-                                             :class="{ 'comment-proposed-solution': comment.assignmentCommentTypeId === 2 }">
+                                             :class="{ 'comment-proposed-solution': comment.assignmentCommentIsProposedSolution }">
                                             <div class="card">
                                                 <div class="card-body">
                                                     <div class="d-flex justify-content-between align-items-start">
                                                         <div>
-                                                            <strong>{{ comment.name }}</strong>
-                                                            <small class="text-muted">{{ comment.createdAt }}</small>
+                                                            <strong>{{ comment.assignmentCommentAuthorName }}</strong>
+                                                            <small class="text-muted">{{ comment.assignmentCommentCreatedAt }}</small>
                                                         </div>
                                                         <!-- Miniature grade buttons for proposed solutions -->
-                                                        <div v-if="comment.assignmentCommentTypeId === 2" class="d-flex gap-1">
-                                                            <button v-for="grade in ['MA', '1', '2', '3', '4', '5', 'A']"
+                                                        <div v-if="comment.assignmentCommentIsProposedSolution" class="d-flex gap-1">
+                                                            <button v-for="grade in getPossibleGrades(currentAssignment.subject)"
                                                                     :key="grade"
                                                                     class="btn btn-sm flex-grow-0"
                                                                     :class="{
-                                                                        'btn-outline-danger': ['MA', '1', '2'].includes(grade) && selectedGrade !== grade,
-                                                                        'btn-outline-success': ['3', '4', '5', 'A'].includes(grade) && selectedGrade !== grade,
-                                                                        'btn-danger active': ['MA', '1', '2'].includes(grade) && selectedGrade === grade,
-                                                                        'btn-success active': ['3', '4', '5', 'A'].includes(grade) && selectedGrade === grade
+                                                                        'btn-outline-danger': ['MA', '1', '2'].includes(grade) && comment.assignmentCommentGrade !== grade,
+                                                                        'btn-outline-success': ['3', '4', '5', 'A'].includes(grade) && comment.assignmentCommentGrade !== grade,
+                                                                        'btn-danger active': ['MA', '1', '2'].includes(grade) && comment.assignmentCommentGrade === grade,
+                                                                        'btn-success active': ['3', '4', '5', 'A'].includes(grade) && comment.assignmentCommentGrade === grade
                                                                     }"
                                                                     style="min-width: 32px; padding: 0.1rem 0.3rem;"
-                                                                    @click="selectGrade(grade)">
+                                                                    @click="handleGradeClick(comment, grade)">
                                                                 {{ grade }}
                                                             </button>
                                                         </div>
                                                     </div>
-                                                    <p v-html="renderMarkdown(comment.comment)"></p>
+                                                    <p v-html="renderMarkdown(comment.assignmentCommentText)"></p>
+                                                    
+                                                    <!-- Tagasiside vorm -->
+                                                    <div v-if="comment.showFeedbackForm" class="mt-3">
+                                                        <textarea v-model="comment.feedback" 
+                                                                  class="form-control mb-2" 
+                                                                  placeholder="Lisa tagasiside..."></textarea>
+                                                        <div class="d-flex justify-content-end gap-2">
+                                                            <button class="btn btn-secondary" 
+                                                                    @click="comment.showFeedbackForm = false">
+                                                                Tühista
+                                                            </button>
+                                                            <button class="btn btn-primary" 
+                                                                    @click="submitGrade(comment)"
+                                                                    :disabled="!comment.feedback">
+                                                                Salvesta
+                                                            </button>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -322,7 +370,7 @@
                                 <div class="mt-3 p-3">
                                     <!-- Grade Buttons -->
                                     <div class="d-flex gap-2 mb-3">
-                                        <button v-for="grade in ['MA', '1', '2', '3', '4', '5', 'A']"
+                                        <button v-for="grade in getPossibleGrades(currentAssignment.subject)"
                                                 :key="grade"
                                                 class="btn flex-grow-1"
                                                 :class="{
@@ -373,27 +421,26 @@
                 isTeacher: <?= json_encode($this->auth->userIsTeacher) ?>,
                 selectedGrade: null,
                 gradingFeedback: '',
+                gradingSystems: {
+                    'numeric_1_5': ['1', '2', '3', '4', '5'],
+                    'numeric_2_5': ['2', '3', '4', '5'],
+                    'non_numeric': ['MA', 'A']
+                }
             }
         },
         computed: {
             isStudent() {
-                // Kontrolli kas on ainult üks grupp ja selles üks õpilane
                 const allGroups = Object.values(this.groups);
-                console.log('Groups:', allGroups); // Debug info
-                
+
                 if (allGroups.length === 1) {
                     const students = Object.values(allGroups[0].students || {});
-                    console.log('Students in group:', students); // Debug info
-                    console.log('Is student view:', students.length === 1); // Debug info
                     return students.length === 1;
                 }
                 return false;
             },
             getStudentProgress() {
                 return (progress, assignment) => {
-                    console.log('Progress:', progress); // Debug info
-                    console.log('Assignment:', assignment); // Debug info
-                    
+
                     if (!progress) return { symbol: '', tooltip: '' };
                     
                     if (progress.grade) {
@@ -451,33 +498,35 @@
                 return date ? new Date(date).toLocaleDateString('et-EE') : "Pole määratud";
             },
             getBadgeClass(assignment) {
-                // Lisa siia olemasolev badge'i loogika
                 return assignment.badgeClass;
             },
             openAssignmentModal(assignment, student) {
-                
-                if (!assignment.assignmentId || !student.userId) {
-                    console.error('Missing required IDs:', { 
-                        assignmentId: assignment.assignmentId, 
-                        userId: student.userId 
-                    });
-                    return;
-                }
-
                 ajax(`assignments/${assignment.assignmentId}/${student.userId}`, null, (res) => {
                     const data = res.data;
-                    this.currentAssignment = data;
+                    console.log(data);
+                    
+                    // Leiame õige grupi ja aine
+                    let subject;
+                    for (const group of Object.values(this.groups)) {
+                        for (const [subjectId, subjectData] of Object.entries(group.subjects)) {
+                            if (subjectData.assignments && subjectData.assignments[assignment.assignmentId]) {
+                                subject = subjectData;
+                                break;
+                            }
+                        }
+                        if (subject) break;
+                    }
+                    
+                    this.currentAssignment = {
+                        ...data,
+                        subject: subject
+                    };
                     this.currentStudent = student;
                     this.currentCriteria = Object.values(data.criteria || {}).map(criterion => ({
                         ...criterion,
                         done: criterion.done === 1
                     }));
-                    this.currentComments = (data.comments || []).map(comment => ({
-                        name: comment.userName || data.studentName,
-                        createdAt: comment.assignmentCommentCreatedAt,
-                        comment: comment.assignmentCommentText,
-                        assignmentCommentTypeId: comment.assignmentCommentTypeId
-                    }));
+                    this.currentComments = data.comments || [];
 
                     this.selectedGrade = data.grade || null;
                     this.gradingFeedback = '';
@@ -491,7 +540,6 @@
                 return marked.parse(text || '');
             },
             saveUserDoneCriteria(criterion) {
-                // Kui kasutaja pole õpetaja ja üritab märget eemaldada, siis ei luba seda
                 if (!this.isTeacher && !criterion.done) {
                     criterion.done = true;
                     return;
@@ -515,15 +563,10 @@
 
                 ajax('api/assignments/addComment', {
                     assignmentId: this.currentAssignment.assignmentId,
-                    comment: this.commentText,
+                    assignmentCommentText: this.commentText,
                     studentId: this.currentStudent.userId
-                }, () => {
-                    this.currentComments.push({
-                        name: this.currentStudent.userName,
-                        createdAt: new Date().toLocaleString('et-EE'),
-                        comment: this.commentText,
-                        assignmentCommentTypeId: 1
-                    });
+                }, (response) => {
+                    this.currentComments.push(response.data);
                     this.commentText = '';
                     this.scrollToBottom();
                 }, err => {
@@ -559,7 +602,6 @@
                     });
             },
             handleAssignmentClick(assignment, student) {
-                console.log('Handling click:', { assignment, student }); // Debug info
                 if (this.isStudent) {
                     window.location.href = `assignments/${assignment.assignmentId}`;
                 } else {
@@ -581,14 +623,14 @@
                     grade: this.selectedGrade,
                     feedback: this.gradingFeedback
                 }, () => {
-                    // Värskenda UI-d pärast edukat salvestamist
                     this.currentAssignment.grade = this.selectedGrade;
                     if (this.gradingFeedback) {
                         this.currentComments.push({
-                            name: 'Süsteem',
-                            createdAt: new Date().toLocaleString('et-EE'),
-                            comment: `Hinne: ${this.selectedGrade}\n\n${this.gradingFeedback}`,
-                            assignmentCommentTypeId: 1
+                            assignmentCommentAuthorName: 'Süsteem',
+                            assignmentCommentCreatedAt: new Date().toLocaleString('et-EE'),
+                            assignmentCommentText: `Hinne: ${this.selectedGrade}\n\n${this.gradingFeedback}`,
+                            assignmentCommentGrade: this.currentAssignment.grade,
+                            assignmentCommentIsProposedSolution: 0
                         });
                     }
                     this.scrollToBottom();
@@ -596,6 +638,38 @@
                     console.error('Error saving grade:', err);
                 });
             },
+            getPossibleGrades(subject) {
+                let grades = this.gradingSystems[subject.gradingSystem] || this.gradingSystems.numeric_1_5;
+                
+                // Kui õpilasel on hinne, mis ei ole hindamissüsteemis, lisame selle
+                if (this.currentAssignment?.grade && !grades.includes(this.currentAssignment.grade)) {
+                    grades = [...grades, this.currentAssignment.grade];
+                }
+                
+                return grades;
+            },
+            handleGradeClick(comment, grade) {
+                if (!this.isTeacher) return;
+                
+                comment.selectedGrade = grade;
+                comment.showFeedbackForm = true;
+                comment.feedback = '';
+            },
+            submitGrade(comment) {
+                ajax('api/assignments/gradeComment', {
+                    assignmentId: this.currentAssignment.assignmentId,
+                    assignmentCommentId: comment.assignmentCommentId,
+                    grade: comment.selectedGrade,
+                    feedback: comment.feedback,
+                    studentId: this.currentStudent.userId
+                }, () => {
+                    comment.assignmentCommentGrade = comment.selectedGrade;
+                    comment.showFeedbackForm = false;
+                    this.currentAssignment.grade = comment.selectedGrade;
+                }, err => {
+                    console.error('Error saving grade:', err);
+                });
+            }
         },
         mounted() {
             this.modal = new bootstrap.Modal(document.getElementById('assignmentModal'));

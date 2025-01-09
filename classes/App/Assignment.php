@@ -1,4 +1,5 @@
 <?php
+
 namespace App;
 
 use App\api\assignments;
@@ -11,11 +12,12 @@ class Assignment
             SELECT
                 a.assignmentId, a.assignmentName, a.assignmentInstructions, a.assignmentDueAt,
                 s.userId AS studentId, s.userName AS studentName, s.groupId,
-                userGrade, 
+                grade, 
                 ast.assignmentStatusId as assignmentStatusId, 
                 solutionUrl,
                 ast.statusName as assignmentStatusName,
                 subj.teacherId AS teacherId,
+                subj.subjectName AS subjectName,
                 t.userName AS teacherName
             FROM assignments a
             JOIN subjects subj ON a.subjectId = subj.subjectId
@@ -46,12 +48,14 @@ class Assignment
         ];
     }
 
-    public static function userIsTeacher($userId, $assignmentId) {
+    public static function userIsTeacher($userId, $assignmentId)
+    {
 
         return !!Db::getOne('SELECT teacherId FROM assignments JOIN subjects USING (subjectId) WHERE assignmentId = ? AND teacherId = ?', [$assignmentId, $userId]);
     }
 
-    public static function userIsStudent($userId, $assignmentId) {
+    public static function userIsStudent($userId, $assignmentId)
+    {
 
         return !!Db::getOne('SELECT userId FROM assignments JOIN subjects USING (subjectId) JOIN users USING (groupId) WHERE assignmentId = ? AND userId = ?', [$assignmentId, $userId]);
     }
@@ -74,18 +78,18 @@ class Assignment
         return self::statusClassMap($isStudent, $isTeacher)[$statusName] ?? '';
     }
 
-    static function addComment($assignmentId, $userId, $authorId, $comment, $commentType = 1): void
+    static function addComment($assignmentId, $userId, $assignmentCommentAuthorId, $assignmentCommentText, bool $isProposedSolution = false): int
     {
-        @validate($comment, 'Invalid comment. It must be a string.', IS_STRING);
+        @validate($assignmentCommentText, 'Invalid comment. It must be a string.', IS_STRING);
         @validate($assignmentId, 'Invalid assignmentId.');
 
-        Db::insert('assignmentComments', [
+        return Db::insert('assignmentComments', [
             'assignmentId' => $assignmentId,
             'userId' => $userId,
-            'assignmentCommentAuthorId' => $authorId,
-            'assignmentCommentText' => $comment,
-            'assignmentCommentTypeId' => $commentType,
-            'assignmentCommentCreatedAt' => date('Y-m-d H:i:s')
+            'assignmentCommentAuthorId' => $assignmentCommentAuthorId,
+            'assignmentCommentText' => $assignmentCommentText,
+            'assignmentCommentCreatedAt' => date('Y-m-d H:i:s'),
+            'assignmentCommentIsProposedSolution' => $isProposedSolution ? 1 : 0
         ]);
 
     }
@@ -107,9 +111,35 @@ class Assignment
 
     public static function comments(int $assignmentId, int $userId): array
     {
-        return Db::getAll(
-            "SELECT * FROM assignmentComments WHERE assignmentId = ? AND userId = ?",
+        return Db::getAll("
+            SELECT
+                assignmentCommentId,
+                assignmentCommentText,
+                assignmentCommentGrade,
+                assignmentCommentAuthorId,
+                assignmentCommentCreatedAt,
+                assignmentCommentIsProposedSolution,
+                u.userName as assignmentCommentAuthorName
+            FROM assignmentComments ac
+            JOIN users u ON u.userId = ac.assignmentCommentAuthorId 
+            WHERE ac.assignmentId = ? AND ac.userId = ?",
             [$assignmentId, $userId]
         );
+    }
+
+    /**
+     * @param int $assignmentCommentId
+     * @return array|false|null
+     */
+    public static function getComment(int $assignmentCommentId): array|null|false
+    {
+        return Db::getFirst("
+            SELECT assignmentCommentId, 
+                   assignmentCommentText, 
+                   assignmentCommentCreatedAt, 
+                   assignmentCommentGrade, userName as assignmentCommentAuthorName 
+            FROM assignmentComments c 
+            JOIN users u ON c.assignmentCommentAuthorId = u.userId 
+            WHERE assignmentCommentId = ?", [$assignmentCommentId]);
     }
 }

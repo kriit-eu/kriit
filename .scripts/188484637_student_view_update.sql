@@ -1,19 +1,6 @@
 /* Mariadb 10.5.12 */
 set foreign_key_checks = 0;
 
-drop table if exists assignmentCommentTypes;
-CREATE TABLE assignmentCommentTypes
-(
-    assignmentCommentTypeId   INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    assignmentCommentTypeName VARCHAR(191) NOT NULL
-);
-
-INSERT INTO assignmentCommentTypes (assignmentCommentTypeName)
-VALUES ('Normal comment'),
-       ('Proposed solution'),
-       ('Accepted solution'),
-       ('Rejected solution');
-
 drop table if exists assignmentComments;
 create table assignmentComments
 (
@@ -23,12 +10,10 @@ create table assignmentComments
     assignmentCommentText      text                   null,
     assignmentCommentCreatedAt timestamp              null,
     assignmentCommentAuthorId  int unsigned           null,
-    assignmentCommentTypeId    int unsigned default 1 not null,
+    assignmentCommentIsProposedSolution    tinyint unsigned default 0 not null,
     primary key (assignmentCommentId),
     constraint assignmentComments_assignments_assignmentId_fk
         foreign key (assignmentId) references assignments (assignmentId),
-    constraint assignmentComments_ibfk_1
-        foreign key (assignmentCommentTypeId) references assignmentCommentTypes (assignmentCommentTypeId),
     constraint assignmentComments_users_userId_fk
         foreign key (userId) references users (userId)
 );

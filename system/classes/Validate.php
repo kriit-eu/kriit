@@ -25,6 +25,17 @@ class Validate
         }
     }
 
+    public static function grade($value, $message = 'Vigane hinne', $optional = false): void
+    {
+        if ($optional && empty($value)) {
+            return;
+        }
+
+        if (!is_string($value) || !in_array($value, ['MA', '1', '2', '3', '4', '5', 'A'])) {
+            stop(400, $message);
+        }
+    }
+
     public static function url(string $url, string $message = 'Vigane URL', $optional = false): void
     {
         if ($optional && empty($url)) {

@@ -277,7 +277,7 @@
         },RELOAD, function(res){
             spinner.remove();
             clickedBtn.css('display','block');
-            showModal('Error', res);
+            showError('Error', res);
         })
     })
 

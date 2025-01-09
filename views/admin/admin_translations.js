@@ -16,7 +16,7 @@ $(function () {
                 cell.addClass('alert-success');
             }, function (res) {
                 if (typeof res !== 'undefined') {
-                    showModal('Error', res)
+                    showError('Error', res)
                 }
                 cell.addClass('alert-danger');
             });

@@ -18,6 +18,6 @@
     </li>
     <?php endif ?>
     <li class="nav-item">
-        <a class="nav-link" href="logout"><?= __('Logout') ?></a>
+        <a class="nav-link" href="logout"><?= __('Logout') ?> <?= $this->auth->userName ?></a>
     </li>
 </ul>

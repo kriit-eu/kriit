@@ -10,7 +10,8 @@
     "sentry/sdk": "^3.5",
     "ext-mbstring": "*",
     "erusev/parsedown": "^1.7",
-    "ext-curl": "*"
+    "ext-curl": "*",
+    "pusher/pusher-php-server": "^7.2"
   },
   "autoload": {
     "psr-4": {

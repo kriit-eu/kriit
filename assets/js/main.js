@@ -6,23 +6,50 @@ const RELOAD = 33;
  * Assumes the HTML has an element #errorModal with child elements
  * #errorModalLabel (for title) and #errorModalBody (for the message).
  */
-function showModal(title, body) {
-    const error_modal = document.getElementById("error-modal");
+function showError(title, body) {
+    const errorModal = document.getElementById("error-modal");
 
     if(!body){
         body = '<i>Serveri vastust ei saanud tuvastada. Palun proovige uuesti.</i>';
     }
 
-    error_modal.querySelector('.modal-body').innerHTML = body;
+    errorModal.querySelector('.modal-body').innerHTML = body;
 
     if (title) {
-        error_modal.querySelector('.modal-title').innerHTML = title;
+        errorModal.querySelector('.modal-title').innerHTML = title;
     }
 
-    const bootstrapModal = new bootstrap.Modal(error_modal);
+    errorModal.querySelectorAll('.copy-btn').forEach(button => {
+        if (button.hasAttribute('onclick')) {
+            const originalOnClick = button.getAttribute('onclick');
+            const match = originalOnClick.match(/copyToClipboard\('([^']+)'\)/);
+            if (match) {
+                const textToCopy = match[1];
+                button.removeAttribute('onclick');
+                button.addEventListener('click', () => copyToClipboard(textToCopy));
+            }
+        } else if (button.hasAttribute('data-clipboard')) {
+            const textToCopy = button.getAttribute('data-clipboard');
+            button.addEventListener('click', () => copyToClipboard(textToCopy));
+        }
+    });
+
+    const bootstrapModal = new bootstrap.Modal(errorModal);
     bootstrapModal.show();
 }
-  
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = event.currentTarget;
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = '<i class="bi bi-check"></i>';
+        setTimeout(() => {
+            btn.innerHTML = originalHtml;
+        }, 1000);
+    }).catch(err => {
+        console.error('Failed to copy text: ', err);
+    });
+}
 
 /**
  * Sends a POST request to a PHP server expecting JSON response
@@ -44,7 +71,7 @@ async function ajax(url, payload, onSuccessOrRedirect, onError) {
 
         const text = await res.text();
         if (!text.trim()) {
-            showModal('Error', 'Server returned an empty response');
+            showError('Error', 'Server returned an empty response');
             return;
         }
 
@@ -52,7 +79,7 @@ async function ajax(url, payload, onSuccessOrRedirect, onError) {
         try {
             json = JSON.parse(text);
         } catch {
-            showModal(res.ok ? 'Error' : `Error ${res.status}`, text);
+            showError(res.ok ? 'Error' : `Error ${res.status}`, text);
             return;
         }
 
@@ -62,10 +89,10 @@ async function ajax(url, payload, onSuccessOrRedirect, onError) {
             if (typeof onSuccessOrRedirect === 'function') onSuccessOrRedirect(json);
             else if (onSuccessOrRedirect === RELOAD) location.reload();
             else if (typeof onSuccessOrRedirect === 'string') location.href = onSuccessOrRedirect;
-        } else onError?.(json) || showModal(res.ok ? 'Error' : `Error ${res.status}`, data || 'Unknown error');
+        } else onError?.(json) || showError(res.ok ? 'Error' : `Error ${res.status}`, data || 'Unknown error');
 
     } catch (err) {
-        showModal('Error', `Network error: ${err.message}`);
+        showError('Error', `Network error: ${err.message}`);
         onError?.(err);
     }
 }
