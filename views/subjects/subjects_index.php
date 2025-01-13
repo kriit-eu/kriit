@@ -101,10 +101,61 @@
         max-height: 400px;
         overflow-y: auto;
         border-bottom: 1px solid #d5d9dc;
+        position: relative;
+        background-color: #f8f9fa;
+    }
+
+    .scroll-to-top {
+        position: sticky;
+        top: 10px;
+        right: 10px;
+        float: right;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        z-index: 2;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background-color: rgba(0, 0, 0, 0.5);
+        color: white;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 10px;
+    }
+
+    .scroll-to-top:hover {
+        background-color: rgba(0, 0, 0, 0.7);
+    }
+
+    .comments-container.has-overflow .scroll-to-top {
+        opacity: 1;
+    }
+
+    .comments-container::before {
+        content: '';
+        position: sticky;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 30px;
+        background: linear-gradient(180deg, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0) 100%);
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        z-index: 2;
+        display: block;
+    }
+
+    .comments-container.has-overflow::before {
+        opacity: 1;
     }
 
     .comment-section-container {
         background-color: #f8f9fa;
+        position: relative;
     }
 
     .comment-entry {
@@ -162,10 +213,58 @@
 
     .toggle-link {
         text-align: left;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        color: #6c757d;
+        text-decoration: none;
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 4px;
+        transition: background-color 0.2s ease;
+    }
+
+    .toggle-link:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    .edit-button {
+        display: inline-flex;
+        align-items: center;
+        color: #6c757d;
+        background: none;
+        border: none;
+        padding: 4px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        font-size: 16px;
+    }
+
+    .edit-button:hover {
+        background-color: rgba(0, 0, 0, 0.05);
     }
 
     .instructions-content {
         margin-top: 10px;
+    }
+
+    .modal-content.grade-bg-danger .modal-body {
+        background-color: #f8d7da;
+    }
+
+    .modal-content.grade-bg-success .modal-body {
+        background-color: #e8f5e9;
+    }
+
+    .modal-content.grade-bg-none .modal-body {
+        background-color: #ffffff;
+    }
+
+    .modal-header {
+        background-color: #ffffff;
+        border-top-left-radius: inherit;
+        border-top-right-radius: inherit;
     }
 </style>
 <br>
@@ -178,8 +277,6 @@
     <div class="col text-end mb-3" v-if="isAdmin">
         <button class="btn btn-primary" @click="goToAdmin">Muuda</button>
     </div>
-
-    <pre>{{ isStudent }}</pre>
 
     <div class="row">
         <template v-for="group in Object.values(groups)">
@@ -249,10 +346,18 @@
     <!-- Modal -->
     <div class="modal fade" id="assignmentModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
-            <div class="modal-content">
+            <div class="modal-content" :class="getModalGradeClass">
                 <div class="modal-header">
-                    <h5 class="modal-title">{{ currentAssignment?.assignmentName }} - {{ currentStudent?.userName
-                        }}</h5>
+                    <h5 class="modal-title">
+                        <span v-if="currentAssignment?.grade" class="badge me-2"
+                              :class="{
+                                  'bg-danger': ['MA', '1', '2'].includes(currentAssignment.grade),
+                                  'bg-success': ['3', '4', '5', 'A'].includes(currentAssignment.grade)
+                              }">
+                            {{ currentAssignment.grade }}
+                        </span>
+                        {{ currentAssignment?.assignmentName }} - {{ currentStudent?.userName }}
+                    </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body" v-if="currentAssignment">
@@ -260,13 +365,32 @@
                         <!-- Instructions -->
                         <div class="card mb-4">
                             <div class="card-header">
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <h5 style="margin: 0;">{{ currentAssignment.assignmentName }}</h5>
-                                    <span class="toggle-link" 
-                                          @click="toggleInstructions"
-                                          style="cursor: pointer;">
-                                        {{ instructionsVisible ? 'Peida' : 'Näita' }}
-                                    </span>
+                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px;">
+                                    <div class="flex-grow-1" style="min-width: 0;">
+                                        <h5 v-if="!editingTitle" style="margin: 0; overflow: hidden; text-overflow: ellipsis;">{{ currentAssignment.assignmentName }}</h5>
+                                        <div v-else class="d-flex gap-2">
+                                            <input type="text" 
+                                                   class="form-control"
+                                                   v-model="editedTitle"
+                                                   @keyup.enter="saveTitle"
+                                                   @keyup.esc="cancelEditingTitle"
+                                                   ref="titleInput">
+                                            <button class="btn btn-sm btn-success" @click="saveTitle">✓</button>
+                                            <button class="btn btn-sm btn-secondary" @click="cancelEditingTitle">✕</button>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                                        <span class="toggle-link" 
+                                              @click="toggleInstructions">
+                                            {{ instructionsVisible ? 'Peida' : 'Näita' }} {{ instructionsVisible ? '▼' : '▶' }}
+                                        </span>
+                                        <button v-if="isTeacher && !editingTitle" 
+                                                class="edit-button" 
+                                                @click="startEditingTitle"
+                                                title="Muuda pealkirja">
+                                            ✎
+                                        </button>
+                                    </div>
                                 </div>
                                 <transition name="slide">
                                     <div v-if="instructionsVisible" class="instructions-content">
@@ -275,7 +399,26 @@
                                 </transition>
                             </div>
                             <div class="card-body" v-show="instructionsVisible">
-                                <p v-html="renderMarkdown(currentAssignment.assignmentInstructions)"></p>
+                                <div v-if="!editingInstructions">
+                                    <div class="d-flex justify-content-end mb-2" v-if="isTeacher">
+                                        <button class="btn btn-sm btn-link" 
+                                                @click="startEditingInstructions"
+                                                title="Muuda juhiseid">
+                                            ✎ Muuda
+                                        </button>
+                                    </div>
+                                    <p v-html="renderMarkdown(currentAssignment.assignmentInstructions)"></p>
+                                </div>
+                                <div v-else>
+                                    <div class="d-flex gap-2 mb-2">
+                                        <button class="btn btn-sm btn-success" @click="saveInstructions">Salvesta</button>
+                                        <button class="btn btn-sm btn-secondary" @click="cancelEditingInstructions">Tühista</button>
+                                    </div>
+                                    <textarea class="form-control" 
+                                              v-model="editedInstructions"
+                                              rows="10"
+                                              ref="instructionsInput"></textarea>
+                                </div>
                             </div>
                         </div>
 
@@ -312,6 +455,11 @@
                             </div>
                             <div class="card-body p-0">
                                 <div class="comments-container" ref="commentsContainer">
+                                    <button class="scroll-to-top" 
+                                            @click="scrollToTop" 
+                                            title="Keri üles">
+                                        ↑
+                                    </button>
                                     <div v-if="currentComments.length" class="comment-section-container">
                                         <div v-for="comment in currentComments" 
                                              class="comment-entry"
@@ -319,25 +467,27 @@
                                             <div class="card">
                                                 <div class="card-body">
                                                     <div class="d-flex justify-content-between align-items-start">
-                                                        <div>
-                                                            <strong>{{ comment.assignmentCommentAuthorName }}</strong>
-                                                            <small class="text-muted">{{ comment.assignmentCommentCreatedAt }}</small>
+                                                        <div class="d-flex align-items-baseline">
+                                                            <strong class="text-body">{{ comment.assignmentCommentAuthorName }}</strong>
                                                         </div>
-                                                        <!-- Miniature grade buttons for proposed solutions -->
-                                                        <div v-if="comment.assignmentCommentIsProposedSolution" class="d-flex gap-1">
-                                                            <button v-for="grade in getPossibleGrades(currentAssignment.subject)"
-                                                                    :key="grade"
-                                                                    class="btn btn-sm flex-grow-0"
-                                                                    :class="{
-                                                                        'btn-outline-danger': ['MA', '1', '2'].includes(grade) && comment.assignmentCommentGrade !== grade,
-                                                                        'btn-outline-success': ['3', '4', '5', 'A'].includes(grade) && comment.assignmentCommentGrade !== grade,
-                                                                        'btn-danger active': ['MA', '1', '2'].includes(grade) && comment.assignmentCommentGrade === grade,
-                                                                        'btn-success active': ['3', '4', '5', 'A'].includes(grade) && comment.assignmentCommentGrade === grade
-                                                                    }"
-                                                                    style="min-width: 32px; padding: 0.1rem 0.3rem;"
-                                                                    @click="handleGradeClick(comment, grade)">
-                                                                {{ grade }}
-                                                            </button>
+                                                        <div class="d-flex align-items-center gap-3">
+                                                            <!-- Miniature grade buttons for proposed solutions -->
+                                                            <div v-if="comment.assignmentCommentIsProposedSolution" class="d-flex gap-1">
+                                                                <button v-for="grade in getPossibleGrades(currentAssignment.subject)"
+                                                                        :key="grade"
+                                                                        class="btn btn-sm flex-grow-0"
+                                                                        :class="{
+                                                                            'btn-outline-danger': ['MA', '1', '2'].includes(grade) && comment.assignmentCommentGrade !== grade,
+                                                                            'btn-outline-success': ['3', '4', '5', 'A'].includes(grade) && comment.assignmentCommentGrade !== grade,
+                                                                            'btn-danger active': ['MA', '1', '2'].includes(grade) && comment.assignmentCommentGrade === grade,
+                                                                            'btn-success active': ['3', '4', '5', 'A'].includes(grade) && comment.assignmentCommentGrade === grade
+                                                                        }"
+                                                                        style="min-width: 32px; padding: 0.1rem 0.3rem;"
+                                                                        @click="handleGradeClick(comment, grade)">
+                                                                    {{ grade }}
+                                                                </button>
+                                                            </div>
+                                                            <small class="text-muted" style="margin-top: 2px;">{{ comment.assignmentCommentCreatedAt }}</small>
                                                         </div>
                                                     </div>
                                                     <p v-html="renderMarkdown(comment.assignmentCommentText)"></p>
@@ -370,29 +520,62 @@
                                 <div class="mt-3 p-3">
                                     <!-- Grade Buttons -->
                                     <div class="d-flex gap-2 mb-3">
-                                        <button v-for="grade in getPossibleGrades(currentAssignment.subject)"
-                                                :key="grade"
+                                        <button v-for="grade in getRegularGrades(currentAssignment.subject)"
+                                                :key="grade || 'none'"
                                                 class="btn flex-grow-1"
                                                 :class="{
                                                     'btn-outline-danger': ['MA', '1', '2'].includes(grade) && selectedGrade !== grade,
-                                                    'btn-outline-success': ['3', '4', '5', 'A'].includes(grade) && selectedGrade !== grade,
+                                                    'btn-outline-success': ['3', '4', '5'].includes(grade) && selectedGrade !== grade,
+                                                    'btn-outline-secondary': grade === null && selectedGrade !== null,
                                                     'btn-danger active': ['MA', '1', '2'].includes(grade) && selectedGrade === grade,
-                                                    'btn-success active': ['3', '4', '5', 'A'].includes(grade) && selectedGrade === grade
+                                                    'btn-success active': ['3', '4', '5'].includes(grade) && selectedGrade === grade,
+                                                    'btn-secondary active': grade === null && selectedGrade === null
                                                 }"
                                                 @click="selectGrade(grade)">
-                                            {{ grade }}
+                                            {{ grade || 'Hinne puudub' }}
+                                        </button>
+                                        
+                                        <!-- A Grade Dropdown for binary grading -->
+                                        <div class="dropdown" v-if="currentAssignment.subject.gradingSystem === 'non_numeric'">
+                                            <button class="btn btn-outline-success dropdown-toggle flex-grow-1"
+                                                    :class="{'active': selectedGrade === 'A'}"
+                                                    type="button"
+                                                    data-bs-toggle="dropdown"
+                                                    data-bs-auto-close="true"
+                                                    ref="aGradeDropdown">
+                                                {{ selectedGrade === 'A' ? getSelectedAGradeDisplay() : 'A' }}
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li v-for="grade in ['A', 'A+', 'A++', 'A+++']">
+                                                    <a class="dropdown-item" 
+                                                       href="#" 
+                                                       @click.prevent="selectGrade(grade); $refs.aGradeDropdown.click()"
+                                                       :class="{'active': selectedGrade === 'A' && selectedAVariant === grade}">
+                                                        {{ grade }}
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+
+                                        <!-- 5+ option for numeric grading -->
+                                        <button v-if="currentAssignment.subject.gradingSystem.startsWith('numeric')"
+                                                class="btn btn-outline-success flex-grow-1"
+                                                :class="{'active': selectedGrade === '5' && selectedAVariant === 'A+++'}"
+                                                @click="selectGrade('5+')">
+                                            5+
                                         </button>
                                     </div>
 
                                     <textarea v-model="commentText"
                                               class="form-control mb-2"
                                               rows="3"
-                                              placeholder="Lisa kommentaar..."></textarea>
+                                              @input="handleCommentInput"
+                                              :placeholder="selectedGrade ? 'Lisa tagasiside hindele (valikuline)...' : 'Lisa kommentaar...'"></textarea>
                                     <div class="comment-actions">
                                         <button class="btn btn-primary"
                                                 @click="submitComment"
-                                                :disabled="!commentText.trim() && !selectedGrade">
-                                            Saada
+                                                :disabled="!commentText.trim() && (selectedGrade === undefined || selectedGrade === currentAssignment?.grade)">
+                                            {{ getSaveButtonText }}
                                         </button>
                                     </div>
                                 </div>
@@ -416,6 +599,7 @@
                 currentCriteria: [],
                 currentComments: [],
                 commentText: '',
+                commentTouched: false,
                 modal: null,
                 instructionsVisible: false,
                 isTeacher: <?= json_encode($this->auth->userIsTeacher) ?>,
@@ -425,7 +609,58 @@
                     'numeric_1_5': ['1', '2', '3', '4', '5'],
                     'numeric_2_5': ['2', '3', '4', '5'],
                     'non_numeric': ['MA', 'A']
-                }
+                },
+                feedbackTemplates: {
+                    'positive': [
+                        "✓ Hästi tehtud! Ülesanne on korrektselt lahendatud.",
+                        "✓ Tubli töö! Kõik vajalik on olemas.",
+                        "✓ Hea lahendus! Põhilised nõuded on täidetud.",
+                        "✓ Korralik töö! Ülesanne on lahendatud nõuetekohaselt.",
+                        "✓ Hästi! Kõik olulised osad on kaetud.",
+                        "✓ Tubli! Ülesanne on lahendatud ootuspäraselt.",
+                        "🌟 Suurepärane töö! Kõik kriteeriumid on täidetud väga heal tasemel. Jätka samas vaimus! 💪",
+                        "✨ Väga tubli! Sinu lahendus näitab põhjalikku arusaamist teemast. 🎯",
+                        "🎉 Hästi tehtud! Sinu töö on läbimõeldud ja korrektselt vormistatud. 👏",
+                        "⭐ Muljetavaldav lahendus! Näed, et oled teemasse süvenenud ja andnud endast parima. 🏆"
+                    ],
+                    'excellent': [
+                        "🌟 Väga hästi tehtud! Sinu lahendus on põhjalik ja läbimõeldud.",
+                        "⭐ Suurepärane töö! Näitad head arusaamist teemast.",
+                        "✨ Tubli! Sinu lahendus on kvaliteetne ja detailne.",
+                        "🌟 Väga hea! Sinu töö näitab põhjalikku lähenemist.",
+                        "⭐ Suurepärane! Lahendus on hästi struktureeritud ja selge.",
+                        "✨ Väga tubli! Oled näidanud head analüütilist mõtlemist.",
+                        "🌟 Hästi tehtud! Sinu töö on põhjalik ja läbimõeldud.",
+                        "⭐ Tubli töö! Näitad head arusaamist ja püüdlikkust."
+                    ],
+                    'outstanding': [
+                        "🏆 Suurepärane töö! Sinu lahendus on eeskujulik ja põhjalik! 🌟",
+                        "🎯 Väga muljetavaldav! Oled näidanud sügavat arusaamist ja pühendumist! ⭐",
+                        "💫 Oivaline sooritus! Sinu töö kvaliteet on silmapaistev! ✨",
+                        "🏆 Väga tubli! Sinu lahendus on läbimõeldud ja innovaatiline! 🌟",
+                        "🎯 Suurepärane! Oled näidanud erakordset tähelepanelikkust! ⭐",
+                        "💫 Väga muljetavaldav töö! Sinu lähenemine on loominguline ja põhjalik! ✨",
+                        "🏆 Oivaline! Sinu töö on detailne ja hästi argumenteeritud! 🌟",
+                        "🎯 Suurepärane sooritus! Näitad sügavat arusaamist ja loovust! ⭐",
+                        "💫 Väga tubli! Sinu lahendus on läbimõeldud ja professionaalne! ✨"
+                    ],
+                    'exceptional': [
+                        "🌟 VÄGEV TÖÖ! Sinu lahendus on absoluutselt silmapaistev! Oled seadnud uue standardi! 🏆 ⭐",
+                        "🎯 FANTASTILINE! Sinu töö on täiuslik näide eeskujulikust lahendusest! Imetlusväärne! 💫 🌟",
+                        "✨ BRILJANTNE! Sinu pühendumus ja meisterlikkus on ülimalt muljetavaldavad! Oled end ületanud! 🌟 💪",
+                        "🌟 SUUREPÄRANE! Sinu lahendus on geniaalne ja innovaatiline! Oled tõeline eeskuju! 🏆 ⭐",
+                        "🎯 HÄMMASTAV! Sinu töö on täiuslik kombinatsioon loovusest ja täpsusest! Vau! 💫 🌟",
+                        "✨ FENOMENAALNE! Sinu lähenemine on revolutsiooniline ja inspireeriv! Oled tõeline talent! 🌟 💪",
+                        "🌟 MEISTERLIK! Sinu töö on absoluutne tippklass! Oled ületanud kõik ootused! 🏆 ⭐",
+                        "🎯 VÕRRATU! Sinu lahendus on pööraselt hea! Oled seadnud uue kuldstandardi! 💫 🌟",
+                        "✨ GENIAALNE! Sinu töö on täiesti erakordne! Oled näidanud tõelist meisterlikkust! 🌟 💪"
+                    ]
+                },
+                selectedAVariant: null,
+                editingTitle: false,
+                editingInstructions: false,
+                editedTitle: '',
+                editedInstructions: '',
             }
         },
         computed: {
@@ -488,6 +723,21 @@
 
                     return { symbol: '', tooltip: 'Ootel' };
                 };
+            },
+            getModalGradeClass() {
+                const gradeToCheck = this.selectedGrade || this.currentAssignment?.grade;
+                if (!gradeToCheck) return 'grade-bg-none';
+                if (['MA', '1', '2'].includes(gradeToCheck)) return 'grade-bg-danger';
+                if (['3', '4', '5', 'A'].includes(gradeToCheck)) return 'grade-bg-success';
+                return 'grade-bg-none';
+            },
+            getSaveButtonText() {
+                const hasComment = this.commentText.trim().length > 0;
+                const gradeChanged = this.selectedGrade !== this.currentAssignment?.grade;
+                
+                if (gradeChanged && hasComment) return 'Salvesta kommentaar ja hinne';
+                if (gradeChanged) return 'Salvesta hinne';
+                return 'Salvesta kommentaar';
             }
         },
         methods: {
@@ -559,25 +809,102 @@
                 });
             },
             submitComment() {
-                if (!this.commentText.trim()) return;
+                if (this.selectedGrade !== undefined) {
+                    // If a grade is selected or being removed, save both grade and comment
+                    const oldGrade = this.currentAssignment.grade;
+                    const gradeChanged = oldGrade !== this.selectedGrade;
 
-                ajax('api/assignments/addComment', {
-                    assignmentId: this.currentAssignment.assignmentId,
-                    assignmentCommentText: this.commentText,
-                    studentId: this.currentStudent.userId
-                }, (response) => {
-                    this.currentComments.push(response.data);
-                    this.commentText = '';
-                    this.scrollToBottom();
-                }, err => {
-                    console.error('Error submitting comment:', err);
-                });
+                    // If grade is changing but no feedback is provided, ask for confirmation
+                    if (gradeChanged && !this.commentText.trim()) {
+                        if (!confirm('Kas olete kindel, et soovite muuta hinnet ilma tagasisideta?')) {
+                            return;
+                        }
+                    }
+
+                    // Prepare the comment text for grade changes
+                    let commentText = this.commentText;
+
+                    if (gradeChanged) {
+                        const getBadgeClass = grade => {
+                            if (grade === null) return 'bg-secondary';
+                            if (['MA', '1', '2'].includes(grade)) return 'bg-danger';
+                            if (['3', '4', '5', 'A'].includes(grade)) return 'bg-success';
+                            return 'bg-secondary';
+                        };
+
+                        const oldGradeBadge = `<span class="badge ${getBadgeClass(oldGrade)}">${oldGrade || 'Hinne puudub'}</span>`;
+                        const newGradeBadge = `<span class="badge ${getBadgeClass(this.selectedGrade)}">${this.selectedGrade || 'Hinne puudub'}</span>`;
+                        
+                        const gradeText = `Hinne: ${oldGradeBadge} ➜ ${newGradeBadge}`;
+                        commentText = this.commentText.trim()
+                            ? `${gradeText}\n\n${this.commentText}`
+                            : gradeText;
+                    }
+
+                    ajax('api/assignments/grade', {
+                        assignmentId: this.currentAssignment.assignmentId,
+                        studentId: this.currentStudent.userId,
+                        grade: this.selectedGrade,
+                        feedback: commentText
+                    }, () => {
+                        // Update the current assignment grade
+                        this.currentAssignment.grade = this.selectedGrade;
+                        
+                        // Update the grid's studentProgress data
+                        for (const group of Object.values(this.groups)) {
+                            for (const subject of Object.values(group.subjects)) {
+                                if (subject.assignments && subject.assignments[this.currentAssignment.assignmentId]) {
+                                    if (!subject.assignments[this.currentAssignment.assignmentId].studentProgress) {
+                                        subject.assignments[this.currentAssignment.assignmentId].studentProgress = {};
+                                    }
+                                    if (!subject.assignments[this.currentAssignment.assignmentId].studentProgress[this.currentStudent.userId]) {
+                                        subject.assignments[this.currentAssignment.assignmentId].studentProgress[this.currentStudent.userId] = {};
+                                    }
+                                    subject.assignments[this.currentAssignment.assignmentId].studentProgress[this.currentStudent.userId].grade = this.selectedGrade;
+                                    subject.assignments[this.currentAssignment.assignmentId].studentProgress[this.currentStudent.userId].assignmentStatusId = this.selectedGrade ? '3' : '2';
+                                }
+                            }
+                        }
+                        
+                        // The grade endpoint already adds the comment, so we don't need to add it again
+                        if (gradeChanged || this.commentText.trim()) {
+                            // Refresh comments to show the new comment
+                            ajax(`assignments/${this.currentAssignment.assignmentId}/${this.currentStudent.userId}`, null, (res) => {
+                                this.currentComments = res.data.comments || [];
+                                this.scrollToBottom();
+                                this.modal.hide();
+                            });
+                        } else {
+                            this.modal.hide();
+                        }
+                        
+                        this.commentText = '';
+                        this.selectedGrade = null;
+                    }, err => {
+                        console.error('Error saving grade:', err);
+                    });
+                } else if (this.commentText.trim()) {
+                    // If no grade selected but has comment text, save as regular comment
+                    ajax('api/assignments/addComment', {
+                        assignmentId: this.currentAssignment.assignmentId,
+                        assignmentCommentText: this.commentText,
+                        studentId: this.currentStudent.userId
+                    }, (response) => {
+                        this.currentComments.push(response.data);
+                        this.commentText = '';
+                        this.scrollToBottom();
+                        this.modal.hide();
+                    }, err => {
+                        console.error('Error submitting comment:', err);
+                    });
+                }
             },
             scrollToBottom() {
                 if (this.$refs.commentsContainer) {
                     this.$nextTick(() => {
                         const container = this.$refs.commentsContainer;
                         container.scrollTop = container.scrollHeight;
+                        this.updateCommentsContainerShadow();
                     });
                 }
             },
@@ -611,8 +938,86 @@
             toggleInstructions() {
                 this.instructionsVisible = !this.instructionsVisible;
             },
+            getRegularGrades(subject) {
+                // For non_numeric, exclude 'A' as it's handled by dropdown
+                if (subject.gradingSystem === 'non_numeric') {
+                    return ['MA', null];
+                }
+                // For numeric, include all numeric grades (5+ is handled separately)
+                return [...this.gradingSystems[subject.gradingSystem], null];
+            },
+            getSelectedAGradeDisplay() {
+                return this.selectedAVariant || 'A';
+            },
             selectGrade(grade) {
-                this.selectedGrade = this.selectedGrade === grade ? null : grade;
+                if (grade === '5+') {
+                    this.selectedGrade = '5';
+                    this.selectedAVariant = 'A+++';
+                } else if (grade?.startsWith('A')) {
+                    this.selectedGrade = 'A';
+                    this.selectedAVariant = grade;
+                } else {
+                    this.selectedGrade = grade;
+                    this.selectedAVariant = null;
+                }
+
+                // Update comment if it hasn't been manually edited or is empty
+                if (!this.commentTouched || !this.commentText.trim()) {
+                    let feedbackLevel = 'positive';
+                    
+                    if (this.selectedAVariant) {
+                        feedbackLevel = {
+                            'A': 'positive',
+                            'A+': 'excellent',
+                            'A++': 'outstanding',
+                            'A+++': 'exceptional'
+                        }[this.selectedAVariant];
+                    } else if (this.selectedGrade) {
+                        feedbackLevel = {
+                            '3': 'positive',
+                            '4': 'excellent',
+                            '5': 'outstanding'
+                        }[this.selectedGrade] || 'positive';
+                    }
+
+                    if (feedbackLevel) {
+                        const feedbackArray = this.feedbackTemplates[feedbackLevel];
+                        const randomIndex = Math.floor(Math.random() * feedbackArray.length);
+                        this.commentText = feedbackArray[randomIndex];
+                        this.commentTouched = false;  // Reset touched state as we're using a template
+                    }
+                }
+            },
+            removeGrade() {
+                if (confirm('Kas olete kindel, et soovite hinde eemaldada?')) {
+                    ajax('api/assignments/grade', {
+                        assignmentId: this.currentAssignment.assignmentId,
+                        studentId: this.currentStudent.userId,
+                        grade: null,
+                        feedback: 'Hinne eemaldatud'
+                    }, () => {
+                        const oldGrade = this.currentAssignment.grade;
+                        this.currentAssignment.grade = null;
+                        this.selectedGrade = null;
+                        
+                        // Add a comment about grade removal
+                        ajax('api/assignments/addComment', {
+                            assignmentId: this.currentAssignment.assignmentId,
+                            assignmentCommentText: `Hinne <span class="badge ${this.getBadgeClassForGrade(oldGrade)}">${oldGrade}</span> eemaldatud`,
+                            studentId: this.currentStudent.userId
+                        }, (response) => {
+                            this.currentComments.push(response.data);
+                            this.scrollToBottom();
+                        });
+                    }, err => {
+                        console.error('Error removing grade:', err);
+                    });
+                }
+            },
+            getBadgeClassForGrade(grade) {
+                if (['MA', '1', '2'].includes(grade)) return 'bg-danger';
+                if (['3', '4', '5', 'A'].includes(grade)) return 'bg-success';
+                return 'bg-secondary';
             },
             saveGrade() {
                 if (!this.selectedGrade) return;
@@ -666,15 +1071,117 @@
                     comment.assignmentCommentGrade = comment.selectedGrade;
                     comment.showFeedbackForm = false;
                     this.currentAssignment.grade = comment.selectedGrade;
+
+                    // Update the grid's studentProgress data
+                    for (const group of Object.values(this.groups)) {
+                        for (const subject of Object.values(group.subjects)) {
+                            if (subject.assignments && subject.assignments[this.currentAssignment.assignmentId]) {
+                                if (!subject.assignments[this.currentAssignment.assignmentId].studentProgress) {
+                                    subject.assignments[this.currentAssignment.assignmentId].studentProgress = {};
+                                }
+                                if (!subject.assignments[this.currentAssignment.assignmentId].studentProgress[this.currentStudent.userId]) {
+                                    subject.assignments[this.currentAssignment.assignmentId].studentProgress[this.currentStudent.userId] = {};
+                                }
+                                subject.assignments[this.currentAssignment.assignmentId].studentProgress[this.currentStudent.userId].grade = comment.selectedGrade;
+                                subject.assignments[this.currentAssignment.assignmentId].studentProgress[this.currentStudent.userId].assignmentStatusId = comment.selectedGrade ? '3' : '2';
+                            }
+                        }
+                    }
+
+                    this.modal.hide();
                 }, err => {
                     console.error('Error saving grade:', err);
                 });
-            }
+            },
+            handleCommentInput(event) {
+                // Only mark as touched if the current value is different from any template
+                const allTemplates = [
+                    ...this.feedbackTemplates.positive,
+                    ...this.feedbackTemplates.excellent,
+                    ...this.feedbackTemplates.outstanding,
+                    ...this.feedbackTemplates.exceptional
+                ];
+                this.commentTouched = !allTemplates.includes(event.target.value);
+            },
+            updateCommentsContainerShadow() {
+                const container = this.$refs.commentsContainer;
+                if (container) {
+                    const hasOverflow = container.scrollHeight > container.clientHeight;
+                    container.classList.toggle('has-overflow', hasOverflow && container.scrollTop > 10);
+
+                    // Add scroll event listener
+                    container.onscroll = () => {
+                        container.classList.toggle('has-overflow', container.scrollTop > 10);
+                    };
+                }
+            },
+            scrollToTop() {
+                if (this.$refs.commentsContainer) {
+                    this.$refs.commentsContainer.scrollTop = 0;
+                }
+            },
+            startEditingTitle() {
+                this.editingTitle = true;
+                this.editedTitle = this.currentAssignment.assignmentName;
+                this.$nextTick(() => {
+                    this.$refs.titleInput.focus();
+                });
+            },
+            cancelEditingTitle() {
+                this.editingTitle = false;
+                this.editedTitle = '';
+            },
+            saveTitle() {
+                if (!this.editedTitle.trim()) return;
+                
+                ajax('api/assignments/updateTitle', {
+                    assignmentId: this.currentAssignment.assignmentId,
+                    title: this.editedTitle.trim()
+                }, () => {
+                    this.currentAssignment.assignmentName = this.editedTitle.trim();
+                    
+                    // Update the title in the grid
+                    for (const group of Object.values(this.groups)) {
+                        for (const subject of Object.values(group.subjects)) {
+                            if (subject.assignments && subject.assignments[this.currentAssignment.assignmentId]) {
+                                subject.assignments[this.currentAssignment.assignmentId].assignmentName = this.editedTitle.trim();
+                            }
+                        }
+                    }
+                    
+                    this.editingTitle = false;
+                }, err => {
+                    console.error('Error updating title:', err);
+                });
+            },
+            startEditingInstructions() {
+                this.editingInstructions = true;
+                this.editedInstructions = this.currentAssignment.assignmentInstructions;
+                this.$nextTick(() => {
+                    this.$refs.instructionsInput.focus();
+                });
+            },
+            cancelEditingInstructions() {
+                this.editingInstructions = false;
+                this.editedInstructions = '';
+            },
+            saveInstructions() {
+                ajax('api/assignments/updateInstructions', {
+                    assignmentId: this.currentAssignment.assignmentId,
+                    instructions: this.editedInstructions
+                }, () => {
+                    this.currentAssignment.assignmentInstructions = this.editedInstructions;
+                    this.editingInstructions = false;
+                }, err => {
+                    console.error('Error updating instructions:', err);
+                });
+            },
         },
         mounted() {
             this.modal = new bootstrap.Modal(document.getElementById('assignmentModal'));
             this.modal._element.addEventListener('shown.bs.modal', () => {
                 this.scrollToBottom();
+                this.updateCommentsContainerShadow();
             });
 
             // Initialize tooltips

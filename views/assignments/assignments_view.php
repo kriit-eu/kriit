@@ -317,13 +317,15 @@
                 <div class="card-body p-0">
                     <div class="comments-container" ref="commentsContainer">
                         <div v-if="comments.length > 0" class="comment-section-container gray-background p-0">
-                            <div v-for="comment in comments" class="comment-entry mb-0">
-                                <div class="card">
+                            <div v-for="comment in comments" :class="['comment-entry mb-0', { 'bg-warning': comment.assignmentCommentIsProposedSolution }]">
+                                <div class="card" :style="{ 'background-color': comment.assignmentCommentIsProposedSolution ? '#fff3cd' : '' }">
                                     <div class="card-body">
+                                        <p class="d-flex justify-content-between">
+                                            <strong>{{ comment.assignmentCommentAuthorName || 'Tundmatu' }}</strong>
+                                            <span>{{ comment.assignmentCommentCreatedAt }}</span>
+                                        </p>
                                         <p>
-                                            {{ comment.createdAt }}
-                                            <strong>{{ comment.name || 'Tundmatu' }}</strong><br>
-                                            <span v-html="renderMarkdown(comment.comment)"></span>
+                                            <span v-html="renderMarkdown(comment.assignmentCommentText)"></span>
                                         </p>
                                     </div>
                                 </div>

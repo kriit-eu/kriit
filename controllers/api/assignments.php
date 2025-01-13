@@ -359,7 +359,7 @@ class assignments extends Controller
         // Remove the 'proposed' status from all previous comments
         Db::update(
             'assignmentComments',
-            ['assignmentCommentText' => null],
+            ['assignmentCommentIsProposedSolution' => 0],
             'assignmentCommentIsProposedSolution = 1 AND assignmentId = ? AND userId = ?',
             [$_POST['assignmentId'], $this->auth->userId]);
 
@@ -368,7 +368,7 @@ class assignments extends Controller
             $_POST['assignmentId'],
             $this->auth->userId,
             $this->auth->userId,
-            "[$_POST[solutionUrl]]($_POST[solutionUrl])",
+            "*Kasutaja esitas lahenduse: [$_POST[solutionUrl]]($_POST[solutionUrl])*",
             true);
 
         // Get data for email notification
@@ -401,6 +401,14 @@ class assignments extends Controller
                 $_POST['solutionUrl']
             );
             Mail::send($subject['teacherEmail'], $emailSubject, $body);
+            
+            // Log email notification
+            Activity::create(
+                ACTIVITY_UPDATE_ASSIGNMENT,
+                $this->auth->userId,
+                $_POST['assignmentId'],
+                "Email notification sent to teacher ({$subject['teacherEmail']}) about solution submission"
+            );
         }
         stop(200);
     }
@@ -421,8 +429,15 @@ class assignments extends Controller
             $_POST['assignmentCommentText']
         );
 
-        stop(200, Assignment::getComment($assignmentCommentId));
+        // Log the activity
+        Activity::create(
+            ACTIVITY_UPDATE_ASSIGNMENT, 
+            $this->auth->userId, 
+            $_POST['assignmentId'],
+            "Added a comment to the assignment"
+        );
 
+        stop(200, Assignment::getComment($assignmentCommentId));
     }
 
     /**
@@ -432,7 +447,7 @@ class assignments extends Controller
     {
         @Validate::id($_POST['assignmentId'], 'Invalid assignmentId.');
         @Validate::id($_POST['assignmentCommentId'], 'Invalid commentId.');
-        @Validate::grade($_POST['grade'], 'Invalid grade.');
+        @Validate::grade($_POST['grade'], 'Invalid grade.', true);
         @Validate::string($_POST['feedback'], 'Invalid feedback.', true);
         @Validate::id($_POST['studentId'], 'Invalid studentId.');
 
@@ -451,10 +466,16 @@ class assignments extends Controller
             stop(404, 'Comment not found');
         }
 
+        // Get current grade for activity log
+        $currentGrade = Db::getOne(
+            'SELECT grade FROM userAssignments WHERE assignmentId = ? AND userId = ?',
+            [$_POST['assignmentId'], $_POST['studentId']]
+        );
+
         // Add feedback to the comment
         $updatedText = $comment['assignmentCommentText'];
         if ($_POST['feedback']) {
-            $updatedText .= "\n\n### Õpetaja tagasiside\n" . $_POST['feedback'];
+            $updatedText .= "\n\n<div class='teacher-feedback'>\n\n### Õpetaja tagasiside\n\n" . $_POST['feedback'] . "\n\n</div>";
         }
 
         // Update the comment
@@ -477,6 +498,25 @@ class assignments extends Controller
             [$_POST['assignmentId'], $_POST['studentId']]
         );
 
+        // Log the grade change
+        if ($currentGrade !== $_POST['grade']) {
+            $oldGrade = $currentGrade ?? 'Hinne puudub';
+            $newGrade = $_POST['grade'] ?? 'Hinne puudub';
+            
+            // Get student name for the log
+            $studentName = Db::getOne(
+                'SELECT userName FROM users WHERE userId = ?',
+                [$_POST['studentId']]
+            );
+            
+            Activity::create(
+                ACTIVITY_UPDATE_ASSIGNMENT,
+                $this->auth->userId,
+                $_POST['assignmentId'],
+                "Changed grade for student '$studentName' from '$oldGrade' to '$newGrade'"
+            );
+        }
+
         // Send email notification
         Notify::studentAboutGrade(
             $_POST['studentId'],
@@ -485,7 +525,175 @@ class assignments extends Controller
             $_POST['feedback']
         );
 
+        // Log email notification
+        $studentEmail = Db::getOne(
+            'SELECT userEmail FROM users WHERE userId = ?',
+            [$_POST['studentId']]
+        );
+        if ($studentEmail) {
+            Activity::create(
+                ACTIVITY_UPDATE_ASSIGNMENT,
+                $this->auth->userId,
+                $_POST['assignmentId'],
+                "Email notification sent to student ($studentEmail) about grade change"
+            );
+        }
+
         stop(200);
+    }
+
+    function grade()
+    {
+        @Validate::id($_POST['assignmentId'], 'Invalid assignmentId.');
+        @Validate::id($_POST['studentId'], 'Invalid studentId.');
+        @Validate::grade($_POST['grade'], 'Invalid grade.', true);
+        @Validate::string($_POST['feedback'], 'Invalid feedback.', true);
+
+        // Check if the user is an admin or the teacher teaching the subject that the assignment belongs to
+        if (!$this->auth->userIsAdmin && !Assignment::userIsTeacher($this->auth->userId, $_POST['assignmentId'])) {
+            stop(403, 'You are not authorized to grade assignments.');
+        }
+
+        // Get current grade and status for activity log
+        $currentGrade = Db::getOne(
+            'SELECT grade FROM userAssignments WHERE assignmentId = ? AND userId = ?',
+            [$_POST['assignmentId'], $_POST['studentId']]
+        );
+
+        // Check current status before updating
+        $currentStatus = Db::getOne(
+            'SELECT assignmentStatusId FROM userAssignments WHERE assignmentId = ? AND userId = ?',
+            [$_POST['assignmentId'], $_POST['studentId']]
+        );
+
+        // If removing grade, set status back to original state (1 if never submitted, 2 if submitted)
+        $newStatus = $_POST['grade'] === null 
+            ? ($currentStatus === 3 ? 2 : $currentStatus) 
+            : 3;
+
+        // Update the assignment status and grade
+        Db::update('userAssignments',
+            [
+                'grade' => $_POST['grade'],
+                'assignmentStatusId' => $newStatus
+            ],
+            'assignmentId = ? AND userId = ?',
+            [$_POST['assignmentId'], $_POST['studentId']]
+        );
+
+        // Log the grade change
+        if ($currentGrade !== $_POST['grade']) {
+            $oldGrade = $currentGrade ?? 'Hinne puudub';
+            $newGrade = $_POST['grade'] ?? 'Hinne puudub';
+            
+            // Get student name for the log
+            $studentName = Db::getOne(
+                'SELECT userName FROM users WHERE userId = ?',
+                [$_POST['studentId']]
+            );
+            
+            Activity::create(
+                ACTIVITY_UPDATE_ASSIGNMENT,
+                $this->auth->userId,
+                $_POST['assignmentId'],
+                "Changed grade for student '$studentName' from '$oldGrade' to '$newGrade'"
+            );
+        }
+
+        // Add a comment with the feedback if provided
+        if ($_POST['feedback']) {
+            // Only add grade text if the grade has changed
+            if ($currentGrade !== $_POST['grade']) {
+                if (!str_contains($_POST['feedback'], 'Hinne:')) {
+                    $_POST['feedback'] = "### Hinne: $_POST[grade]\n\n$_POST[feedback]";
+                }
+            }
+
+            Assignment::addComment(
+                $_POST['assignmentId'],
+                $_POST['studentId'],
+                $this->auth->userId,
+                $_POST['feedback']
+            );
+        }
+
+        // Send email notification
+        Notify::studentAboutGrade(
+            $_POST['studentId'],
+            $_POST['assignmentId'],
+            $_POST['grade'],
+            $_POST['feedback']
+        );
+
+        // Log email notification
+        $studentEmail = Db::getOne(
+            'SELECT userEmail FROM users WHERE userId = ?',
+            [$_POST['studentId']]
+        );
+        if ($studentEmail) {
+            Activity::create(
+                ACTIVITY_UPDATE_ASSIGNMENT,
+                $this->auth->userId,
+                $_POST['assignmentId'],
+                "Email notification sent to student ($studentEmail) about grade change"
+            );
+        }
+
+        stop(200);
+    }
+
+    public function updateTitle()
+    {
+        // Only teachers can update titles
+        if (!$this->auth->userIsTeacher) {
+            stop(403, 'Access denied');
+        }
+
+        // Validate input
+        @Validate::id($_POST['assignmentId'], 'Invalid assignment ID');
+        if (empty($_POST['title'])) {
+            stop(400, 'Title is required');
+        }
+
+        // Get the old title for activity log
+        $oldTitle = Db::getOne('SELECT assignmentName FROM assignments WHERE assignmentId = ?', [$_POST['assignmentId']]);
+
+        // Update the title
+        Db::update('assignments', [
+            'assignmentName' => $_POST['title']
+        ], 'assignmentId = ?', [$_POST['assignmentId']]);
+
+        // Log the activity
+        Activity::create(ACTIVITY_UPDATE_ASSIGNMENT, $this->auth->userId, $_POST['assignmentId'], "Changed assignment name from '$oldTitle' to '$_POST[title]'");
+
+        stop(200, 'Title updated successfully');
+    }
+
+    public function updateInstructions()
+    {
+        // Only teachers can update instructions
+        if (!$this->auth->userIsTeacher) {
+            stop(403, 'Access denied');
+        }
+
+        // Validate input
+        @Validate::id($_POST['assignmentId'], 'Invalid assignment ID');
+        if (empty($_POST['instructions'])) {
+            stop(400, 'Instructions are required');
+        }
+
+        // Get the old instructions for activity log
+        $oldInstructions = Db::getOne('SELECT assignmentInstructions FROM assignments WHERE assignmentId = ?', [$_POST['assignmentId']]);
+
+        // Update the instructions
+        Db::update('assignments', [
+            'assignmentInstructions' => $_POST['instructions']
+        ], 'assignmentId = ?', [$_POST['assignmentId']]);
+
+        // Log the activity
+        Activity::create(ACTIVITY_UPDATE_ASSIGNMENT, $this->auth->userId, $_POST['assignmentId'], "Changed assignment instructions from '$oldInstructions' to '$_POST[instructions]'");
+
+        stop(200, 'Instructions updated successfully');
     }
 
 }
