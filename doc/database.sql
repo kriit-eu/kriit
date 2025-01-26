@@ -27,7 +27,7 @@ CREATE TABLE `activities` (
   `activityName` varchar(50) NOT NULL COMMENT 'Autocreated',
   `activityDescription` varchar(191) NOT NULL,
   PRIMARY KEY (`activityId`)
-) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -53,7 +53,8 @@ INSERT INTO `activities` VALUES
 (14,'addUser','added user'),
 (15,'updateUser','updated user'),
 (16,'deleteUser','deleted user'),
-(17,'submitAssignment','submitted an assignment');
+(17,'submitAssignment','submitted an assignment'),
+(18,'triggerNotification','triggered notification');
 /*!40000 ALTER TABLE `activities` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -885,4 +886,4 @@ UNLOCK TABLES;
 /*!50503 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-01-09 11:24:21
+-- Dump completed on 2025-01-26 17:58:30

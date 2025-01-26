@@ -34,7 +34,6 @@ class Auth
             }
 
             $this->load_user_data($user);
-            $this->logged_in = TRUE;
             return;
         }
 
@@ -46,23 +45,23 @@ class Auth
 
             if (!empty($user)) {
                 $this->load_user_data($user);
-                $this->logged_in = TRUE;
             }
         }
+
     }
 
     /**
      * Dynamically add all user table fields as object properties to auth object
      * @param $user
      */
-    public
-    function load_user_data($user)
+    public function load_user_data($user)
     {
 
         foreach ($user as $user_attr => $value) {
             $this->$user_attr = $value;
         }
         $this->logged_in = TRUE;
+        define("App\USER_ID", $this->userId);
     }
 
     /**

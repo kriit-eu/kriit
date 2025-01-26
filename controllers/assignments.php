@@ -72,51 +72,6 @@ class assignments extends Controller
         stop(200, 'Comment saved');
     }
 
-    function ajax_saveMessage(): void
-    {
-        $assignmentId = $_POST['assignmentId'];
-        $this->checkIfUserHasPermissionForAction($assignmentId) || stop(403, 'Teil pole õigusi sellele tegevusele.');
-        $content = $_POST['content'];
-
-        $answerToId = $_POST['answerToId'] ?? null;
-
-        $this->saveMessage($assignmentId, $_POST['userId'], $content);
-
-        $receiverId = $answerToId ? Db::getOne('SELECT userId FROM messages WHERE messageId = ?', [$answerToId]) : $_POST['teacherId'];
-        $mailData = $this->getSenderNameAndReceiverEmail($_POST['userId'], $receiverId);
-
-        $senderName = $mailData['senderName'];
-        $receiverMail = $mailData['receiverMail'];
-        $assignment = $this->getAssignmentDetails($assignmentId);
-
-
-        $emailBody = $answerToId ? sprintf(
-            "<strong>%s</strong> vastas teie sõnumile ülesande '<strong>%s</strong>' kohta.<br>Vastus: <br>%s<br><br>Ülesande link: <a href='%s'>%s</a><br>",
-            $senderName,
-            $assignment['assignmentName'],
-            nl2br($content),
-            BASE_URL . 'assignments/' . $assignmentId,
-            BASE_URL . 'assignments/' . $assignmentId
-        ) : sprintf(
-            "<strong>%s</strong> saatis sõnumi ülesande '<strong>%s</strong>' kohta.<br>Sõnum: <br>%s<br><br>Ülesande link: <a href='%s'>%s</a><br>",
-            $senderName,
-            $assignment['assignmentName'],
-            nl2br($content),
-            BASE_URL . 'assignments/' . $assignmentId,
-            BASE_URL . 'assignments/' . $assignmentId
-        );
-
-        $subject = $answerToId ?
-            $assignment['subjectName'] . ": $senderName vastas teie sõnumile ülesande '" . $assignment['assignmentName'] . "' kohta" :
-            $assignment['subjectName'] . ": $senderName saatis teile sõnumi ülesande '" . $assignment['assignmentName'] . "' kohta";
-
-        if ($receiverMail) {
-            $this->sendNotificationToEmail($receiverMail, $subject, $emailBody);
-        }
-
-        stop(200, 'Message saved');
-    }
-
     function ajax_editAssignment(): void
     {
         $assignmentId = $_POST['assignmentId'];
@@ -392,7 +347,8 @@ class assignments extends Controller
         Mail::send(
             $receiverEmail,
             $subject,
-            $content
+            $content,
+
         );
     }
 

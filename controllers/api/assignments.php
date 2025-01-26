@@ -5,8 +5,11 @@ use App\Assignment;
 use App\Controller;
 use App\Db;
 use App\Mail;
+use App\Notification;
+use App\NotificationOptions;
 use App\Notify;
 use App\Validate;
+use Exception;
 
 // add /api/groups to the URL
 
@@ -277,7 +280,7 @@ class assignments extends Controller
         try {
             Db::delete('assignments', 'tahvelJournalEntryId = ?', [$_POST['tahvelJournalEntryId']]);
             Activity::create(ACTIVITY_DELETE_ASSIGNMENT, $this->auth->userId, null, "Deleted assignment with tahvelJournalEntryId: $_POST[tahvelJournalEntryId]");
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             stop(400, $e->getMessage());
         }
 
@@ -295,7 +298,7 @@ class assignments extends Controller
             Db::delete('criteria', 'assignmentId = (SELECT assignmentId FROM assignments WHERE tahvelJournalEntryId = ?)', [$tahvelJournalEntryId]);
             Db::delete('messages', 'assignmentId = (SELECT assignmentId FROM assignments WHERE tahvelJournalEntryId = ?)', [$tahvelJournalEntryId]);
             Db::delete('userAssignments', 'assignmentId = (SELECT assignmentId FROM assignments WHERE tahvelJournalEntryId = ?)', [$tahvelJournalEntryId]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             stop(400, $e->getMessage());
         }
 
@@ -400,8 +403,8 @@ class assignments extends Controller
                 $_POST['solutionUrl'],
                 $_POST['solutionUrl']
             );
-            Mail::send($subject['teacherEmail'], $emailSubject, $body);
-            
+            Mail::send($subject['teacherEmail'], $emailSubject, $body, $_POST['assignmentId']);
+
             // Log email notification
             Activity::create(
                 ACTIVITY_UPDATE_ASSIGNMENT,
@@ -413,35 +416,52 @@ class assignments extends Controller
         stop(200);
     }
 
-    function addComment()
+    /**
+     * @throws Exception
+     */
+    function addComment(): void
     {
-        @Validate::id($_POST['assignmentId'], 'Invalid assignmentId.');
-        @Validate::string($_POST['assignmentCommentText'], 'Invalid comment.');
-        @Validate::id($_POST['studentId'], 'Invalid studentId.', false);
+        @Validate::id($_POST['assignmentId'] ??= '', 'Invalid assignmentId.');
+        @Validate::string($_POST['assignmentCommentText'] ??= '', 'Invalid comment.');
+        @Validate::id($_POST['studentId'] ??= '', 'Invalid studentId.', false);
 
-        // Read studentId from POST or use auth->userId
-        $studentId = $_POST['studentId'] ?? $this->auth->userId;
+        $assignmentId = $_POST['assignmentId'];
+        $studentId = (int)($_POST['studentId'] ?: $this->auth->userId);
+        $assignment = Assignment::get($assignmentId, $studentId)
+            ?? throw new Exception("Assignment $assignmentId not found");
 
-        $assignmentCommentId = Assignment::addComment(
-            $_POST['assignmentId'],
+        // Authorization
+        if ($assignment['teacherId'] !== $this->auth->userId
+            && !$this->auth->userIsAdmin
+            && $studentId !== $this->auth->userId
+        ) {
+            stop(403, 'Authorization required');
+        }
+
+        // Core action
+        $comment = Assignment::addComment(
+            $assignmentId,
             $studentId,
             $this->auth->userId,
-            $_POST['assignmentCommentText']
+            $_POST['assignmentCommentText']);
+
+        Activity::create(ACTIVITY_UPDATE_ASSIGNMENT,
+            $this->auth->userId,
+            $assignmentId,
+            'Added comment: ' . substr($_POST['assignmentCommentText'], 0, 20));
+
+        Mail::send(
+            $assignment['studentId'] === $this->auth->userId ? $assignment['teacherEmail'] : $assignment['studentEmail'],
+            $assignment['studentId'] === $this->auth->userId ? 'Teacher feedback on ' . $assignment['assignmentName'] : 'Student comment on ' . $assignment['assignmentName'],
+            "New comment: {$_POST['assignmentCommentText']}<br>",
+            $assignmentId
         );
 
-        // Log the activity
-        Activity::create(
-            ACTIVITY_UPDATE_ASSIGNMENT, 
-            $this->auth->userId, 
-            $_POST['assignmentId'],
-            "Added a comment to the assignment"
-        );
-
-        stop(200, Assignment::getComment($assignmentCommentId));
+        stop(200, Assignment::getComment($comment));
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     function gradeComment()
     {
@@ -451,8 +471,10 @@ class assignments extends Controller
         @Validate::string($_POST['feedback'], 'Invalid feedback.', true);
         @Validate::id($_POST['studentId'], 'Invalid studentId.');
 
+        $assignment = Assignment::get($_POST['assignmentId'], $_POST['studentId']);
+
         // Check if the user is an admin or the teacher teaching the subject that the assignment belongs to
-        if (!$this->auth->userIsAdmin && !Assignment::userIsTeacher($this->auth->userId, $_POST['assignmentId'])) {
+        if (!$this->auth->userIsAdmin && $assignment['teacherId'] !== $this->auth->userId) {
             stop(403, 'You are not authorized to grade assignments.');
         }
 
@@ -492,7 +514,7 @@ class assignments extends Controller
         Db::update('userAssignments',
             [
                 'grade' => $_POST['grade'],
-                'assignmentStatusId' => 3
+                'assignmentStatusId' => ASSIGNMENT_STATUS_GRADED
             ],
             'assignmentId = ? AND userId = ?',
             [$_POST['assignmentId'], $_POST['studentId']]
@@ -502,13 +524,13 @@ class assignments extends Controller
         if ($currentGrade !== $_POST['grade']) {
             $oldGrade = $currentGrade ?? 'Hinne puudub';
             $newGrade = $_POST['grade'] ?? 'Hinne puudub';
-            
+
             // Get student name for the log
             $studentName = Db::getOne(
                 'SELECT userName FROM users WHERE userId = ?',
                 [$_POST['studentId']]
             );
-            
+
             Activity::create(
                 ACTIVITY_UPDATE_ASSIGNMENT,
                 $this->auth->userId,
@@ -517,26 +539,21 @@ class assignments extends Controller
             );
         }
 
-        // Send email notification
-        Notify::studentAboutGrade(
-            $_POST['studentId'],
-            $_POST['assignmentId'],
-            $_POST['grade'],
-            $_POST['feedback']
-        );
+        if ($assignment['studentEmail']) {
 
-        // Log email notification
-        $studentEmail = Db::getOne(
-            'SELECT userEmail FROM users WHERE userId = ?',
-            [$_POST['studentId']]
-        );
-        if ($studentEmail) {
-            Activity::create(
-                ACTIVITY_UPDATE_ASSIGNMENT,
-                $this->auth->userId,
-                $_POST['assignmentId'],
-                "Email notification sent to student ($studentEmail) about grade change"
+            Mail::send(
+                $assignment['studentEmail'],
+                $assignment['teacherName'] . ' hindas teie esitatud lahendust ülesandele ' . $assignment['assignmentName'],
+                "<strong>{$assignment['teacherName']}</strong> hindas teie esitatud lahendust ülesandele "
+                . "'<strong>{$assignment['assignmentName']}</strong>'.<br><br>"
+                . "Ülesande link: <a href='" . BASE_URL . "/assignments/{$_POST['assignmentId']}/{$_POST['studentId']}/"
+                . slugify($assignment['studentName']) . "'>{$assignment['assignmentName']}</a><br>"
+                . "Hinne: <strong>{$_POST['grade']}</strong><br>"
+                . "Tagasiside: <strong>{$_POST['feedback']}</strong>", $_POST['assignmentId']
             );
+
+
+
         }
 
         stop(200);
@@ -554,6 +571,8 @@ class assignments extends Controller
             stop(403, 'You are not authorized to grade assignments.');
         }
 
+        $assignment = Assignment::get($_POST['assignmentId'], $_POST['studentId']);
+
         // Get current grade and status for activity log
         $currentGrade = Db::getOne(
             'SELECT grade FROM userAssignments WHERE assignmentId = ? AND userId = ?',
@@ -567,8 +586,8 @@ class assignments extends Controller
         );
 
         // If removing grade, set status back to original state (1 if never submitted, 2 if submitted)
-        $newStatus = $_POST['grade'] === null 
-            ? ($currentStatus === 3 ? 2 : $currentStatus) 
+        $newStatus = $_POST['grade'] === null
+            ? ($currentStatus === 3 ? 2 : $currentStatus)
             : 3;
 
         // Update the assignment status and grade
@@ -585,13 +604,13 @@ class assignments extends Controller
         if ($currentGrade !== $_POST['grade']) {
             $oldGrade = $currentGrade ?? 'Hinne puudub';
             $newGrade = $_POST['grade'] ?? 'Hinne puudub';
-            
+
             // Get student name for the log
             $studentName = Db::getOne(
                 'SELECT userName FROM users WHERE userId = ?',
                 [$_POST['studentId']]
             );
-            
+
             Activity::create(
                 ACTIVITY_UPDATE_ASSIGNMENT,
                 $this->auth->userId,
@@ -617,27 +636,23 @@ class assignments extends Controller
             );
         }
 
-        // Send email notification
-        Notify::studentAboutGrade(
-            $_POST['studentId'],
-            $_POST['assignmentId'],
-            $_POST['grade'],
-            $_POST['feedback']
-        );
+
+        Mail::send(
+            $assignment['studentEmail'],
+            $assignment['teacherName'] . ' hindas teie esitatud lahendust ülesandele ' . $assignment['assignmentName'],
+            "<strong>{$assignment['teacherName']}</strong> hindas teie esitatud lahendust ülesandele "
+            . "'<strong>{$assignment['assignmentName']}</strong>'.<br><br>"
+            . "Ülesande link: <a href='" . BASE_URL . "/assignments/{$_POST['assignmentId']}/{$_POST['studentId']}/"
+            . slugify($assignment['studentName']) . "'>{$assignment['assignmentName']}</a><br>"
+            . "Hinne: <strong>{$_POST['grade']}</strong><br>"
+            . "Tagasiside: <strong>{$_POST['feedback']}</strong>", $_POST['assignmentId']);
 
         // Log email notification
         $studentEmail = Db::getOne(
             'SELECT userEmail FROM users WHERE userId = ?',
             [$_POST['studentId']]
         );
-        if ($studentEmail) {
-            Activity::create(
-                ACTIVITY_UPDATE_ASSIGNMENT,
-                $this->auth->userId,
-                $_POST['assignmentId'],
-                "Email notification sent to student ($studentEmail) about grade change"
-            );
-        }
+
 
         stop(200);
     }

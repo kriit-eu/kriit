@@ -1,6 +1,7 @@
 <?php namespace App;
 
 use Doctrine\SqlFormatter\SqlFormatter;
+use Exception;
 use JetBrains\PhpStorm\NoReturn;
 
 class Db
@@ -22,7 +23,7 @@ class Db
         mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
         if ($this->conn->connect_error) {
-            throw new \Exception("Connection failed: " . $this->conn->connect_error);
+            throw new Exception("Connection failed: " . $this->conn->connect_error);
         }
     }
 
@@ -36,7 +37,7 @@ class Db
                     DATABASE_PASSWORD,
                     DATABASE_DATABASE
                 );
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 die("Database connection error: " . $e->getMessage());
             }
         }
@@ -77,7 +78,7 @@ class Db
         $hasNamed = !empty($namedMatches[0]);
 
         if ($hasQuestionMarks && $hasNamed) {
-            throw new \Exception("Cannot mix named placeholders and question marks in the same query.");
+            throw new Exception("Cannot mix named placeholders and question marks in the same query.");
         }
 
         $debugQuery = $query;
@@ -175,7 +176,7 @@ class Db
                 'boolean', 'integer' => 'i',
                 'double' => 'd',
                 'NULL', 'string' => 's',
-                default => throw new \Exception("Unsupported data type: {$type}"),
+                default => throw new Exception("Unsupported data type: {$type}"),
             };
         }, $params));
     }
@@ -199,7 +200,7 @@ class Db
         $namedPlaceholders = $namedMatches[0] ?? [];
 
         if ($hasQuestionMarks && !empty($namedPlaceholders)) {
-            throw new \Exception("Cannot mix named placeholders and question marks in the same query.");
+            throw new Exception("Cannot mix named placeholders and question marks in the same query.");
         }
 
         $debugQuery = $this->debugQuery($query, $params);
@@ -210,7 +211,7 @@ class Db
             foreach ($namedPlaceholders as $ph) {
                 $key = ltrim($ph, ':');
                 if (!array_key_exists($key, $params)) {
-                    throw new \Exception("Missing named parameter :{$key}");
+                    throw new Exception("Missing named parameter :{$key}");
                 }
                 $orderedParams[] = $params[$key];
             }

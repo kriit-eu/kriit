@@ -1,10 +1,11 @@
 <?php namespace App;
 
+use Exception;
 use PHPMailer\PHPMailer\PHPMailer;
 
 class Mail
 {
-    static function send($to, $subject, $body, $path = null, $stringAttachments = null, $cc = false, $cc_to = null)
+    static function send($to, $subject, $body, $associatedEntityId)
     {
         global $cfg;
 
@@ -85,11 +86,6 @@ class Mail
             }
 
 
-            //Set Carbon Copy recipient
-            if ($cc) {
-                $mail->AddCC($cc_to);
-            }
-
             //Attach attachment, if given
             if (!empty($path)) {
 
@@ -103,6 +99,10 @@ class Mail
 
             //send the message
             $mail->send();
+
+            // Log email notification activity
+            Activity::create(ACTIVITY_SEND_EMAIL, USER_ID, $associatedEntityId, "Email sent to {$to} with subject `{$subject}`");
+
 
         } catch (\Exception $e) {
 
@@ -139,6 +139,42 @@ class Mail
         return false;
     }
 
+    /**
+     * @throws Exception
+     */
+    public static function getTemplate($context): array
+    {
+
+        $assignmentlink .= "<br>View assignment: <a href='"
+            . BASE_URL . "/assignments/{$context['assignment']['assignmentId']}/" . "{$context['assignment']['studentId']}/"
+            . slugify($context['assignment']['studentName']) . "'>{$context['assignment']['assignmentName']}</a>";
+
+        $templates = [
+            'comment' => [
+                'student' => [
+                    'email' => $context['assignment']['studentEmail'],
+                    'subject' => "Teacher feedback on {$context['assignment']['assignmentName']}",
+                    'body' => "New comment: {$context['context']['assignmentCommentText']}<br>"
+                ],
+                'teacher' => [
+                    'email' => $context['assignment']['teacherEmail'],
+                    'subject' => "New comment on {$context['assignment']['assignmentName']}",
+                    'body' => "New comment: {$context['context']['assignmentCommentText']}<br>"
+                ]
+            ],
+            'grade' => [
+                'email' => $context['assignment']['studentEmail'],
+                'subject' => "Grade for {$context['assignment']['assignmentName']}",
+                'body' => "Your grade: {$context['context']['grade']}<br>Feedback: {$context['context']['feedback']}"
+            ]
+        ];
+
+        return match ($context['type']) {
+            'comment' => $templates['comment'][$context['recipient']],
+            'grade' => $templates['grade'],
+            default => throw new Exception("Invalid notification type")
+        };
+    }
 
 
 }

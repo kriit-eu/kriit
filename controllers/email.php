@@ -25,7 +25,7 @@ class email extends Controller
                 'SESSION' => $_SESSION,
                 'COOKIE' => $_COOKIE,
                 'THIS' => get_object_vars($this)
-            ], 1) . '</pre>');
+            ], 1) . '</pre>', null);
 
 
         stop(200);

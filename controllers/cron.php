@@ -39,7 +39,7 @@ class cron extends Controller
                 $messageBody = $this->generateEmailMessageForStudentsWithPassedDeadlines($studentData);
                 $studentEmail = $studentData['studentEmail'];
                 $subject = "Esitamata ülesanded!";
-                Mail::send($studentEmail, $subject, $messageBody);
+                Mail::send($studentEmail, $subject, $messageBody, null);
             }
         }
     }
@@ -98,7 +98,7 @@ class cron extends Controller
             );
 
             if (!empty($student['userEmail'])) {
-                Mail::send($student['userEmail'], $subject, $message);
+                Mail::send($student['userEmail'], $subject, $message, null);
             }
         }
     }
@@ -117,7 +117,7 @@ class cron extends Controller
             $messageBody = $this->createTableWithUngradedWorks($teacherData);
 
             if (!empty($teacherEmail) && !empty(trim($teacherEmail))) {
-                Mail::send($teacherEmail, "Kriit vajab Sinu tähelepanu!", $messageBody);
+                Mail::send($teacherEmail, "Kriit vajab Sinu tähelepanu!", $messageBody, null);
             }
         }
 
@@ -407,7 +407,8 @@ class cron extends Controller
                     Mail::send(
                         $student['userEmail'],
                         "Ülesande tähtaeg on möödas!",
-                        "<strong>Lugupeetud õppur!</strong><p>Teatame, et eile, " . date('d.m.Y', strtotime($assignment['assignmentDueAt'])) . ", oli aine '{$assignment['subjectName']}' ülesande '<a href='$assignmentUrl'>{$assignment['assignmentName']}</a>' esitamise tähtaeg. Kuna ülesannet ei esitatud õigeaegselt, on see hinnatud hindega 'MA' (hinne sünkroonitakse Kriidist Tahvlisse viitega).</p> <p>Vastavalt õppekorralduseeskirjale tuleb sellisel juhul osaleda esimesel võimalusel konsultatsioonis ja juhul, kui õppevõlg ei ole õppekorralduseeskirjas sätestatud tähtajaks likvideeritud, esitada seletuskiri korralduse mittetäitmise kohta läbi rühmajuhendaja osakonnajuhile.</p> <p>Palun võta esimesel võimalusel ühendust aine õpetajaga, et leppida kokku edasised tegevused.</p> <p>Parimate soovidega,<br>Kriit</p>"
+                        "<strong>Lugupeetud õppur!</strong><p>Teatame, et eile, " . date('d.m.Y', strtotime($assignment['assignmentDueAt'])) . ", oli aine '{$assignment['subjectName']}' ülesande '<a href='$assignmentUrl'>{$assignment['assignmentName']}</a>' esitamise tähtaeg. Kuna ülesannet ei esitatud õigeaegselt, on see hinnatud hindega 'MA' (hinne sünkroonitakse Kriidist Tahvlisse viitega).</p> <p>Vastavalt õppekorralduseeskirjale tuleb sellisel juhul osaleda esimesel võimalusel konsultatsioonis ja juhul, kui õppevõlg ei ole õppekorralduseeskirjas sätestatud tähtajaks likvideeritud, esitada seletuskiri korralduse mittetäitmise kohta läbi rühmajuhendaja osakonnajuhile.</p> <p>Palun võta esimesel võimalusel ühendust aine õpetajaga, et leppida kokku edasised tegevused.</p> <p>Parimate soovidega,<br>Kriit</p>",
+                        null
                     );
                 }
             }

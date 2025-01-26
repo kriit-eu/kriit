@@ -3,6 +3,7 @@
 namespace App;
 
 use App\api\assignments;
+use Exception;
 
 class Assignment
 {
@@ -10,15 +11,18 @@ class Assignment
     {
         $assignment = Db::getFirst("
             SELECT
+                -- Assignment
                 a.assignmentId, a.assignmentName, a.assignmentInstructions, a.assignmentDueAt,
-                s.userId AS studentId, s.userName AS studentName, s.groupId,
-                grade, 
-                ast.assignmentStatusId as assignmentStatusId, 
-                solutionUrl,
-                ast.statusName as assignmentStatusName,
-                subj.teacherId AS teacherId,
-                subj.subjectName AS subjectName,
-                t.userName AS teacherName
+                
+                -- Student
+                s.userId AS studentId, s.userName AS studentName, s.userEmail AS studentEmail, s.groupId,
+                
+                -- Teacher
+                subj.teacherId AS teacherId, t.userName AS teacherName, t.userEmail AS teacherEmail,
+                
+                -- Others
+                ast.assignmentStatusId as assignmentStatusId, ast.statusName as assignmentStatusName,
+                grade, solutionUrl, subj.subjectName AS subjectName
             FROM assignments a
             JOIN subjects subj ON a.subjectId = subj.subjectId
             JOIN users t ON subj.teacherId = t.userId
@@ -52,6 +56,11 @@ class Assignment
     {
 
         return !!Db::getOne('SELECT teacherId FROM assignments JOIN subjects USING (subjectId) WHERE assignmentId = ? AND teacherId = ?', [$assignmentId, $userId]);
+    }
+
+    public static function getTeacherId(int $assignmentId): int
+    {
+        return Db::getOne('SELECT teacherId FROM assignments JOIN subjects USING (subjectId) WHERE assignmentId = ?', [$assignmentId]);
     }
 
     public static function userIsStudent($userId, $assignmentId)
@@ -142,4 +151,5 @@ class Assignment
             JOIN users u ON c.assignmentCommentAuthorId = u.userId 
             WHERE assignmentCommentId = ?", [$assignmentCommentId]);
     }
+
 }
