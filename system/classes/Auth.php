@@ -34,7 +34,6 @@ class Auth
             }
 
             $this->load_user_data($user);
-            $this->logged_in = TRUE;
             return;
         }
 
@@ -46,7 +45,6 @@ class Auth
 
             if (!empty($user)) {
                 $this->load_user_data($user);
-                $this->logged_in = TRUE;
             }
         }
     }
@@ -63,6 +61,11 @@ class Auth
             $this->$user_attr = $value;
         }
         $this->logged_in = TRUE;
+        
+        // Define USER_ID constant after successful login
+        if (!defined('USER_ID')) {
+            define('USER_ID', $user['userId']);
+        }
     }
 
     /**

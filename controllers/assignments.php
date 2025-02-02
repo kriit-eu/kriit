@@ -241,6 +241,7 @@ class assignments extends Controller
         $solutionUrl = $_POST['solutionUrl'];
         $commentForTeacher = $_POST['comment'];
 
+        $subjectId = Db::getOne("SELECT subjectId FROM assignments WHERE assignmentId = ?", [$assignmentId]);
         $ifStudentHasAllCriteria = $this->checkIfStudentHasAllCriteria();
         $ifStudentHasPositiveGrade = $this->checkIfStudentHasPositiveGrade($studentId, $assignmentId);
         $isValidUrl = $this->validateSolutionUrl($solutionUrl);
@@ -269,6 +270,8 @@ class assignments extends Controller
             $studentName = $existAssignment['userName'];
         }
 
+        // Set subject as not synchronized if the assignment is not synchronized
+        Db::update('subjects', ['isSynchronized' => 0], 'subjectId = ?', [$subjectId]);
 
         if ($commentForTeacher) {
 
@@ -453,12 +456,20 @@ class assignments extends Controller
             $message = "$_POST[teacherName] lisas õpilasele $_POST[studentName] hindeks: $grade";
             $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
         } else {
+
             Db::update('userAssignments', [
                 'userGrade' => $grade,
                 'assignmentStatusId' => $grade ? 3 : $existUserAssignment['assignmentStatusId']
             ], 'userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
 
             if ($existUserAssignment['userGrade'] !== $grade) {
+
+                // Get subject ID from assignment ID
+                $subjectId = Db::getOne("SELECT subjectId FROM assignments WHERE assignmentId = ?", [$assignmentId]);
+
+                // Set subject as not synchronized
+                Db::update('subjects', ['isSynchronized' => 0], 'subjectId = ?', [$subjectId]);
+
                 $this->saveMessage(
                     $assignmentId,
                     $_POST['teacherId'],
