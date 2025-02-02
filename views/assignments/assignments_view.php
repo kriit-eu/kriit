@@ -757,6 +757,7 @@
         }
     });
 
+
     document.querySelectorAll('#studentGradeCriteriaContainer input[type="checkbox"]').forEach(checkbox => {
         checkbox.addEventListener('change', () => {
             const allChecked = Array.from(document.querySelectorAll('#studentGradeCriteriaContainer input[type="checkbox"]'))
@@ -921,7 +922,7 @@
                 const allChecked = Array.from(document.querySelectorAll('#checkboxesContainer input[type="checkbox"]'))
                     .every(cb => cb.checked);
 
-                submitButton.disabled = !(allChecked && isValidUrl && student.isDisabledStudentActionButton === '');
+                submitButton.disabled = !(allChecked && isValidUrl);
             }
 
         } else {
