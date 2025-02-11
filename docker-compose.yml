@@ -1,0 +1,44 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html
+      - /var/www/html/vendor
+      - /var/www/html/node_modules
+    depends_on:
+      - db
+    environment:
+      - DB_HOST=db
+      - DB_DATABASE=kriit
+      - DB_USERNAME=root
+      - DB_PASSWORD=kriitkriit
+
+  db:
+    image: mariadb:10.5
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_DATABASE=kriit
+      - MYSQL_ROOT_PASSWORD=kriitkriit
+      - MYSQL_ROOT_HOST=%
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./doc/database.sql:/docker-entrypoint-initdb.d/database.sql
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    ports:
+      - "8081:80"
+    environment:
+      - PMA_HOST=db
+      - PMA_USER=root
+      - PMA_PASSWORD=kriitkriit
+    depends_on:
+      - db
+
+volumes:
+  db_data: 

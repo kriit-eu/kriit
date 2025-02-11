@@ -78,7 +78,7 @@ class assignments extends Controller
             }
 
             if (!isset($assignment['students'][$studentId])) {
-                $comments = json_decode($row['comments'], true) ?? [];
+                $comments = json_decode($row['comments'] ?? '[]', true) ?? [];
 
                 // Parse Markdown comments to HTML
                 foreach ($comments as &$comment) {
