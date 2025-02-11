@@ -593,7 +593,7 @@
                             <div class="notification-item">
                                 <i class="fa fa-bell notification-icon"></i>
                                 <div class="notification-text">
-                                    <p class="fw-bold mb-1"><?= $message['content'] ?></p>
+                                    <p class="fw-bold mb-1"><?= htmlspecialchars($message['content'], ENT_QUOTES, 'UTF-8') ?></p>
                                 </div>
                                 <small class="notification-time text-muted"><?= $message['createdAt'] ?></small>
                             </div>
