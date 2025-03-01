@@ -3,6 +3,7 @@
 use App\Controller;
 use App\Db;
 use App\Activity;
+use App\Sync;
 
 class subjects extends Controller
 {
@@ -53,9 +54,9 @@ class subjects extends Controller
             $subject = $subjectsById[$id] ?? [];
             $data[] = [
                 'tahvelSubjectId' => $id,
-                'subjectName'     => $subject['subjectName'] ?? '',
-                'groupName'       => $subject['groupName'] ?? '',
-                'isSynchronized'  => !empty($subject['isSynchronized']),
+                'subjectName' => $subject['subjectName'] ?? '',
+                'groupName' => $subject['groupName'] ?? '',
+                'isSynchronized' => !empty($subject['isSynchronized']),
             ];
         }
 
@@ -64,154 +65,14 @@ class subjects extends Controller
     }
 
     /**
-     * Get unsynced grades for all students in all subjects
-     * @used-by Õpetaja Assistent (TahvelJournalList.addUnsynchronizedBanner)
+     * Compares the grades in Kriit with the grades in Tahvel, inserts missing subjects, groups, teachers, assignments
+     * and students, and returns the differences between the two, using the same format as the input.
+     * @return void
      */
     function getUnsyncedGrades(): void
     {
-        // Get the JSON input
-        $input = file_get_contents('php://input');
-        $subjects = json_decode($input, true);
-
-        // Prepare response array
-        $response = [];
-
-        foreach ($subjects as $subjectData) {
-            $subjectName = $subjectData['subjectName'];
-            $subjectExternalId = $subjectData['subjectExternalId'];
-            $groupName = $subjectData['groupName'];
-            $teacherPersonalCode = $subjectData['teacherPersonalCode'];
-            $teacherName = $subjectData['teacherName'];
-
-            // Find or create teacher
-            $teacher = Db::getFirst("SELECT userId FROM users WHERE userPersonalCode = ?", [$teacherPersonalCode]);
-            if (!$teacher) {
-                $teacherId = Db::insert('users', [
-                    'userName' => $teacherName,
-                    'userPersonalCode' => $teacherPersonalCode,
-                    'userIsTeacher' => 1
-                ]);
-                Activity::create(ACTIVITY_ADD_USER, $this->auth->userId, $teacherId, ['teacherId' => $teacherId, 'teacherName' => $teacherName]);
-            } else {
-                $teacherId = $teacher['userId'];
-            }
-
-            // Find or create group
-            $group = Db::getFirst("SELECT groupId FROM `groups` WHERE groupName = ?", [$groupName]);
-            if (!$group) {
-                $groupId = Db::insert('groups', [
-                    'groupName' => $groupName
-                ]);
-                Activity::create(ACTIVITY_CREATE_GROUP, $this->auth->userId, $groupId, ['groupId' => $groupId, 'groupName' => $groupName]);
-            } else {
-                $groupId = $group['groupId'];
-            }
-
-            // Find or create subject
-            $subject = Db::getFirst("SELECT * FROM subjects WHERE tahvelSubjectId = ?", [$subjectExternalId]);
-            if (!$subject) {
-                $subjectId = Db::insert('subjects', [
-                    'subjectName' => $subjectName,
-                    'tahvelSubjectId' => $subjectExternalId,
-                    'groupId' => $groupId,
-                    'teacherId' => $teacherId,
-                    'isSynchronized' => 1
-                ]);
-                Activity::create(ACTIVITY_CREATE_SUBJECT, $this->auth->userId, $subjectId, ['subjectId' => $subjectId, 'subjectName' => $subjectName, 'groupId' => $groupId, 'teacherId' => $teacherId]);
-            } else {
-                $subjectId = $subject['subjectId'];
-            }
-
-            // Process assignments
-            $subjectResponse = [];
-            foreach ($subjectData['assignments'] as $assignmentData) {
-                $assignmentExternalId = $assignmentData['assignmentExternalId'];
-                $assignmentName = $assignmentData['assignmentName'];
-                $assignmentInstructions = $assignmentData['assignmentInstructions'];
-                $assignmentDueAt = $assignmentData['assignmentDueAt'];
-
-                // Find or create assignment
-                $assignment = Db::getFirst("SELECT * FROM assignments WHERE tahvelJournalEntryId = ?", [$assignmentExternalId]);
-                if (!$assignment) {
-                    $assignmentId = Db::insert('assignments', [
-                        'assignmentName' => $assignmentName,
-                        'assignmentInstructions' => $assignmentInstructions,
-                        'subjectId' => $subjectId,
-                        'tahvelJournalEntryId' => $assignmentExternalId,
-                        'assignmentDueAt' => date('Y-m-d', strtotime($assignmentDueAt))
-                    ]);
-                    Activity::create(ACTIVITY_CREATE_ASSIGNMENT, $this->auth->userId, $assignmentId, ['assignmentId' => $assignmentId, 'assignmentName' => $assignmentName, 'subjectId' => $subjectId]);
-                } else {
-                    $assignmentId = $assignment['assignmentId'];
-                }
-
-                // Process student results
-                $assignmentResponse = [];
-                $hasGradeDifferences = false;
-
-                foreach ($assignmentData['results'] as $result) {
-                    $studentPersonalCode = $result['studentPersonalCode'];
-                    $studentName = $result['studentName'];
-                    $grade = $result['grade'];
-
-                    // Find or create student
-                    $student = Db::getFirst("SELECT userId FROM users WHERE userPersonalCode = ?", [$studentPersonalCode]);
-                    if (!$student) {
-                        $studentId = Db::insert('users', [
-                            'userName' => $studentName,
-                            'userPersonalCode' => $studentPersonalCode,
-                            'userIsTeacher' => 0
-                        ]);
-                        Activity::create(ACTIVITY_ADD_USER, $this->auth->userId, $studentId, ['studentId' => $studentId, 'studentName' => $studentName]);
-                    } else {
-                        $studentId = $student['userId'];
-                    }
-
-                    // Get existing grade from userAssignments
-                    $existingAssignment = Db::getFirst("SELECT userGrade FROM userAssignments WHERE userId = ? AND assignmentId = ?", 
-                        [$studentId, $assignmentId]);
-
-                    // Only add to response if:
-                    // 1. Tahvel has a grade AND
-                    // 2. Grade exists in Kriit AND is different from Tahvel
-                    if ($grade !== null && $existingAssignment && $existingAssignment['userGrade'] !== $grade) {
-                        // Keep the exact same structure as received from Tahvel
-                        $assignmentResponse[] = [
-                            'studentPersonalCode' => $studentPersonalCode,
-                            'studentName' => $studentName,
-                            'grade' => $existingAssignment['userGrade']
-                        ];
-                        $hasGradeDifferences = true;
-                    }
-
-                    $now = date('Y-m-d H:i:s');
-                }
-
-                // Only add assignment to response if there were different grades or instructions
-                if ($hasGradeDifferences || ($assignment && $assignment['assignmentInstructions'] !== $assignmentInstructions)) {
-                    $subjectResponse[] = [
-                        'assignmentExternalId' => (int)$assignmentExternalId,
-                        'assignmentName' => $assignmentName,
-                        'assignmentInstructions' => $assignment ? $assignment['assignmentInstructions'] : '',
-                        'assignmentDueAt' => $assignmentDueAt,
-                        'results' => $assignmentResponse
-                    ];
-                }
-            }
-
-            // Only add subject to response if there were different assignments/grades
-            if (!empty($subjectResponse)) {
-                $response[] = [
-                    'subjectName' => $subjectName,
-                    'subjectExternalId' => (int)$subjectExternalId,
-                    'groupName' => $groupName,
-                    'teacherPersonalCode' => $teacherPersonalCode,
-                    'teacherName' => $teacherName,
-                    'assignments' => $subjectResponse
-                ];
-            }
-        }
-
-        stop(200, $response);
+        $tahvelSubjects = json_decode(file_get_contents('php://input'), true);
+        stop(200, Sync::getUnsyncedGrades($tahvelSubjects));
     }
+
 }
