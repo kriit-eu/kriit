@@ -1,8 +1,8 @@
--- MariaDB dump 10.19  Distrib 10.11.8-MariaDB, for debian-linux-gnu (x86_64)
+-- MariaDB dump 10.19  Distrib 10.11.9-MariaDB, for osx10.19 (arm64)
 --
 -- Host: 127.0.0.1    Database: kriit
 -- ------------------------------------------------------
--- Server version	10.11.8-MariaDB-0ubuntu0.24.04.1
+-- Server version	10.11.9-MariaDB
 
 /*!50503 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!50503 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -27,7 +27,7 @@ CREATE TABLE `activities` (
   `activityName` varchar(50) NOT NULL COMMENT 'Autocreated',
   `activityDescription` varchar(191) NOT NULL,
   PRIMARY KEY (`activityId`)
-) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -53,7 +53,13 @@ INSERT INTO `activities` VALUES
 (14,'addUser','added user'),
 (15,'updateUser','updated user'),
 (16,'deleteUser','deleted user'),
-(17,'submitAssignment','submitted an assignment');
+(17,'submitAssignment','submitted an assignment'),
+(18,'syncStart','started synchronization with external system'),
+(19,'createSubjectSync','created subject during synchronization'),
+(20,'createAssignmentSync','created assignment during synchronization'),
+(21,'createUserSync','created user during synchronization'),
+(22,'gradeSync','synchronized grade'),
+(23,'updateUserName','updated user name during synchronization');
 /*!40000 ALTER TABLE `activities` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -77,7 +83,7 @@ CREATE TABLE `activityLog` (
   KEY `idx_activityLog_id` (`id`),
   CONSTRAINT `fk_activityLog_activityId` FOREIGN KEY (`activityId`) REFERENCES `activities` (`activityId`),
   CONSTRAINT `fk_activityLog_userId` FOREIGN KEY (`userId`) REFERENCES `users` (`userId`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -128,16 +134,17 @@ DROP TABLE IF EXISTS `assignments`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `assignments` (
   `assignmentId` int unsigned NOT NULL AUTO_INCREMENT COMMENT 'Autocreated',
-  `assignmentName` varchar(50) NOT NULL COMMENT 'Autocreated',
+  `assignmentName` varchar(191) NOT NULL COMMENT 'Autocreated',
   `assignmentInstructions` text NOT NULL COMMENT 'Autocreated',
   `subjectId` int unsigned NOT NULL,
-  `tahvelJournalEntryId` int unsigned DEFAULT NULL,
+  `assignmentExternalId` int unsigned DEFAULT NULL,
+  `systemId` int unsigned NOT NULL DEFAULT 1,
   `assignmentDueAt` date DEFAULT NULL,
   `assignmentInitialCode` text,
   `assignmentValidationFunction` text,
   PRIMARY KEY (`assignmentId`),
+  UNIQUE KEY `idx_assignments_ext_system` (`assignmentExternalId`,`systemId`),
   KEY `assignments_subjectId_fk` (`subjectId`),
-  KEY `idx_assignments_tahvelJournalEntryId` (`tahvelJournalEntryId`),
   CONSTRAINT `assignments_subjectId_fk` FOREIGN KEY (`subjectId`) REFERENCES `subjects` (`subjectId`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
@@ -149,7 +156,7 @@ CREATE TABLE `assignments` (
 LOCK TABLES `assignments` WRITE;
 /*!40000 ALTER TABLE `assignments` DISABLE KEYS */;
 INSERT INTO `assignments` VALUES
-(1,'Aatomi lõhustamine','### **Aatomi lõhestamise juhised**\n\n1. **Valmistu suurteks muutusteks!**  \n   Enne töö alustamist veendu, et oled varustatud kaitseprillide, laborikitli ja julge südamega. Me pole kindlad, kas siin toimub suur pauk või lihtsalt pisike sähvatus.\n\n2. **Leia lõhestamiseks sobiv aatom.**  \n   Soovitame valida suurema aatomi, näiteks uraani (U). Kui sul on ainult süsinikku (C) käepärast, proovi, aga ära oota ilutulestikku.\n\n3. **Pane aatom pingesse.**  \n   Loo kontrollitud keskkond, kus aatom tunneb end piisavalt ebamugavalt, et mõra tekkida võiks. Mõtle termotuumasünteesi vastandile – see peab jahtuma, mitte kuumenema.\n\n4. **Vabasta neutronid.**  \n   Sihi täpselt – aatomi tuum ei anna alla lihtsalt! Lase neutroneid, kuni üks neist tabab märki ja vallandab reaktsiooni.\n\n5. **Jälgi ahelreaktsiooni.**  \n   Kui midagi toimub, peaksid nägema, kuidas aatomid hakkavad lõhenema ja kiirgama energiat. Kui midagi ei juhtu, oled leidnud universumi kõige laisema aatomi.\n\n6. **Energia kogumine.**  \n   Kui õnnestus, seadista süsteem (või vähemalt sule süda) energia turvaliseks püüdmiseks. Ära lase naabritel märgata, et sul kodus mini-tuumaelektrijaam töötab.\n\n7. **Puhasta segadus.**  \n   Lõhestatud aatomid võivad jätta radioaktiivseid jäätmeid. Palun ära viska neid prügikasti ega loputa kraanikausist alla – see tekitab halbu kommentaare naabruskonnas.\n\n8. **Raporteeri tulemused.**  \n   Kui sul õnnestus lõhestada aatom, jäta endast jälg ajalukku – keemiaõpikud vajavad kindlasti värskendust.\n\n---\n\n### **Hoiatus**  \n*Ära ürita seda katset kodus ilma täiskasvanu järelvalveta. Kui oled täiskasvanu, kutsu igaks juhuks teine täiskasvanu appi. Ja võib-olla tuumafüüsik.*',1,NULL,'2024-11-30','','');
+(1,'Aatomi lõhustamine','### **Aatomi lõhestamise juhised**\n\n1. **Valmistu suurteks muutusteks!**  \n   Enne töö alustamist veendu, et oled varustatud kaitseprillide, laborikitli ja julge südamega. Me pole kindlad, kas siin toimub suur pauk või lihtsalt pisike sähvatus.\n\n2. **Leia lõhestamiseks sobiv aatom.**  \n   Soovitame valida suurema aatomi, näiteks uraani (U). Kui sul on ainult süsinikku (C) käepärast, proovi, aga ära oota ilutulestikku.\n\n3. **Pane aatom pingesse.**  \n   Loo kontrollitud keskkond, kus aatom tunneb end piisavalt ebamugavalt, et mõra tekkida võiks. Mõtle termotuumasünteesi vastandile – see peab jahtuma, mitte kuumenema.\n\n4. **Vabasta neutronid.**  \n   Sihi täpselt – aatomi tuum ei anna alla lihtsalt! Lase neutroneid, kuni üks neist tabab märki ja vallandab reaktsiooni.\n\n5. **Jälgi ahelreaktsiooni.**  \n   Kui midagi toimub, peaksid nägema, kuidas aatomid hakkavad lõhenema ja kiirgama energiat. Kui midagi ei juhtu, oled leidnud universumi kõige laisema aatomi.\n\n6. **Energia kogumine.**  \n   Kui õnnestus, seadista süsteem (või vähemalt sule süda) energia turvaliseks püüdmiseks. Ära lase naabritel märgata, et sul kodus mini-tuumaelektrijaam töötab.\n\n7. **Puhasta segadus.**  \n   Lõhestatud aatomid võivad jätta radioaktiivseid jäätmeid. Palun ära viska neid prügikasti ega loputa kraanikausist alla – see tekitab halbu kommentaare naabruskonnas.\n\n8. **Raporteeri tulemused.**  \n   Kui sul õnnestus lõhestada aatom, jäta endast jälg ajalukku – keemiaõpikud vajavad kindlasti värskendust.\n\n---\n\n### **Hoiatus**  \n*Ära ürita seda katset kodus ilma täiskasvanu järelvalveta. Kui oled täiskasvanu, kutsu igaks juhuks teine täiskasvanu appi. Ja võib-olla tuumafüüsik.*',1,NULL,1,'2024-11-30','','');
 /*!40000 ALTER TABLE `assignments` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -162,7 +169,7 @@ DROP TABLE IF EXISTS `criteria`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `criteria` (
   `criterionId` int unsigned NOT NULL AUTO_INCREMENT,
-  `criterionName` varchar(191) DEFAULT NULL,
+  `criterionName` varchar(2000) DEFAULT NULL,
   `assignmentId` int unsigned NOT NULL,
   PRIMARY KEY (`criterionId`),
   KEY `criteria_assignments_assignmentId_fk` (`assignmentId`),
@@ -403,14 +410,15 @@ DROP TABLE IF EXISTS `subjects`;
 CREATE TABLE `subjects` (
   `subjectId` int unsigned NOT NULL AUTO_INCREMENT COMMENT 'Autocreated',
   `subjectName` varchar(50) NOT NULL COMMENT 'Autocreated',
-  `tahvelSubjectId` int unsigned DEFAULT NULL,
+  `subjectExternalId` int unsigned DEFAULT NULL,
+  `systemId` int unsigned NOT NULL DEFAULT 1,
   `groupId` int unsigned NOT NULL,
   `teacherId` int unsigned NOT NULL,
   `isSynchronized` tinyint DEFAULT 0,
   PRIMARY KEY (`subjectId`),
+  UNIQUE KEY `idx_subjects_ext_system` (`subjectExternalId`,`systemId`),
   KEY `subjects_groups_groupId_fk` (`groupId`),
   KEY `subjects_users_userId_fk` (`teacherId`),
-  KEY `idx_subjects_tahvelSubjectId` (`tahvelSubjectId`),
   CONSTRAINT `subjects_groups_groupId_fk` FOREIGN KEY (`groupId`) REFERENCES `groups` (`groupId`),
   CONSTRAINT `subjects_users_userId_fk` FOREIGN KEY (`teacherId`) REFERENCES `users` (`userId`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4;
@@ -423,8 +431,35 @@ CREATE TABLE `subjects` (
 LOCK TABLES `subjects` WRITE;
 /*!40000 ALTER TABLE `subjects` DISABLE KEYS */;
 INSERT INTO `subjects` VALUES
-(1,'Keemia',1,1,1,0);
+(1,'Keemia',1,1,1,1,0);
 /*!40000 ALTER TABLE `subjects` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `systems`
+--
+
+DROP TABLE IF EXISTS `systems`;
+/*!50503 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `systems` (
+  `systemId` int unsigned NOT NULL AUTO_INCREMENT,
+  `systemName` varchar(50) NOT NULL,
+  `systemUrl` varchar(191) DEFAULT NULL,
+  `systemApiKey` varchar(50) DEFAULT NULL,
+  PRIMARY KEY (`systemId`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4;
+/*!50503 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `systems`
+--
+
+LOCK TABLES `systems` WRITE;
+/*!40000 ALTER TABLE `systems` DISABLE KEYS */;
+INSERT INTO `systems` VALUES
+(1,'Tahvel',NULL,NULL);
+/*!40000 ALTER TABLE `systems` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -629,7 +664,7 @@ CREATE TABLE `userAssignments` (
   `assignmentStatusId` tinyint unsigned NOT NULL,
   `userGrade` varchar(191) DEFAULT NULL,
   `solutionUrl` text,
-  `comments` text NOT NULL DEFAULT '[]',
+  `comments` text DEFAULT '[]',
   `userAssignmentCreatedAt` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
   `userAssignmentEditedAt` datetime DEFAULT NULL,
   PRIMARY KEY (`assignmentId`,`userId`),
@@ -778,7 +813,7 @@ DROP TABLE IF EXISTS `users`;
 CREATE TABLE `users` (
   `userId` int unsigned NOT NULL AUTO_INCREMENT,
   `userName` varchar(191) NOT NULL,
-  `userPersonalCode` varchar(191) NOT NULL,
+  `userPersonalCode` varchar(191) NOT NULL COMMENT 'isikukood',
   `userIsAdmin` tinyint NOT NULL DEFAULT 0,
   `userPassword` varchar(191) NOT NULL DEFAULT '',
   `userDeleted` tinyint unsigned NOT NULL DEFAULT 0,
@@ -788,12 +823,14 @@ CREATE TABLE `users` (
   `groupId` int unsigned DEFAULT NULL,
   `userIsTeacher` tinyint DEFAULT 0,
   `userEmail` varchar(191) DEFAULT NULL,
-  `tahvelStudentId` int unsigned DEFAULT NULL,
+  `userExternalId` int unsigned DEFAULT NULL,
+  `systemId` int unsigned DEFAULT 1,
   PRIMARY KEY (`userId`),
+  UNIQUE KEY `idx_users_ext_system` (`userExternalId`,`systemId`),
+  UNIQUE KEY `idx_users_pk` (`userPersonalCode`),
   KEY `users_groups_groupId_fk` (`groupId`),
-  KEY `idx_users_tahvelStudentId` (`tahvelStudentId`),
   CONSTRAINT `users_groups_groupId_fk` FOREIGN KEY (`groupId`) REFERENCES `groups` (`groupId`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -803,8 +840,8 @@ CREATE TABLE `users` (
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
 INSERT INTO `users` VALUES
-(1,'Kati Maasikas','41111111115',1,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo',NULL,1,NULL,NULL),
-(2,'Mati Vaarikas','31111111114',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo2',1,0,'',NULL);
+(1,'Kati Maasikas','41111111115',1,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo',NULL,1,NULL,NULL,1),
+(2,'Mati Vaarikas','31111111114',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo2',1,0,'',NULL,1);
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -817,4 +854,4 @@ UNLOCK TABLES;
 /*!50503 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-11-20 13:02:52
+-- Dump completed on 2025-03-16 21:15:06

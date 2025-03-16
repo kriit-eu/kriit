@@ -164,7 +164,7 @@ class admin extends Controller
             subjects.subjectId,
             subjects.subjectName,
             subjects.teacherId,
-            subjects.tahvelSubjectId,
+            subjects.subjectExternalId,
             subjects.groupId,
             groups.groupName AS subjectGroup,
             users.userName AS teacherName
@@ -198,7 +198,7 @@ class admin extends Controller
     {
         $data = Db::getAll("
                 SELECT
-                    u.userId, u.userName, u.groupId, u.userPersonalCode, u.tahvelStudentId, u.userEmail, g.groupName
+                    u.userId, u.userName, u.groupId, u.userPersonalCode, u.userExternalId, u.userEmail, g.groupName
                 FROM users u
                 LEFT JOIN groups g ON u.groupId = g.groupId
                 WHERE g.groupId = ?
@@ -357,8 +357,8 @@ class admin extends Controller
             stop(400, 'Aine nimi on kohustuslik');
         }
 
-        if (empty($_POST['tahvelSubjectId'])) {
-            stop(400, 'Tahvel aine ID on kohustuslik');
+        if (empty($_POST['subjectExternalId'])) {
+            stop(400, 'Remote aine ID on kohustuslik');
         }
 
         if (empty($_POST['teacherId'])) {
@@ -369,9 +369,9 @@ class admin extends Controller
             stop(400, 'Grupp on kohustuslik');
         }
 
-        $subject = Db::getFirst("SELECT * FROM subjects WHERE tahvelSubjectId = ?", [$_POST['tahvelSubjectId']]);
+        $subject = Db::getFirst("SELECT * FROM subjects WHERE subjectExternalId = ?", [$_POST['subjectExternalId']]);
         if ($subject) {
-            stop(409, 'Aine selle tahvel ID-ga on juba olemas');
+            stop(409, 'Aine selle remote ID-ga on juba olemas');
         }
 
         $subject = Db::getFirst("SELECT * FROM subjects WHERE subjectName = ?", [$_POST['subjectName']]);
@@ -381,7 +381,7 @@ class admin extends Controller
 
         $data = [
             'subjectName' => $_POST['subjectName'],
-            'tahvelSubjectId' => $_POST['tahvelSubjectId'],
+            'subjectExternalId' => $_POST['subjectExternalId'],
             'teacherId' => $_POST['teacherId'],
             'groupId' => $_POST['groupId']
         ];
@@ -459,14 +459,14 @@ class admin extends Controller
             stop(409, "Õpilane selle isikukoodiga on juba olemas");
         }
 
-        if (!empty($_POST['tahvelStudentId']) && User::get(["tahvelStudentId = '$_POST[tahvelStudentId]'"])) {
-            stop(409, "Õpilane selle tahvel ID-ga on juba olemas");
+        if (!empty($_POST['userExternalId']) && User::get(["userExternalId = '$_POST[userExternalId]'"])) {
+            stop(409, "Õpilane selle remote ID-ga on juba olemas");
         }
 
 
         $data = [
             'groupId' => $_POST['groupId'],
-            'tahvelStudentId' => !empty($_POST['tahvelStudentId']) ? $_POST['tahvelStudentId'] : null,
+            'userExternalId' => !empty($_POST['userExternalId']) ? $_POST['userExternalId'] : null,
             'userName' => $_POST['userName'],
             'userPersonalCode' => $_POST['userPersonalCode'],
             'userEmail' => $_POST['userEmail'] ?? null
@@ -808,7 +808,7 @@ class admin extends Controller
                     $userId = Db::insert('users', [
                         'userName' => addslashes($student['name']),
                         'userPersonalCode' => $student['idcode'],
-                        'tahvelStudentId' => $student['studentId'],
+                        'userExternalId' => $student['studentId'],
                         'groupId' => $groupId
                     ]);
 

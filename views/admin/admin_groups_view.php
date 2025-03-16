@@ -33,7 +33,7 @@
                 <th>Isikukood</th>
                 <th>Nimi</th>
                 <th>Email</th>
-                <th>Tahvel ID</th>
+                <th>Teise süsteemi ID</th>
                 <th></th>
             </tr>
             <tr></tr>
@@ -44,7 +44,7 @@
                     <td onclick="window.location.href='admin/users'" ><b><?= $s['userPersonalCode'] ?></b></td>
                     <td onclick="window.location.href='admin/users'"><?= $s['userName'] ?></td>
                     <td onclick="window.location.href='admin/users'"><?= $s['userEmail'] ?></td>
-                    <td onclick="window.location.href='admin/users'"><?= $s['tahvelStudentId'] ?></td>
+                    <td onclick="window.location.href='admin/users'"><?= $s['userExternalId'] ?></td>
                     <td class="text-center" style="">
                         <span class="delete-btn" onclick="deleteStudent(<?= $s['userId']?>)">&#x2717;</span>
                     </td>
@@ -74,8 +74,8 @@
                         <input type="text" class="form-control" id="userPersonalCode" required>
                     </div>
                     <div class="mb-3">
-                        <label for="tahvelStudentId" class="form-label">Tahvel ID</label>
-                        <input type="text" class="form-control" id="tahvelStudentId" required>
+                        <label for="userExternalId" class="form-label">Teise süsteemi ID</label>
+                        <input type="text" class="form-control" id="userExternalId" required>
                     </div>
                     <div class="mb-3">
                         <label for="userEmail" class="form-label">Email</label>
@@ -135,7 +135,7 @@
         $('#saveStudentBtn').on('click', async function () {
             const userName = $.trim($('#userName').val());
             const userPersonalCode = $.trim($('#userPersonalCode').val());
-            const tahvelStudentId = $.trim($('#tahvelStudentId').val());
+            const userExternalId = $.trim($('#userExternalId').val());
             const userEmail = $.trim($('#userEmail').val());
 
             if (!userName || !userPersonalCode ) {
@@ -147,7 +147,7 @@
                 groupId: <?= $this->getId() ?>,
                 userName: userName,
                 userPersonalCode: userPersonalCode,
-                tahvelStudentId: tahvelStudentId,
+                userExternalId: userExternalId,
                 userEmail: userEmail
             };
 
