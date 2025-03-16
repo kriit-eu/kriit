@@ -28,6 +28,7 @@ class Application
 
         session_name(PROJECT_SESSION_ID);
         session_start();
+
         ob_start();
 
         $this->set_language();

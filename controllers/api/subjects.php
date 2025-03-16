@@ -69,10 +69,10 @@ class subjects extends Controller
      * and students, and returns the differences between the two, using the same format as the input.
      * @return void
      */
-    function getUnsyncedGrades(): void
+    function getDifferences(): void
     {
         $tahvelSubjects = json_decode(file_get_contents('php://input'), true);
-        stop(200, Tahvel::sync($tahvelSubjects));
+        stop(200, Tahvel::addMissingSubjectsStudentsAssignmentsAndReturnDiff($tahvelSubjects));
     }
 
 }
