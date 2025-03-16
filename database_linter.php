@@ -9,8 +9,8 @@ $irregular_plurals = [
 // Define whitelisted fields that don't need FK checks
 $whitelisted_fields = [
     // External system references
-    'subjects.tahvelSubjectId',
-    'users.tahvelStudentId',
+    'subjects.subjectExternalId',
+    'users.userExternalId',
     'assignments.assignmentExternalId',
     // Special cases with dynamic references
     'activityLog.id'

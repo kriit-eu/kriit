@@ -3,70 +3,103 @@
 namespace App;
 
 /**
- * This class handles receiving data from Tahvel and synchronizing it with Kriit:
- *  1) If a teacher/group/subject/assignment/student is missing in Kriit, it is created (and the Tahvel grade is inserted for new students).
- *  2) If a student already exists but has a different grade in Tahvel, that difference is included in the final output.
- *  3) If a subject/assignment is completely new, it will not appear in the final output (since Kriit now matches Tahvel for those).
+ * This class handles receiving data from External system and synchronizing it with Kriit:
+ *  1) If a teacher/group/subject/assignment/student is missing in Kriit, it is created (and the External system grade is inserted for new students).
+ *  2) If a student already exists but has a different grade in External system, that difference is included in the final output.
+ *  3) If a subject/assignment is completely new, it will not appear in the final output (since Kriit now matches External System for those).
  *
- * The final output is an array of subjects that exist in both Kriit and Tahvel but have differing data:
+ * The final output is an array of subjects that exist in both Kriit and External System but have differing data:
  *  - subjectExternalId always included
  *  - only the differing fields for the subject (subjectName, groupName, teacherPersonalCode, teacherName) if they differ
  *  - only the differing assignments, each with assignmentExternalId and the differing fields
  *  - only the differing results (existing students in Kriit whose grade differs)
- *    (newly inserted students will not appear in the output, because Kriit’s data matches Tahvel once inserted).
+ *    (newly inserted students will not appear in the output, because Kriit's data matches External System once inserted).
  */
-class Tahvel
+class Sync
 {
     /**
      * Inserts missing entities (teacher, group, subject, assignment, student) into Kriit
-     * using the data from Tahvel. Then returns an array describing the differences
-     * (subject-level, assignment-level, and existing student grades) between Tahvel and Kriit.
+     * using the data from External System.
      *
-     * @param array $tahvelJournals Array of subjects from Tahvel, each with assignments and results
-     * @return array
+     * @param array $remoteSubjects Array of subjects from External System, each with assignments and results
+     * @param int $systemId The ID of the external system
+     * @return void
      */
-    public static function addMissingSubjectsStudentsAssignmentsAndReturnDiff(array $tahvelJournals): array
+    public static function addMissingEntities(array $remoteSubjects, int $systemId = 1): void
     {
-        $diffSubjects = [];
         // Load all relevant existing data from Kriit
-        $kriitSubjects = self::loadKriitSubjectsData($tahvelJournals);
+        $kriitSubjects = self::loadKriitSubjectsData($remoteSubjects, $systemId);
 
-        foreach ($tahvelJournals as $tahvelSubject) {
+        foreach ($remoteSubjects as $remoteSubject) {
             // 1) Ensure teacher & group in Kriit
-            self::findOrCreate('users', 'userPersonalCode', $tahvelSubject['teacherPersonalCode'], [
-                'userPersonalCode' => $tahvelSubject['teacherPersonalCode'],
-                'userName'         => $tahvelSubject['teacherName'],
+            self::findOrCreate('users', 'userPersonalCode', $remoteSubject['teacherPersonalCode'], [
+                'userPersonalCode' => $remoteSubject['teacherPersonalCode'],
+                'userName'         => $remoteSubject['teacherName'],
                 'userIsTeacher'    => 1
             ]);
-            self::findOrCreate('groups', 'groupName', $tahvelSubject['groupName'], [
-                'groupName' => $tahvelSubject['groupName']
+            self::findOrCreate('groups', 'groupName', $remoteSubject['groupName'], [
+                'groupName' => $remoteSubject['groupName']
             ]);
 
-            // 2) Check if the subject exists in Kriit
+            // 2) Check if the subject exists in Kriit for this system
             $matchingSubjects = array_filter(
                 $kriitSubjects,
-                fn($s) => $s['subjectExternalId'] == $tahvelSubject['subjectExternalId']
+                fn($s) => $s['subjectExternalId'] == $remoteSubject['subjectExternalId'] &&
+                          $s['systemId'] == $systemId
             );
 
             // If subject not found, create it, along with assignments and students if needed
-            // Then skip from final differences, because newly inserted = no difference
             if (!$matchingSubjects) {
-                self::createKriitSubject($tahvelSubject);
+                self::createKriitSubject($remoteSubject, $systemId);
                 continue;
             }
 
-            // Subject found, let's compare subject-level fields + ensure assignments exist
-            $kriitSubject = reset($matchingSubjects); // There's only one subject with that externalId
-            $subjectDiffFields = self::diffSubjectFields($kriitSubject, $tahvelSubject);
+            // Subject found, ensure assignments exist
+            $kriitSubject = reset($matchingSubjects); // Subject with matching externalId and systemId
 
-            // 3) Ensure each assignment in Tahvel is in Kriit; create if missing
-            self::ensureAssignmentsExist($tahvelSubject['assignments'], $kriitSubject['subjectId'], $kriitSubject['assignments']);
+            // 3) Ensure each assignment in Remote is in Kriit; create if missing
+            self::ensureAssignmentsExist($remoteSubject['assignments'], $kriitSubject['subjectId'], $kriitSubject['assignments'], $systemId);
+        }
+    }
 
-            // 4) Compare assignment-level fields for those that existed in Kriit
+    /**
+     * Returns an array describing the differences (subject-level, assignment-level, and existing student grades) 
+     * between External System and Kriit.
+     *
+     * @param array $remoteSubjects Array of subjects from External System, each with assignments and results
+     * @param int $systemId The ID of the external system
+     * @return array
+     */
+    public static function getSystemDifferences(array $remoteSubjects, int $systemId = 1): array
+    {
+        $diffSubjects = [];
+        // Load all relevant existing data from Kriit
+        $kriitSubjects = self::loadKriitSubjectsData($remoteSubjects, $systemId);
+
+        foreach ($remoteSubjects as $remoteSubject) {
+            // Check if the subject exists in Kriit for this system
+            $matchingSubjects = array_filter(
+                $kriitSubjects,
+                fn($s) => $s['subjectExternalId'] == $remoteSubject['subjectExternalId'] &&
+                          $s['systemId'] == $systemId
+            );
+
+            // If subject not found, it should have been created via addMissingEntities
+            // Skip from differences, because newly inserted = no difference
+            if (!$matchingSubjects) {
+                continue;
+            }
+
+            // Subject found, let's compare subject-level fields
+            $kriitSubject = reset($matchingSubjects); // Subject with matching externalId and systemId
+            $subjectDiffFields = self::diffSubjectFields($kriitSubject, $remoteSubject);
+
+            // Compare assignment-level fields for those that existed in Kriit
             $assignmentsDifferences = [];
-            foreach ($tahvelSubject['assignments'] as $tahvelAssignment) {
-                $extId = $tahvelAssignment['assignmentExternalId'];
-                // If we just created it (step 3), it's new => no difference
+            foreach ($remoteSubject['assignments'] as $remoteAssignment) {
+                $extId = $remoteAssignment['assignmentExternalId'];
+                // If it doesn't exist in Kriit (should have been created via addMissingEntities)
+                // Skip from differences, because newly inserted = no difference
                 if (!isset($kriitSubject['assignments'][$extId])) {
                     continue;
                 }
@@ -74,11 +107,10 @@ class Tahvel
                 $kriitAssignment = $kriitSubject['assignments'][$extId];
 
                 // Compare assignment fields
-                $fieldDiff = self::diffAssignmentFields($kriitAssignment, $tahvelAssignment);
+                $fieldDiff = self::diffAssignmentFields($kriitAssignment, $remoteAssignment);
 
                 // Compare results for existing students
-                // Also note that new students are inserted with the Tahvel grade in step 3 or 5
-                $resultsDiff = self::diffAssignmentResults($kriitAssignment['results'], $tahvelAssignment['results']);
+                $resultsDiff = self::diffAssignmentResults($kriitAssignment['results'], $remoteAssignment['results']);
 
                 // If either fields differ or existing students differ => record difference
                 if ($fieldDiff || $resultsDiff) {
@@ -92,7 +124,7 @@ class Tahvel
                         $assignDiff['results'] = [];
                         foreach ($resultsDiff as $studCode => $d) {
                             // The user wants final data, but we show that there's a difference
-                            // We could choose Kriit's or Tahvel's grade; the user specifically wants to see
+                            // We could choose Kriit's or Remote's grade; the user specifically wants to see
                             // that the grade is different. We'll show Kriit's final data for now.
                             $assignDiff['results'][] = [
                                 'studentPersonalCode' => $studCode,
@@ -128,20 +160,24 @@ class Tahvel
     }
 
     /**
-     * Loads from Kriit the subjects that match the external IDs found in the given Tahvel data.
+     * Loads from Kriit the subjects that match the external IDs found in the given Remote data.
+     * 
+     * @param array $remoteSubjects Array of subjects from External System, each with assignments and results
+     * @param int $systemId The ID of the external system
+     * @return array
      */
-    private static function loadKriitSubjectsData(array $tahvelSubjects): array
+    private static function loadKriitSubjectsData(array $remoteSubjects, int $systemId = 1): array
     {
-        $extIds = array_column($tahvelSubjects, 'subjectExternalId');
+        $extIds = array_column($remoteSubjects, 'subjectExternalId');
         $extIdsString = implode(',', array_filter($extIds));
         if (!$extIdsString) {
             return [];
         }
         $rows = Db::getAll("
-            SELECT s.subjectId, s.subjectName, s.subjectExternalId,
+            SELECT s.subjectId, s.subjectName, s.subjectExternalId, s.systemId,
                    g.groupName,
                    t.userPersonalCode AS teacherPersonalCode, t.userName AS teacherName,
-                   a.assignmentId, a.assignmentExternalId, a.assignmentName,
+                   a.assignmentId, a.assignmentExternalId, a.systemId as assignmentSystemId, a.assignmentName,
                    a.assignmentInstructions, a.assignmentDueAt,
                    ua.userGrade, st.userPersonalCode, st.userName
             FROM subjects s
@@ -150,8 +186,8 @@ class Tahvel
             JOIN assignments a ON s.subjectId = a.subjectId
             LEFT JOIN userAssignments ua ON a.assignmentId = ua.assignmentId
             LEFT JOIN users st ON ua.userId = st.userId
-            WHERE s.subjectExternalId IN ($extIdsString)
-        ");
+            WHERE s.subjectExternalId IN ($extIdsString) AND s.systemId = ?
+        ", [$systemId]);
 
         $subjects = [];
         foreach ($rows as $r) {
@@ -161,6 +197,7 @@ class Tahvel
                     'subjectId'          => $r['subjectId'],
                     'subjectName'        => $r['subjectName'],
                     'subjectExternalId'  => $r['subjectExternalId'],
+                    'systemId'           => $r['systemId'],
                     'groupName'          => $r['groupName'],
                     'teacherPersonalCode'=> $r['teacherPersonalCode'],
                     'teacherName'        => $r['teacherName'],
@@ -172,6 +209,7 @@ class Tahvel
                 $subjects[$sxId]['assignments'][$axId] = [
                     'assignmentId'          => $r['assignmentId'],
                     'assignmentExternalId'   => $axId,
+                    'systemId'               => $r['assignmentSystemId'],
                     'assignmentName'         => $r['assignmentName'],
                     'assignmentInstructions' => $r['assignmentInstructions'],
                     'assignmentDueAt'        => $r['assignmentDueAt'],
@@ -190,33 +228,38 @@ class Tahvel
     }
 
     /**
-     * Creates a subject in Kriit for $tahvelSubject (including assignments and new students).
+     * Creates a subject in Kriit for $remoteSubject (including assignments and new students).
      * Because it's newly inserted, it won't show up as a difference.
+     * 
+     * @param array $remoteSubject Subject data from External System
+     * @param int $systemId The ID of the external system
      */
-    private static function createKriitSubject(array $tahvelSubject): void
+    private static function createKriitSubject(array $remoteSubject, int $systemId = 1): void
     {
-        $teacher = Db::getFirst("SELECT * FROM users WHERE userPersonalCode='{$tahvelSubject['teacherPersonalCode']}'");
-        $group   = Db::getFirst("SELECT * FROM `groups` WHERE groupName='{$tahvelSubject['groupName']}'");
+        $teacher = Db::getFirst("SELECT * FROM users WHERE userPersonalCode='{$remoteSubject['teacherPersonalCode']}'");
+        $group   = Db::getFirst("SELECT * FROM `groups` WHERE groupName='{$remoteSubject['groupName']}'");
 
         $subjId = Db::insert('subjects', [
-            'subjectName'     => $tahvelSubject['subjectName'],
-            'tahvelSubjectId' => $tahvelSubject['subjectExternalId'],
+            'subjectName'     => $remoteSubject['subjectName'],
+            'subjectExternalId' => $remoteSubject['subjectExternalId'],
+            'systemId'        => $systemId,
             'groupId'         => $group['groupId'],
             'teacherId'       => $teacher['userId']
         ]);
 
         // Create all assignments
-        foreach ($tahvelSubject['assignments'] as $asm) {
+        foreach ($remoteSubject['assignments'] as $asm) {
             Db::insert('assignments', [
                 'subjectId'             => $subjId,
                 'assignmentName'        => $asm['assignmentName'],
                 'assignmentExternalId'  => $asm['assignmentExternalId'],
+                'systemId'              => $systemId,
                 'assignmentDueAt'       => $asm['assignmentDueAt'],
                 'assignmentInstructions'=> $asm['assignmentInstructions']
             ]);
             $newAssignId = Db::getOne("
                 SELECT assignmentId FROM assignments
-                 WHERE subjectId={$subjId} AND assignmentExternalId={$asm['assignmentExternalId']}
+                WHERE subjectId={$subjId} AND assignmentExternalId={$asm['assignmentExternalId']} AND systemId={$systemId}
             ");
 
             // Insert userAssignments for any students (if they exist or are newly inserted)
@@ -230,11 +273,12 @@ class Tahvel
                     $newUserId = Db::insert('users', [
                         'userPersonalCode' => $res['studentPersonalCode'],
                         'userName'         => $res['studentName'],
-                        'userIsTeacher'    => 0
+                        'userIsTeacher'    => 0,
+                        'systemId'         => $systemId
                     ]);
                     $student = Db::getFirst("SELECT * FROM users WHERE userId={$newUserId}");
                 }
-                // 5B) Insert userAssignment with the Tahvel grade for the new user
+                // 5B) Insert userAssignment with the Remote grade for the new user
                 Db::insert('userAssignments', [
                     'assignmentId' => $newAssignId,
                     'userId'       => $student['userId'],
@@ -245,16 +289,31 @@ class Tahvel
     }
 
     /**
-     * For each $tahvelAssignment, if it doesn't exist in Kriit, create it (and any new students).
+     * For each $remoteAssignment, if it doesn't exist in Kriit, create it (and any new students).
      * No difference will be recorded for brand new assignments/students, because Kriit now has the same data.
+     * 
+     * @param array $remoteAssignments Array of assignments from External System
+     * @param int $kriitSubjectId The subject ID in Kriit
+     * @param array $kriitAssignments Existing assignments in Kriit
+     * @param int $systemId The ID of the external system
      */
-    private static function ensureAssignmentsExist(array $tahvelAssignments, int $kriitSubjectId, array $kriitAssignments): void
+    private static function ensureAssignmentsExist(array $remoteAssignments, int $kriitSubjectId, array $kriitAssignments, int $systemId = 1): void
     {
-        foreach ($tahvelAssignments as $asm) {
+        foreach ($remoteAssignments as $asm) {
             $extId = $asm['assignmentExternalId'];
-            if (isset($kriitAssignments[$extId])) {
-                // Already exists -> let's ensure any missing students are created
-                self::ensureStudentsAndGrades($kriitAssignments[$extId]['assignmentId'], $asm['results'] ?? []);
+            
+            // Check if assignment exists in this system
+            $exists = false;
+            foreach ($kriitAssignments as $ka) {
+                if ($ka['assignmentExternalId'] == $extId && $ka['systemId'] == $systemId) {
+                    $exists = true;
+                    // Already exists -> let's ensure any missing students are created
+                    self::ensureStudentsAndGrades($ka['assignmentId'], $asm['results'] ?? [], $systemId);
+                    break;
+                }
+            }
+            
+            if ($exists) {
                 continue;
             }
 
@@ -263,27 +322,32 @@ class Tahvel
                 'subjectId'             => $kriitSubjectId,
                 'assignmentName'        => $asm['assignmentName'],
                 'assignmentExternalId'  => $asm['assignmentExternalId'],
+                'systemId'              => $systemId,
                 'assignmentDueAt'       => $asm['assignmentDueAt'],
                 'assignmentInstructions'=> $asm['assignmentInstructions']
             ]);
             $newAssignId = Db::getOne("
                 SELECT assignmentId FROM assignments
-                 WHERE subjectId={$kriitSubjectId} AND assignmentExternalId={$extId}
+                WHERE subjectId={$kriitSubjectId} AND assignmentExternalId={$extId} AND systemId={$systemId}
             ");
 
             // Insert userAssignments for any students, creating new students if needed
-            self::ensureStudentsAndGrades($newAssignId, $asm['results'] ?? []);
+            self::ensureStudentsAndGrades($newAssignId, $asm['results'] ?? [], $systemId);
         }
     }
 
     /**
      * For each result (student + grade):
      *   - If the student does not exist, create them.
-     *   - If no userAssignment found, create it with the Tahvel grade.
+     *   - If no userAssignment found, create it with the Remote grade.
      *   - If there's already a userAssignment, do NOT overwrite if the grade differs
      *     (this difference will appear in the final output).
+     * 
+     * @param int $assignmentId The assignment ID in Kriit
+     * @param array $results Array of results from External System
+     * @param int $systemId The ID of the external system
      */
-    private static function ensureStudentsAndGrades(int $assignmentId, array $results): void
+    private static function ensureStudentsAndGrades(int $assignmentId, array $results, int $systemId = 1): void
     {
         foreach ($results as $r) {
             if (empty($r['grade'])) {
@@ -295,7 +359,8 @@ class Tahvel
                 $newUserId = Db::insert('users', [
                     'userPersonalCode' => $r['studentPersonalCode'],
                     'userName'         => $r['studentName'],
-                    'userIsTeacher'    => 0
+                    'userIsTeacher'    => 0,
+                    'systemId'         => $systemId
                 ]);
                 $student = Db::getFirst("SELECT * FROM users WHERE userId={$newUserId}");
             }
@@ -304,7 +369,7 @@ class Tahvel
                 SELECT * FROM userAssignments
                 WHERE assignmentId={$assignmentId} AND userId={$student['userId']}
             ");
-            // If no existing userAssignment, create with the Tahvel grade
+            // If no existing userAssignment, create with the Remote grade
             if (!$existingUA) {
                 Db::insert('userAssignments', [
                     'assignmentId' => $assignmentId,
@@ -318,18 +383,18 @@ class Tahvel
     }
 
     /**
-     * Compares subjectName, groupName, teacherPersonalCode, teacherName between Kriit & Tahvel,
-     * returning an array of only fields that differ. The array is [fieldName => ['kriit' => ..., 'tahvel' => ...]].
+     * Compares subjectName, groupName, teacherPersonalCode, teacherName between Kriit & Remote,
+     * returning an array of only fields that differ. The array is [fieldName => ['kriit' => ..., 'remote' => ...]].
      */
-    private static function diffSubjectFields(array $kriitSubject, array $tahvelSubject): array
+    private static function diffSubjectFields(array $kriitSubject, array $remoteSubject): array
     {
         $check = ['subjectName','groupName','teacherPersonalCode','teacherName'];
         $diffs = [];
         foreach ($check as $fld) {
-            if ($kriitSubject[$fld] !== $tahvelSubject[$fld]) {
+            if ($kriitSubject[$fld] !== $remoteSubject[$fld]) {
                 $diffs[$fld] = [
                     'kriit'  => $kriitSubject[$fld],
-                    'tahvel' => $tahvelSubject[$fld]
+                    'remote' => $remoteSubject[$fld]
                 ];
             }
         }
@@ -338,17 +403,17 @@ class Tahvel
 
     /**
      * Compares assignment-level fields (assignmentName, assignmentInstructions, assignmentDueAt)
-     * returning [fieldName => ['kriit'=>..., 'tahvel'=>...]] for only the ones that differ.
+     * returning [fieldName => ['kriit'=>..., 'remote'=>...]] for only the ones that differ.
      */
-    private static function diffAssignmentFields(array $kriitAssignment, array $tahvelAssignment): array
+    private static function diffAssignmentFields(array $kriitAssignment, array $remoteAssignment): array
     {
         $check = ['assignmentName','assignmentInstructions','assignmentDueAt'];
         $diffs = [];
         foreach ($check as $fld) {
-            if ($kriitAssignment[$fld] !== $tahvelAssignment[$fld]) {
+            if ($kriitAssignment[$fld] !== $remoteAssignment[$fld]) {
                 $diffs[$fld] = [
                     'kriit'  => $kriitAssignment[$fld],
-                    'tahvel' => $tahvelAssignment[$fld]
+                    'remote' => $remoteAssignment[$fld]
                 ];
             }
         }
@@ -356,28 +421,28 @@ class Tahvel
     }
 
     /**
-     * For each Tahvel result, checks if Kriit has a different grade for that student.
+     * For each Remote result, checks if Kriit has a different grade for that student.
      * Only returns differences for students who already exist in Kriit (ensured by the array keys in $kriitResults).
-     * Returns: [studentCode => ['kriitGrade'=>..., 'tahvelGrade'=>..., 'studentName'=>...], ...]
+     * Returns: [studentCode => ['kriitGrade'=>..., 'remoteGrade'=>..., 'studentName'=>...], ...]
      */
-    private static function diffAssignmentResults(array $kriitResults, array $tahvelResults): array
+    private static function diffAssignmentResults(array $kriitResults, array $remoteResults): array
     {
-        $indexedTahvel = [];
-        foreach ($tahvelResults as $res) {
-            $indexedTahvel[$res['studentPersonalCode']] = $res;
+        $indexedRemote = [];
+        foreach ($remoteResults as $res) {
+            $indexedRemote[$res['studentPersonalCode']] = $res;
         }
 
         $diffs = [];
-        foreach ($indexedTahvel as $studCode => $t) {
-            $tahvelGrade = $t['grade'] ?? null;
+        foreach ($indexedRemote as $studCode => $t) {
+            $remoteGrade = $t['grade'] ?? null;
             $kriitGrade  = $kriitResults[$studCode]['grade'] ?? null;
 
             // If the student doesn't exist in Kriit, they've just been inserted => no difference
             // If the student exists but the grade differs, record difference
-            if (array_key_exists($studCode, $kriitResults) && $tahvelGrade !== $kriitGrade) {
+            if (array_key_exists($studCode, $kriitResults) && $remoteGrade !== $kriitGrade) {
                 $diffs[$studCode] = [
                     'kriitGrade'  => $kriitGrade,
-                    'tahvelGrade' => $tahvelGrade,
+                    'remoteGrade' => $remoteGrade,
                     'studentName' => $t['studentName']
                 ];
             }

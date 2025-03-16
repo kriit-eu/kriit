@@ -49,8 +49,8 @@
                         <input type="text" class="form-control" id="subjectName" required>
                     </div>
                     <div class="mb-3">
-                        <label for="subjectTahvelId" class="form-label">Tahvli ID<span class="text-danger" data-bs-toggle="tooltip" title="See väli on kohustuslik">*</span></label>
-                        <input type="text" class="form-control" id="subjectTahvelId" required>
+                        <label for="subjectExternalId" class="form-label">Tahvli ID<span class="text-danger" data-bs-toggle="tooltip" title="See väli on kohustuslik">*</span></label>
+                        <input type="text" class="form-control" id="subjectExternalId" required>
                     </div>
                     <div class="mb-3">
                         <label for="subjectTeacher" class="form-label">Õpetaja<span class="text-danger" data-bs-toggle="tooltip" title="See väli on kohustuslik">*</span></label>
@@ -95,12 +95,12 @@
 
         function checkFormValidation() {
             const subjectName = $.trim($('#subjectName').val());
-            const subjectTahvelId = $.trim($('#subjectTahvelId').val());
+            const subjectExternalId = $.trim($('#subjectExternalId').val());
             const subjectTeacher = $('#subjectTeacher').val();
             const subjectGroup = $('#subjectGroup').val();
 
             // Check if all required fields are filled
-            if (subjectName && subjectTahvelId && subjectTeacher && subjectGroup) {
+            if (subjectName && subjectExternalId && subjectTeacher && subjectGroup) {
                 $('#saveSubjectBtn').prop('disabled', false); // Enable the button
             } else {
                 $('#saveSubjectBtn').prop('disabled', true);  // Disable the button
@@ -115,12 +115,12 @@
         // Handle save subject button click
         $('#saveSubjectBtn').on('click', async function() {
             const subjectName = $.trim($('#subjectName').val());
-            const subjectTahvelId = $.trim($('#subjectTahvelId').val());
+            const subjectExternalId = $.trim($('#subjectExternalId').val());
             const subjectTeacher = $('#subjectTeacher').val();
             const subjectGroup = $('#subjectGroup').val();
 
             // Validate required fields
-            if (!subjectName || !subjectTahvelId || !subjectTeacher || !subjectGroup) {
+            if (!subjectName || !subjectExternalId || !subjectTeacher || !subjectGroup) {
                 alert('Palun täitke kõik vajalikud väljad.');
                 return;
             }
@@ -128,7 +128,7 @@
             // Form data to send to the server
             const formData = {
                 subjectName: subjectName,
-                tahvelSubjectId: subjectTahvelId,
+                subjectExternalId: subjectExternalId,
                 teacherId: subjectTeacher,
                 groupId: subjectGroup
             };

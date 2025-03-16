@@ -27,7 +27,7 @@ class users extends Controller
 
         $usersWithoutEmail = [];
         foreach ($_POST['students'] as $student) {
-            $tahvelStudentId = $student['id'];
+            $userExternalId = $student['id'];
             $fullName = $student['fullname'];
             $personalCode = $student['idcode'];
 
@@ -54,7 +54,7 @@ class users extends Controller
             } else {
                 try {
                     $createdUserId = Db::insert('users', [
-                        'tahvelStudentId' => $tahvelStudentId,
+                        'userExternalId' => $userExternalId,
                         'userName' => $fullName,
                         'userPersonalCode' => $personalCode,
                         'groupId' => $groupId,

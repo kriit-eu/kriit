@@ -112,7 +112,7 @@ class assignments extends Controller
             if ($field === 'subjectId') {
                 stop(400, "Invalid subjectId provided");
             } else {
-                $subjectId = Db::insert('subjects', ['subjectName' => $_POST['subjectName'], 'tahvelSubjectId' => $_POST['tahvelSubjectId'], 'groupId' => $groupId, 'teacherId' => $this->auth->userId]);
+                $subjectId = Db::insert('subjects', ['subjectName' => $_POST['subjectName'], 'subjectExternalId' => $_POST['subjectExternalId'], 'groupId' => $groupId, 'teacherId' => $this->auth->userId]);
                 Activity::create(ACTIVITY_CREATE_SUBJECT, $this->auth->userId, $subjectId);
             }
         } else {
@@ -163,9 +163,9 @@ class assignments extends Controller
             return ['code' => 400, 'message' => 'groupId or groupName is required but not both'];
         }
 
-        // Check if tahvelSubjectId is provided
-        if (empty($_POST['tahvelSubjectId'])) {
-            return ['code' => 400, 'message' => 'tahvelSubjectId is required'];
+        // Check if subjectExternalId is provided
+        if (empty($_POST['subjectExternalId'])) {
+            return ['code' => 400, 'message' => 'subjectExternalId is required'];
         }
 
         // Check if assignmentExternalId is provided
