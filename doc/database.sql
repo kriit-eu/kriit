@@ -27,7 +27,7 @@ CREATE TABLE `activities` (
   `activityName` varchar(50) NOT NULL COMMENT 'Autocreated',
   `activityDescription` varchar(191) NOT NULL,
   PRIMARY KEY (`activityId`)
-) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -53,7 +53,12 @@ INSERT INTO `activities` VALUES
 (14,'addUser','added user'),
 (15,'updateUser','updated user'),
 (16,'deleteUser','deleted user'),
-(17,'submitAssignment','submitted an assignment');
+(17,'submitAssignment','submitted an assignment'),
+(18,'syncStart','started synchronization with external system'),
+(19,'createSubjectSync','created subject during synchronization'),
+(20,'createAssignmentSync','created assignment during synchronization'),
+(21,'createUserSync','created user during synchronization'),
+(22,'gradeSync','synchronized grade');
 /*!40000 ALTER TABLE `activities` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -77,7 +82,7 @@ CREATE TABLE `activityLog` (
   KEY `idx_activityLog_id` (`id`),
   CONSTRAINT `fk_activityLog_activityId` FOREIGN KEY (`activityId`) REFERENCES `activities` (`activityId`),
   CONSTRAINT `fk_activityLog_userId` FOREIGN KEY (`userId`) REFERENCES `users` (`userId`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -847,4 +852,4 @@ UNLOCK TABLES;
 /*!50503 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-03-16 20:12:09
+-- Dump completed on 2025-03-16 21:15:06

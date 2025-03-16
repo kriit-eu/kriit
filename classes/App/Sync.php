@@ -227,6 +227,8 @@ class Sync
         return $subjects;
     }
 
+    // This method has been moved to the Assignment class
+    
     /**
      * Creates a subject in Kriit for $remoteSubject (including assignments and new students).
      * Because it's newly inserted, it won't show up as a difference.
@@ -246,21 +248,25 @@ class Sync
             'groupId'         => $group['groupId'],
             'teacherId'       => $teacher['userId']
         ]);
+        
+        // Log subject creation
+        Activity::create(ACTIVITY_CREATE_SUBJECT_SYNC, $teacher['userId'], $subjId, [
+            'systemId' => $systemId,
+            'subjectName' => $remoteSubject['subjectName'],
+            'subjectExternalId' => $remoteSubject['subjectExternalId'],
+            'groupName' => $remoteSubject['groupName']
+        ]);
 
         // Create all assignments
         foreach ($remoteSubject['assignments'] as $asm) {
-            Db::insert('assignments', [
-                'subjectId'             => $subjId,
-                'assignmentName'        => $asm['assignmentName'],
-                'assignmentExternalId'  => $asm['assignmentExternalId'],
-                'systemId'              => $systemId,
-                'assignmentDueAt'       => $asm['assignmentDueAt'],
-                'assignmentInstructions'=> $asm['assignmentInstructions']
-            ]);
-            $newAssignId = Db::getOne("
-                SELECT assignmentId FROM assignments
-                WHERE subjectId={$subjId} AND assignmentExternalId={$asm['assignmentExternalId']} AND systemId={$systemId}
-            ");
+            // Create the assignment and get its ID using Assignment class
+            $newAssignId = Assignment::createFromExternalData(
+                $asm, 
+                $subjId, 
+                $systemId, 
+                $teacher['userId'], 
+                $remoteSubject['subjectName']
+            );
 
             // Insert userAssignments for any students (if they exist or are newly inserted)
             foreach ($asm['results'] as $res) {
@@ -277,20 +283,35 @@ class Sync
                         'systemId'         => $systemId
                     ]);
                     $student = Db::getFirst("SELECT * FROM users WHERE userId={$newUserId}");
+                    
+                    // Log user creation
+                    Activity::create(ACTIVITY_CREATE_USER_SYNC, $teacher['userId'], $newUserId, [
+                        'systemId' => $systemId,
+                        'userName' => $res['studentName'],
+                        'userPersonalCode' => $res['studentPersonalCode'],
+                        'subjectName' => $remoteSubject['subjectName'],
+                        'userIsTeacher' => 0
+                    ]);
                 }
-                // 5B) Insert userAssignment with the Remote grade for the new user
-                Db::insert('userAssignments', [
-                    'assignmentId' => $newAssignId,
-                    'userId'       => $student['userId'],
-                    'userGrade'    => $res['grade']
-                ]);
+                
+                // Set grade using Assignment class
+                Assignment::setGrade(
+                    $newAssignId,
+                    $student['userId'],
+                    $res['grade'],
+                    $teacher['userId'],
+                    $systemId,
+                    $remoteSubject['subjectName'],
+                    !empty($asm['assignmentName']) ? $asm['assignmentName'] : 'Unnamed assignment',
+                    $student['userName']
+                );
             }
         }
     }
 
     /**
      * For each $remoteAssignment, if it doesn't exist in Kriit, create it (and any new students).
-     * No difference will be recorded for brand new assignments/students, because Kriit now has the same data.
+     * No difference will be recorded for brand-new assignments/students, because Kriit now has the same data.
      * 
      * @param array $remoteAssignments Array of assignments from External System
      * @param int $kriitSubjectId The subject ID in Kriit
@@ -299,40 +320,34 @@ class Sync
      */
     private static function ensureAssignmentsExist(array $remoteAssignments, int $kriitSubjectId, array $kriitAssignments, int $systemId = 1): void
     {
-        foreach ($remoteAssignments as $asm) {
-            $extId = $asm['assignmentExternalId'];
+        // Get subject and teacher info for logging once (optimization)
+        $subject = Db::getFirst("SELECT s.subjectName, s.teacherId, u.userName FROM subjects s JOIN users u ON s.teacherId = u.userId WHERE s.subjectId = ?", [$kriitSubjectId]);
+        $teacherId = $subject ? $subject['teacherId'] : null;
+        $subjectName = $subject ? $subject['subjectName'] : null;
+        
+        foreach ($remoteAssignments as $ra) {
+            $extId = $ra['assignmentExternalId'];
             
-            // Check if assignment exists in this system
-            $exists = false;
+            // Check if assignment exists in this system using the Assignment class
+            $existing = false;
             foreach ($kriitAssignments as $ka) {
                 if ($ka['assignmentExternalId'] == $extId && $ka['systemId'] == $systemId) {
-                    $exists = true;
+                    $existing = true;
                     // Already exists -> let's ensure any missing students are created
-                    self::ensureStudentsAndGrades($ka['assignmentId'], $asm['results'] ?? [], $systemId);
+                    self::ensureStudentsAndGrades($ka['assignmentId'], $ra['results'] ?? [], $systemId);
                     break;
                 }
             }
             
-            if ($exists) {
+            if ($existing) {
                 continue;
             }
-
-            // Not found -> create assignment in Kriit
-            Db::insert('assignments', [
-                'subjectId'             => $kriitSubjectId,
-                'assignmentName'        => $asm['assignmentName'],
-                'assignmentExternalId'  => $asm['assignmentExternalId'],
-                'systemId'              => $systemId,
-                'assignmentDueAt'       => $asm['assignmentDueAt'],
-                'assignmentInstructions'=> $asm['assignmentInstructions']
-            ]);
-            $newAssignId = Db::getOne("
-                SELECT assignmentId FROM assignments
-                WHERE subjectId={$kriitSubjectId} AND assignmentExternalId={$extId} AND systemId={$systemId}
-            ");
+            
+            // Not found -> create assignment in Kriit using Assignment class
+            $newAssignId = Assignment::createFromExternalData($ra, $kriitSubjectId, $systemId, $teacherId, $subjectName);
 
             // Insert userAssignments for any students, creating new students if needed
-            self::ensureStudentsAndGrades($newAssignId, $asm['results'] ?? [], $systemId);
+            self::ensureStudentsAndGrades($newAssignId, $ra['results'] ?? [], $systemId);
         }
     }
 
@@ -363,19 +378,64 @@ class Sync
                     'systemId'         => $systemId
                 ]);
                 $student = Db::getFirst("SELECT * FROM users WHERE userId={$newUserId}");
+                
+                // Get assignment and subject info for logging
+                $assignmentInfo = Db::getFirst("
+                    SELECT a.assignmentName, s.subjectId, s.subjectName, s.teacherId
+                    FROM assignments a
+                    JOIN subjects s ON a.subjectId = s.subjectId
+                    WHERE a.assignmentId = ?
+                ", [$assignmentId]);
+                
+                if ($assignmentInfo) {
+                    // Log user creation
+                    Activity::create(ACTIVITY_CREATE_USER_SYNC, $assignmentInfo['teacherId'], $newUserId, [
+                        'systemId' => $systemId,
+                        'userName' => $r['studentName'],
+                        'userPersonalCode' => $r['studentPersonalCode'],
+                        'subjectName' => $assignmentInfo['subjectName'],
+                        'userIsTeacher' => 0
+                    ]);
+                }
             }
+
             // 2) Check if there's a userAssignment already
             $existingUA = Db::getFirst("
                 SELECT * FROM userAssignments
                 WHERE assignmentId={$assignmentId} AND userId={$student['userId']}
             ");
-            // If no existing userAssignment, create with the Remote grade
+
+            // If no existing userAssignment, create with the Remote grade using Assignment class
             if (!$existingUA) {
-                Db::insert('userAssignments', [
-                    'assignmentId' => $assignmentId,
-                    'userId'       => $student['userId'],
-                    'userGrade'    => $r['grade']
-                ]);
+                // Get assignment info for passing to Assignment::setGrade
+                $assignmentInfo = Db::getFirst("
+                    SELECT a.assignmentName, s.subjectId, s.subjectName, s.teacherId
+                    FROM assignments a
+                    JOIN subjects s ON a.subjectId = s.subjectId
+                    WHERE a.assignmentId = ?
+                ", [$assignmentId]);
+                
+                if ($assignmentInfo) {
+                    Assignment::setGrade(
+                        $assignmentId,
+                        $student['userId'],
+                        $r['grade'],
+                        $assignmentInfo['teacherId'],
+                        $systemId,
+                        $assignmentInfo['subjectName'],
+                        $assignmentInfo['assignmentName'],
+                        $student['userName']
+                    );
+                } else {
+                    // Fallback if no assignment info available
+                    Assignment::setGrade(
+                        $assignmentId,
+                        $student['userId'],
+                        $r['grade'],
+                        null,
+                        $systemId
+                    );
+                }
             }
             // If there's already a record but the grade differs, we keep it as-is for now
             // so it will appear in final diff. (No override here, since the user wants to see the difference.)

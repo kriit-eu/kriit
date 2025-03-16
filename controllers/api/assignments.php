@@ -197,33 +197,27 @@ class assignments extends Controller
             stop(400, 'Invalid assignmentExternalId');
         }
 
-        $this->deleteAllAssignmentDependentData($_POST['assignmentExternalId']);
-
         try {
-            Db::delete('assignments', 'assignmentExternalId = ?', [$_POST['assignmentExternalId']]);
-            Activity::create(ACTIVITY_DELETE_ASSIGNMENT, $this->auth->userId, null, "Deleted assignment with assignmentExternalId: $_POST[assignmentExternalId]");
-        } catch (\Exception $e) {
-            stop(400, $e->getMessage());
-        }
-
-        stop(200, 'Assignment deleted');
-    }
-
-    private function deleteAllAssignmentDependentData($assignmentExternalId): void
-    {
-        try {
-            $criteria = Db::getAll("SELECT criterionId FROM criteria WHERE assignmentId = (SELECT assignmentId FROM assignments WHERE assignmentExternalId = ?)", [$assignmentExternalId]);
-            foreach ($criteria as $criterion) {
-                Db::delete('userDoneCriteria', 'criterionId = ?', [$criterion['criterionId']]);
+            // Get the assignment to log its ID
+            $assignment = Assignment::getByExternalId($_POST['assignmentExternalId'], 1);
+            
+            if (!$assignment) {
+                stop(404, 'Assignment not found');
             }
-
-            Db::delete('criteria', 'assignmentId = (SELECT assignmentId FROM assignments WHERE assignmentExternalId = ?)', [$assignmentExternalId]);
-            Db::delete('messages', 'assignmentId = (SELECT assignmentId FROM assignments WHERE assignmentExternalId = ?)', [$assignmentExternalId]);
-            Db::delete('userAssignments', 'assignmentId = (SELECT assignmentId FROM assignments WHERE assignmentExternalId = ?)', [$assignmentExternalId]);
+            
+            // Use Assignment class to delete by external ID
+            $result = Assignment::deleteByExternalId($_POST['assignmentExternalId'], 1);
+            
+            if ($result) {
+                Activity::create(ACTIVITY_DELETE_ASSIGNMENT, $this->auth->userId, $assignment['assignmentId'], 
+                    "Deleted assignment with assignmentExternalId: $_POST[assignmentExternalId]");
+                stop(200, 'Assignment deleted');
+            } else {
+                stop(500, 'Failed to delete assignment');
+            }
         } catch (\Exception $e) {
             stop(400, $e->getMessage());
         }
-
     }
 
 }

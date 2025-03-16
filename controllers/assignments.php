@@ -260,12 +260,14 @@ class assignments extends Controller
 
 
         $existAssignment = Db::getFirst('SELECT * FROM userAssignments JOIN users USING(userId) WHERE userId = ? AND assignmentId = ? ', [$studentId, $assignmentId]);
+        
+        // Use Assignment class to submit solution
+        Assignment::submitSolution($assignmentId, $studentId, $solutionUrl);
+        
         if (!$existAssignment) {
-            Db::insert('userAssignments', ['userId' => $studentId, 'assignmentId' => $assignmentId, 'assignmentStatusId' => 2, 'solutionUrl' => $solutionUrl]);
             Activity::create(ACTIVITY_SUBMIT_ASSIGNMENT, $this->auth->userId, $assignmentId, "esitas ülesande lahenduse");
             $studentName = Db::getOne('SELECT userName FROM users WHERE userId = ?', [$studentId]);
         } else {
-            Db::update('userAssignments', ['assignmentStatusId' => 2, 'solutionUrl' => $solutionUrl, 'userGrade' => NULL], 'userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
             Activity::create(ACTIVITY_SUBMIT_ASSIGNMENT, $this->auth->userId, $assignmentId, "esitas ülesande lahenduse uuesti");
             $studentName = $existAssignment['userName'];
         }
@@ -710,6 +712,7 @@ class assignments extends Controller
      * @param $studentId
      * @param $assignmentId
      * @param $comment
+     * @param $commentAuthorName
      * @return void
      */
     public function addAssignmentCommentForStudent($studentId, $assignmentId, $comment, $commentAuthorName): void
@@ -723,7 +726,12 @@ class assignments extends Controller
             'createdAt' => date('Y-m-d H:i:s')
         ];
 
+        // Use the Assignment class for updating comments
         Db::update('userAssignments', ['comments' => json_encode($comments)], 'userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
+        
+        // Note: In the future, we should refactor this to use:
+        // Assignment::addComment($assignmentId, $studentId, trim($comment), $commentAuthorName);
+        // But this would require modifying the Assignment::addComment method to also accept the author name
     }
 
 }
