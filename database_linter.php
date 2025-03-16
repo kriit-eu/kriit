@@ -11,7 +11,7 @@ $whitelisted_fields = [
     // External system references
     'subjects.tahvelSubjectId',
     'users.tahvelStudentId',
-    'assignments.tahvelJournalEntryId',
+    'assignments.assignmentExternalId',
     // Special cases with dynamic references
     'activityLog.id'
 ];

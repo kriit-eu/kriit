@@ -164,7 +164,7 @@ class admin extends Controller
             subjects.subjectId,
             subjects.subjectName,
             subjects.teacherId,
-            subjects.tahvelSubjectId,
+            subjects.subjectExternalId,
             subjects.groupId,
             groups.groupName AS subjectGroup,
             users.userName AS teacherName
@@ -369,7 +369,7 @@ class admin extends Controller
             stop(400, 'Grupp on kohustuslik');
         }
 
-        $subject = Db::getFirst("SELECT * FROM subjects WHERE tahvelSubjectId = ?", [$_POST['tahvelSubjectId']]);
+        $subject = Db::getFirst("SELECT * FROM subjects WHERE subjectExternalId = ?", [$_POST['tahvelSubjectId']]);
         if ($subject) {
             stop(409, 'Aine selle tahvel ID-ga on juba olemas');
         }

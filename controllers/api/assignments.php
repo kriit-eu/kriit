@@ -26,8 +26,8 @@ class assignments extends Controller
 
         $this->addAssignmentTeachers();
 
-        //Check if assignment exists with given tahvelJournalEntryId
-        $existingAssignment = Db::getFirst("SELECT * FROM assignments WHERE tahvelJournalEntryId = ?", [$_POST['tahvelJournalEntryId']]);
+        //Check if assignment exists with given assignmentExternalId
+        $existingAssignment = Db::getFirst("SELECT * FROM assignments WHERE assignmentExternalId = ?", [$_POST['assignmentExternalId']]);
         $assignmentName = mb_strlen($_POST['assignmentInstructions']) > 50 ? mb_substr($_POST['assignmentInstructions'], 0, 47) . '...' : $_POST['assignmentInstructions'];
 
         if ($existingAssignment) {
@@ -39,7 +39,7 @@ class assignments extends Controller
             $data = [
                 'subjectId' => $subjectId,
                 'assignmentName' => $assignmentName,
-                'tahvelJournalEntryId' => $_POST['tahvelJournalEntryId'],
+                'assignmentExternalId' => $_POST['assignmentExternalId'],
                 'assignmentDueAt' => $_POST['assignmentDueAt'],
                 'assignmentInstructions' => $_POST['assignmentInstructions'],
             ];
@@ -168,9 +168,9 @@ class assignments extends Controller
             return ['code' => 400, 'message' => 'tahvelSubjectId is required'];
         }
 
-        // Check if tahvelJournalEntryId is provided
-        if (empty($_POST['tahvelJournalEntryId'])) {
-            return ['code' => 400, 'message' => 'tahvelJournalEntryId is required'];
+        // Check if assignmentExternalId is provided
+        if (empty($_POST['assignmentExternalId'])) {
+            return ['code' => 400, 'message' => 'assignmentExternalId is required'];
         }
 
         // if assignmentDueAt is provided, check if it is a valid date
@@ -204,7 +204,7 @@ class assignments extends Controller
 
         foreach ($journalEntries as $entry) {
             $assignmentId = Db::getOne(
-                "SELECT assignmentId FROM kriit.assignments WHERE tahvelJournalEntryId = ?",
+                "SELECT assignmentId FROM kriit.assignments WHERE assignmentExternalId = ?",
                 [$entry['id']]
             );
 
@@ -265,15 +265,15 @@ class assignments extends Controller
 
     function deleteAssignmentByTahvelJournalId(): void
     {
-        if (empty($_POST['tahvelJournalEntryId'])) {
-            stop(400, 'Invalid tahvelJournalEntryId');
+        if (empty($_POST['assignmentExternalId'])) {
+            stop(400, 'Invalid assignmentExternalId');
         }
 
-        $this->deleteAllAssignmentDependentData($_POST['tahvelJournalEntryId']);
+        $this->deleteAllAssignmentDependentData($_POST['assignmentExternalId']);
 
         try {
-            Db::delete('assignments', 'tahvelJournalEntryId = ?', [$_POST['tahvelJournalEntryId']]);
-            Activity::create(ACTIVITY_DELETE_ASSIGNMENT, $this->auth->userId, null, "Deleted assignment with tahvelJournalEntryId: $_POST[tahvelJournalEntryId]");
+            Db::delete('assignments', 'assignmentExternalId = ?', [$_POST['assignmentExternalId']]);
+            Activity::create(ACTIVITY_DELETE_ASSIGNMENT, $this->auth->userId, null, "Deleted assignment with assignmentExternalId: $_POST[assignmentExternalId]");
         } catch (\Exception $e) {
             stop(400, $e->getMessage());
         }
@@ -281,17 +281,17 @@ class assignments extends Controller
         stop(200, 'Assignment deleted');
     }
 
-    private function deleteAllAssignmentDependentData($tahvelJournalEntryId): void
+    private function deleteAllAssignmentDependentData($assignmentExternalId): void
     {
         try {
-            $criteria = Db::getAll("SELECT criterionId FROM criteria WHERE assignmentId = (SELECT assignmentId FROM assignments WHERE tahvelJournalEntryId = ?)", [$tahvelJournalEntryId]);
+            $criteria = Db::getAll("SELECT criterionId FROM criteria WHERE assignmentId = (SELECT assignmentId FROM assignments WHERE assignmentExternalId = ?)", [$assignmentExternalId]);
             foreach ($criteria as $criterion) {
                 Db::delete('userDoneCriteria', 'criterionId = ?', [$criterion['criterionId']]);
             }
 
-            Db::delete('criteria', 'assignmentId = (SELECT assignmentId FROM assignments WHERE tahvelJournalEntryId = ?)', [$tahvelJournalEntryId]);
-            Db::delete('messages', 'assignmentId = (SELECT assignmentId FROM assignments WHERE tahvelJournalEntryId = ?)', [$tahvelJournalEntryId]);
-            Db::delete('userAssignments', 'assignmentId = (SELECT assignmentId FROM assignments WHERE tahvelJournalEntryId = ?)', [$tahvelJournalEntryId]);
+            Db::delete('criteria', 'assignmentId = (SELECT assignmentId FROM assignments WHERE assignmentExternalId = ?)', [$assignmentExternalId]);
+            Db::delete('messages', 'assignmentId = (SELECT assignmentId FROM assignments WHERE assignmentExternalId = ?)', [$assignmentExternalId]);
+            Db::delete('userAssignments', 'assignmentId = (SELECT assignmentId FROM assignments WHERE assignmentExternalId = ?)', [$assignmentExternalId]);
         } catch (\Exception $e) {
             stop(400, $e->getMessage());
         }

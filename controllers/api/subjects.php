@@ -3,7 +3,7 @@
 use App\Controller;
 use App\Db;
 use App\Activity;
-use App\Sync;
+use App\Tahvel;
 
 class subjects extends Controller
 {
@@ -11,7 +11,7 @@ class subjects extends Controller
     {
         $tahvelSubjectId = $_POST['tahvelSubjectId'];
 
-        $existingSubject = Db::getFirst("SELECT * FROM subjects WHERE tahvelSubjectId = ?", [$tahvelSubjectId]);
+        $existingSubject = Db::getFirst("SELECT * FROM subjects WHERE subjectExternalId = ?", [$tahvelSubjectId]);
 
         if ($existingSubject) {
             Db::update('subjects', [
@@ -39,10 +39,10 @@ class subjects extends Controller
         // SQL query to fetch subjects
         // Execute query with IDs as parameters
         $subjects = Db::getAll("
-            SELECT tahvelSubjectId, isSynchronized, subjectName, groupName
+            SELECT subjectExternalId, isSynchronized, subjectName, groupName
             FROM subjects
             JOIN `groups` USING (groupId)
-            WHERE tahvelSubjectId IN ($placeholders)
+            WHERE subjectExternalId IN ($placeholders)
         ", $subjectIds);
 
         // Map subjects by their IDs for easy access
@@ -72,7 +72,7 @@ class subjects extends Controller
     function getUnsyncedGrades(): void
     {
         $tahvelSubjects = json_decode(file_get_contents('php://input'), true);
-        stop(200, Sync::getUnsyncedGrades($tahvelSubjects));
+        stop(200, Tahvel::sync($tahvelSubjects));
     }
 
 }
