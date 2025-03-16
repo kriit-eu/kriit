@@ -32,11 +32,14 @@ class Sync
 
         foreach ($remoteSubjects as $remoteSubject) {
             // 1) Ensure teacher & group in Kriit
-            self::findOrCreate('users', 'userPersonalCode', $remoteSubject['teacherPersonalCode'], [
+            $teacher = self::findOrCreate('users', 'userPersonalCode', $remoteSubject['teacherPersonalCode'], [
                 'userPersonalCode' => $remoteSubject['teacherPersonalCode'],
                 'userName'         => $remoteSubject['teacherName'],
                 'userIsTeacher'    => 1
             ]);
+            
+            // Check if teacher name needs updating
+            self::updateUserNameIfNeeded($teacher, $remoteSubject['teacherName'], $systemId);
             self::findOrCreate('groups', 'groupName', $remoteSubject['groupName'], [
                 'groupName' => $remoteSubject['groupName']
             ]);
@@ -181,9 +184,9 @@ class Sync
                    a.assignmentInstructions, a.assignmentDueAt,
                    ua.userGrade, st.userPersonalCode, st.userName
             FROM subjects s
-            JOIN `groups` g ON s.groupId = g.groupId
-            JOIN users t    ON s.teacherId = t.userId
-            JOIN assignments a ON s.subjectId = a.subjectId
+            LEFT JOIN `groups` g ON s.groupId = g.groupId
+            LEFT JOIN users t    ON s.teacherId = t.userId
+            LEFT JOIN assignments a ON s.subjectId = a.subjectId
             LEFT JOIN userAssignments ua ON a.assignmentId = ua.assignmentId
             LEFT JOIN users st ON ua.userId = st.userId
             WHERE s.subjectExternalId IN ($extIdsString) AND s.systemId = ?
@@ -397,6 +400,9 @@ class Sync
                         'userIsTeacher' => 0
                     ]);
                 }
+            } else {
+                // Check if name needs to be updated (e.g., the student got married, and their name changed)
+                self::updateUserNameIfNeeded($student, $r['studentName'], $systemId);
             }
 
             // 2) Check if there's a userAssignment already
@@ -519,8 +525,50 @@ class Sync
         $existing = Db::getFirst("SELECT * FROM `{$table}` WHERE {$field} = '{$value}'");
         if (!$existing) {
             $id = Db::insert($table, $insertData);
+
+            // Determine activity id based on table name
+            $activityId = match ($table) {
+                'subjects' => ACTIVITY_CREATE_SUBJECT_SYNC,
+                'assignments' => ACTIVITY_CREATE_ASSIGNMENT_SYNC,
+                'users' => ACTIVITY_ADD_USER,
+                default => 9999
+            };
+
+            Activity::create($activityId, null, $id, $insertData);
+
             $existing = Db::getFirst("SELECT * FROM `{$table}` WHERE {$field} = '{$value}'");
         }
         return $existing;
+    }
+    
+    /**
+     * Updates a user's name if it has changed in the external system (e.g., after marriage)
+     * 
+     * @param array $user The user data from Kriit
+     * @param string $remoteName The user name from the external system
+     * @param int $systemId The ID of the external system
+     * @return bool Whether the name was updated
+     */
+    private static function updateUserNameIfNeeded(array $user, string $remoteName, int $systemId): bool
+    {
+        // If names are the same, no update needed
+        if ($user['userName'] === $remoteName) {
+            return false;
+        }
+        
+        // Update the user's name in the database
+        Db::update('users', [
+            'userName' => $remoteName
+        ], "userId = {$user['userId']}");
+        
+        // Log the name change
+        Activity::create(ACTIVITY_UPDATE_USER_NAME, null, $user['userId'], [
+            'systemId' => $systemId,
+            'oldName' => $user['userName'],
+            'newName' => $remoteName,
+            'userPersonalCode' => $user['userPersonalCode']
+        ]);
+        
+        return true;
     }
 }

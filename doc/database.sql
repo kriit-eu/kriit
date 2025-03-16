@@ -27,7 +27,7 @@ CREATE TABLE `activities` (
   `activityName` varchar(50) NOT NULL COMMENT 'Autocreated',
   `activityDescription` varchar(191) NOT NULL,
   PRIMARY KEY (`activityId`)
-) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4;
 /*!50503 SET character_set_client = @saved_cs_client */;
 
 --
@@ -58,7 +58,8 @@ INSERT INTO `activities` VALUES
 (19,'createSubjectSync','created subject during synchronization'),
 (20,'createAssignmentSync','created assignment during synchronization'),
 (21,'createUserSync','created user during synchronization'),
-(22,'gradeSync','synchronized grade');
+(22,'gradeSync','synchronized grade'),
+(23,'updateUserName','updated user name during synchronization');
 /*!40000 ALTER TABLE `activities` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -826,6 +827,7 @@ CREATE TABLE `users` (
   `systemId` int unsigned DEFAULT 1,
   PRIMARY KEY (`userId`),
   UNIQUE KEY `idx_users_ext_system` (`userExternalId`,`systemId`),
+  UNIQUE KEY `idx_users_pk` (`userPersonalCode`),
   KEY `users_groups_groupId_fk` (`groupId`),
   CONSTRAINT `users_groups_groupId_fk` FOREIGN KEY (`groupId`) REFERENCES `groups` (`groupId`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4;
