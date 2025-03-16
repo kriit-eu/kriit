@@ -1,8 +1,8 @@
--- MariaDB dump 10.19  Distrib 10.11.8-MariaDB, for debian-linux-gnu (x86_64)
+-- MariaDB dump 10.19  Distrib 10.11.9-MariaDB, for osx10.19 (arm64)
 --
 -- Host: 127.0.0.1    Database: kriit
 -- ------------------------------------------------------
--- Server version	10.11.8-MariaDB-0ubuntu0.24.04.1
+-- Server version	10.11.9-MariaDB
 
 /*!50503 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!50503 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -128,7 +128,7 @@ DROP TABLE IF EXISTS `assignments`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `assignments` (
   `assignmentId` int unsigned NOT NULL AUTO_INCREMENT COMMENT 'Autocreated',
-  `assignmentName` varchar(50) NOT NULL COMMENT 'Autocreated',
+  `assignmentName` varchar(191) NOT NULL COMMENT 'Autocreated',
   `assignmentInstructions` text NOT NULL COMMENT 'Autocreated',
   `subjectId` int unsigned NOT NULL,
   `assignmentExternalId` int unsigned DEFAULT NULL,
@@ -162,7 +162,7 @@ DROP TABLE IF EXISTS `criteria`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `criteria` (
   `criterionId` int unsigned NOT NULL AUTO_INCREMENT,
-  `criterionName` varchar(191) DEFAULT NULL,
+  `criterionName` varchar(2000) DEFAULT NULL,
   `assignmentId` int unsigned NOT NULL,
   PRIMARY KEY (`criterionId`),
   KEY `criteria_assignments_assignmentId_fk` (`assignmentId`),
@@ -629,7 +629,7 @@ CREATE TABLE `userAssignments` (
   `assignmentStatusId` tinyint unsigned NOT NULL,
   `userGrade` varchar(191) DEFAULT NULL,
   `solutionUrl` text,
-  `comments` text NOT NULL DEFAULT '[]',
+  `comments` text DEFAULT '[]',
   `userAssignmentCreatedAt` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
   `userAssignmentEditedAt` datetime DEFAULT NULL,
   PRIMARY KEY (`assignmentId`,`userId`),
@@ -778,7 +778,7 @@ DROP TABLE IF EXISTS `users`;
 CREATE TABLE `users` (
   `userId` int unsigned NOT NULL AUTO_INCREMENT,
   `userName` varchar(191) NOT NULL,
-  `userPersonalCode` varchar(191) NOT NULL,
+  `userPersonalCode` varchar(191) NOT NULL COMMENT 'isikukood',
   `userIsAdmin` tinyint NOT NULL DEFAULT 0,
   `userPassword` varchar(191) NOT NULL DEFAULT '',
   `userDeleted` tinyint unsigned NOT NULL DEFAULT 0,
@@ -817,4 +817,4 @@ UNLOCK TABLES;
 /*!50503 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-11-20 13:02:52
+-- Dump completed on 2025-03-16 19:00:27
