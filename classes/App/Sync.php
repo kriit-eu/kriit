@@ -325,7 +325,7 @@ class Sync
         foreach ($remoteAssignments as $ra) {
             $extId = $ra['assignmentExternalId'];
             
-            // Check if assignment exists in this system using the Assignment class
+            // Check if assignment exists in memory first (faster)
             $existing = false;
             foreach ($kriitAssignments as $ka) {
                 if ($ka['assignmentExternalId'] == $extId && $ka['systemId'] == $systemId) {
@@ -340,7 +340,15 @@ class Sync
                 continue;
             }
             
-            // Not found -> create assignment in Kriit using Assignment class
+            // Not found in memory, double-check directly in the database
+            $existingAssignment = Assignment::getByExternalId($extId, $systemId);
+            if ($existingAssignment) {
+                // Assignment exists in database but wasn't in our memory cache
+                self::ensureStudentsAndGrades($existingAssignment['assignmentId'], $ra['results'] ?? [], $systemId);
+                continue;
+            }
+
+            // Not found in database -> create assignment in Kriit using Assignment class
             $newAssignId = Assignment::createFromExternalData($ra, $kriitSubjectId, $systemId, $teacherId, $subjectName);
 
             // Insert userAssignments for any students, creating new students if needed
