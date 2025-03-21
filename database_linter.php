@@ -157,3 +157,5 @@ if (!empty($sql_fixes)) {
         echo $sql . "\n";
     }
 }
+
+echo "Done.\n";
