@@ -149,6 +149,9 @@ class Db
 
     private function executePrepared($query, $params = [], $returnType = self::GET_RESULT): bool|\mysqli_result
     {
+        // Ensure $params is numerically indexed
+        $params = array_values($params);
+        
         $types = self::getTypeString($params);
         $debugQuery = $this->debugQuery($query, $params);
 
