@@ -1,3 +1,6 @@
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
 <style>
 
     .red-cell {
@@ -674,51 +677,84 @@
         <div class="modal-dialog modal-dialog-centered modal-xl" style="max-width: 90%;">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="swaggerModalLabel">OpenAPI Documentation</h5>
+                    <h5 class="modal-title" id="swaggerModalLabel">OpenAPI Dokumentatsioon</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="swaggerUrlInput" class="form-label">Swagger URL</label>
-                        <input type="text" class="form-control" id="swaggerUrlInput" placeholder="https://example.com/swagger-ui-init.js">
+                        <label for="swaggerUrlInput" class="form-label">swagger-ui-init.js URL
+                            <i class="bi bi-info-circle" data-bs-toggle="tooltip" data-bs-placement="top"
+                               title="Sisesta swagger-ui-init.js faili URL. Vaikimisi genereeritakse see automaatselt lahenduse URL-ist."></i>
+                        </label>
+                        <input type="text" class="form-control" id="swaggerUrlInput" placeholder="https://näide.ee/swagger-ui-init.js">
                     </div>
                     <?php if ($this->auth->userIsAdmin): ?>
                     <div class="mb-3">
-                        <label for="promptTextarea" class="form-label">Prompt</label>
+                        <label for="promptTextarea" class="form-label">Prompt
+                            <i class="bi bi-info-circle" data-bs-toggle="tooltip" data-bs-placement="top"
+                               title="See on prompti tekst, mis kopeeritakse koos OpenAPI spetsifikatsiooniga. Administraatorina saad seda prompti muuta."></i>
+                        </label>
                         <textarea class="form-control" id="promptTextarea" rows="5"></textarea>
                     </div>
                     <?php else: ?>
                     <div class="mb-3">
-                        <label class="form-label">Prompt</label>
+                        <label class="form-label">Prompt
+                            <i class="bi bi-info-circle" data-bs-toggle="tooltip" data-bs-placement="top"
+                               title="See on prompti tekst, mis kopeeritakse koos OpenAPI spetsifikatsiooniga."></i>
+                        </label>
                         <pre id="promptDisplay" class="form-control" style="min-height: 100px; white-space: pre-wrap;"></pre>
                         <!-- Hidden textarea for copying purposes -->
                         <textarea id="promptTextarea" style="display: none;"></textarea>
                     </div>
                     <?php endif; ?>
                     <div class="mb-3">
-                        <label for="swaggerDocOutput" class="form-label">Swagger Documentation</label>
-                        <textarea class="form-control" id="swaggerDocOutput" rows="20" readonly></textarea>
+                        <label for="swaggerDocOutput" class="form-label">OpenAPI Spetsifikatsioon
+                            <i class="bi bi-info-circle" data-bs-toggle="tooltip" data-bs-placement="top"
+                               title="See on õpilase lahendusest ekstraktitud OpenAPI spetsifikatsioon. See kopeeritakse koos promptiga."></i>
+                        </label>
+                        <div class="position-relative">
+                            <textarea class="form-control" id="swaggerDocOutput" rows="20" readonly></textarea>
+                            <div id="swaggerLoadingSpinner" class="position-absolute top-0 start-0 w-100 h-100 d-none" style="background-color: rgba(255,255,255,0.7);">
+                                <div class="d-flex justify-content-center align-items-center h-100">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Laadimine...</span>
+                                    </div>
+                                    <span class="ms-2">Laadin OpenAPI spetsifikatsiooni...</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <!-- 1. Hangi button -->
-                    <button type="button" class="btn btn-primary" id="fetchSwaggerButton" onclick="fetchSwaggerDoc()">Hangi</button>
+                    <button type="button" class="btn btn-primary" id="fetchSwaggerButton" onclick="fetchSwaggerDoc()"
+                            data-bs-toggle="tooltip" data-bs-placement="top" title="Hangi OpenAPI spetsifikatsioon URL-ist">
+                        Hangi OpenAPI spekk
+                    </button>
 
                     <!-- 2. Kopeeri prompt ja spekk button -->
-                    <button type="button" class="btn btn-success" id="copyButton" onclick="copyPromptAndSpec()" disabled>Kopeeri prompt ja spekk</button>
+                    <button type="button" class="btn btn-success" id="copyButton" onclick="copyPromptAndSpec()" disabled
+                            data-bs-toggle="tooltip" data-bs-placement="top" title="Kopeeri nii prompt kui ka OpenAPI spetsifikatsioon lõikelauale">
+                        Kopeeri prompt ja spekk
+                    </button>
 
                     <!-- 3a. Ava ChatGPT button -->
-                    <button type="button" class="btn btn-info" id="openChatGPTButton" onclick="window.open('https://chatgpt.com', '_blank')">
+                    <button type="button" class="btn btn-info" id="openChatGPTButton" onclick="window.open('https://chatgpt.com', '_blank')"
+                            data-bs-toggle="tooltip" data-bs-placement="top" title="Ava ChatGPT uues aknas, et kleepida kopeeritud sisu">
                         Ava ChatGPT <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
                     </button>
 
                     <!-- 3b. Ava Claude button -->
-                    <button type="button" class="btn btn-warning" id="openClaudeButton" onclick="window.open('https://claude.ai', '_blank')">
+                    <button type="button" class="btn btn-warning" id="openClaudeButton" onclick="window.open('https://claude.ai', '_blank')"
+                            data-bs-toggle="tooltip" data-bs-placement="top" title="Ava Claude uues aknas, et kleepida kopeeritud sisu">
                         Ava Claude <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
                     </button>
 
                     <!-- 4. Sulge button -->
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Sulge</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+                            data-bs-toggle="tooltip" data-bs-placement="top" title="Sulge see aken">
+                        Sulge
+                    </button>
                 </div>
             </div>
         </div>
@@ -1318,7 +1354,18 @@
         loadPromptFromSettings();
 
         // Show the modal
-        const modal = new bootstrap.Modal(document.getElementById('swaggerModal'));
+        const modalElement = document.getElementById('swaggerModal');
+        const modal = new bootstrap.Modal(modalElement);
+
+        // Initialize tooltips when the modal is fully shown
+        modalElement.addEventListener('shown.bs.modal', function () {
+            // Initialize all tooltips within the modal
+            const tooltipTriggerList = [].slice.call(modalElement.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+
         modal.show();
     }
 
@@ -1387,9 +1434,10 @@
         const outputTextarea = document.getElementById('swaggerDocOutput');
         const fetchButton = document.getElementById('fetchSwaggerButton');
         const copyButton = document.getElementById('copyButton');
+        const loadingSpinner = document.getElementById('swaggerLoadingSpinner');
 
         if (!swaggerUrl) {
-            outputTextarea.value = 'Please enter a valid URL';
+            showError(outputTextarea, 'Palun sisesta kehtiv URL');
             return;
         }
 
@@ -1397,14 +1445,19 @@
         fetchButton.disabled = true;
         copyButton.disabled = true;
         fetchButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
-        outputTextarea.value = 'Fetching Swagger documentation...';
+        outputTextarea.value = '';
+
+        // Show the loading spinner
+        loadingSpinner.classList.remove('d-none');
 
         // Use AJAX to fetch the swagger-ui-init.js file through a PHP proxy
         ajax('assignments/fetchSwaggerDoc', {
             url: swaggerUrl
         }, function(response) {
+            // Reset UI elements
             fetchButton.disabled = false;
-            fetchButton.innerHTML = 'Hangi';
+            fetchButton.innerHTML = 'Hangi OpenAPI spekk';
+            loadingSpinner.classList.add('d-none');
 
             if (response.status === 200 && response.data && response.data.swaggerDoc) {
                 // Format the JSON for better readability
@@ -1439,19 +1492,50 @@
                     outputTextarea.value = formattedJson;
                     copyButton.disabled = false; // Enable the copy button only when we have content
                 } catch (e) {
-                    outputTextarea.value = 'Error formatting JSON: ' + e.message;
+                    showError(outputTextarea, 'Viga JSON-i vormindamisel: ' + e.message);
                     copyButton.disabled = true;
                 }
             } else {
-                outputTextarea.value = response.error || 'Failed to fetch or parse Swagger documentation';
+                let errorMessage = 'OpenAPI spetsifikatsiooni hankimine või parsimine ebaõnnestus';
+                if (response.error) {
+                    errorMessage = response.error;
+                }
+                showError(outputTextarea, errorMessage);
                 copyButton.disabled = true;
             }
         }, function(error) {
+            // Reset UI elements
             fetchButton.disabled = false;
-            fetchButton.innerHTML = 'Hangi';
-            outputTextarea.value = error || 'An error occurred while fetching the Swagger documentation';
+            fetchButton.innerHTML = 'Hangi OpenAPI spekk';
+            loadingSpinner.classList.add('d-none');
+
+            let errorMessage = 'OpenAPI spetsifikatsiooni hankimisel tekkis viga';
+            if (error) {
+                if (error.includes('404')) {
+                    errorMessage = 'OpenAPI spetsifikatsiooni faili ei leitud (404). Palun kontrolli URL-i.';
+                } else if (error.includes('403')) {
+                    errorMessage = 'Juurdepääs OpenAPI spetsifikatsioonile on keelatud (403). Sul ei pruugi olla õigusi sellele ressursile jõuda.';
+                } else if (error.includes('500')) {
+                    errorMessage = 'Serveril tekkis viga (500) OpenAPI spetsifikatsiooni hankimisel.';
+                } else if (error.includes('timeout')) {
+                    errorMessage = 'Päring aegus. Server võib olla aeglane või kättesaamatu.';
+                } else {
+                    errorMessage = error;
+                }
+            }
+
+            showError(outputTextarea, errorMessage);
             copyButton.disabled = true;
         });
+    }
+
+    // Helper function to show formatted error messages
+    function showError(textarea, message) {
+        textarea.value = '⚠️ VIGA: ' + message;
+        textarea.style.color = 'red';
+        setTimeout(() => {
+            textarea.style.color = ''; // Reset color after a delay
+        }, 5000);
     }
 
     // Helper function to extract the base URL from the swagger-ui-init.js URL
@@ -1466,7 +1550,7 @@
             // This ensures we get the root of the server (e.g., https://docs.eerovallistu.site)
             return urlObj.origin;
         } catch (e) {
-            console.error('Error parsing URL:', e);
+            console.error('Viga URL-i parsimisel:', e);
             return null;
         }
     }
@@ -1479,7 +1563,7 @@
 
         // Only proceed if there's content to copy
         if (!swaggerTextarea.value.trim()) {
-            alert('No Swagger documentation to copy. Please fetch the documentation first.');
+            alert('OpenAPI spetsifikatsioon puudub. Palun hangi spetsifikatsioon enne kopeerimist.');
             return;
         }
 
@@ -1495,13 +1579,13 @@
             navigator.clipboard.writeText(combinedText)
                 .then(() => {
                     // Visual feedback that copy was successful
-                    copyButton.innerHTML = '<i class="bi bi-check"></i> Copied!';
+                    copyButton.innerHTML = '<i class="bi bi-check"></i> Kopeeritud!';
                     setTimeout(() => {
                         copyButton.innerHTML = originalButtonText;
                     }, 1500);
                 })
                 .catch(err => {
-                    console.error('Failed to copy text: ', err);
+                    console.error('Teksti kopeerimine ebaõnnestus: ', err);
                     // Fallback to the older method
                     fallbackCopyTextToClipboard(combinedText);
                 });
@@ -1528,16 +1612,16 @@
                 const successful = document.execCommand('copy');
                 if (successful) {
                     // Visual feedback that copy was successful
-                    copyButton.innerHTML = '<i class="bi bi-check"></i> Copied!';
+                    copyButton.innerHTML = '<i class="bi bi-check"></i> Kopeeritud!';
                     setTimeout(() => {
                         copyButton.innerHTML = originalButtonText;
                     }, 1500);
                 } else {
-                    alert('Failed to copy text');
+                    alert('Teksti kopeerimine ebaõnnestus');
                 }
             } catch (err) {
-                console.error('Failed to copy text: ', err);
-                alert('Failed to copy text: ' + err);
+                console.error('Teksti kopeerimine ebaõnnestus: ', err);
+                alert('Teksti kopeerimine ebaõnnestus: ' + err);
             } finally {
                 // Remove the temporary textarea
                 document.body.removeChild(tempTextarea);

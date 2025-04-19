@@ -495,7 +495,7 @@ class assignments extends Controller
             $jsContent = @file_get_contents($url);
 
             if ($jsContent === false) {
-                stop(404, 'Failed to fetch the Swagger documentation file');
+                stop(404, 'Failed to fetch the OpenAPI specification file');
             }
 
             // Extract the swaggerDoc object using a simpler approach
@@ -547,7 +547,7 @@ class assignments extends Controller
                             $swaggerDoc = json_decode($cleanedJson, true);
 
                             if (json_last_error() !== JSON_ERROR_NONE) {
-                                stop(500, 'Failed to parse Swagger documentation: ' . json_last_error_msg());
+                                stop(500, 'Failed to parse OpenAPI specification: ' . json_last_error_msg());
                             }
                         }
 
