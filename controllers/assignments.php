@@ -17,7 +17,7 @@ class assignments extends Controller
         $assignmentId = $this->getId();
         $data = Db::getAll("
                 SELECT
-                    a.assignmentId, a.assignmentName, a.assignmentInstructions, a.assignmentDueAt,
+                    a.assignmentId, a.assignmentName, a.assignmentInstructions, a.assignmentDueAt, a.assignmentInvolvesOpenApi,
                     c.criterionId, c.criterionName,
                     u.userId AS studentId, u.userName AS studentName, u.groupId,
                     ua.userGrade, ua.assignmentStatusId, ua.solutionUrl, ua.comments,
@@ -43,6 +43,7 @@ class assignments extends Controller
             'assignmentName' => null,
             'assignmentInstructions' => null,
             'assignmentDueAt' => null,
+            'assignmentInvolvesOpenApi' => 0,
             'teacherId' => null,
             'teacherName' => null,
             'criteria' => [],
@@ -57,6 +58,7 @@ class assignments extends Controller
                 $assignment['assignmentName'] = $row['assignmentName'];
                 $assignment['assignmentInstructions'] = $row['assignmentInstructions'];
                 $assignment['assignmentDueAt'] = !empty($row['assignmentDueAt']) ? date('d.m.Y', strtotime($row['assignmentDueAt'])) : 'Pole määratud';
+                $assignment['assignmentInvolvesOpenApi'] = (int)$row['assignmentInvolvesOpenApi'];
                 $assignment['teacherId'] = $row['teacherId'];
                 $assignment['teacherName'] = $row['teacherName'];
             }
@@ -260,10 +262,10 @@ class assignments extends Controller
 
 
         $existAssignment = Db::getFirst('SELECT * FROM userAssignments JOIN users USING(userId) WHERE userId = ? AND assignmentId = ? ', [$studentId, $assignmentId]);
-        
+
         // Use Assignment class to submit solution
         Assignment::submitSolution($assignmentId, $studentId, $solutionUrl);
-        
+
         if (!$existAssignment) {
             Activity::create(ACTIVITY_SUBMIT_ASSIGNMENT, $this->auth->userId, $assignmentId, "esitas ülesande lahenduse");
             $studentName = Db::getOne('SELECT userName FROM users WHERE userId = ?', [$studentId]);
@@ -384,13 +386,19 @@ class assignments extends Controller
         $assignmentName = $_POST['assignmentName'];
         $assignmentInstructions = $_POST['assignmentInstructions'];
         $assignmentDueAt = empty($_POST['assignmentDueAt']) ? null : $_POST['assignmentDueAt'];
+        $assignmentInvolvesOpenApi = isset($_POST['assignmentInvolvesOpenApi']) ? (int)$_POST['assignmentInvolvesOpenApi'] : 0;
         $oldCriteria = $_POST['oldCriteria'] ?? [];
         $newCriteria = $_POST['newCriteria'] ?? [];
 
         $existAssignment = Db::getFirst('SELECT * FROM assignments WHERE assignmentId = ?', [$assignmentId]);
         $this->saveEditAssignmentCriteria($oldCriteria, $newCriteria, $assignmentId);
 
-        Db::update('assignments', ['assignmentName' => $assignmentName, 'assignmentInstructions' => $assignmentInstructions, 'assignmentDueAt' => $assignmentDueAt], 'assignmentId = ?', [$assignmentId]);
+        Db::update('assignments', [
+            'assignmentName' => $assignmentName,
+            'assignmentInstructions' => $assignmentInstructions,
+            'assignmentDueAt' => $assignmentDueAt,
+            'assignmentInvolvesOpenApi' => $assignmentInvolvesOpenApi
+        ], 'assignmentId = ?', [$assignmentId]);
 
         if ($existAssignment['assignmentName'] !== $assignmentName) {
             $message = "$_POST[teacherName] muutis ülesande nimeks '$assignmentName'.";
@@ -410,6 +418,13 @@ class assignments extends Controller
             Activity::create(ACTIVITY_UPDATE_ASSIGNMENT, $this->auth->userId, $assignmentId, "Changed assignment due date from '$existAssignment[assignmentDueAt]' to '$assignmentDueAt'");
         }
 
+        if ((int)$existAssignment['assignmentInvolvesOpenApi'] !== $assignmentInvolvesOpenApi) {
+            $status = $assignmentInvolvesOpenApi ? 'aktiveeris' : 'deaktiveeris';
+            $message = "$_POST[teacherName] $status OpenAPI toe ülesandel.";
+            $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
+            Activity::create(ACTIVITY_UPDATE_ASSIGNMENT, $this->auth->userId, $assignmentId, "Changed assignment OpenAPI support from '" . (int)$existAssignment['assignmentInvolvesOpenApi'] . "' to '$assignmentInvolvesOpenApi'");
+        }
+
         stop(200, 'Assignment edited');
 
     }
@@ -421,6 +436,181 @@ class assignments extends Controller
         $response = $this->validateSolutionUrl($solutionUrl);
 
         stop($response['code'], $response['message']);
+    }
+
+    function ajax_getOpenApiPrompt(): void
+    {
+        // Get the OpenAPI prompt from settings
+        $prompt = Db::getOne("SELECT settingValue FROM settings WHERE settingName = 'openapiPrompt'");
+
+        // If the prompt doesn't exist, return an empty string
+        if ($prompt === false) {
+            $prompt = '';
+        }
+
+        stop(200, ['prompt' => $prompt]);
+    }
+
+    function ajax_saveOpenApiPrompt(): void
+    {
+        // Only admins can save the prompt
+        if (!$this->auth->userIsAdmin) {
+            stop(403, 'Only admins can save the OpenAPI prompt');
+        }
+
+        $prompt = $_POST['prompt'] ?? '';
+
+        // Check if the setting already exists
+        $existingSetting = Db::getOne("SELECT settingName FROM settings WHERE settingName = 'openapiPrompt'");
+
+        if ($existingSetting) {
+            // Update the existing setting
+            Db::update('settings', ['settingValue' => $prompt], "settingName = 'openapiPrompt'");
+        } else {
+            // Create a new setting
+            Db::insert('settings', [
+                'settingName' => 'openapiPrompt',
+                'settingValue' => $prompt
+            ]);
+        }
+
+        stop(200, 'Prompt saved successfully');
+    }
+
+    function ajax_fetchSwaggerDoc(): void
+    {
+        $url = $_POST['url'] ?? '';
+
+        if (empty($url)) {
+            stop(400, 'URL is required');
+        }
+
+        // Validate URL
+        if (!filter_var($url, FILTER_VALIDATE_URL)) {
+            stop(400, 'Invalid URL format');
+        }
+
+        try {
+            // Fetch the swagger-ui-init.js file
+            $jsContent = @file_get_contents($url);
+
+            if ($jsContent === false) {
+                stop(404, 'Failed to fetch the Swagger documentation file');
+            }
+
+            // Extract the swaggerDoc object using a simpler approach
+            // First, find the position of "swaggerDoc"
+            $pos = stripos($jsContent, '"swaggerDoc"');
+            if ($pos === false) {
+                $pos = stripos($jsContent, "'swaggerDoc'");
+            }
+
+            if ($pos !== false) {
+                // Find the opening brace after "swaggerDoc":
+                $openBracePos = strpos($jsContent, '{', $pos);
+                if ($openBracePos !== false) {
+                    // Now we need to find the matching closing brace
+                    $braceCount = 1;
+                    $currentPos = $openBracePos + 1;
+                    $endPos = null;
+
+                    // Simple brace counting to find the matching closing brace
+                    while ($braceCount > 0 && $currentPos < strlen($jsContent)) {
+                        $char = $jsContent[$currentPos];
+                        if ($char === '{') {
+                            $braceCount++;
+                        } elseif ($char === '}') {
+                            $braceCount--;
+                            if ($braceCount === 0) {
+                                $endPos = $currentPos;
+                                break;
+                            }
+                        }
+                        $currentPos++;
+                    }
+
+                    if ($endPos !== null) {
+                        // Extract the JSON object including the braces
+                        $swaggerDocJson = substr($jsContent, $openBracePos, $endPos - $openBracePos + 1);
+
+                        // Parse the JSON
+                        $swaggerDoc = json_decode($swaggerDocJson, true);
+
+                        if (json_last_error() !== JSON_ERROR_NONE) {
+                            // Try to clean the JSON string before parsing
+                            // Replace JavaScript-style trailing commas
+                            $cleanedJson = preg_replace('/,\s*\}/', '}', $swaggerDocJson);
+                            // Replace single quotes with double quotes for JSON compatibility
+                            $cleanedJson = preg_replace('/([{,])\s*\'([^\']*)\'\'\s*:/', '$1"$2":', $cleanedJson);
+                            $cleanedJson = preg_replace('/:\s*\'([^\']*)\'\'/', ':"$1"', $cleanedJson);
+
+                            $swaggerDoc = json_decode($cleanedJson, true);
+
+                            if (json_last_error() !== JSON_ERROR_NONE) {
+                                stop(500, 'Failed to parse Swagger documentation: ' . json_last_error_msg());
+                            }
+                        }
+
+                        // Return the parsed swaggerDoc
+                        stop(200, ['swaggerDoc' => $swaggerDoc]);
+                    }
+                }
+            }
+
+            // If we get here, we couldn't extract the swaggerDoc using the brace-counting approach
+            // Try a simpler regex approach for the options object
+            if (preg_match('/var\s+options\s*=\s*\{([^;]*)\};/s', $jsContent, $matches)) {
+                $optionsStr = '{' . $matches[1] . '}';
+
+                // Try to extract swaggerDoc using a simple regex
+                if (preg_match('/["\']swaggerDoc["\']\s*:\s*\{/s', $optionsStr, $docMatches, PREG_OFFSET_CAPTURE)) {
+                    $docStart = $docMatches[0][1];
+                    $docStartBrace = strpos($optionsStr, '{', $docStart + strlen($docMatches[0][0]) - 1);
+
+                    // Count braces to find the end of the swaggerDoc object
+                    $braceCount = 1;
+                    $currentPos = $docStartBrace + 1;
+                    $endPos = null;
+
+                    while ($braceCount > 0 && $currentPos < strlen($optionsStr)) {
+                        $char = $optionsStr[$currentPos];
+                        if ($char === '{') {
+                            $braceCount++;
+                        } elseif ($char === '}') {
+                            $braceCount--;
+                            if ($braceCount === 0) {
+                                $endPos = $currentPos;
+                                break;
+                            }
+                        }
+                        $currentPos++;
+                    }
+
+                    if ($endPos !== null) {
+                        $swaggerDocJson = substr($optionsStr, $docStartBrace, $endPos - $docStartBrace + 1);
+                        $swaggerDoc = json_decode($swaggerDocJson, true);
+
+                        if (json_last_error() === JSON_ERROR_NONE) {
+                            stop(200, null, ['swaggerDoc' => $swaggerDoc]);
+                        }
+                    }
+                }
+
+                // If we still couldn't extract it, try to convert the entire options object to JSON
+                $optionsJson = preg_replace('/([{,])\s*([a-zA-Z0-9_]+)\s*:/s', '$1"$2":', $optionsStr);
+                $options = json_decode($optionsJson, true);
+
+                if (json_last_error() === JSON_ERROR_NONE && isset($options['swaggerDoc'])) {
+                    stop(200, ['swaggerDoc' => $options['swaggerDoc']]);
+                }
+            }
+
+            // If all approaches failed
+            stop(404, 'Could not find or parse swaggerDoc in the JavaScript file');
+
+        } catch (\Exception $e) {
+            stop(500, 'An error occurred: ' . $e->getMessage());
+        }
     }
 
     private function saveStudentCriteria(): void
@@ -728,7 +918,7 @@ class assignments extends Controller
 
         // Use the Assignment class for updating comments
         Db::update('userAssignments', ['comments' => json_encode($comments)], 'userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
-        
+
         // Note: In the future, we should refactor this to use:
         // Assignment::addComment($assignmentId, $studentId, trim($comment), $commentAuthorName);
         // But this would require modifying the Assignment::addComment method to also accept the author name
