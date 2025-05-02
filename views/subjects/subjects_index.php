@@ -122,7 +122,7 @@
                                     ?>
                                     <td class="<?= $status['class'] ?> text-center <?= $inactiveClass ?>"
                                         data-bs-toggle="tooltip"
-                                        title="<?= $status['tooltipText'] ?><?= $inactiveText ?>"
+                                        title="<?= $s['userName'] ?>"
                                         data-grade="<?= is_numeric($status['grade']) ? intval($status['grade']) : '' ?>"
                                         data-is-student="<?= json_encode($isStudent) ?>"
                                         data-url="assignments/<?= $a['assignmentId'] ?>">
