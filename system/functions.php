@@ -39,6 +39,24 @@ function get_translation_strings($lang)
 {
     global $translations;
 
+    // Check if the language column exists in the database
+    $languageColumns = Db::getAll("
+        SELECT COLUMN_NAME
+        FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = 'translations'
+        AND COLUMN_NAME = ?
+    ", ["translationIn$lang"]);
+
+    // If the column doesn't exist, create it
+    if (empty($languageColumns)) {
+        try {
+            Db::q("ALTER TABLE translations ADD COLUMN translationIn$lang VARCHAR(765) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL");
+        } catch (\Exception $e) {
+            // Column might have been created by another process, ignore error
+        }
+    }
+
     // Handle case when current language has been just deleted from the DB
     $translationColumn = !in_array($_SESSION['language'], Translation::languageCodesInUse(false))
         ? "NULL AS translationIn$lang" : "translationIn$lang";
@@ -48,8 +66,10 @@ function get_translation_strings($lang)
         FROM translations");
 
     foreach ($translations_raw as $item) {
-        $translations[$item['translationPhrase']] = $item["translationIn$lang"] === NULL ? $item['translationPhrase']
-            : $item["translationIn$lang"];
+        $columnName = "translationIn$lang";
+        $translations[$item['translationPhrase']] = !isset($item[$columnName]) || $item[$columnName] === NULL
+            ? $item['translationPhrase']
+            : $item[$columnName];
     }
 }
 

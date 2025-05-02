@@ -7,12 +7,13 @@ class subjects extends Controller
 
     public function index()
     {
-
-
         $this->template = $this->auth->userIsAdmin ? 'admin' : 'master';
         // Define user roles
         $this->isStudent = $this->auth->groupId && !$this->auth->userIsAdmin && !$this->auth->userIsTeacher;
         $this->isTeacher = $this->auth->userIsTeacher;
+
+        // Check if we should show inactive students
+        $this->showAll = isset($_GET['showAll']) && $_GET['showAll'] == '1';
 
         // Construct the WHERE clause for the SQL query
         $whereClause = implode(' OR ', array_filter([
@@ -21,13 +22,12 @@ class subjects extends Controller
             $this->auth->userIsAdmin ? 'true' : null
         ]));
 
-
-
-        // Fetch data from the database
+        // Fetch data from the database - include inactive students who have ungraded assignments
+        $showAllValue = $this->showAll ? 1 : 0;
         $this->data = Db::getAll("
             SELECT
                 s.subjectId, s.subjectName, s.teacherId, t.userName AS teacherName,
-                u.userId AS studentId, u.userName AS studentName, u.groupId, g.groupName,
+                u.userId AS studentId, u.userName AS studentName, u.groupId, g.groupName, u.userIsActive,
                 a.assignmentId, a.assignmentName, a.assignmentDueAt,
                 ua.userGrade, ua.assignmentStatusId, ast.statusName AS assignmentStatusName
             FROM subjects s
@@ -37,7 +37,18 @@ class subjects extends Controller
             LEFT JOIN assignments a ON a.subjectId = s.subjectId
             LEFT JOIN userAssignments ua ON ua.assignmentId = a.assignmentId AND ua.userId = u.userId
             LEFT JOIN assignmentStatuses ast ON ua.assignmentStatusId = ast.assignmentStatusId
-            WHERE {$whereClause}
+            WHERE ({$whereClause})
+            AND (
+                u.userIsActive = 1
+                OR $showAllValue = 1
+                OR EXISTS (
+                    SELECT 1
+                    FROM assignments a2
+                    LEFT JOIN userAssignments ua2 ON ua2.assignmentId = a2.assignmentId AND ua2.userId = u.userId
+                    WHERE a2.subjectId = s.subjectId
+                    AND ua2.assignmentStatusId = 2
+                )
+            )
             ORDER BY g.groupName, u.userName, s.subjectName, a.assignmentDueAt");
 
 
@@ -72,6 +83,7 @@ class subjects extends Controller
                 'subjectId' => $subjectId,
                 'status' => $row['assignmentStatusName'] ?? 'Esitamata',
                 'userId' => $studentId,
+                'userIsActive' => $row['userIsActive'] ?? 1,
                 'initials' => mb_substr($row['studentName'] ?? '', 0, 1)
                     . mb_substr(mb_strrpos($row['studentName'] ?? '', ' ') + 1, 1)
             ];

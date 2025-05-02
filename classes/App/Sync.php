@@ -30,20 +30,20 @@ class Sync
         if (empty($remoteSubjects)) {
             return;
         }
-        
+
         // Reset our data caches
         self::resetCaches();
-        
+
         // Preload all relevant data at once
         self::preloadAllData($remoteSubjects, $systemId);
-        
+
         // Load all relevant existing data from Kriit
         $kriitSubjects = self::loadKriitSubjectsData($remoteSubjects, $systemId);
 
         // Preload all group names and teacher personal codes in one batch
         $allGroupNames = array_unique(array_column($remoteSubjects, 'groupName'));
         $allTeacherCodes = array_unique(array_column($remoteSubjects, 'teacherPersonalCode'));
-        
+
         // Fetch all existing groups in one query
         $existingGroups = [];
         if (!empty($allGroupNames)) {
@@ -53,7 +53,7 @@ class Sync
                 $existingGroups[$group['groupName']] = $group;
             }
         }
-        
+
         // Fetch all existing teachers in one query
         $existingTeachers = [];
         if (!empty($allTeacherCodes)) {
@@ -83,7 +83,7 @@ class Sync
                 // Add to our local cache
                 $existingTeachers[$teacherCode] = $teacher;
             }
-            
+
             // 2) Ensure group exists
             $groupName = $remoteSubject['groupName'];
             if (!isset($existingGroups[$groupName])) {
@@ -116,7 +116,7 @@ class Sync
     }
 
     /**
-     * Returns an array describing the differences (subject-level, assignment-level, and existing student grades) 
+     * Returns an array describing the differences (subject-level, assignment-level, and existing student grades)
      * between External System and Kriit.
      *
      * @param array $remoteSubjects Array of subjects from External System, each with assignments and results
@@ -126,13 +126,13 @@ class Sync
     public static function getSystemDifferences(array $remoteSubjects, int $systemId = 1): array
     {
         $diffSubjects = [];
-        
+
         // Reset our data caches
         self::resetCaches();
-        
+
         // Preload all relevant data at once
         self::preloadAllData($remoteSubjects, $systemId);
-        
+
         // Load all relevant existing data from Kriit
         $kriitSubjects = self::loadKriitSubjectsData($remoteSubjects, $systemId);
 
@@ -223,7 +223,7 @@ class Sync
 
     /**
      * Loads from Kriit the subjects that match the external IDs found in the given Remote data.
-     * 
+     *
      * @param array $remoteSubjects Array of subjects from External System, each with assignments and results
      * @param int $systemId The ID of the external system
      * @return array
@@ -290,11 +290,11 @@ class Sync
     }
 
     // This method has been moved to the Assignment class
-    
+
     /**
      * Creates a subject in Kriit for $remoteSubject (including assignments and new students).
      * Because it's newly inserted, it won't show up as a difference.
-     * 
+     *
      * @param array $remoteSubject Subject data from External System
      * @param int $systemId The ID of the external system
      */
@@ -310,7 +310,7 @@ class Sync
             'groupId'         => $group['groupId'],
             'teacherId'       => $teacher['userId']
         ]);
-        
+
         // Log subject creation
         Activity::create(ACTIVITY_CREATE_SUBJECT_SYNC, $teacher['userId'], $subjId, [
             'systemId' => $systemId,
@@ -323,10 +323,10 @@ class Sync
         foreach ($remoteSubject['assignments'] as $asm) {
             // Create the assignment and get its ID using Assignment class
             $newAssignId = Assignment::createFromExternalData(
-                $asm, 
-                $subjId, 
-                $systemId, 
-                $teacher['userId'], 
+                $asm,
+                $subjId,
+                $systemId,
+                $teacher['userId'],
                 $remoteSubject['subjectName']
             );
 
@@ -348,7 +348,7 @@ class Sync
                     );
                     $student = User::findById($newUserId);
                 }
-                
+
                 // Set grade using Assignment class
                 Assignment::setGrade(
                     $newAssignId,
@@ -368,7 +368,7 @@ class Sync
     /**
      * For each $remoteAssignment, if it doesn't exist in Kriit, create it (and any new students).
      * No difference will be recorded for brand-new assignments/students, because Kriit now has the same data.
-     * 
+     *
      * @param array $remoteAssignments Array of assignments from External System
      * @param int $kriitSubjectId The subject ID in Kriit
      * @param array $kriitAssignments Existing assignments in Kriit
@@ -386,25 +386,25 @@ class Sync
         } else {
             // Not in cache, fetch it
             $subject = Db::getFirst("SELECT s.subjectId, s.subjectName, s.teacherId, u.userName FROM subjects s JOIN users u ON s.teacherId = u.userId WHERE s.subjectId = ?", [$kriitSubjectId]);
-            
+
             if ($subject) {
                 // Store in cache for future use
                 self::$subjectInfoCache[$kriitSubjectId] = $subject;
             }
         }
-        
+
         $teacherId = $subject ? $subject['teacherId'] : null;
         $subjectName = $subject ? $subject['subjectName'] : null;
-        
+
         // Collect all assignment external IDs that we need to verify
         $assignmentsToCheck = [];
         $assignmentResults = [];
         $assignmentMemoryStatus = [];
-        
+
         foreach ($remoteAssignments as $ra) {
             $extId = $ra['assignmentExternalId'];
             $assignmentResults[$extId] = $ra['results'] ?? [];
-            
+
             // Check if assignment exists in memory first (faster)
             $existsInMemory = false;
             foreach ($kriitAssignments as $ka) {
@@ -417,7 +417,7 @@ class Sync
                     break;
                 }
             }
-            
+
             // If not found in memory, we need to check the database
             if (!$existsInMemory) {
                 $assignmentsToCheck[] = $extId;
@@ -427,18 +427,18 @@ class Sync
                 ];
             }
         }
-        
+
         // Check all missing assignments in a single query if needed
         $existingDbAssignments = [];
         if (!empty($assignmentsToCheck)) {
             $placeholders = implode(',', array_fill(0, count($assignmentsToCheck), '?'));
             $params = array_merge($assignmentsToCheck, [$systemId]);
-            
+
             $dbAssignments = Db::getAll("
-                SELECT * FROM assignments 
+                SELECT * FROM assignments
                 WHERE assignmentExternalId IN ({$placeholders}) AND systemId = ?
             ", $params);
-            
+
             foreach ($dbAssignments as $a) {
                 $existingDbAssignments[$a['assignmentExternalId']] = $a;
                 // Update our status record
@@ -448,19 +448,19 @@ class Sync
                 ];
             }
         }
-        
+
         // Now process each assignment with our collected information
         foreach ($remoteAssignments as $ra) {
             $extId = $ra['assignmentExternalId'];
             $status = $assignmentMemoryStatus[$extId];
-            
+
             if ($status['exists']) {
                 // Assignment exists - ensure students and grades
                 self::ensureStudentsAndGrades($status['assignmentId'], $assignmentResults[$extId], $systemId);
             } else {
                 // Assignment doesn't exist - create it
                 $newAssignId = Assignment::createFromExternalData($ra, $kriitSubjectId, $systemId, $teacherId, $subjectName);
-                
+
                 // Process student results for the new assignment
                 self::ensureStudentsAndGrades($newAssignId, $assignmentResults[$extId], $systemId);
             }
@@ -473,7 +473,7 @@ class Sync
      *   - If no userAssignment found, create it with the Remote grade.
      *   - If there's already a userAssignment, do NOT overwrite if the grade differs
      *     (this difference will appear in the final output).
-     * 
+     *
      * @param int $assignmentId The assignment ID in Kriit
      * @param array $results Array of results from External System
      * @param int $systemId The ID of the external system
@@ -483,7 +483,7 @@ class Sync
     private static $assignmentInfoCache = [];
     private static $subjectInfoCache = [];
     private static $userAssignmentsCache = []; // [assignmentId][userId] = assignment data
-    
+
     /**
      * Helper method to get assignment info for multiple assignments at once
      */
@@ -492,10 +492,10 @@ class Sync
         if (empty($assignmentIds)) {
             return [];
         }
-        
+
         // Filter out assignment IDs we already have in cache
         $idsToFetch = array_filter($assignmentIds, fn($id) => !isset(self::$assignmentInfoCache[$id]));
-        
+
         if (!empty($idsToFetch)) {
             $placeholders = implode(',', array_fill(0, count($idsToFetch), '?'));
             $assignmentsInfo = Db::getAll("
@@ -504,12 +504,12 @@ class Sync
                 JOIN subjects s ON a.subjectId = s.subjectId
                 WHERE a.assignmentId IN ({$placeholders})
             ", $idsToFetch);
-            
+
             foreach ($assignmentsInfo as $info) {
                 self::$assignmentInfoCache[$info['assignmentId']] = $info;
             }
         }
-        
+
         // Return all requested assignment info from cache
         $result = [];
         foreach ($assignmentIds as $id) {
@@ -517,10 +517,10 @@ class Sync
                 $result[$id] = self::$assignmentInfoCache[$id];
             }
         }
-        
+
         return $result;
     }
-    
+
     /**
      * Helper method to preload students by personal codes
      */
@@ -529,24 +529,24 @@ class Sync
         if (empty($personalCodes)) {
             return;
         }
-        
+
         // Filter out codes we already have in cache
         $codesToLoad = array_filter($personalCodes, fn($code) => !isset(self::$studentCache[$code]));
         if (empty($codesToLoad)) {
             return;
         }
-        
+
         $placeholders = implode(',', array_fill(0, count($codesToLoad), '?'));
         $studentsResult = Db::getAll("
-            SELECT * FROM users 
+            SELECT * FROM users
             WHERE userPersonalCode IN ({$placeholders})
         ", $codesToLoad);
-        
+
         foreach ($studentsResult as $student) {
             self::$studentCache[$student['userPersonalCode']] = $student;
         }
     }
-    
+
     /**
      * Helper method to get subject info for multiple subjects at once
      */
@@ -555,24 +555,24 @@ class Sync
         if (empty($subjectIds)) {
             return [];
         }
-        
+
         // Filter out subject IDs we already have in cache
         $idsToFetch = array_filter($subjectIds, fn($id) => !isset(self::$subjectInfoCache[$id]));
-        
+
         if (!empty($idsToFetch)) {
             $placeholders = implode(',', array_fill(0, count($idsToFetch), '?'));
             $subjectsInfo = Db::getAll("
-                SELECT s.subjectId, s.subjectName, s.teacherId, u.userName 
-                FROM subjects s 
-                JOIN users u ON s.teacherId = u.userId 
+                SELECT s.subjectId, s.subjectName, s.teacherId, u.userName
+                FROM subjects s
+                JOIN users u ON s.teacherId = u.userId
                 WHERE s.subjectId IN ({$placeholders})
             ", $idsToFetch);
-            
+
             foreach ($subjectsInfo as $info) {
                 self::$subjectInfoCache[$info['subjectId']] = $info;
             }
         }
-        
+
         // Return all requested subject info from cache
         $result = [];
         foreach ($subjectIds as $id) {
@@ -580,10 +580,10 @@ class Sync
                 $result[$id] = self::$subjectInfoCache[$id];
             }
         }
-        
+
         return $result;
     }
-    
+
     /**
      * Reset all data caches to prepare for a new sync operation
      */
@@ -594,7 +594,7 @@ class Sync
         self::$subjectInfoCache = [];
         self::$userAssignmentsCache = [];
     }
-    
+
     /**
      * Preload all data needed for the sync process to minimize database queries
      */
@@ -604,36 +604,36 @@ class Sync
         $allStudentCodes = [];
         $allAssignmentIds = [];
         $allSubjectIds = [];
-        
+
         // First, find all existing subjects and their IDs
         $extIds = array_column($remoteSubjects, 'subjectExternalId');
         if (!empty($extIds)) {
             $extIdsString = implode(',', array_filter($extIds));
             $subjectRows = Db::getAll("
-                SELECT subjectId, subjectExternalId 
-                FROM subjects 
+                SELECT subjectId, subjectExternalId
+                FROM subjects
                 WHERE subjectExternalId IN ({$extIdsString}) AND systemId = ?
             ", [$systemId]);
-            
+
             foreach ($subjectRows as $row) {
                 $allSubjectIds[] = $row['subjectId'];
             }
         }
-        
+
         // Get all assignments for these subjects
         if (!empty($allSubjectIds)) {
             $subjectIdsString = implode(',', $allSubjectIds);
             $assignmentRows = Db::getAll("
-                SELECT assignmentId, subjectId 
-                FROM assignments 
+                SELECT assignmentId, subjectId
+                FROM assignments
                 WHERE subjectId IN ({$subjectIdsString})
             ");
-            
+
             foreach ($assignmentRows as $row) {
                 $allAssignmentIds[] = $row['assignmentId'];
             }
         }
-        
+
         // Collect all student codes from remote data
         foreach ($remoteSubjects as $subject) {
             if (!empty($subject['assignments'])) {
@@ -648,29 +648,29 @@ class Sync
                 }
             }
         }
-        
+
         // 2. Preload students
         $allStudentCodes = array_unique($allStudentCodes);
         if (!empty($allStudentCodes)) {
             self::preloadStudents($allStudentCodes, $systemId);
         }
-        
+
         // 3. Preload subject info
         $allSubjectIds = array_unique($allSubjectIds);
         if (!empty($allSubjectIds)) {
             $placeholders = implode(',', array_fill(0, count($allSubjectIds), '?'));
             $subjectsInfo = Db::getAll("
-                SELECT s.subjectId, s.subjectName, s.teacherId, u.userName 
-                FROM subjects s 
-                JOIN users u ON s.teacherId = u.userId 
+                SELECT s.subjectId, s.subjectName, s.teacherId, u.userName
+                FROM subjects s
+                JOIN users u ON s.teacherId = u.userId
                 WHERE s.subjectId IN ({$placeholders})
             ", $allSubjectIds);
-            
+
             foreach ($subjectsInfo as $info) {
                 self::$subjectInfoCache[$info['subjectId']] = $info;
             }
         }
-        
+
         // 4. Preload assignment info
         $allAssignmentIds = array_unique($allAssignmentIds);
         if (!empty($allAssignmentIds)) {
@@ -681,12 +681,12 @@ class Sync
                 JOIN subjects s ON a.subjectId = s.subjectId
                 WHERE a.assignmentId IN ({$placeholders})
             ", $allAssignmentIds);
-            
+
             foreach ($assignmentsInfo as $info) {
                 self::$assignmentInfoCache[$info['assignmentId']] = $info;
             }
         }
-        
+
         // 5. Preload userAssignments
         if (!empty($allAssignmentIds) && !empty($allStudentCodes)) {
             // First get all user IDs for the personal codes
@@ -696,19 +696,19 @@ class Sync
                     $userIds[] = self::$studentCache[$code]['userId'];
                 }
             }
-            
+
             if (!empty($userIds)) {
                 $assignmentPlaceholders = implode(',', array_fill(0, count($allAssignmentIds), '?'));
                 $userPlaceholders = implode(',', array_fill(0, count($userIds), '?'));
-                
+
                 $params = array_merge($allAssignmentIds, $userIds);
-                
+
                 $userAssignments = Db::getAll("
                     SELECT * FROM userAssignments
                     WHERE assignmentId IN ({$assignmentPlaceholders})
                     AND userId IN ({$userPlaceholders})
                 ", $params);
-                
+
                 foreach ($userAssignments as $ua) {
                     if (!isset(self::$userAssignmentsCache[$ua['assignmentId']])) {
                         self::$userAssignmentsCache[$ua['assignmentId']] = [];
@@ -718,7 +718,7 @@ class Sync
             }
         }
     }
-    
+
     private static function ensureStudentsAndGrades(int $assignmentId, array $results, int $systemId = 1): void
     {
         if (empty($results)) {
@@ -742,48 +742,61 @@ class Sync
                 JOIN subjects s ON a.subjectId = s.subjectId
                 WHERE a.assignmentId = ?
             ", [$assignmentId]);
-            
+
             if (!$assignmentInfo) {
                 // Something is wrong with this assignment
                 return;
             }
-            
+
             // Store in cache for future use
             self::$assignmentInfoCache[$assignmentId] = $assignmentInfo;
         }
-        
+
         $groupId = $assignmentInfo['groupId'];
         $teacherId = $assignmentInfo['teacherId'];
         $subjectName = $assignmentInfo['subjectName'];
 
         // Extract all student personal codes
         $personalCodes = array_column($validResults, 'studentPersonalCode');
-        
+
         // Preload students into cache
         self::preloadStudents($personalCodes, $systemId);
-        
+
         // Process students first - create any missing students
         $allStudentIds = [];
         $newStudentNames = []; // Track which students were created/updated for later use
-        
+
         foreach ($validResults as $r) {
             $personalCode = $r['studentPersonalCode'];
-            
+
             if (isset(self::$studentCache[$personalCode])) {
                 // Student exists - check if name needs updating
                 $student = self::$studentCache[$personalCode];
                 User::updateNameIfNeeded($student, $r['studentName'], $systemId);
+
+                // Update student active status if provided
+                if (isset($r['studentIsActive'])) {
+                    $isActive = (bool)$r['studentIsActive'];
+                    if ($student['userIsActive'] != $isActive) {
+                        User::edit($student['userId'], ['userIsActive' => $isActive ? 1 : 0]);
+                        // Update our cache
+                        self::$studentCache[$personalCode]['userIsActive'] = $isActive ? 1 : 0;
+                    }
+                }
+
                 $allStudentIds[$personalCode] = $student['userId'];
                 $newStudentNames[$personalCode] = $r['studentName'];
             } else {
                 // Student doesn't exist - create them
+                $isActive = isset($r['studentIsActive']) ? (bool)$r['studentIsActive'] : true;
                 $newUserId = User::createStudent(
                     $personalCode,
                     $r['studentName'],
                     $systemId,
                     $groupId,
                     $teacherId,
-                    $subjectName
+                    $subjectName,
+                    $isActive
                 );
                 $student = User::findById($newUserId);
                 $allStudentIds[$personalCode] = $student['userId'];
@@ -794,7 +807,7 @@ class Sync
 
         // Get existing userAssignments from cache if possible
         $existingUserAssignments = [];
-        
+
         if (!empty($allStudentIds)) {
             // Check if we have cache data for this assignment
             if (isset(self::$userAssignmentsCache[$assignmentId])) {
@@ -814,12 +827,12 @@ class Sync
                     SELECT * FROM userAssignments
                     WHERE assignmentId = ? AND userId IN ({$placeholders})
                 ", $params);
-                
+
                 // Initialize cache entry if needed
                 if (!isset(self::$userAssignmentsCache[$assignmentId])) {
                     self::$userAssignmentsCache[$assignmentId] = [];
                 }
-                
+
                 foreach ($userAssignments as $ua) {
                     // Update both local working copy and cache
                     $existingUserAssignments[$ua['userId']] = $ua;
@@ -832,7 +845,7 @@ class Sync
         foreach ($validResults as $r) {
             $personalCode = $r['studentPersonalCode'];
             $userId = $allStudentIds[$personalCode];
-            
+
             // If no userAssignment exists for this student and assignment
             if (!isset($existingUserAssignments[$userId])) {
                 Assignment::setGrade(
@@ -905,15 +918,39 @@ class Sync
         foreach ($indexedRemote as $studCode => $t) {
             $remoteGrade = $t['grade'] ?? null;
             $kriitGrade  = $kriitResults[$studCode]['grade'] ?? null;
+            $studentIsActive = $t['studentIsActive'] ?? true;
 
             // If the student doesn't exist in Kriit, they've just been inserted => no difference
             // If the student exists but the grade differs, record difference
-            if (array_key_exists($studCode, $kriitResults) && $remoteGrade !== $kriitGrade) {
-                $diffs[$studCode] = [
-                    'kriitGrade'  => $kriitGrade,
-                    'remoteGrade' => $remoteGrade,
+            if (array_key_exists($studCode, $kriitResults)) {
+                $hasDifferences = false;
+                $diffData = [
                     'studentName' => $t['studentName']
                 ];
+
+                // Check for grade differences
+                if ($remoteGrade !== $kriitGrade) {
+                    $diffData['kriitGrade'] = $kriitGrade;
+                    $diffData['remoteGrade'] = $remoteGrade;
+                    $hasDifferences = true;
+                }
+
+                // Check for active status differences if provided
+                if (isset($t['studentIsActive'])) {
+                    $student = User::findByPersonalCode($studCode);
+                    if ($student && isset($student['userIsActive'])) {
+                        $kriitIsActive = (bool)$student['userIsActive'];
+                        if ($kriitIsActive != $studentIsActive) {
+                            $diffData['kriitIsActive'] = $kriitIsActive;
+                            $diffData['remoteIsActive'] = $studentIsActive;
+                            $hasDifferences = true;
+                        }
+                    }
+                }
+
+                if ($hasDifferences) {
+                    $diffs[$studCode] = $diffData;
+                }
             }
         }
         return $diffs;
@@ -952,7 +989,7 @@ class Sync
             }
             return $existing;
         }
-        
+
         // Regular case for other tables
         $existing = Db::getFirst("SELECT * FROM `{$table}` WHERE {$field} = '{$value}'");
         if (!$existing) {
@@ -972,5 +1009,5 @@ class Sync
         }
         return $existing;
     }
-    
+
 }

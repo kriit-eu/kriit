@@ -23,14 +23,15 @@ class User
         return $userId;
     }
 
-    public static function get($criteria = null, $orderBy = null)
+    public static function get($criteria = null, $orderBy = null, $includeInactive = false)
     {
         $criteria = $criteria ? 'AND ' . implode("AND", $criteria) : '';
         $orderBy = $orderBy ? $orderBy : 'userName';
+        $activeFilter = $includeInactive ? '' : 'AND userIsActive=1';
         return Db::getAll("
-            SELECT userId, userName, userPersonalCode, userIsAdmin, groupId
+            SELECT userId, userName, userPersonalCode, userIsAdmin, groupId, userIsActive
             FROM users
-            WHERE userDeleted=0 $criteria
+            WHERE userDeleted=0 $activeFilter $criteria
             ORDER BY $orderBy");
     }
 
@@ -65,10 +66,10 @@ class User
             ], "userId=$userId");
         }
     }
-    
+
     /**
      * Finds a user by their personal code
-     * 
+     *
      * @param string $personalCode The user's personal code
      * @return array|null The user data or null if not found
      */
@@ -76,10 +77,10 @@ class User
     {
         return Db::getFirst("SELECT * FROM users WHERE userPersonalCode = ?", [$personalCode]);
     }
-    
+
     /**
      * Creates a new student user
-     * 
+     *
      * @param string $personalCode Student's personal code
      * @param string $name Student's full name
      * @param int $systemId The ID of the external system
@@ -89,12 +90,13 @@ class User
      * @return int The new user's ID
      */
     public static function createStudent(
-        string $personalCode, 
-        string $name, 
-        int $systemId, 
+        string $personalCode,
+        string $name,
+        int $systemId,
         ?int $groupId = null,
         ?int $teacherId = null,
-        ?string $subjectName = null
+        ?string $subjectName = null,
+        bool $isActive = true
     ): int {
         // Generate email in format: their.full.name.without.umlauts@vikk.ee
         $email = strtolower(str_replace(
@@ -102,18 +104,19 @@ class User
             ['.', 'o', 'a', 'o', 'u', 'O', 'A', 'O', 'U'],
             $name
         )) . '@vikk.ee';
-        
+
         $userData = [
             'userPersonalCode' => $personalCode,
             'userName' => $name,
             'userEmail' => $email,
             'userIsTeacher' => 0,
             'systemId' => $systemId,
-            'groupId' => $groupId
+            'groupId' => $groupId,
+            'userIsActive' => $isActive ? 1 : 0
         ];
-        
+
         $userId = Db::insert('users', $userData);
-        
+
         // Log user creation if teacher ID is provided
         if ($teacherId) {
             $activityData = [
@@ -123,20 +126,20 @@ class User
                 'userIsTeacher' => 0,
                 'groupId' => $groupId
             ];
-            
+
             if ($subjectName) {
                 $activityData['subjectName'] = $subjectName;
             }
-            
+
             Activity::create(ACTIVITY_CREATE_USER_SYNC, $teacherId, $userId, $activityData);
         }
-        
+
         return $userId;
     }
-    
+
     /**
      * Updates a user's name if it has changed in the external system (e.g., after marriage)
-     * 
+     *
      * @param array $user The user data from Kriit
      * @param string $remoteName The user name from the external system
      * @param int $systemId The ID of the external system
@@ -148,12 +151,12 @@ class User
         if ($user['userName'] === $remoteName) {
             return false;
         }
-        
+
         // Update the user's name in the database
         Db::update('users', [
             'userName' => $remoteName
         ], "userId = {$user['userId']}");
-        
+
         // Log the name change
         Activity::create(ACTIVITY_UPDATE_USER_NAME, null, $user['userId'], [
             'systemId' => $systemId,
@@ -161,13 +164,13 @@ class User
             'newName' => $remoteName,
             'userPersonalCode' => $user['userPersonalCode']
         ]);
-        
+
         return true;
     }
-    
+
     /**
      * Creates a new teacher user
-     * 
+     *
      * @param string $personalCode Teacher's personal code
      * @param string $name Teacher's full name
      * @param int $systemId The ID of the external system
@@ -181,18 +184,18 @@ class User
             'userIsTeacher'    => 1,
             'systemId'         => $systemId
         ];
-        
+
         $userId = Db::insert('users', $userData);
-        
+
         // Log user creation
         Activity::create(ACTIVITY_ADD_USER, null, $userId, $userData);
-        
+
         return $userId;
     }
-    
+
     /**
      * Find a user by their ID
-     * 
+     *
      * @param int $userId The user ID
      * @return array|null The user data or null if not found
      */

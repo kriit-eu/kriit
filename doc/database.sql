@@ -1,4 +1,4 @@
--- Dump created on 2025-04-20 01:36:33 by Hennos-MacBook-Pro-2.local
+-- Dump created on 2025-05-02 22:58:44 by Hennos-MacBook-Pro-2.local
 SET FOREIGN_KEY_CHECKS=0;
 SET @@SESSION.sql_mode='NO_AUTO_VALUE_ON_ZERO';
 
@@ -452,6 +452,7 @@ CREATE TABLE `users` (
 `userIsAdmin` tinyint NOT NULL DEFAULT 0,
 `userPassword` varchar(191) NOT NULL DEFAULT '',
 `userDeleted` tinyint unsigned NOT NULL DEFAULT 0,
+`userIsActive` tinyint NOT NULL DEFAULT 1,
 `userTimeUpAt` datetime DEFAULT NULL,
 `userTimeTotal` time DEFAULT NULL,
 `userApiKey` varchar(32) DEFAULT NULL,
@@ -469,7 +470,7 @@ CONSTRAINT `users_groups_groupId_fk` FOREIGN KEY (`groupId`) REFERENCES `groups`
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
 INSERT INTO `users` VALUES
-(1,'Kati Maasikas','41111111115',1,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo',NULL,1,NULL,NULL,1),
-(2,'Mati Vaarikas','31111111114',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,NULL,NULL,'demo2',1,0,'',NULL,1);
+(1,'Kati Maasikas','41111111115',1,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,1,NULL,NULL,'demo',NULL,1,NULL,NULL,1),
+(2,'Mati Vaarikas','31111111114',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,1,NULL,NULL,'demo2',1,0,'',NULL,1);
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
