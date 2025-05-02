@@ -21,12 +21,25 @@
     }
 
     .narrow-name {
-        font-size: 0.6em;
-        line-height: 1.1;
+        font-size: 0.55em;
+        line-height: 1;
         white-space: nowrap;
         text-align: center;
         width: 100%;
-        display: block;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        height: 100%;
+        font-family: Arial Narrow, Arial, sans-serif;
+        font-stretch: condensed;
+        letter-spacing: -0.02em;
+    }
+
+    #subject-table th.student-name-header {
+        padding: 2px 4px;
+        font-weight: normal;
+        vertical-align: middle;
+        height: 100%;
     }
 </style>
 <?php if ($this->auth->userIsAdmin || $this->auth->userIsTeacher): ?>
@@ -80,7 +93,7 @@
                                 }
                             ?>
                             <th data-bs-toggle="tooltip" title="<?= $tooltipText ?>"
-                                class="<?= $isInactive ? 'inactive-student' : '' ?>">
+                                class="student-name-header <?= $isInactive ? 'inactive-student' : '' ?>">
                                 <?php
                                     $nameParts = explode(' ', $s['userName']);
                                     $lastName = array_pop($nameParts);
