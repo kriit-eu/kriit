@@ -18,6 +18,8 @@ class Application
     {
         global $controller;
 
+
+
         $this->set_base_url();
         $this->define_current_commit_hash();
 
@@ -31,6 +33,7 @@ class Application
         ob_start();
 
         $this->set_language();
+
         $this->process_uri();
         $this->parse_json_request_pody();
         $this->update_settings();
@@ -59,6 +62,8 @@ class Application
                 500);
         }
         $controller = new $controller_fqn($this);
+
+
 
         // Make request and auth properties available to controller
         $controller->controller = $this->controller;
@@ -121,6 +126,7 @@ class Application
             $this->save_current_url_to_session($controller);
 
             $controller->{$controller->action}();
+
             $controller->render($controller->template);
         }
 

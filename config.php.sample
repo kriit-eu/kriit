@@ -38,3 +38,6 @@ const ALLOWED_IP_ADDRESSES = ['127.0.0.1', '::1'];
 const NODE_EXE = '/Users/henno/.nvm/versions/node/v20.12.1/bin/node';
 
 const SENTRY_DSN = '';
+
+// Enable SQL debugging (shows all SQL queries at the end of the page for admin users only)
+const SQL_DEBUG = false;

@@ -7,6 +7,8 @@ class subjects extends Controller
 
     public function index()
     {
+
+
         $this->template = $this->auth->userIsAdmin ? 'admin' : 'master';
         // Define user roles
         $this->isStudent = $this->auth->groupId && !$this->auth->userIsAdmin && !$this->auth->userIsTeacher;
@@ -18,6 +20,8 @@ class subjects extends Controller
             $this->auth->groupId ? "s.groupId = {$this->auth->groupId}" : null,
             $this->auth->userIsAdmin ? 'true' : null
         ]));
+
+
 
         // Fetch data from the database
         $this->data = Db::getAll("
@@ -36,7 +40,10 @@ class subjects extends Controller
             WHERE {$whereClause}
             ORDER BY g.groupName, u.userName, s.subjectName, a.assignmentDueAt");
 
+
+
         $groups = [];
+
 
 
         // Process each row of data
@@ -134,5 +141,7 @@ class subjects extends Controller
 
         $this->statusClassMap = Assignment::statusClassMap($this->isStudent, $this->isTeacher);
         $this->groups = $groups;
+
+
     }
 }

@@ -151,7 +151,7 @@ class Db
     {
         // Ensure $params is numerically indexed
         $params = array_values($params);
-        
+
         $types = self::getTypeString($params);
         $debugQuery = $this->debugQuery($query, $params);
 
@@ -278,7 +278,7 @@ class Db
         foreach ($debugLog as $item) {
             $time = number_format($item['cumulative_time'], 4);
             $item['query'] = preg_replace('/\s+/', ' ', $item['query']);
-            $result[] = "$item[count] x  $time $item[query]";
+            $result[] = "$item[count] x  $time sec  $item[query]";
         }
 
         // Reverse sort result array so that the last query is on top
@@ -330,5 +330,35 @@ class Db
             $totalTime += $item['cumulative_time'];
         }
         return $totalTime;
+    }
+
+    /**
+     * Displays SQL debug information at the end of the page
+     * This function is called at the end of the output when SQL_DEBUG is true
+     */
+    public static function displayDebugInfo(): void
+    {
+        echo '<div class="container mt-5 pt-5 border-top">';
+        echo '<h3>SQL Debug Information</h3>';
+
+        // Display debug log
+        echo '<div class="mb-3">';
+        echo '<h4>Query Log:</h4>';
+        echo '<pre class="bg-light p-3">';
+        echo '<strong>Count x Time x Query</strong>' . "\n";
+        echo '----------------------------------------------' . "\n";
+        foreach (self::getDebugLog() as $logItem) {
+            echo htmlspecialchars($logItem) . "\n";
+        }
+        echo '</pre>';
+        echo '</div>';
+
+        // Display total query time
+        echo '<div class="mb-3">';
+        echo '<h4>Total Query Execution Time:</h4>';
+        echo '<pre class="bg-light p-3">' . self::getTotalQueryTime() . ' seconds</pre>';
+        echo '</div>';
+
+        echo '</div>';
     }
 }

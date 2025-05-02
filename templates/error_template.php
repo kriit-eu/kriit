@@ -27,5 +27,12 @@
 
 </div>
 
+<?php
+// Display SQL debug information if SQL_DEBUG is enabled and user is admin
+if (defined('SQL_DEBUG') && SQL_DEBUG && isset($auth) && $auth->userIsAdmin) {
+    \App\Db::displayDebugInfo();
+}
+?>
+
 </body>
 </html>

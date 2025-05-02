@@ -21,19 +21,39 @@ class Translation
     public static function languageCodesInUse(bool $capitalize): array
     {
 
+
         // Serve from cache, if possible
         if (self::$languageCodesInUse) {
             return $capitalize ? self::$languageCodesInUse : array_map('strtolower', self::$languageCodesInUse);
         }
 
-        $languageColumns = Db::getAll("SHOW COLUMNS FROM translations LIKE 'translationIn%'");
-        foreach ($languageColumns as $column) {
-            $code = substr($column['Field'], 13);
-            self::$languageCodesInUse[] = $code;
+        // Use INFORMATION_SCHEMA instead of SHOW COLUMNS for better performance and memory usage
+        $languageColumns = Db::getAll("
+            SELECT COLUMN_NAME
+            FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE()
+            AND TABLE_NAME = 'translations'
+            AND COLUMN_NAME LIKE 'translationIn%'
+        ");
+
+
+
+        // If no language columns exist, use default language only
+        if (empty($languageColumns)) {
+            self::$languageCodesInUse = [DEFAULT_LANGUAGE];
+        } else {
+            foreach ($languageColumns as $column) {
+                $code = substr($column['COLUMN_NAME'], 13);
+                self::$languageCodesInUse[] = $code;
+            }
         }
 
         // Return language codes in requested case
-        return $capitalize ? self::$languageCodesInUse : array_map('strtolower', self::$languageCodesInUse);
+        $result = $capitalize ? self::$languageCodesInUse : array_map('strtolower', self::$languageCodesInUse);
+
+
+
+        return $result;
     }
 
     public static function get($criteria = null)
