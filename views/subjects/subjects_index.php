@@ -19,6 +19,15 @@
         opacity: 0.6;
         font-style: italic;
     }
+
+    .narrow-name {
+        font-size: 0.6em;
+        line-height: 1.1;
+        white-space: nowrap;
+        text-align: center;
+        width: 100%;
+        display: block;
+    }
 </style>
 <?php if ($this->auth->userIsAdmin || $this->auth->userIsTeacher): ?>
     <div class="col text-end mb-3 d-flex justify-content-end align-items-center">
@@ -72,7 +81,12 @@
                             ?>
                             <th data-bs-toggle="tooltip" title="<?= $tooltipText ?>"
                                 class="<?= $isInactive ? 'inactive-student' : '' ?>">
-                                <?= $s['initials'] ?>
+                                <?php
+                                    $nameParts = explode(' ', $s['userName']);
+                                    $lastName = array_pop($nameParts);
+                                    $firstName = implode(' ', $nameParts);
+                                ?>
+                                <span class="narrow-name"><?= $firstName ?><br><?= $lastName ?></span>
                             </th>
                         <?php endforeach; ?>
                     <?php endif; ?>
