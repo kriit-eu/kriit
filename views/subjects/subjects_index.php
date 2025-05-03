@@ -25,22 +25,41 @@
         line-height: 1;
         white-space: nowrap;
         text-align: center;
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        height: 100%;
         font-family: Arial Narrow, Arial, sans-serif;
         font-stretch: condensed;
         letter-spacing: -0.02em;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+    }
+
+    .narrow-name .lastname {
+        margin-top: 1px;  /* Changed from -1px to 1px to add a tiny bit of space */
+        display: block;
     }
 
     #subject-table th.student-name-header {
-        padding: 2px 4px;
+        padding: 1px 4px;
         font-weight: normal;
         vertical-align: middle;
-        height: 100%;
+        height: 36px; /* Set a consistent height */
     }
+
+    /* Simple spacing between subject groups */
+    .subject-spacer {
+        height: 20px;
+        background-color: #f8f9fa;
+        border: none;
+    }
+
+    .subject-spacer td {
+        border: none !important;
+
+    }
+
+
 </style>
 <?php if ($this->auth->userIsAdmin || $this->auth->userIsTeacher): ?>
     <div class="col text-end mb-3 d-flex justify-content-end align-items-center">
@@ -60,60 +79,36 @@
         <h1><?= $group['groupName'] ?></h1>
         <div class="table-responsive">
             <table id="subject-table" class="table table-bordered">
-                <thead>
-                <tr>
-                    <th>Aine</th>
-                    <?= $isStudent ? "<th>Staatus / Hinne</th>" : "" ?>
-                    <?php if (!$isStudent): ?>
-                        <?php foreach ($group['students'] as $s): ?>
-                            <?php
-                                $isInactive = isset($s['userIsActive']) && !$s['userIsActive'];
-                                $hasUngradedAssignments = false;
 
-                                // Check if student has any ungraded assignments
-                                if ($isInactive) {
-                                    foreach ($group['subjects'] as $subject) {
-                                        if (!empty($subject['assignments'])) {
-                                            foreach ($subject['assignments'] as $assignment) {
-                                                if (isset($assignment['assignmentStatuses'][$s['userId']])) {
-                                                    $status = $assignment['assignmentStatuses'][$s['userId']];
-                                                    if (empty($status['grade']) || $status['assignmentStatusName'] == 'Kontrollimisel') {
-                                                        $hasUngradedAssignments = true;
-                                                        break 2;
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
+            <?php foreach ($group['subjects'] as $index => $subject): ?>
+                    <?php if ($index > 0): ?>
+                    <tr class="subject-spacer">
+                        <td colspan="<?= $isStudent ? 2 : count($group['students']) + 1 ?>"></td>
+                    </tr>
+                    <?php endif; ?>
 
-                                $tooltipText = $s['userName'];
-                                if ($isInactive) {
-                                    $tooltipText .= $hasUngradedAssignments ? ' (Mitteaktiivne õpilane, hindamata ülesandeid)' : ' (Mitteaktiivne õpilane)';
-                                }
-                            ?>
-                            <th data-bs-toggle="tooltip" title="<?= $tooltipText ?>"
-                                class="student-name-header <?= $isInactive ? 'inactive-student' : '' ?>">
+                    <tr data-href="subjects/<?= $subject['subjectId'] ?>">
+                        <th>
+                            <b><?= $subject['subjectName'] ?></b>
+                        </th>
+                        <?php if (!$isStudent): ?>
+                            <?php foreach ($group['students'] as $s): ?>
                                 <?php
+                                    $isInactive = isset($s['userIsActive']) && !$s['userIsActive'];
+                                    $tooltipText = $s['userName'];
                                     $nameParts = explode(' ', $s['userName']);
                                     $lastName = array_pop($nameParts);
                                     $firstName = implode(' ', $nameParts);
                                 ?>
-                                <span class="narrow-name"><?= $firstName ?><br><?= $lastName ?></span>
-                            </th>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </tr>
-                </thead>
-                <tbody>
-                <?php foreach ($group['subjects'] as $subject): ?>
-                    <tr data-href="subjects/<?= $subject['subjectId'] ?>">
-                        <td>
-                            <b><?= $subject['subjectName'] ?></b>
-                        </td>
-                        <td colspan="<?= count($group['students']) + 1 ?>" class="text-end">
-                            <b><?= $subject['teacherName'] ?></b>
-                        </td>
+                                <th data-bs-toggle="tooltip" title="<?= $tooltipText ?>"
+                                    class="student-name-header text-center <?= $isInactive ? 'inactive-student' : '' ?>">
+                                    <div class="narrow-name">
+                                        <?= $firstName ?>
+                                        <span class="lastname"><?= $lastName ?></span>
+                                    </div>
+                                </th>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
                     </tr>
                     <?php if (!empty($subject['assignments'])): ?>
                         <?php foreach ($subject['assignments'] as $a): ?>
@@ -145,11 +140,7 @@
                             </tr>
                         <?php endforeach; ?>
                     <?php endif; ?>
-                    <tr>
-                        <td colspan="<?= $isStudent ? 2 : count($group['students']) + 2 ?>">&nbsp;</td>
-                    </tr>
                 <?php endforeach; ?>
-                </tbody>
             </table>
         </div>
     <?php endforeach; ?>
