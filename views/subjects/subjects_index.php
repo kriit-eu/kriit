@@ -75,15 +75,43 @@
         background-color: transparent !important;
     }
 
-    /* Remove shadow from table to avoid artifacts in spacer rows */
+    /* Add subtle shadow to tables for better contrast with background */
     #subject-table {
         background-color: transparent;
-        box-shadow: none;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.07);
     }
 
     /* Ensure the table-responsive container is also transparent */
     .table-responsive {
         background-color: transparent;
+    }
+
+    /* Set consistent width for all grade cells */
+    #subject-table td:not(:first-child),
+    #subject-table th:not(:first-child) {
+        width: 40px;
+        min-width: 40px;
+        max-width: 40px;
+        text-align: center;
+    }
+
+    /* Set consistent width for the first column (assignment name) */
+    #subject-table td:first-child,
+    #subject-table th:first-child {
+        width: 300px;
+        min-width: 200px;
+    }
+
+    /* Ensure table layout is fixed for consistent column widths */
+    #subject-table {
+        table-layout: fixed;
+        border: 1px solid #d8d8d8 !important; /* More subtle border color */
+    }
+
+    /* More subtle cell borders */
+    #subject-table td,
+    #subject-table th {
+        border-color: #d8d8d8 !important;
     }
 
     /* Make sure the row between subjects is completely transparent and has no borders */
@@ -120,14 +148,14 @@
     <?php foreach ($groups as $group): ?>
         <h1><?= $group['groupName'] ?></h1>
         <div class="table-responsive" style="background-color: transparent;">
-            <table id="subject-table" class="table table-bordered" style="background-color: transparent;">
+            <table id="subject-table" class="table table-bordered" style="background-color: transparent; table-layout: fixed;">
 
             <?php foreach ($group['subjects'] as $index => $subject): ?>
                     <?php if ($index > 0): ?>
                     </table>
                     <!-- Use a div instead of a table row for spacing -->
                     <div style="height: 20px; width: 100%; background-color: transparent;"></div>
-                    <table id="subject-table" class="table table-bordered" style="background-color: transparent;">
+                    <table id="subject-table" class="table table-bordered" style="background-color: transparent; table-layout: fixed;">
                     <?php endif; ?>
 
                     <tr data-href="subjects/<?= $subject['subjectId'] ?>">
