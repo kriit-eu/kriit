@@ -13,7 +13,7 @@ class Assignment
     {
         return Db::insert('assignments', $data);
     }
-    
+
     /**
      * Update an existing assignment
      *
@@ -25,7 +25,7 @@ class Assignment
     {
         return Db::update('assignments', $data, 'assignmentId = ?', [$assignmentId]);
     }
-    
+
     /**
      * Delete an assignment
      *
@@ -36,11 +36,11 @@ class Assignment
     {
         // First delete related user assignments
         Db::delete('userAssignments', 'assignmentId = ?', [$assignmentId]);
-        
+
         // Then delete the assignment
         return Db::delete('assignments', 'assignmentId = ?', [$assignmentId]);
     }
-    
+
     /**
      * Delete an assignment by external ID
      *
@@ -52,15 +52,15 @@ class Assignment
     {
         // First get the assignment
         $assignment = self::getByExternalId($externalId, $systemId);
-        
+
         if (!$assignment) {
             return false;
         }
-        
+
         // Delete the assignment
         return self::delete($assignment['assignmentId']);
     }
-    
+
     /**
      * Get assignment by ID
      *
@@ -71,7 +71,7 @@ class Assignment
     {
         return Db::getFirst("SELECT * FROM assignments WHERE assignmentId = ?", [$assignmentId]);
     }
-    
+
     /**
      * Get assignments for a subject
      *
@@ -82,7 +82,7 @@ class Assignment
     {
         return Db::getAll("SELECT * FROM assignments WHERE subjectId = ?", [$subjectId]);
     }
-    
+
     /**
      * Submit an assignment solution
      *
@@ -94,32 +94,34 @@ class Assignment
     public static function submitSolution(int $assignmentId, int $studentId, string $solutionUrl): bool
     {
         $existingAssignment = Db::getFirst(
-            "SELECT * FROM userAssignments WHERE userId = ? AND assignmentId = ?", 
+            "SELECT * FROM userAssignments WHERE userId = ? AND assignmentId = ?",
             [$studentId, $assignmentId]
         );
-        
+
+        $currentTime = date('Y-m-d H:i:s');
+
         if (!$existingAssignment) {
             return Db::insert('userAssignments', [
-                'userId' => $studentId, 
-                'assignmentId' => $assignmentId, 
+                'userId' => $studentId,
+                'assignmentId' => $assignmentId,
                 'assignmentStatusId' => ASSIGNMENT_STATUS_WAITING_FOR_REVIEW, // 2 = Waiting for review
                 'solutionUrl' => $solutionUrl,
-                'userAssignmentCreatedAt' => date('Y-m-d H:i:s')
+                'userAssignmentSubmittedAt' => $currentTime
             ]) > 0;
         } else {
-            return Db::update('userAssignments', 
+            return Db::update('userAssignments',
                 [
-                    'assignmentStatusId' => ASSIGNMENT_STATUS_WAITING_FOR_REVIEW, 
-                    'solutionUrl' => $solutionUrl, 
+                    'assignmentStatusId' => ASSIGNMENT_STATUS_WAITING_FOR_REVIEW,
+                    'solutionUrl' => $solutionUrl,
                     'userGrade' => NULL,
-                    'userAssignmentEditedAt' => date('Y-m-d H:i:s')
-                ], 
-                'userId = ? AND assignmentId = ?', 
+                    'userAssignmentSubmittedAt' => $currentTime
+                ],
+                'userId = ? AND assignmentId = ?',
                 [$studentId, $assignmentId]
             );
         }
     }
-    
+
     /**
      * Add a comment to an assignment
      *
@@ -131,23 +133,23 @@ class Assignment
     public static function addComment(int $assignmentId, int $studentId, string $comment): bool
     {
         $existingAssignment = Db::getFirst(
-            "SELECT * FROM userAssignments WHERE userId = ? AND assignmentId = ?", 
+            "SELECT * FROM userAssignments WHERE userId = ? AND assignmentId = ?",
             [$studentId, $assignmentId]
         );
-        
+
         if (!$existingAssignment) {
             return false;
         }
-        
+
         $comments = json_decode($existingAssignment['comments'] ?? '[]', true);
         $comments[] = [
             'comment' => $comment,
             'createdAt' => date('Y-m-d H:i:s')
         ];
-        
-        return Db::update('userAssignments', 
-            ['comments' => json_encode($comments)], 
-            'userId = ? AND assignmentId = ?', 
+
+        return Db::update('userAssignments',
+            ['comments' => json_encode($comments)],
+            'userId = ? AND assignmentId = ?',
             [$studentId, $assignmentId]
         );
     }
@@ -172,7 +174,7 @@ class Assignment
         $assignmentName = !empty($assignmentData['assignmentName']) ? $assignmentData['assignmentName'] : 'Unnamed assignment';
         $assignmentInstructions = !empty($assignmentData['assignmentInstructions']) ? $assignmentData['assignmentInstructions'] : '';
         $assignmentDueAt = !empty($assignmentData['assignmentDueAt']) ? $assignmentData['assignmentDueAt'] : null;
-        
+
         Db::insert('assignments', [
             'subjectId'             => $subjectId,
             'assignmentName'        => $assignmentName,
@@ -181,12 +183,12 @@ class Assignment
             'assignmentDueAt'       => $assignmentDueAt,
             'assignmentInstructions'=> $assignmentInstructions
         ]);
-        
+
         $newAssignId = Db::getOne("
             SELECT assignmentId FROM assignments
             WHERE subjectId=? AND assignmentExternalId=? AND systemId=?
         ", [$subjectId, $assignmentData['assignmentExternalId'], $systemId]);
-        
+
         // Log assignment creation if teacher ID is provided
         if ($teacherId !== null) {
             Activity::create(ACTIVITY_CREATE_ASSIGNMENT_SYNC, $teacherId, $newAssignId, [
@@ -197,10 +199,10 @@ class Assignment
                 'subjectName' => $subjectName ?? 'Unknown'
             ]);
         }
-        
+
         return $newAssignId;
     }
-    
+
     /**
      * Add or update a grade for an assignment
      *
@@ -228,33 +230,35 @@ class Assignment
             SELECT * FROM userAssignments
             WHERE assignmentId=? AND userId=?
         ", [$assignmentId, $userId]);
-        
+
         $isNew = false;
-        
+
         // If no existing userAssignment, create with the grade
         if (!$existingUA) {
+            $currentTime = date('Y-m-d H:i:s');
             Db::insert('userAssignments', [
                 'assignmentId' => $assignmentId,
                 'userId'       => $userId,
                 'userGrade'    => $grade,
                 'assignmentStatusId' => ASSIGNMENT_STATUS_GRADED, // 3 = Hinnatud
-                'userAssignmentCreatedAt' => date('Y-m-d H:i:s')
+                'userAssignmentGradedAt' => $currentTime
             ]);
             $isNew = true;
         } else {
             // Update existing grade if grade has changed
             if ($existingUA['userGrade'] !== $grade) {
+                $currentTime = date('Y-m-d H:i:s');
                 Db::update('userAssignments', [
                     'userGrade' => $grade,
                     'assignmentStatusId' => ASSIGNMENT_STATUS_GRADED, // 3 = Hinnatud
-                    'userAssignmentEditedAt' => date('Y-m-d H:i:s')
+                    'userAssignmentGradedAt' => $currentTime
                 ], 'assignmentId = ? AND userId = ?', [$assignmentId, $userId]);
             } else {
                 // No changes needed
                 return false;
             }
         }
-        
+
         // Log grade synchronization if teacher ID is provided
         if ($teacherId !== null) {
             Activity::create(ACTIVITY_GRADE_SYNC, $teacherId, $assignmentId, [
@@ -267,10 +271,10 @@ class Assignment
                 'action' => $isNew ? 'created' : 'updated'
             ]);
         }
-        
+
         return $isNew;
     }
-    
+
     /**
      * Retrieves an assignment by its external ID and system ID
      *
@@ -283,18 +287,18 @@ class Assignment
     {
         $params = [$externalId, $systemId];
         $subjectClause = '';
-        
+
         if ($subjectId !== null) {
             $subjectClause = ' AND subjectId = ?';
             $params[] = $subjectId;
         }
-        
+
         return Db::getFirst("
-            SELECT * FROM assignments 
+            SELECT * FROM assignments
             WHERE assignmentExternalId = ? AND systemId = ?{$subjectClause}
         ", $params);
     }
-    
+
     public static function statusClassMap($isStudent, $isTeacher): array
     {
         return [

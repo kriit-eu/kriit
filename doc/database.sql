@@ -1,4 +1,4 @@
--- Dump created on 2025-05-02 22:58:44 by Hennos-MacBook-Pro-2.local
+-- Dump created on 2025-05-03 21:16:49 by Hennos-MacBook-Pro-2.local
 SET FOREIGN_KEY_CHECKS=0;
 SET @@SESSION.sql_mode='NO_AUTO_VALUE_ON_ZERO';
 
@@ -368,11 +368,13 @@ CREATE TABLE `userAssignments` (
 `userGrade` varchar(191) DEFAULT NULL,
 `solutionUrl` text DEFAULT NULL,
 `comments` text DEFAULT '[]',
-`userAssignmentCreatedAt` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
-`userAssignmentEditedAt` datetime DEFAULT NULL,
+`userAssignmentSubmittedAt` datetime DEFAULT NULL COMMENT 'When the student submitted their solution',
+`userAssignmentGradedAt` datetime DEFAULT NULL COMMENT 'When the teacher graded the assignment',
 PRIMARY KEY (`assignmentId`,`userId`),
 KEY `userAssignments_users_userId_fk` (`userId`),
 KEY `userAssignments_assignmentStatuses_assignmentStatusId_fk` (`assignmentStatusId`),
+KEY `idx_userAssignmentSubmittedAt` (`userAssignmentSubmittedAt`),
+KEY `idx_userAssignmentGradedAt` (`userAssignmentGradedAt`),
 CONSTRAINT `userAssignments_assignmentStatuses_assignmentStatusId_fk` FOREIGN KEY (`assignmentStatusId`) REFERENCES `assignmentStatuses` (`assignmentStatusId`),
 CONSTRAINT `userAssignments_assignments_assignmentId_fk` FOREIGN KEY (`assignmentId`) REFERENCES `assignments` (`assignmentId`),
 CONSTRAINT `userAssignments_users_userId_fk` FOREIGN KEY (`userId`) REFERENCES `users` (`userId`)
@@ -380,7 +382,7 @@ CONSTRAINT `userAssignments_users_userId_fk` FOREIGN KEY (`userId`) REFERENCES `
 LOCK TABLES `userAssignments` WRITE;
 /*!40000 ALTER TABLE `userAssignments` DISABLE KEYS */;
 INSERT INTO `userAssignments` VALUES
-(1,2,2,NULL,'https://www.google.com/','[{\"comment\":\"Kommentaar\",\"createdAt\":\"2024-11-20 12:55:28\"}]','1970-01-01 00:00:00',NULL);
+(1,2,2,NULL,'https://www.google.com/','[{\"comment\":\"Kommentaar\",\"createdAt\":\"2024-11-20 12:55:28\"}]',NULL,NULL);
 /*!40000 ALTER TABLE `userAssignments` ENABLE KEYS */;
 UNLOCK TABLES;
 DELIMITER ;;

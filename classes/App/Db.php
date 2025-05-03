@@ -10,8 +10,8 @@ class Db
     private \mysqli $conn;
     public array $debugLog = [];
 
-    const GET_RESULT = 1;
-    const AFFECTED_ROWS = 2;
+    public const GET_RESULT = 1;
+    public const AFFECTED_ROWS = 2;
 
     private function __construct(string $host, string $user, string $password, string $dbname)
     {
@@ -330,6 +330,71 @@ class Db
             $totalTime += $item['cumulative_time'];
         }
         return $totalTime;
+    }
+
+    /**
+     * Begin a database transaction
+     *
+     * @throws \Exception If transaction cannot be started
+     * @return bool True if transaction was started successfully
+     */
+    public static function beginTransaction(): bool
+    {
+        $instance = self::getInstance();
+        $result = $instance->conn->begin_transaction();
+
+        if (!$result) {
+            throw new \Exception("Failed to start transaction: " . $instance->conn->error);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Alias for beginTransaction()
+     *
+     * @throws \Exception If transaction cannot be started
+     * @return bool True if transaction was started successfully
+     */
+    public static function begin(): bool
+    {
+        return self::beginTransaction();
+    }
+
+    /**
+     * Commit the current database transaction
+     *
+     * @throws \Exception If transaction cannot be committed
+     * @return bool True if transaction was committed successfully
+     */
+    public static function commit(): bool
+    {
+        $instance = self::getInstance();
+        $result = $instance->conn->commit();
+
+        if (!$result) {
+            throw new \Exception("Failed to commit transaction: " . $instance->conn->error);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Roll back the current database transaction
+     *
+     * @throws \Exception If transaction cannot be rolled back
+     * @return bool True if transaction was rolled back successfully
+     */
+    public static function rollback(): bool
+    {
+        $instance = self::getInstance();
+        $result = $instance->conn->rollback();
+
+        if (!$result) {
+            throw new \Exception("Failed to rollback transaction: " . $instance->conn->error);
+        }
+
+        return $result;
     }
 
     /**

@@ -5,6 +5,83 @@ class subjects extends Controller
     public $template = 'master';
 
 
+    /**
+     * Helper method to get relative time in Estonian (e.g., "2 nädalat tagasi")
+     *
+     * @param \DateTime $timestamp The timestamp to format
+     * @return string Formatted relative time in Estonian
+     */
+    private function getRelativeTimeInEstonian(\DateTime $timestamp): string
+    {
+        $now = new \DateTime();
+        $diff = $timestamp->diff($now);
+
+        // Calculate total difference in seconds for comparison
+        $totalSeconds = $now->getTimestamp() - $timestamp->getTimestamp();
+
+        if ($totalSeconds < 60) {
+            return 'just praegu';
+        } elseif ($totalSeconds < 3600) {
+            $minutes = $diff->i;
+            return $minutes . ' ' . ($minutes == 1 ? 'minut' : 'minutit') . ' tagasi';
+        } elseif ($totalSeconds < 86400) {
+            $hours = $diff->h;
+            return $hours . ' ' . ($hours == 1 ? 'tund' : 'tundi') . ' tagasi';
+        } elseif ($totalSeconds < 604800) {
+            $days = $diff->d;
+            return $days . ' ' . ($days == 1 ? 'päev' : 'päeva') . ' tagasi';
+        } elseif ($totalSeconds < 2592000) {
+            $weeks = floor($diff->d / 7);
+            return $weeks . ' ' . ($weeks == 1 ? 'nädal' : 'nädalat') . ' tagasi';
+        } elseif ($totalSeconds < 31536000) {
+            $months = $diff->m;
+            return $months . ' ' . ($months == 1 ? 'kuu' : 'kuud') . ' tagasi';
+        } else {
+            $years = $diff->y;
+            return $years . ' ' . ($years == 1 ? 'aasta' : 'aastat') . ' tagasi';
+        }
+    }
+
+    /**
+     * Calculate the time difference between two timestamps in Estonian (e.g., "3 päeva")
+     *
+     * @param \DateTime $startTime The start timestamp
+     * @param \DateTime $endTime The end timestamp
+     * @return string Formatted time difference in Estonian
+     */
+    private function getTimeDifferenceInEstonian(\DateTime $startTime, \DateTime $endTime): string
+    {
+        // Make sure endTime is after startTime
+        if ($endTime < $startTime) {
+            return '';
+        }
+
+        $diff = $startTime->diff($endTime);
+        $totalSeconds = $endTime->getTimestamp() - $startTime->getTimestamp();
+
+        if ($totalSeconds < 60) {
+            return 'mõne sekundi';
+        } elseif ($totalSeconds < 3600) {
+            $minutes = $diff->i;
+            return $minutes . ' ' . ($minutes == 1 ? 'minut' : 'minutit');
+        } elseif ($totalSeconds < 86400) {
+            $hours = $diff->h;
+            return $hours . ' ' . ($hours == 1 ? 'tund' : 'tundi');
+        } elseif ($totalSeconds < 604800) {
+            $days = $diff->d;
+            return $days . ' ' . ($days == 1 ? 'päev' : 'päeva');
+        } elseif ($totalSeconds < 2592000) {
+            $weeks = floor($diff->d / 7);
+            return $weeks . ' ' . ($weeks == 1 ? 'nädal' : 'nädalat');
+        } elseif ($totalSeconds < 31536000) {
+            $months = $diff->m;
+            return $months . ' ' . ($months == 1 ? 'kuu' : 'kuud');
+        } else {
+            $years = $diff->y;
+            return $years . ' ' . ($years == 1 ? 'aasta' : 'aastat');
+        }
+    }
+
     public function index()
     {
         $this->template = $this->auth->userIsAdmin ? 'admin' : 'master';
@@ -30,7 +107,8 @@ class subjects extends Controller
                 s.subjectId, s.subjectName, s.teacherId, t.userName AS teacherName,
                 u.userId AS studentId, u.userName AS studentName, u.groupId, g.groupName, u.userIsActive,
                 a.assignmentId, a.assignmentName, a.assignmentDueAt,
-                ua.userGrade, ua.assignmentStatusId, ast.statusName AS assignmentStatusName
+                ua.userGrade, ua.assignmentStatusId, ast.statusName AS assignmentStatusName,
+                ua.userAssignmentSubmittedAt, ua.userAssignmentGradedAt
             FROM subjects s
             JOIN users t ON s.teacherId = t.userId
             JOIN groups g ON s.groupId = g.groupId
@@ -139,7 +217,67 @@ class subjects extends Controller
                     default => ''
                 };
 
+                // Default tooltip text based on user role and status
                 $tooltipText = $this->isStudent ? $linkText : ($statusName ? "($statusName) $linkText" : 'Esitamata');
+
+                // Get the timestamps for grading and submission
+                $gradedTimestamp = null;
+                $submittedTimestamp = null;
+
+                if (!empty($row['userAssignmentGradedAt'])) {
+                    $gradedTimestamp = new \DateTime($row['userAssignmentGradedAt']);
+                }
+
+                if (!empty($row['userAssignmentSubmittedAt'])) {
+                    $submittedTimestamp = new \DateTime($row['userAssignmentSubmittedAt']);
+                }
+
+                // Format the timestamps for display with shorter year format (25 instead of 2025)
+                $gradedTimestampFormatted = $gradedTimestamp ? $gradedTimestamp->format('d.m.y H:i') : '';
+                $submittedTimestampFormatted = $submittedTimestamp ? $submittedTimestamp->format('d.m.y H:i') : '';
+
+                // Update tooltip text based on assignment status
+                if ($this->isStudent) {
+                    // For students
+                    if ($statusName === 'Hinnatud' && !empty($gradedTimestampFormatted)) {
+                        $tooltipText = "Hinnatud $gradedTimestampFormatted";
+                    } elseif ($statusName === 'Kontrollimisel' && !empty($submittedTimestampFormatted)) {
+                        $tooltipText = "Esitatud $submittedTimestampFormatted";
+                    }
+                } else {
+                    // For teachers and admins - no need to include student name since tooltip will be below
+                    if ($statusName === 'Hinnatud') {
+                        // Start with an empty tooltip
+                        $tooltipText = "";
+
+                        // Add submission timestamp if available
+                        if (!empty($submittedTimestampFormatted)) {
+                            $tooltipText .= "Esitatud $submittedTimestampFormatted";
+                        }
+
+                        // Add grading timestamp if available
+                        if (!empty($gradedTimestampFormatted)) {
+                            // Add a line break if we already have submission info
+                            if (!empty($submittedTimestampFormatted)) {
+                                $tooltipText .= "\n";
+                            }
+
+                            $tooltipText .= "Hinnatud $gradedTimestampFormatted";
+
+                            // Add time difference between submission and grading if both timestamps are available
+                            if (!empty($submittedTimestampFormatted) && $submittedTimestamp && $gradedTimestamp) {
+                                $timeDiff = $this->getTimeDifferenceInEstonian($submittedTimestamp, $gradedTimestamp);
+                                if (!empty($timeDiff)) {
+                                    $tooltipText .= "\n($timeDiff hiljem)";
+                                }
+                            }
+                        }
+                    } elseif ($statusName === 'Kontrollimisel' && !empty($submittedTimestampFormatted)) {
+                        $tooltipText = "Esitatud $submittedTimestampFormatted";
+                    } else {
+                        $tooltipText = $statusName;
+                    }
+                }
 
                 // Add or update assignment status
                 $groups[$groupName]['subjects'][$subjectId]['assignments'][$assignmentId]['assignmentStatuses'][$studentId] = [
@@ -147,7 +285,9 @@ class subjects extends Controller
                     'assignmentStatusName' => $statusName,
                     'grade' => $grade,
                     'class' => $class,
-                    'tooltipText' => $tooltipText
+                    'tooltipText' => $tooltipText,
+                    'gradedTimestamp' => $gradedTimestampFormatted,
+                    'submittedTimestamp' => $submittedTimestampFormatted
                 ];
             }
         }

@@ -642,17 +642,31 @@ class assignments extends Controller
     {
         $existUserAssignment = Db::getFirst('SELECT * FROM userAssignments WHERE userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
         $isUpdated = false;
+        $currentTime = date('Y-m-d H:i:s');
 
         if (!$existUserAssignment) {
-            Db::insert('userAssignments', ['userId' => $studentId, 'assignmentId' => $assignmentId, 'userGrade' => $grade, 'assignmentStatusId' => $grade ? 3 : 1, 'comments' => '[]']);
+            Db::insert('userAssignments', [
+                'userId' => $studentId,
+                'assignmentId' => $assignmentId,
+                'userGrade' => $grade,
+                'assignmentStatusId' => $grade ? 3 : 1,
+                'comments' => '[]',
+                'userAssignmentGradedAt' => $grade ? $currentTime : null
+            ]);
             $message = "$_POST[teacherName] lisas õpilasele $_POST[studentName] hindeks: $grade";
             $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
         } else {
-
-            Db::update('userAssignments', [
+            $updateData = [
                 'userGrade' => $grade,
                 'assignmentStatusId' => $grade ? 3 : $existUserAssignment['assignmentStatusId']
-            ], 'userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
+            ];
+
+            // Only set gradedAt if there's a grade and it's different from before
+            if ($grade && $existUserAssignment['userGrade'] !== $grade) {
+                $updateData['userAssignmentGradedAt'] = $currentTime;
+            }
+
+            Db::update('userAssignments', $updateData, 'userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
 
             if ($existUserAssignment['userGrade'] !== $grade) {
 
@@ -909,15 +923,18 @@ class assignments extends Controller
     {
         $existingComments = Db::getOne('SELECT comments FROM userAssignments WHERE userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
         $comments = $existingComments ? json_decode($existingComments, true) : [];
+        $currentTime = date('Y-m-d H:i:s');
 
         $comments[] = [
             'name' => $commentAuthorName,
             'comment' => trim($comment),
-            'createdAt' => date('Y-m-d H:i:s')
+            'createdAt' => $currentTime
         ];
 
         // Use the Assignment class for updating comments
-        Db::update('userAssignments', ['comments' => json_encode($comments)], 'userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
+        Db::update('userAssignments', [
+            'comments' => json_encode($comments)
+        ], 'userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
 
         // Note: In the future, we should refactor this to use:
         // Assignment::addComment($assignmentId, $studentId, trim($comment), $commentAuthorName);
