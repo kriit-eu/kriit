@@ -1,4 +1,20 @@
 <style>
+    /* Add a light gradient background to the page */
+    body {
+        background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%);
+        min-height: 100vh;
+    }
+
+    /* Ensure container has a transparent background to show the gradient */
+    #container {
+        background-color: transparent;
+    }
+
+    /* Make sure table cells have white background to stand out */
+    #subject-table td {
+        background-color: white;
+    }
+
     #subject-table th {
         background-color: #f2f2f2;
     }
@@ -50,15 +66,41 @@
     /* Simple spacing between subject groups */
     .subject-spacer {
         height: 20px;
-        background-color: #f8f9fa;
+        background-color: transparent !important;
         border: none;
     }
 
     .subject-spacer td {
         border: none !important;
-
+        background-color: transparent !important;
     }
 
+    /* Remove shadow from table to avoid artifacts in spacer rows */
+    #subject-table {
+        background-color: transparent;
+        box-shadow: none;
+    }
+
+    /* Ensure the table-responsive container is also transparent */
+    .table-responsive {
+        background-color: transparent;
+    }
+
+    /* Make sure the row between subjects is completely transparent and has no borders */
+    tr.subject-spacer,
+    tr.subject-spacer td {
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        outline: none !important;
+    }
+
+    /* Remove borders from table cells in the spacer area */
+    #subject-table tr.subject-spacer td {
+        border-width: 0 !important;
+        border-style: none !important;
+        border-color: transparent !important;
+    }
 
 </style>
 <?php if ($this->auth->userIsAdmin || $this->auth->userIsTeacher): ?>
@@ -77,14 +119,15 @@
 <div class="row">
     <?php foreach ($groups as $group): ?>
         <h1><?= $group['groupName'] ?></h1>
-        <div class="table-responsive">
-            <table id="subject-table" class="table table-bordered">
+        <div class="table-responsive" style="background-color: transparent;">
+            <table id="subject-table" class="table table-bordered" style="background-color: transparent;">
 
             <?php foreach ($group['subjects'] as $index => $subject): ?>
                     <?php if ($index > 0): ?>
-                    <tr class="subject-spacer">
-                        <td colspan="<?= $isStudent ? 2 : count($group['students']) + 1 ?>"></td>
-                    </tr>
+                    </table>
+                    <!-- Use a div instead of a table row for spacing -->
+                    <div style="height: 20px; width: 100%; background-color: transparent;"></div>
+                    <table id="subject-table" class="table table-bordered" style="background-color: transparent;">
                     <?php endif; ?>
 
                     <tr data-href="subjects/<?= $subject['subjectId'] ?>">
@@ -142,6 +185,7 @@
                     <?php endif; ?>
                 <?php endforeach; ?>
             </table>
+            <!-- Ensure we close the last table properly -->
         </div>
     <?php endforeach; ?>
 </div>
