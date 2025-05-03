@@ -93,6 +93,7 @@
         min-width: 40px;
         max-width: 40px;
         text-align: center;
+        vertical-align: middle; /* Center grades vertically */
     }
 
     /* Set consistent width for the first column (assignment name) */
