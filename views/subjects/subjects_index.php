@@ -186,10 +186,30 @@
                         <?php foreach ($subject['assignments'] as $a): ?>
                             <tr>
                                 <td colspan="1">
-                                    <span class="badge <?= $a['badgeClass'] ?>"
-                                          data-days-remaining="<?= $a['daysRemaining'] ?>"
-                                          data-is-student="<?= json_encode($isStudent) ?>">
-                        <?= $a['assignmentDueAt'] ? (new DateTime($a['assignmentDueAt']))->format('d.m.y') : "Pole määratud" ?></span>
+                                    <?php
+                                    // For students with positive grades, don't show the due date
+                                    $showDueDate = true;
+                                    if ($isStudent) {
+                                        // Check if current student has a positive grade for this assignment
+                                        $currentUserId = $this->auth->userId;
+                                        if (isset($a['assignmentStatuses'][$currentUserId])) {
+                                            $studentStatus = $a['assignmentStatuses'][$currentUserId];
+                                            $grade = $studentStatus['grade'] ?? '';
+                                            // A positive grade is 3 or higher, or not 'MA'
+                                            $hasPositiveGrade = is_numeric($grade) && intval($grade) >= 3 || ($grade !== '' && $grade !== 'MA');
+                                            if ($hasPositiveGrade) {
+                                                $showDueDate = false;
+                                            }
+                                        }
+                                    }
+
+                                    if ($showDueDate): ?>
+                                        <span class="badge <?= $a['badgeClass'] ?>"
+                                              data-days-remaining="<?= $a['daysRemaining'] ?>"
+                                              data-is-student="<?= json_encode($isStudent) ?>">
+                                            <?= $a['assignmentDueAt'] ? (new DateTime($a['assignmentDueAt']))->format('d.m.y') : "Pole määratud" ?>
+                                        </span>
+                                    <?php endif; ?>
                                     <a href="assignments/<?= $a['assignmentId'] ?>"><?= $a['assignmentName'] ?></a>
                                 </td>
                                 <?php foreach ($group['students'] as $s): ?>
@@ -249,6 +269,9 @@
             const grade = parseInt(studentCell.getAttribute('data-grade'), 10);
             const isStudent = JSON.parse(studentCell.getAttribute('data-is-student'));
             const badgeElement = studentCell.closest('tr').querySelector('span[data-days-remaining]');
+            // Skip if there's no badge element (it might be hidden for students with positive grades)
+            if (!badgeElement) return;
+
             if (isStudent && !isNaN(grade) &&
                 grade >= 3 &&
                 badgeElement.className !== 'badge bg-light text-dark') {
