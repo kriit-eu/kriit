@@ -187,10 +187,12 @@
                             <tr>
                                 <td colspan="1">
                                     <?php
-                                    // For students with positive grades, don't show the due date
+                                    // Determine whether to show the due date badge
                                     $showDueDate = true;
+                                    $badgeClass = $a['badgeClass'];
+
                                     if ($isStudent) {
-                                        // Check if current student has a positive grade for this assignment
+                                        // For students with positive grades, don't show the due date
                                         $currentUserId = $this->auth->userId;
                                         if (isset($a['assignmentStatuses'][$currentUserId])) {
                                             $studentStatus = $a['assignmentStatuses'][$currentUserId];
@@ -201,10 +203,18 @@
                                                 $showDueDate = false;
                                             }
                                         }
+                                    } else {
+                                        // For teachers, only show the badge if the due date is not set
+                                        // (and make it red)
+                                        if (!empty($a['assignmentDueAt'])) {
+                                            $showDueDate = false;
+                                        } else {
+                                            $badgeClass = 'badge bg-danger'; // Red badge for missing due date
+                                        }
                                     }
 
                                     if ($showDueDate): ?>
-                                        <span class="badge <?= $a['badgeClass'] ?>"
+                                        <span class="badge <?= $badgeClass ?>"
                                               data-days-remaining="<?= $a['daysRemaining'] ?>"
                                               data-is-student="<?= json_encode($isStudent) ?>">
                                             <?= $a['assignmentDueAt'] ? (new DateTime($a['assignmentDueAt']))->format('d.m.y') : "Pole määratud" ?>
@@ -269,14 +279,16 @@
             const grade = parseInt(studentCell.getAttribute('data-grade'), 10);
             const isStudent = JSON.parse(studentCell.getAttribute('data-is-student'));
             const badgeElement = studentCell.closest('tr').querySelector('span[data-days-remaining]');
-            // Skip if there's no badge element (it might be hidden for students with positive grades)
+            // Skip if there's no badge element (it might be hidden)
             if (!badgeElement) return;
 
-            if (isStudent && !isNaN(grade) &&
-                grade >= 3 &&
+            // For students with passing grades, update badge class if needed
+            if (isStudent && !isNaN(grade) && grade >= 3 &&
                 badgeElement.className !== 'badge bg-light text-dark') {
                 badgeElement.className = 'badge bg-light text-dark';
             }
+
+            // Note: For teachers, we don't need to modify badges here as it's handled server-side
         });
     });
 </script>
