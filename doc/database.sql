@@ -73,6 +73,7 @@ CREATE TABLE `assignments` (
 `assignmentExternalId` int unsigned DEFAULT NULL,
 `systemId` int unsigned NOT NULL DEFAULT 1,
 `assignmentDueAt` date DEFAULT NULL,
+`assignmentEntryDate` date DEFAULT NULL,
 `assignmentInitialCode` text DEFAULT NULL,
 `assignmentValidationFunction` text DEFAULT NULL,
 `assignmentInvolvesOpenApi` tinyint unsigned NOT NULL DEFAULT 0,

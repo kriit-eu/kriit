@@ -174,6 +174,7 @@ class Assignment
         $assignmentName = !empty($assignmentData['assignmentName']) ? $assignmentData['assignmentName'] : 'Unnamed assignment';
         $assignmentInstructions = !empty($assignmentData['assignmentInstructions']) ? $assignmentData['assignmentInstructions'] : '';
         $assignmentDueAt = !empty($assignmentData['assignmentDueAt']) ? $assignmentData['assignmentDueAt'] : null;
+        $assignmentEntryDate = !empty($assignmentData['assignmentEntryDate']) ? $assignmentData['assignmentEntryDate'] : null;
 
         Db::insert('assignments', [
             'subjectId'             => $subjectId,
@@ -181,6 +182,7 @@ class Assignment
             'assignmentExternalId'  => $assignmentData['assignmentExternalId'],
             'systemId'              => $systemId,
             'assignmentDueAt'       => $assignmentDueAt,
+            'assignmentEntryDate'   => $assignmentEntryDate,
             'assignmentInstructions'=> $assignmentInstructions
         ]);
 

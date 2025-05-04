@@ -240,7 +240,7 @@ class Sync
                    g.groupName,
                    t.userPersonalCode AS teacherPersonalCode, t.userName AS teacherName,
                    a.assignmentId, a.assignmentExternalId, a.systemId as assignmentSystemId, a.assignmentName,
-                   a.assignmentInstructions, a.assignmentDueAt,
+                   a.assignmentInstructions, a.assignmentDueAt, a.assignmentEntryDate,
                    ua.userGrade, st.userPersonalCode, st.userName
             FROM subjects s
             LEFT JOIN `groups` g ON s.groupId = g.groupId
@@ -275,6 +275,7 @@ class Sync
                     'assignmentName'         => $r['assignmentName'],
                     'assignmentInstructions' => $r['assignmentInstructions'],
                     'assignmentDueAt'        => $r['assignmentDueAt'],
+                    'assignmentEntryDate'    => $r['assignmentEntryDate'],
                     'results'                => []
                 ];
             }
@@ -884,15 +885,15 @@ class Sync
     }
 
     /**
-     * Compares assignment-level fields (assignmentName, assignmentInstructions, assignmentDueAt)
+     * Compares assignment-level fields (assignmentName, assignmentInstructions, assignmentDueAt, assignmentEntryDate)
      * returning [fieldName => ['kriit'=>..., 'remote'=>...]] for only the ones that differ.
      */
     private static function diffAssignmentFields(array $kriitAssignment, array $remoteAssignment): array
     {
-        $check = ['assignmentDueAt'];
+        $check = ['assignmentDueAt', 'assignmentEntryDate'];
         $diffs = [];
         foreach ($check as $fld) {
-            if ($kriitAssignment[$fld] !== $remoteAssignment[$fld]) {
+            if (isset($remoteAssignment[$fld]) && $kriitAssignment[$fld] !== $remoteAssignment[$fld]) {
                 $diffs[$fld] = [
                     'kriit'  => $kriitAssignment[$fld],
                     'remote' => $remoteAssignment[$fld]
