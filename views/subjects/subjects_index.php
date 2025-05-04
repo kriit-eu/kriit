@@ -87,8 +87,8 @@
     }
 
     /* Set consistent width for all grade cells */
-    #subject-table td:not(:first-child),
-    #subject-table th:not(:first-child) {
+    #subject-table td:not(:first-child):not(:nth-child(2)),
+    #subject-table th:not(:first-child):not(:nth-child(2)) {
         width: 40px;
         min-width: 40px;
         max-width: 40px;
@@ -96,9 +96,19 @@
         vertical-align: middle; /* Center grades vertically */
     }
 
-    /* Set consistent width for the first column (assignment name) */
+    /* Set width for the ID column (first column) */
     #subject-table td:first-child,
     #subject-table th:first-child {
+        width: 60px;
+        min-width: 60px;
+        max-width: 60px;
+        text-align: center;
+        vertical-align: middle;
+    }
+
+    /* Set consistent width for the second column (assignment name) */
+    #subject-table td:nth-child(2),
+    #subject-table th:nth-child(2) {
         width: 300px;
         min-width: 200px;
     }
@@ -160,6 +170,9 @@
                     <?php endif; ?>
 
                     <tr data-href="subjects/<?= $subject['subjectId'] ?>">
+                        <th class="text-center">
+                            <b>ID</b>
+                        </th>
                         <th>
                             <b><?= $subject['subjectName'] ?></b>
                         </th>
@@ -185,6 +198,9 @@
                     <?php if (!empty($subject['assignments'])): ?>
                         <?php foreach ($subject['assignments'] as $a): ?>
                             <tr>
+                                <td class="text-center">
+                                    <?= $a['assignmentId'] ?>
+                                </td>
                                 <td colspan="1">
                                     <?php
                                     // Determine whether to show the due date badge
