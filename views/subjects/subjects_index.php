@@ -86,14 +86,16 @@
         background-color: transparent;
     }
 
-    /* Set consistent width for all grade cells */
+    /* Set fixed width for all grade cells */
     #subject-table td:not(:first-child):not(:nth-child(2)),
     #subject-table th:not(:first-child):not(:nth-child(2)) {
-        width: 40px;
-        min-width: 40px;
-        max-width: 40px;
+        width: 40px !important;
+        min-width: 40px !important;
+        max-width: 40px !important;
         text-align: center;
         vertical-align: middle; /* Center grades vertically */
+        padding: 4px 2px; /* Reduce padding to ensure content fits */
+        box-sizing: border-box; /* Include padding in width calculation */
     }
 
     /* Set width for the ID column (first column) */
@@ -106,17 +108,20 @@
         vertical-align: middle;
     }
 
-    /* Set consistent width for the second column (assignment name) */
+    /* Make the assignment name column flexible to fit container */
     #subject-table td:nth-child(2),
     #subject-table th:nth-child(2) {
-        width: 300px;
-        min-width: 200px;
+        width: auto;
+        min-width: 160px;
+        flex-grow: 1;
     }
 
-    /* Ensure table layout is fixed for consistent column widths */
+    /* Ensure table layout is fixed for consistent column widths but allows scaling */
     #subject-table {
-        table-layout: fixed;
+        table-layout: fixed !important;
         border: 1px solid #d8d8d8 !important; /* More subtle border color */
+        width: 100% !important; /* Make table fill container */
+        border-collapse: collapse !important; /* Ensure borders collapse properly */
     }
 
     /* More subtle cell borders */
@@ -141,6 +146,55 @@
         border-color: transparent !important;
     }
 
+    /* Style for assignment entry date */
+    .entry-date {
+        color: #666;
+        font-size: 0.85em;
+        background-color: #f5f5f5;
+        padding: 2px 5px;
+        border-radius: 3px;
+        margin-right: 5px;
+    }
+
+    /* Style for assignment name to make it stand out */
+    #subject-table td:nth-child(2) a {
+        display: inline;
+        line-height: 1.4;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    /* Add padding to assignment name cell and make it scale */
+    #subject-table td:nth-child(2) {
+        padding: 8px 12px;
+        width: auto;
+        word-wrap: break-word;
+        white-space: normal;
+    }
+
+    /* Style for the link to make it more readable */
+    #subject-table td:nth-child(2) a:hover {
+        text-decoration: underline;
+        color: #0056b3;
+    }
+
+    /* Style for ID badge in the ID column */
+    .id-badge {
+        background-color: #e9ecef;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 0.85em;
+        color: #495057;
+    }
+
+    /* Ensure grade values are centered in their cells */
+    #subject-table td:not(:first-child):not(:nth-child(2)) {
+        text-align: center !important;
+        justify-content: center !important;
+        align-items: center !important;
+        display: table-cell !important;
+    }
+
 </style>
 <?php if ($this->auth->userIsAdmin || $this->auth->userIsTeacher): ?>
     <div class="col text-end mb-3 d-flex justify-content-end align-items-center">
@@ -159,14 +213,14 @@
     <?php foreach ($groups as $group): ?>
         <h1><?= $group['groupName'] ?></h1>
         <div class="table-responsive" style="background-color: transparent;">
-            <table id="subject-table" class="table table-bordered" style="background-color: transparent; table-layout: fixed;">
+            <table id="subject-table" class="table table-bordered" style="background-color: transparent; table-layout: fixed !important; width: 100% !important;">
 
             <?php foreach ($group['subjects'] as $index => $subject): ?>
                     <?php if ($index > 0): ?>
                     </table>
                     <!-- Use a div instead of a table row for spacing -->
                     <div style="height: 20px; width: 100%; background-color: transparent;"></div>
-                    <table id="subject-table" class="table table-bordered" style="background-color: transparent; table-layout: fixed;">
+                    <table id="subject-table" class="table table-bordered" style="background-color: transparent; table-layout: fixed !important; width: 100% !important;">
                     <?php endif; ?>
 
                     <tr data-href="subjects/<?= $subject['subjectId'] ?>">
@@ -199,7 +253,7 @@
                         <?php foreach ($subject['assignments'] as $a): ?>
                             <tr>
                                 <td class="text-center">
-                                    <?= $a['assignmentId'] ?>
+                                    <span class="id-badge"><?= $a['assignmentId'] ?></span>
                                 </td>
                                 <td colspan="1">
                                     <?php
@@ -236,7 +290,12 @@
                                             <?= $a['assignmentDueAt'] ? (new DateTime($a['assignmentDueAt']))->format('d.m.y') : "Pole määratud" ?>
                                         </span>
                                     <?php endif; ?>
-                                    <a href="assignments/<?= $a['assignmentId'] ?>"><?= $a['assignmentName'] ?></a>
+                                    <a href="assignments/<?= $a['assignmentId'] ?>">
+                                        <?php if (!empty($a['assignmentEntryDateFormatted'])): ?>
+                                            <span class="entry-date"><?= $a['assignmentEntryDateFormatted'] ?></span>
+                                        <?php endif; ?>
+                                        <?= $a['assignmentName'] ?>
+                                    </a>
                                 </td>
                                 <?php foreach ($group['students'] as $s): ?>
                                     <?php $status = $a['assignmentStatuses'][$s['userId']]; ?>

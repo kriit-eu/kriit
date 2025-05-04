@@ -106,7 +106,7 @@ class subjects extends Controller
             SELECT
                 s.subjectId, s.subjectName, s.teacherId, t.userName AS teacherName,
                 u.userId AS studentId, u.userName AS studentName, u.groupId, g.groupName, u.userIsActive,
-                a.assignmentId, a.assignmentName, a.assignmentDueAt,
+                a.assignmentId, a.assignmentName, a.assignmentDueAt, a.assignmentEntryDate,
                 ua.userGrade, ua.assignmentStatusId, ast.statusName AS assignmentStatusName,
                 ua.userAssignmentSubmittedAt, ua.userAssignmentGradedAt
             FROM subjects s
@@ -184,10 +184,19 @@ class subjects extends Controller
 
                 // Add or update assignment in subject
                 if (!isset($groups[$groupName]['subjects'][$subjectId]['assignments'][$assignmentId])) {
+                    // Format the assignmentEntryDate if it exists
+                    $entryDateFormatted = '';
+                    if (!empty($row['assignmentEntryDate'])) {
+                        $entryDate = new \DateTime($row['assignmentEntryDate']);
+                        $entryDateFormatted = $entryDate->format('d.m');
+                    }
+
                     $groups[$groupName]['subjects'][$subjectId]['assignments'][$assignmentId] = [
                         'assignmentId' => $assignmentId,
                         'assignmentName' => $row['assignmentName'],
                         'assignmentDueAt' => $row['assignmentDueAt'],
+                        'assignmentEntryDate' => $row['assignmentEntryDate'],
+                        'assignmentEntryDateFormatted' => $entryDateFormatted,
                         'badgeClass' => $daysRemaining >= 3 ? 'badge bg-light text-dark' :
                             ($daysRemaining > 0 ? 'badge bg-warning text-dark' : 'badge bg-danger'),
                         'daysRemaining' => $daysRemaining,
