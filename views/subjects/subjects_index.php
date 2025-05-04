@@ -140,6 +140,12 @@
         width: 100%;
     }
 
+    /* Style for subject header in student view */
+    .student-view #subject-table th[colspan="2"] {
+        text-align: left;
+        padding: 8px 12px;
+    }
+
     /* For students, ensure assignment name cells are left-aligned */
     .student-view #subject-table td {
         text-align: left !important;
@@ -279,7 +285,7 @@
                             <b>ID</b>
                         </th>
                         <?php endif; ?>
-                        <th>
+                        <th <?= $isStudent ? 'colspan="2"' : '' ?>>
                             <b><?= $subject['subjectName'] ?></b>
                         </th>
                         <?php if (!$isStudent): ?>
