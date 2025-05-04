@@ -98,6 +98,8 @@
         box-sizing: border-box; /* Include padding in width calculation */
     }
 
+    /* This rule has been moved below */
+
     /* Set width for the ID column (first column) */
     #subject-table td:first-child,
     #subject-table th:first-child {
@@ -113,7 +115,7 @@
     #subject-table th:nth-child(<?= $isStudent ? '1' : '2' ?>) {
         width: auto;
         min-width: 160px;
-        max-width: <?= $isStudent ? '400px' : 'none' ?>;
+        max-width: none;
         flex-grow: 1;
     }
 
@@ -122,16 +124,24 @@
         table-layout: fixed !important;
         border: 1px solid #d8d8d8 !important; /* More subtle border color */
         border-collapse: collapse !important; /* Ensure borders collapse properly */
-        margin: 0 auto; /* Center the table if it's not full width */
+        width: 100% !important; /* Use full width */
     }
 
-    /* For students, make the table width fit content */
+    /* For students, make tables use full container width */
     .student-view #subject-table {
-        width: auto !important;
+        width: 100% !important; /* Use full container width */
+        table-layout: fixed !important; /* Ensure fixed layout for proper column distribution */
+        border-collapse: collapse !important;
+    }
+
+    /* For student view, ensure the table has only two columns with proper widths */
+    .student-view #subject-table tr {
+        display: table-row;
+        width: 100%;
     }
 
     /* For students, ensure assignment name cells are left-aligned */
-    .student-view #subject-table td[colspan="2"] {
+    .student-view #subject-table td {
         text-align: left !important;
     }
 
@@ -182,13 +192,34 @@
     }
 
     /* Add padding to assignment name cell and make it scale */
-    #subject-table td:nth-child(2),
-    .student-view #subject-table td[colspan="2"] {
+    #subject-table td:nth-child(2) {
         padding: 8px 12px;
         width: auto;
-        word-wrap: break-word;
-        white-space: normal;
+        white-space: nowrap; /* Prevent wrapping for better appearance */
+        overflow: hidden;
+        text-overflow: ellipsis;
         text-align: left;
+    }
+
+    /* Special styling for student view assignment cells */
+    .student-view #subject-table td:first-child {
+        padding: 8px 12px;
+        white-space: nowrap; /* Prevent wrapping for better appearance */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        text-align: left;
+        /* Let this cell take up all remaining space */
+        width: calc(100% - 120px) !important; /* Subtract the grade cell width */
+    }
+
+    /* Override text-center for grade cells in student view */
+    .student-view #subject-table td.text-center {
+        text-align: center !important;
+        width: 120px !important;
+        min-width: 120px !important;
+        max-width: 120px !important;
+        padding: 4px 8px;
+        box-sizing: border-box !important;
     }
 
     /* Style for the link to make it more readable */
@@ -232,14 +263,14 @@
     <?php foreach ($groups as $group): ?>
         <h1><?= $group['groupName'] ?></h1>
         <div class="table-responsive" style="background-color: transparent;">
-            <table id="subject-table" class="table table-bordered" style="background-color: transparent; table-layout: fixed !important; width: <?= $isStudent ? 'auto' : '100%' ?> !important;">
+            <table id="subject-table" class="table table-bordered" style="background-color: transparent; table-layout: fixed !important;">
 
             <?php foreach ($group['subjects'] as $index => $subject): ?>
                     <?php if ($index > 0): ?>
                     </table>
                     <!-- Use a div instead of a table row for spacing -->
                     <div style="height: 20px; width: 100%; background-color: transparent;"></div>
-                    <table id="subject-table" class="table table-bordered" style="background-color: transparent; table-layout: fixed !important; width: <?= $isStudent ? 'auto' : '100%' ?> !important;">
+                    <table id="subject-table" class="table table-bordered" style="background-color: transparent; table-layout: fixed !important;">
                     <?php endif; ?>
 
                     <tr data-href="subjects/<?= $subject['subjectId'] ?>">
@@ -278,7 +309,7 @@
                                     <span class="id-badge"><?= $a['assignmentId'] ?></span>
                                 </td>
                                 <?php endif; ?>
-                                <td <?= $isStudent ? 'colspan="2"' : 'colspan="1"' ?>>
+                                <td colspan="1">
                                     <?php
                                     // Determine whether to show the due date badge
                                     $showDueDate = true;
@@ -320,25 +351,50 @@
                                         <?= $a['assignmentName'] ?>
                                     </a>
                                 </td>
-                                <?php foreach ($group['students'] as $s): ?>
-                                    <?php $status = $a['assignmentStatuses'][$s['userId']]; ?>
+                                <?php if (!$isStudent): ?>
+                                    <?php foreach ($group['students'] as $s): ?>
+                                        <?php $status = $a['assignmentStatuses'][$s['userId']]; ?>
+                                        <?php
+                                            $isInactive = isset($s['userIsActive']) && !$s['userIsActive'];
+                                            $isUngraded = empty($status['grade']) || $status['assignmentStatusName'] === 'Kontrollimisel';
+                                            $inactiveClass = $isInactive ? 'inactive-student' : '';
+                                            $inactiveText = $isInactive ? ($isUngraded ? ' (Mitteaktiivne õpilane, hindamata)' : ' (Mitteaktiivne õpilane)') : '';
+                                        ?>
+                                        <td class="<?= $status['class'] ?> text-center <?= $inactiveClass ?>"
+                                            data-bs-toggle="tooltip"
+                                            data-bs-placement="bottom"
+                                            data-bs-html="true"
+                                            title="<?= nl2br(htmlspecialchars($status['tooltipText'])) ?>"
+                                            data-grade="<?= is_numeric($status['grade']) ? intval($status['grade']) : '' ?>"
+                                            data-is-student="<?= json_encode($isStudent) ?>"
+                                            data-url="assignments/<?= $a['assignmentId'] ?>">
+                                            <?= $status['grade'] ?>
+                                        </td>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
                                     <?php
-                                        $isInactive = isset($s['userIsActive']) && !$s['userIsActive'];
-                                        $isUngraded = empty($status['grade']) || $status['assignmentStatusName'] === 'Kontrollimisel';
-                                        $inactiveClass = $isInactive ? 'inactive-student' : '';
-                                        $inactiveText = $isInactive ? ($isUngraded ? ' (Mitteaktiivne õpilane, hindamata)' : ' (Mitteaktiivne õpilane)') : '';
+                                        // For students, show only their own grade
+                                        $currentUserId = $this->auth->userId;
+                                        if (isset($a['assignmentStatuses'][$currentUserId])) {
+                                            $status = $a['assignmentStatuses'][$currentUserId];
+                                            $isUngraded = empty($status['grade']) || $status['assignmentStatusName'] === 'Kontrollimisel';
+                                        } else {
+                                            $status = ['class' => '', 'assignmentStatusName' => 'Esitamata', 'grade' => '', 'tooltipText' => ''];
+                                            $isUngraded = true;
+                                        }
                                     ?>
-                                    <td class="<?= $status['class'] ?> text-center <?= $inactiveClass ?>"
+                                    <td class="<?= $status['class'] ?> text-center"
                                         data-bs-toggle="tooltip"
                                         data-bs-placement="bottom"
                                         data-bs-html="true"
                                         title="<?= nl2br(htmlspecialchars($status['tooltipText'])) ?>"
-                                        data-grade="<?= is_numeric($status['grade']) ? intval($status['grade']) : '' ?>"
-                                        data-is-student="<?= json_encode($isStudent) ?>"
-                                        data-url="assignments/<?= $a['assignmentId'] ?>">
-                                        <?= $isStudent ? ($status['assignmentStatusName'] == 'Kontrollimisel' ? 'Kontrollimisel' : ($status['grade'] ?: $status['assignmentStatusName'])) : $status['grade'] ?>
+                                        data-grade="<?= is_numeric($status['grade'] ?? '') ? intval($status['grade']) : '' ?>"
+                                        data-is-student="true"
+                                        data-url="assignments/<?= $a['assignmentId'] ?>"
+                                        style="width: 120px; min-width: 120px; max-width: 120px;">
+                                        <?= $status['assignmentStatusName'] == 'Kontrollimisel' ? 'Kontrollimisel' : ($status['grade'] ?: $status['assignmentStatusName']) ?>
                                     </td>
-                                <?php endforeach; ?>
+                                <?php endif; ?>
                             </tr>
                         <?php endforeach; ?>
                     <?php endif; ?>
