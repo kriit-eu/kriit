@@ -57,7 +57,7 @@ class assignments extends Controller
             if (empty($assignment['assignmentName'])) {
                 $assignment['assignmentName'] = $row['assignmentName'];
                 $assignment['assignmentInstructions'] = $row['assignmentInstructions'];
-                $assignment['assignmentDueAt'] = !empty($row['assignmentDueAt']) ? date('d.m.Y', strtotime($row['assignmentDueAt'])) : 'Pole määratud';
+                $assignment['assignmentDueAt'] = !empty($row['assignmentDueAt']) ? date('d.m.Y', strtotime($row['assignmentDueAt'])) : 'Pole tähtaega';
                 $assignment['assignmentInvolvesOpenApi'] = (int)$row['assignmentInvolvesOpenApi'];
                 $assignment['teacherId'] = $row['teacherId'];
                 $assignment['teacherName'] = $row['teacherName'];
