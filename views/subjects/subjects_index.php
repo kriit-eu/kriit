@@ -87,8 +87,8 @@
     }
 
     /* Set fixed width for all grade cells */
-    #subject-table td:not(:first-child):not(:nth-child(2)),
-    #subject-table th:not(:first-child):not(:nth-child(2)) {
+    .student-name-header,
+    #subject-table td.text-center:not(:first-child) {
         width: 40px !important;
         min-width: 40px !important;
         max-width: 40px !important;
@@ -109,10 +109,11 @@
     }
 
     /* Make the assignment name column flexible to fit container */
-    #subject-table td:nth-child(2),
-    #subject-table th:nth-child(2) {
+    #subject-table td:nth-child(<?= $isStudent ? '1' : '2' ?>),
+    #subject-table th:nth-child(<?= $isStudent ? '1' : '2' ?>) {
         width: auto;
         min-width: 160px;
+        max-width: <?= $isStudent ? '400px' : 'none' ?>;
         flex-grow: 1;
     }
 
@@ -120,8 +121,23 @@
     #subject-table {
         table-layout: fixed !important;
         border: 1px solid #d8d8d8 !important; /* More subtle border color */
-        width: 100% !important; /* Make table fill container */
         border-collapse: collapse !important; /* Ensure borders collapse properly */
+        margin: 0 auto; /* Center the table if it's not full width */
+    }
+
+    /* For students, make the table width fit content */
+    .student-view #subject-table {
+        width: auto !important;
+    }
+
+    /* For students, ensure assignment name cells are left-aligned */
+    .student-view #subject-table td[colspan="2"] {
+        text-align: left !important;
+    }
+
+    /* For teachers/admins, make the table fill the container */
+    .teacher-view #subject-table {
+        width: 100% !important;
     }
 
     /* More subtle cell borders */
@@ -148,32 +164,35 @@
 
     /* Style for assignment entry date */
     .entry-date {
-        color: #666;
+        color: #664d03;
         font-size: 0.85em;
-        background-color: #f5f5f5;
+        background-color: #fff3cd;
         padding: 2px 5px;
         border-radius: 3px;
         margin-right: 5px;
+        text-decoration: none;
     }
 
     /* Style for assignment name to make it stand out */
-    #subject-table td:nth-child(2) a {
+    #subject-table td a {
         display: inline;
         line-height: 1.4;
-        text-decoration: none;
+        text-decoration: none !important; /* Force no underline for all views */
         font-weight: 500;
     }
 
     /* Add padding to assignment name cell and make it scale */
-    #subject-table td:nth-child(2) {
+    #subject-table td:nth-child(2),
+    .student-view #subject-table td[colspan="2"] {
         padding: 8px 12px;
         width: auto;
         word-wrap: break-word;
         white-space: normal;
+        text-align: left;
     }
 
     /* Style for the link to make it more readable */
-    #subject-table td:nth-child(2) a:hover {
+    #subject-table td a:hover {
         text-decoration: underline;
         color: #0056b3;
     }
@@ -188,7 +207,7 @@
     }
 
     /* Ensure grade values are centered in their cells */
-    #subject-table td:not(:first-child):not(:nth-child(2)) {
+    #subject-table td[data-grade] {
         text-align: center !important;
         justify-content: center !important;
         align-items: center !important;
@@ -209,24 +228,26 @@
         <?php endif; ?>
     </div>
 <?php endif; ?>
-<div class="row">
+<div class="row <?= $isStudent ? 'student-view' : 'teacher-view' ?>">
     <?php foreach ($groups as $group): ?>
         <h1><?= $group['groupName'] ?></h1>
         <div class="table-responsive" style="background-color: transparent;">
-            <table id="subject-table" class="table table-bordered" style="background-color: transparent; table-layout: fixed !important; width: 100% !important;">
+            <table id="subject-table" class="table table-bordered" style="background-color: transparent; table-layout: fixed !important; width: <?= $isStudent ? 'auto' : '100%' ?> !important;">
 
             <?php foreach ($group['subjects'] as $index => $subject): ?>
                     <?php if ($index > 0): ?>
                     </table>
                     <!-- Use a div instead of a table row for spacing -->
                     <div style="height: 20px; width: 100%; background-color: transparent;"></div>
-                    <table id="subject-table" class="table table-bordered" style="background-color: transparent; table-layout: fixed !important; width: 100% !important;">
+                    <table id="subject-table" class="table table-bordered" style="background-color: transparent; table-layout: fixed !important; width: <?= $isStudent ? 'auto' : '100%' ?> !important;">
                     <?php endif; ?>
 
                     <tr data-href="subjects/<?= $subject['subjectId'] ?>">
+                        <?php if (!$isStudent): ?>
                         <th class="text-center">
                             <b>ID</b>
                         </th>
+                        <?php endif; ?>
                         <th>
                             <b><?= $subject['subjectName'] ?></b>
                         </th>
@@ -252,10 +273,12 @@
                     <?php if (!empty($subject['assignments'])): ?>
                         <?php foreach ($subject['assignments'] as $a): ?>
                             <tr>
+                                <?php if (!$isStudent): ?>
                                 <td class="text-center">
                                     <span class="id-badge"><?= $a['assignmentId'] ?></span>
                                 </td>
-                                <td colspan="1">
+                                <?php endif; ?>
+                                <td <?= $isStudent ? 'colspan="2"' : 'colspan="1"' ?>>
                                     <?php
                                     // Determine whether to show the due date badge
                                     $showDueDate = true;
