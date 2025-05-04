@@ -170,6 +170,40 @@ class Sync
                 // Compare assignment fields
                 $fieldDiff = self::diffAssignmentFields($kriitAssignment, $remoteAssignment);
 
+                // If there are field differences, update the assignment in Kriit
+                // BUT ONLY for fields that are NULL in Kriit
+                if ($fieldDiff) {
+                    $updateData = [];
+                    foreach ($fieldDiff as $field => $diffVal) {
+                        // Only update fields that are NULL in Kriit
+                        if ($diffVal['kriit'] === null && $diffVal['remote'] !== null) {
+                            // Use the remote value for the update
+                            $updateData[$field] = $diffVal['remote'];
+                        }
+                    }
+
+                    // Only update if we have data to update
+                    if (!empty($updateData)) {
+                        Assignment::update($kriitAssignment['assignmentId'], $updateData);
+
+                        // Log the update
+                        $teacherId = null;
+                        $subjectInfo = self::getSubjectsInfo([$kriitSubject['subjectId']]);
+                        if (!empty($subjectInfo) && isset($subjectInfo[$kriitSubject['subjectId']]['teacherId'])) {
+                            $teacherId = $subjectInfo[$kriitSubject['subjectId']]['teacherId'];
+                        }
+
+                        if ($teacherId) {
+                            Activity::create(ACTIVITY_UPDATE_ASSIGNMENT_SYNC, $teacherId, $kriitAssignment['assignmentId'], [
+                                'systemId' => $systemId,
+                                'assignmentName' => $kriitAssignment['assignmentName'],
+                                'assignmentExternalId' => $extId,
+                                'updatedFields' => array_keys($updateData)
+                            ]);
+                        }
+                    }
+                }
+
                 // Compare results for existing students
                 $resultsDiff = self::diffAssignmentResults($kriitAssignment['results'], $remoteAssignment['results']);
 
@@ -178,7 +212,13 @@ class Sync
                     $assignDiff = [ 'assignmentExternalId' => $extId ];
                     foreach ($fieldDiff as $field => $diffVal) {
                         // We'll show Kriit's final data in the result
-                        $assignDiff[$field] = $diffVal['kriit'];
+                        // If the field was NULL in Kriit and has been updated, show the remote value
+                        // Otherwise show the original Kriit value
+                        if ($diffVal['kriit'] === null && $diffVal['remote'] !== null) {
+                            $assignDiff[$field] = $diffVal['remote'];
+                        } else {
+                            $assignDiff[$field] = $diffVal['kriit'];
+                        }
                     }
 
                     if ($resultsDiff) {
@@ -896,13 +936,19 @@ class Sync
     /**
      * Compares assignment-level fields (assignmentName, assignmentInstructions, assignmentDueAt, assignmentEntryDate)
      * returning [fieldName => ['kriit'=>..., 'remote'=>...]] for only the ones that differ.
+     * Special handling for NULL values in Kriit - if remote has a value and Kriit has NULL, it's considered a difference.
      */
     private static function diffAssignmentFields(array $kriitAssignment, array $remoteAssignment): array
     {
         $check = ['assignmentDueAt', 'assignmentEntryDate'];
         $diffs = [];
         foreach ($check as $fld) {
-            if (isset($remoteAssignment[$fld]) && $kriitAssignment[$fld] !== $remoteAssignment[$fld]) {
+            // Consider it a difference if:
+            // 1. Remote has the field AND
+            // 2. Either Kriit's value is NULL while remote has a value, OR the values are different
+            if (isset($remoteAssignment[$fld]) &&
+                (($kriitAssignment[$fld] === null && $remoteAssignment[$fld] !== null) ||
+                 $kriitAssignment[$fld] !== $remoteAssignment[$fld])) {
                 $diffs[$fld] = [
                     'kriit'  => $kriitAssignment[$fld],
                     'remote' => $remoteAssignment[$fld]
