@@ -188,11 +188,20 @@ class Sync
                             // The user wants final data, but we show that there's a difference
                             // We could choose Kriit's or Remote's grade; the user specifically wants to see
                             // that the grade is different. We'll show Kriit's final data for now.
-                            $assignDiff['results'][] = [
+                            $resultEntry = [
                                 'studentPersonalCode' => $studCode,
-                                'grade'              => $d['kriitGrade'],
                                 'studentName'        => $d['studentName']
                             ];
+
+                            // Check if kriitGrade exists (it might not if only studentIsActive differs)
+                            if (isset($d['kriitGrade'])) {
+                                $resultEntry['grade'] = $d['kriitGrade'];
+                            } else {
+                                // If no grade difference, use the grade from kriitResults if available
+                                $resultEntry['grade'] = $kriitResults[$studCode]['grade'] ?? null;
+                            }
+
+                            $assignDiff['results'][] = $resultEntry;
                         }
                     }
 
