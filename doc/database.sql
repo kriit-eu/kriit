@@ -1,4 +1,4 @@
--- Dump created on 2025-05-03 21:16:49 by Hennos-MacBook-Pro-2.local
+-- Dump created on 2025-05-04 15:39:48 by test.diarainfra.com
 SET FOREIGN_KEY_CHECKS=0;
 SET @@SESSION.sql_mode='NO_AUTO_VALUE_ON_ZERO';
 
@@ -24,7 +24,8 @@ INSERT INTO `activities` VALUES
 (19,'createSubjectSync','created subject during synchronization'),
 (20,'createAssignmentSync','created assignment during synchronization'),
 (21,'createUserSync','created user during synchronization'),(22,'gradeSync','synchronized grade'),
-(23,'updateUserName','updated user name during synchronization');
+(23,'updateUserName','updated user name during synchronization'),
+(24,'updateAssignmentSync','updated assignment during synchronization');
 /*!40000 ALTER TABLE `activities` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -41,7 +42,7 @@ KEY `fk_activityLog_userId` (`userId`),
 KEY `fk_activityLog_activityId` (`activityId`),
 KEY `idx_activityLog_id` (`id`),
 CONSTRAINT `fk_activityLog_activityId` FOREIGN KEY (`activityId`) REFERENCES `activities` (`activityId`),
-CONSTRAINT `fk_activityLog_userId` FOREIGN KEY (`userId`) REFERENCES `users` (`userId`)
+CONSTRAINT `fk_activityLog_userId` FOREIGN KEY (`userId`) REFERENCES `users` (`userId`) ON DELETE CASCADE
 );
 LOCK TABLES `activityLog` WRITE;
 /*!40000 ALTER TABLE `activityLog` DISABLE KEYS */;
@@ -70,10 +71,10 @@ CREATE TABLE `assignments` (
 `assignmentName` varchar(191) NOT NULL COMMENT 'Autocreated',
 `assignmentInstructions` text NOT NULL COMMENT 'Autocreated',
 `subjectId` int unsigned NOT NULL,
-`assignmentExternalId` int unsigned DEFAULT NULL,
-`systemId` int unsigned NOT NULL DEFAULT 1,
-`assignmentDueAt` date DEFAULT NULL,
 `assignmentEntryDate` date DEFAULT NULL,
+`assignmentExternalId` int unsigned DEFAULT NULL,
+`assignmentDueAt` date DEFAULT NULL,
+`systemId` int unsigned NOT NULL DEFAULT 1,
 `assignmentInitialCode` text DEFAULT NULL,
 `assignmentValidationFunction` text DEFAULT NULL,
 `assignmentInvolvesOpenApi` tinyint unsigned NOT NULL DEFAULT 0,
@@ -237,7 +238,7 @@ PRIMARY KEY (`messageId`),
 KEY `messages_assignments_assignmentId_fk` (`assignmentId`),
 KEY `messages_users_userId_fk` (`userId`),
 CONSTRAINT `messages_assignments_assignmentId_fk` FOREIGN KEY (`assignmentId`) REFERENCES `assignments` (`assignmentId`),
-CONSTRAINT `messages_users_userId_fk` FOREIGN KEY (`userId`) REFERENCES `users` (`userId`)
+CONSTRAINT `messages_users_userId_fk` FOREIGN KEY (`userId`) REFERENCES `users` (`userId`) ON DELETE CASCADE
 );
 LOCK TABLES `messages` WRITE;
 /*!40000 ALTER TABLE `messages` DISABLE KEYS */;
@@ -255,8 +256,8 @@ PRIMARY KEY (`settingName`)
 LOCK TABLES `settings` WRITE;
 /*!40000 ALTER TABLE `settings` DISABLE KEYS */;
 INSERT INTO `settings` VALUES
-('openapiPrompt','You generate Mocha + Supertest test scripts from OpenAPI 3.0/3.1 JSON specs. Output must be a runnable JavaScript test file that:\n\n- Uses only `mocha` and `supertest`\n- Connects to the base URL from `servers[0].url`\n- Tests all defined endpoints\n- Simulates realistic workflows with ID reuse across create, update, delete\n- Handles authentication if defined in `securitySchemes`/`security`:\n - Tests `401 Unauthorized` on missing tokens\n - Sends login with missing and invalid credentials (expecting 400 or 401, either is fine!)\n - Stores and reuses token in authenticated requests\n - After successful logout, tests that protected operations fail with the old token\n- If a user creation endpoint exists (e.g. `POST /users` or `POST /registrations`):\n - Test successful signup with randomly generated username\n - Test duplicate signup returns `409`\n- Implements a logical resource lifecycle per spec:\n - Only performs `POST`, `GET`, `PATCH/PUT`, `DELETE` where appropriate\n - Avoids assuming any operation support unless defined in the openapi spec \n - Chains actions into realistic workflows (e.g., create → update → delete)\n- Follows provided request body examples exactly when testing `2xx` responses\n- EXTREMELY IMPORTANT: Logs failed tests with a one-line `curl` command *in the catch or fail block of each test*, using `console.log`:\n - Always provides it if a test fails\n - Uses `-X <METHOD>`\n - Adds `Content-Type` and `Authorization` headers if relevant\n - Includes `-d \'<json>\'` if the request had a body (compact, no line breaks)\n - No line breaks, no `\\`, no stack traces\n - Begins with: `# FAIL in: <test name>`\n - Also prints out the actual response body of the failed request for debugging!\n- Groups test cases using `describe()` and `it()`\n- Declares mutable IDs and tokens at the top of the file\n- Avoids mocking — tests target the real API\n- Uses only `required` fields from requestBody schemas\n- If `operationId` exists, use for naming test cases\n- Final output must be clean, readable, and ready to run with Mocha'),
-('projectVersion','26ce9a4'),('translationUpdateLastRun','2025-04-20 01:27:51');
+('openapiPrompt','You generate Mocha + Supertest test scripts from OpenAPI 3.0/3.1 JSON specs. Output must be a runnable JavaScript test file that:\n\n- Uses only `mocha` and `supertest`\n- Connects to the base URL from `servers[0].url`\n- Tests all defined endpoints\n- Pays special attention that the response JSON\'s structure matches the documentation examples 100%!\n- Simulates realistic workflows with ID reuse across create, update, delete\n- Handles authentication if defined in `securitySchemes`/`security`:\n  - Tests `401 Unauthorized` on missing tokens\n  - Sends login with missing and invalid credentials (expecting 400 or 401, either is fine!)\n  - Stores and reuses token in authenticated requests\n  - After successful logout, tests that protected operations fail with the old token\n- If a user creation endpoint exists (e.g. `POST /users` or `POST /registrations`):\n  - Test successful signup with randomly generated username\n  - Test duplicate signup returns `409`\n- Implements a logical resource lifecycle per spec:\n  - Only performs `POST`, `GET`, `PATCH/PUT`, `DELETE` where appropriate\n  - Avoids assuming any operation support unless defined in the openapi spec \n  - Chains actions into realistic workflows (e.g., create → update → delete)\n- Follows provided request body examples exactly when testing `2xx` responses\n- EXTREMELY IMPORTANT: Logs failed tests with a one-line `curl` command *in the catch or fail block of each test*, using `console.log`:\n  - Always provides it if a test fails\n  - Uses `-X <METHOD>`\n  - Adds `Content-Type` and `Authorization` headers if relevant\n  - Includes `-d \'<json>\'` if the request had a body (compact, no line breaks)\n  - No line breaks, no `\\`, no stack traces\n  - Begins with: `# FAIL in: <test name>`\n  - Also prints out the actual response body of the failed request for debugging!\n- Groups test cases using `describe()` and `it()`\n- Declares mutable IDs and tokens at the top of the file\n- Avoids mocking — tests target the real API\n- Uses only `required` fields from requestBody schemas\n- If `operationId` exists, use for naming test cases\n- Final output must be clean, readable, and ready to run with Mocha'),
+('projectVersion','c6d7b6e'),('translationUpdateLastRun','2025-05-04 15:29:51');
 /*!40000 ALTER TABLE `settings` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -333,31 +334,38 @@ CREATE TABLE `translations` (
 `translationPhrase` varchar(765) NOT NULL,
 `translationState` varchar(255) NOT NULL DEFAULT 'existsInCode',
 `TranslationSource` varchar(255) DEFAULT NULL,
+`translationInen` varchar(765) DEFAULT NULL,
 PRIMARY KEY (`translationId`),
 UNIQUE KEY `translations_translationPhrase_uindex` (`translationPhrase`)
 );
 LOCK TABLES `translations` WRITE;
 /*!40000 ALTER TABLE `translations` DISABLE KEYS */;
 INSERT INTO `translations` VALUES
-(3,'User already exists','existsInCode',NULL),(4,'You cannot delete yourself','existsInCode',NULL),
-(5,'Server returned response in an unexpected format','existsInCode',NULL),(6,'Forbidden','existsInCode',NULL),
-(7,'Server returned an error. Please try again later','existsInCode',NULL),(8,'Module Name','existsInCode',NULL),
-(9,'Access denied','existsInCode',NULL),(14,'Logout','existsInCode',NULL),(15,'Error','existsInCode',NULL),
-(16,'Unknown error!','existsInCode',NULL),(29,'Phrase','existsInCode',NULL),(30,'Untranslated','existsInCode',NULL),
-(31,'Search','existsInCode',NULL),(32,'Languages','existsInCode',NULL),(33,'Select language','existsInCode',NULL),
-(34,'Google translates < 5000 chars at a time','existsInCode',NULL),(35,'Select language first','existsInCode',NULL),
-(36,'Are you really sure you want to remove the language %%% and destroy its translations?','existsInCode',NULL),
-(39,'user has started the exercise','dynamic','activities.activityDescription'),
-(40,'logged in','dynamic','activities.activityDescription'),(41,'logged out','dynamic','activities.activityDescription'),
-(42,'user has solved exercise','dynamic','activities.activityDescription'),
-(43,'user has started the timer','dynamic','activities.activityDescription'),
-(44,'updated assignment \'due at\' date','dynamic','activities.activityDescription'),
-(45,'updated assignment','dynamic','activities.activityDescription'),
-(46,'updated assignment instruction','dynamic','activities.activityDescription'),
-(47,'updated assignment name','dynamic','activities.activityDescription'),
-(48,'created assignment','dynamic','activities.activityDescription'),
-(49,'created subject','dynamic','activities.activityDescription'),
-(50,'created group','dynamic','activities.activityDescription');
+(3,'User already exists','existsInCode',NULL,'User already exists'),
+(4,'You cannot delete yourself','existsInCode',NULL,'You cannot delete yourself'),
+(5,'Server returned response in an unexpected format','existsInCode',NULL,'Server returned response in an unexpected format'),
+(6,'Forbidden','existsInCode',NULL,'Forbidden'),
+(7,'Server returned an error. Please try again later','existsInCode',NULL,'Server returned an error. Please try again later'),
+(8,'Module Name','existsInCode',NULL,'Module Name'),(9,'Access denied','existsInCode',NULL,'Access denied'),
+(14,'Logout','existsInCode',NULL,'Logout'),(15,'Error','existsInCode',NULL,'Error'),
+(16,'Unknown error!','existsInCode',NULL,'Unknown error!'),(29,'Phrase','existsInCode',NULL,'Phrase'),
+(30,'Untranslated','existsInCode',NULL,'Untranslated'),(31,'Search','existsInCode',NULL,'Search'),
+(32,'Languages','existsInCode',NULL,'Languages'),(33,'Select language','existsInCode',NULL,'Select language'),
+(34,'Google translates < 5000 chars at a time','existsInCode',NULL,'Google translates < 5000 chars at a time'),
+(35,'Select language first','existsInCode',NULL,'Select language first'),
+(36,'Are you really sure you want to remove the language %%% and destroy its translations?','existsInCode',NULL,'Are you really sure you want to remove the language %%% and destroy its translations?'),
+(39,'user has started the exercise','dynamic','activities.activityDescription','user has started the exercise'),
+(40,'logged in','dynamic','activities.activityDescription','logged in'),
+(41,'logged out','dynamic','activities.activityDescription','logged out'),
+(42,'user has solved exercise','dynamic','activities.activityDescription','user has solved exercise'),
+(43,'user has started the timer','dynamic','activities.activityDescription','user has started the timer'),
+(44,'updated assignment \'due at\' date','dynamic','activities.activityDescription','updated assignment \'due at\' date'),
+(45,'updated assignment','dynamic','activities.activityDescription','updated assignment'),
+(46,'updated assignment instruction','dynamic','activities.activityDescription','updated assignment instruction'),
+(47,'updated assignment name','dynamic','activities.activityDescription','updated assignment name'),
+(48,'created assignment','dynamic','activities.activityDescription','created assignment'),
+(49,'created subject','dynamic','activities.activityDescription','created subject'),
+(50,'created group','dynamic','activities.activityDescription','created group');
 /*!40000 ALTER TABLE `translations` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -378,7 +386,7 @@ KEY `idx_userAssignmentSubmittedAt` (`userAssignmentSubmittedAt`),
 KEY `idx_userAssignmentGradedAt` (`userAssignmentGradedAt`),
 CONSTRAINT `userAssignments_assignmentStatuses_assignmentStatusId_fk` FOREIGN KEY (`assignmentStatusId`) REFERENCES `assignmentStatuses` (`assignmentStatusId`),
 CONSTRAINT `userAssignments_assignments_assignmentId_fk` FOREIGN KEY (`assignmentId`) REFERENCES `assignments` (`assignmentId`),
-CONSTRAINT `userAssignments_users_userId_fk` FOREIGN KEY (`userId`) REFERENCES `users` (`userId`)
+CONSTRAINT `userAssignments_users_userId_fk` FOREIGN KEY (`userId`) REFERENCES `users` (`userId`) ON DELETE CASCADE
 );
 LOCK TABLES `userAssignments` WRITE;
 /*!40000 ALTER TABLE `userAssignments` DISABLE KEYS */;
@@ -388,8 +396,7 @@ INSERT INTO `userAssignments` VALUES
 UNLOCK TABLES;
 DELIMITER ;;
 /*!50003 CREATE*/ /*!50017 */ /*!50003 TRIGGER before_userAssignments_insert
-BEFORE INSERT ON kriit.userAssignments
-FOR EACH ROW
+BEFORE INSERT ON `userAssignments` FOR EACH ROW
 BEGIN
 DECLARE hinnatudStatusId TINYINT;
 SELECT assignmentStatusId INTO hinnatudStatusId
@@ -403,8 +410,7 @@ END */;;
 DELIMITER ;
 DELIMITER ;;
 /*!50003 CREATE*/ /*!50017 */ /*!50003 TRIGGER before_userAssignments_update
-BEFORE UPDATE ON kriit.userAssignments
-FOR EACH ROW
+BEFORE UPDATE ON `userAssignments` FOR EACH ROW
 BEGIN
 DECLARE hinnatudStatusId TINYINT;
 SELECT assignmentStatusId INTO hinnatudStatusId
@@ -424,7 +430,7 @@ CREATE TABLE `userDoneCriteria` (
 PRIMARY KEY (`userId`,`criterionId`),
 KEY `userDoneCriteria_criteria_criterionId_fk` (`criterionId`),
 CONSTRAINT `userDoneCriteria_criteria_criterionId_fk` FOREIGN KEY (`criterionId`) REFERENCES `criteria` (`criterionId`),
-CONSTRAINT `userDoneCriteria_users_userId_fk` FOREIGN KEY (`userId`) REFERENCES `users` (`userId`)
+CONSTRAINT `userDoneCriteria_users_userId_fk` FOREIGN KEY (`userId`) REFERENCES `users` (`userId`) ON DELETE CASCADE
 );
 LOCK TABLES `userDoneCriteria` WRITE;
 /*!40000 ALTER TABLE `userDoneCriteria` DISABLE KEYS */;
