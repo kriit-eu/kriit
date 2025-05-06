@@ -104,7 +104,7 @@ class subjects extends Controller
         $showAllValue = $this->showAll ? 1 : 0;
         $this->data = Db::getAll("
             SELECT
-                s.subjectId, s.subjectName, s.teacherId, t.userName AS teacherName,
+                s.subjectId, s.subjectName, s.teacherId, s.subjectExternalId, t.userName AS teacherName,
                 u.userId AS studentId, u.userName AS studentName, u.groupId, g.groupName, u.userIsActive,
                 a.assignmentId, a.assignmentName, a.assignmentDueAt, a.assignmentEntryDate,
                 ua.userGrade, ua.assignmentStatusId, ast.statusName AS assignmentStatusName,
@@ -172,6 +172,7 @@ class subjects extends Controller
                 $groups[$groupName]['subjects'][$subjectId] = [
                     'subjectId' => $subjectId,
                     'subjectName' => $row['subjectName'],
+                    'subjectExternalId' => $row['subjectExternalId'],
                     'teacherName' => $row['teacherName'],
                     'assignments' => []
                 ];

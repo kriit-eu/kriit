@@ -252,9 +252,16 @@
     }
 
     /* Style for the link to make it more readable */
-    #subject-table td a:hover {
+    #subject-table td a:hover,
+    #subject-table th a:hover {
         text-decoration: underline;
         color: #0056b3;
+    }
+
+    /* Style for subject name links */
+    #subject-table th a {
+        color: inherit;
+        text-decoration: none;
     }
 
     /* Style for ID badge in the ID column */
@@ -309,7 +316,15 @@
                         </th>
                         <?php endif; ?>
                         <th <?= $isStudent ? 'colspan="2"' : '' ?>>
-                            <b><?= $subject['subjectName'] ?></b>
+                            <b>
+                                <?php if (!empty($subject['subjectExternalId'])): ?>
+                                    <a href="https://tahvel.edu.ee/#/journal/<?= $subject['subjectExternalId'] ?>/edit" target="_blank">
+                                        <?= $subject['subjectName'] ?>
+                                    </a>
+                                <?php else: ?>
+                                    <?= $subject['subjectName'] ?>
+                                <?php endif; ?>
+                            </b>
                         </th>
                         <?php if (!$isStudent): ?>
                             <?php foreach ($group['students'] as $s): ?>
