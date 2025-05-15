@@ -1,4 +1,4 @@
--- Dump created on 2025-05-04 15:39:48 by test.diarainfra.com
+-- Dump created on 2025-05-15 20:02:35 by Hennos-MacBook-Pro-2.local
 SET FOREIGN_KEY_CHECKS=0;
 SET @@SESSION.sql_mode='NO_AUTO_VALUE_ON_ZERO';
 
@@ -25,7 +25,8 @@ INSERT INTO `activities` VALUES
 (20,'createAssignmentSync','created assignment during synchronization'),
 (21,'createUserSync','created user during synchronization'),(22,'gradeSync','synchronized grade'),
 (23,'updateUserName','updated user name during synchronization'),
-(24,'updateAssignmentSync','updated assignment during synchronization');
+(24,'updateAssignmentSync','updated assignment during synchronization'),
+(25,'updateUserSync','updated user during synchronization');
 /*!40000 ALTER TABLE `activities` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -86,7 +87,7 @@ CONSTRAINT `assignments_subjectId_fk` FOREIGN KEY (`subjectId`) REFERENCES `subj
 LOCK TABLES `assignments` WRITE;
 /*!40000 ALTER TABLE `assignments` DISABLE KEYS */;
 INSERT INTO `assignments` VALUES
-(1,'Aatomi lõhustamine','',1,NULL,1,'2024-11-30','2024-11-20','',null,1);
+(1,'Aatomi lõhustamine','',1,NULL,1,'2024-11-30',2024,'',NULL,1);
 /*!40000 ALTER TABLE `assignments` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -256,7 +257,7 @@ PRIMARY KEY (`settingName`)
 LOCK TABLES `settings` WRITE;
 /*!40000 ALTER TABLE `settings` DISABLE KEYS */;
 INSERT INTO `settings` VALUES
-('openapiPrompt','You generate Mocha + Supertest test scripts from OpenAPI 3.0/3.1 JSON specs. Output must be a runnable JavaScript test file that:\n\n- Uses only `mocha` and `supertest`\n- Connects to the base URL from `servers[0].url`\n- Tests all defined endpoints\n- Pays special attention that the response JSON\'s structure matches the documentation examples 100%!\n- Simulates realistic workflows with ID reuse across create, update, delete\n- Handles authentication if defined in `securitySchemes`/`security`:\n  - Tests `401 Unauthorized` on missing tokens\n  - Sends login with missing and invalid credentials (expecting 400 or 401, either is fine!)\n  - Stores and reuses token in authenticated requests\n  - After successful logout, tests that protected operations fail with the old token\n- If a user creation endpoint exists (e.g. `POST /users` or `POST /registrations`):\n  - Test successful signup with randomly generated username\n  - Test duplicate signup returns `409`\n- Implements a logical resource lifecycle per spec:\n  - Only performs `POST`, `GET`, `PATCH/PUT`, `DELETE` where appropriate\n  - Avoids assuming any operation support unless defined in the openapi spec \n  - Chains actions into realistic workflows (e.g., create → update → delete)\n- Follows provided request body examples exactly when testing `2xx` responses\n- EXTREMELY IMPORTANT: Logs failed tests with a one-line `curl` command *in the catch or fail block of each test*, using `console.log`:\n  - Always provides it if a test fails\n  - Uses `-X <METHOD>`\n  - Adds `Content-Type` and `Authorization` headers if relevant\n  - Includes `-d \'<json>\'` if the request had a body (compact, no line breaks)\n  - No line breaks, no `\\`, no stack traces\n  - Begins with: `# FAIL in: <test name>`\n  - Also prints out the actual response body of the failed request for debugging!\n- Groups test cases using `describe()` and `it()`\n- Declares mutable IDs and tokens at the top of the file\n- Avoids mocking — tests target the real API\n- Uses only `required` fields from requestBody schemas\n- If `operationId` exists, use for naming test cases\n- Final output must be clean, readable, and ready to run with Mocha'),
+('openapiPrompt','You generate Mocha + Supertest test scripts from OpenAPI 3.0/3.1 JSON specs. Output must be a runnable JavaScript test file that:\n\n- Uses only `mocha` and `supertest`\n- Connects to the base URL from `servers[0].url`\n- Tests all defined endpoints\n- Pays special attention that the response JSON\'s structure matches the documentation examples 100%!\n- Simulates realistic workflows with ID reuse across create, update, delete\n- Handles authentication if defined in `securitySchemes`/`security`:\n - Tests `401 Unauthorized` on missing tokens\n - Sends login with missing and invalid credentials (expecting 400 or 401, either is fine!)\n - Stores and reuses token in authenticated requests\n - After successful logout, tests that protected operations fail with the old token\n- If a user creation endpoint exists (e.g. `POST /users` or `POST /registrations`):\n - Test successful signup with randomly generated username\n - Test duplicate signup returns `409`\n- Implements a logical resource lifecycle per spec:\n - Only performs `POST`, `GET`, `PATCH/PUT`, `DELETE` where appropriate\n - Avoids assuming any operation support unless defined in the openapi spec \n - Chains actions into realistic workflows (e.g., create → update → delete)\n- Follows provided request body examples exactly when testing `2xx` responses\n- EXTREMELY IMPORTANT: Logs failed tests with a one-line `curl` command *in the catch or fail block of each test*, using `console.log`:\n - Always provides it if a test fails\n - Uses `-X <METHOD>`\n - Adds `Content-Type` and `Authorization` headers if relevant\n - Includes `-d \'<json>\'` if the request had a body (compact, no line breaks)\n - No line breaks, no `\\`, no stack traces\n - Begins with: `# FAIL in: <test name>`\n - Also prints out the actual response body of the failed request for debugging!\n- Groups test cases using `describe()` and `it()`\n- Declares mutable IDs and tokens at the top of the file\n- Avoids mocking — tests target the real API\n- Uses only `required` fields from requestBody schemas\n- If `operationId` exists, use for naming test cases\n- Final output must be clean, readable, and ready to run with Mocha'),
 ('projectVersion','c6d7b6e'),('translationUpdateLastRun','2025-05-04 15:29:51');
 /*!40000 ALTER TABLE `settings` ENABLE KEYS */;
 UNLOCK TABLES;
