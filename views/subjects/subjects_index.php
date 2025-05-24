@@ -531,16 +531,25 @@
             }
             processedCells++;
 
-            // Calculate intensity based on days passed (0-10 scale)
-            // 0 days = base color (255, 180, 176), 10+ days = full red (255, 0, 0)
-            const maxDays = 10;
+            // Calculate intensity based on days passed
+            const maxDays = 10; // Strongest red for 10+ days
             const factor = Math.min(daysPassed, maxDays) / maxDays;
 
-            // Calculate red intensity
+            // Calculate color transition from base color to strongest red
             const baseR = 255;
-            const baseG = 180 - Math.round(180 * factor); // Decreases from 180 to 0
-            const baseB = 176 - Math.round(176 * factor); // Decreases from 176 to 0
-            const newColor = `rgb(${baseR}, ${baseG}, ${baseB})`;
+            const baseG = 180;
+            const baseB = 176;
+
+            // Target red color
+            const targetR = 255;
+            const targetG = 0;
+            const targetB = 0;
+
+            // Linearly interpolate between base color and strongest red
+            const newR = Math.round(baseR + (targetR - baseR) * factor);
+            const newG = Math.round(baseG + (targetG - baseG) * factor);
+            const newB = Math.round(baseB + (targetB - baseB) * factor);
+            const newColor = `rgb(${newR}, ${newG}, ${newB})`;
 
             // Set the background color directly with !important to override the .red-cell class
             cell.style.setProperty('background-color', newColor, 'important');
@@ -551,8 +560,10 @@
                             window.getComputedStyle(cell).backgroundColor);
             }, 0);
 
-            // Always use white text for better contrast against red background
-            cell.style.setProperty('color', 'white', 'important');
+            // Set text color based on background darkness for better contrast
+            // Use white text when the background gets dark enough (factor > 0.5)
+            const textColor = factor > 0.5 ? 'white' : 'black';
+            cell.style.setProperty('color', textColor, 'important');
         });
 
         // Update badge class for student cells with passing grades
