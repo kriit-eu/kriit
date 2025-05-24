@@ -285,6 +285,19 @@ class subjects extends Controller
                         }
                     } elseif ($statusName === 'Kontrollimisel' && !empty($submittedTimestampFormatted)) {
                         $tooltipText = "Esitatud $submittedTimestampFormatted";
+
+                        // Calculate days passed since submission for teachers
+                        $daysPassed = null;
+                        if ($submittedTimestamp) {
+                            $now = new \DateTime();
+                            $interval = $submittedTimestamp->diff($now);
+                            $hoursPassed = $interval->h + ($interval->days * 24);
+
+                            // Only set daysPassed if at least 24 hours have passed
+                            if ($hoursPassed >= 24) {
+                                $daysPassed = $interval->days;
+                            }
+                        }
                     } else {
                         $tooltipText = $statusName;
                     }
@@ -298,7 +311,8 @@ class subjects extends Controller
                     'class' => $class,
                     'tooltipText' => $tooltipText,
                     'gradedTimestamp' => $gradedTimestampFormatted,
-                    'submittedTimestamp' => $submittedTimestampFormatted
+                    'submittedTimestamp' => $submittedTimestampFormatted,
+                    'daysPassed' => $daysPassed ?? null
                 ];
             }
         }

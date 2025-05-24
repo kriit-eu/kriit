@@ -23,6 +23,13 @@
         background-color: rgb(255, 180, 176) !important;
     }
 
+    /* No pulsating animation - using static red color intensity based on days passed */
+    /* Color and background-color are set directly in JavaScript */
+
+    .days-passed {
+        font-size: 0.55em;
+    }
+
     .yellow-cell {
         background-color: #fff8b3 !important;
     }
@@ -35,7 +42,7 @@
         opacity: 0.6;
         font-style: italic;
     }
-    
+
     .deleted-student {
         opacity: 0.4;
         text-decoration: line-through;
@@ -420,7 +427,7 @@
                                             $isInactive = isset($s['userIsActive']) && !$s['userIsActive'];
                                             $isDeleted = isset($s['userDeleted']) && $s['userDeleted'] == 1;
                                             $isUngraded = empty($status['grade']) || $status['assignmentStatusName'] === 'Kontrollimisel';
-                                            
+
                                             $cssClass = '';
                                             if ($isDeleted) {
                                                 $cssClass = 'deleted-student';
@@ -429,20 +436,25 @@
                                                 $cssClass = 'inactive-student';
                                                 $statusTooltip = 'Mitteaktiivne õpilane';
                                             }
-                                            
+
                                             $statusTooltipText = $isUngraded ? 
                                                 ($cssClass ? "$statusTooltip, hindamata" : "Hindamata") : 
                                                 ($cssClass ? $statusTooltip : "");
                                         ?>
-                                        <td class="<?= $status['class'] ?> text-center <?= $cssClass ?>"
+                                        <td class="<?= $status['class'] ?> text-center <?= $cssClass ?> <?= ($status['class'] === 'red-cell' && isset($status['daysPassed']) && $status['daysPassed'] > 0) ? 'red-cell-intensity' : '' ?>"
                                             data-bs-toggle="tooltip"
                                             data-bs-placement="bottom"
                                             data-bs-html="true"
                                             title="<?= nl2br(htmlspecialchars(($statusTooltipText ? $statusTooltipText . "\n" : '') . $status['tooltipText'])) ?>"
                                             data-grade="<?= is_numeric($status['grade']) ? intval($status['grade']) : '' ?>"
-                                            data-is-student="<?= json_encode($isStudent) ?>"
+                                            data-is-student="<?= json_encode($this->isStudent) ?>"
+                                            data-days-passed="<?= $status['daysPassed'] ?? 0 ?>"
                                             data-url="assignments/<?= $a['assignmentId'] ?>">
-                                            <?= $status['grade'] ?>
+                                            <?php if ($status['class'] === 'red-cell' && isset($status['daysPassed'])): ?>
+                                                <span class="days-passed"><?= $status['daysPassed'] ?>p</span>
+                                            <?php else: ?>
+                                                <?= $status['grade'] ?>
+                                            <?php endif; ?>
                                         </td>
                                     <?php endforeach; ?>
                                 <?php else: ?>
@@ -503,6 +515,45 @@
                 window.location.href = url.toString();
             });
         }
+
+        // Set red color intensity based on days passed
+        const redCells = document.querySelectorAll('.red-cell[data-days-passed]');
+        console.log('Found red cells with days passed:', redCells.length);
+
+        // Keep track of processed cells
+        let processedCells = 0;
+
+        redCells.forEach(cell => {
+            const daysPassed = parseInt(cell.getAttribute('data-days-passed'), 10);
+            if (isNaN(daysPassed)) {
+                console.log('Skipping cell with invalid days passed value');
+                return;
+            }
+            processedCells++;
+
+            // Calculate intensity based on days passed (0-10 scale)
+            // 0 days = base color (255, 180, 176), 10+ days = full red (255, 0, 0)
+            const maxDays = 10;
+            const factor = Math.min(daysPassed, maxDays) / maxDays;
+
+            // Calculate red intensity
+            const baseR = 255;
+            const baseG = 180 - Math.round(180 * factor); // Decreases from 180 to 0
+            const baseB = 176 - Math.round(176 * factor); // Decreases from 176 to 0
+            const newColor = `rgb(${baseR}, ${baseG}, ${baseB})`;
+
+            // Set the background color directly with !important to override the .red-cell class
+            cell.style.setProperty('background-color', newColor, 'important');
+
+            // Log the color after setting it to verify it was applied
+            setTimeout(() => {
+                console.log('Color after setting for days passed', daysPassed, ':', 
+                            window.getComputedStyle(cell).backgroundColor);
+            }, 0);
+
+            // Always use white text for better contrast against red background
+            cell.style.setProperty('color', 'white', 'important');
+        });
 
         // Update badge class for student cells with passing grades
         document.querySelectorAll('td[data-grade]').forEach(studentCell => {
