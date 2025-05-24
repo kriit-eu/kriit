@@ -780,6 +780,9 @@ class Sync
         if (empty($validResults)) {
             return;
         }
+        
+        // Collect all student personal codes from remote results
+        $remoteStudentCodes = array_column($results, 'studentPersonalCode');
 
         // Get assignment info from cache if possible
         if (isset(self::$assignmentInfoCache[$assignmentId])) {
@@ -892,9 +895,58 @@ class Sync
         }
 
         // Finally, create missing userAssignments
+        // Get existing student assignments for this assignment
+        $existingStudentAssignments = Db::getAll("SELECT ua.userId, u.userPersonalCode 
+                                           FROM userAssignments ua 
+                                           JOIN users u ON ua.userId = u.userId 
+                                           WHERE ua.assignmentId = ?", [$assignmentId]);
+        
+        // Extract all students that have this assignment but weren't included in remote results
+        $missingStudents = [];
+        foreach ($existingStudentAssignments as $existingAssignment) {
+            if (!in_array($existingAssignment['userPersonalCode'], $remoteStudentCodes)) {
+                $missingStudents[] = $existingAssignment['userId'];
+            }
+        }
+        
+        // Mark missing students as deleted
+        if (!empty($missingStudents)) {
+            foreach ($missingStudents as $missingUserId) {
+                $student = User::findById($missingUserId);
+                if ($student && !$student['userDeleted']) {
+                    // Mark student as deleted (logical delete)
+                    Db::update('users', ['userDeleted' => 1], "userId = {$missingUserId}");
+                    
+                    // Log the deletion
+                    Activity::create(ACTIVITY_UPDATE_USER_SYNC, $teacherId, $missingUserId, [
+                        'systemId' => $systemId,
+                        'action' => 'marked_deleted',
+                        'reason' => 'Missing from external system data',
+                        'subjectName' => $subjectName,
+                        'assignmentName' => $assignmentInfo['assignmentName']
+                    ]);
+                }
+            }
+        }
+
         foreach ($validResults as $r) {
             $personalCode = $r['studentPersonalCode'];
             $userId = $allStudentIds[$personalCode];
+            
+            // If student was previously marked as deleted but now appears again, undelete them
+            $student = User::findById($userId);
+            if ($student && $student['userDeleted']) {
+                Db::update('users', ['userDeleted' => 0], "userId = {$userId}");
+                
+                // Log the undeletion
+                Activity::create(ACTIVITY_UPDATE_USER_SYNC, $teacherId, $userId, [
+                    'systemId' => $systemId,
+                    'action' => 'unmarked_deleted',
+                    'reason' => 'Reappeared in external system data',
+                    'subjectName' => $subjectName,
+                    'assignmentName' => $assignmentInfo['assignmentName']
+                ]);
+            }
 
             // If no userAssignment exists for this student and assignment
             if (!isset($existingUserAssignments[$userId])) {

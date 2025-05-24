@@ -105,7 +105,7 @@ class subjects extends Controller
         $this->data = Db::getAll("
             SELECT
                 s.subjectId, s.subjectName, s.teacherId, s.subjectExternalId, t.userName AS teacherName,
-                u.userId AS studentId, u.userName AS studentName, u.groupId, g.groupName, u.userIsActive,
+                u.userId AS studentId, u.userName AS studentName, u.groupId, g.groupName, u.userIsActive, u.userDeleted,
                 a.assignmentId, a.assignmentName, a.assignmentDueAt, a.assignmentEntryDate,
                 ua.userGrade, ua.assignmentStatusId, ast.statusName AS assignmentStatusName,
                 ua.userAssignmentSubmittedAt, ua.userAssignmentGradedAt
@@ -118,7 +118,7 @@ class subjects extends Controller
             LEFT JOIN assignmentStatuses ast ON ua.assignmentStatusId = ast.assignmentStatusId
             WHERE ({$whereClause})
             AND (
-                u.userIsActive = 1
+                (u.userIsActive = 1 AND u.userDeleted = 0)
                 OR $showAllValue = 1
                 OR EXISTS (
                     SELECT 1
@@ -163,6 +163,7 @@ class subjects extends Controller
                 'status' => $row['assignmentStatusName'] ?? 'Esitamata',
                 'userId' => $studentId,
                 'userIsActive' => $row['userIsActive'] ?? 1,
+                'userDeleted' => $row['userDeleted'] ?? 0,
                 'initials' => mb_substr($row['studentName'] ?? '', 0, 1)
                     . mb_substr(mb_strrpos($row['studentName'] ?? '', ' ') + 1, 1)
             ];

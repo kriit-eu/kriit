@@ -23,15 +23,16 @@ class User
         return $userId;
     }
 
-    public static function get($criteria = null, $orderBy = null, $includeInactive = false)
+    public static function get($criteria = null, $orderBy = null, $includeInactive = false, $includeDeleted = false)
     {
         $criteria = $criteria ? 'AND ' . implode("AND", $criteria) : '';
         $orderBy = $orderBy ? $orderBy : 'userName';
         $activeFilter = $includeInactive ? '' : 'AND userIsActive=1';
+        $deletedFilter = $includeDeleted ? '' : 'AND userDeleted=0';
         return Db::getAll("
-            SELECT userId, userName, userPersonalCode, userIsAdmin, groupId, userIsActive
+            SELECT userId, userName, userPersonalCode, userIsAdmin, groupId, userIsActive, userDeleted
             FROM users
-            WHERE userDeleted=0 $activeFilter $criteria
+            WHERE 1=1 $deletedFilter $activeFilter $criteria
             ORDER BY $orderBy");
     }
 

@@ -35,6 +35,12 @@
         opacity: 0.6;
         font-style: italic;
     }
+    
+    .deleted-student {
+        opacity: 0.4;
+        text-decoration: line-through;
+        color: #888;
+    }
 
     .narrow-name {
         font-size: 0.55em;
@@ -330,13 +336,20 @@
                             <?php foreach ($group['students'] as $s): ?>
                                 <?php
                                     $isInactive = isset($s['userIsActive']) && !$s['userIsActive'];
-                                    $tooltipText = $s['userName'];
+                                    $isDeleted = isset($s['userDeleted']) && $s['userDeleted'] == 1;
+                                    $tooltipText = $s['userName'] . ($isDeleted ? ' (kustutatud)' : ($isInactive ? ' (mitteaktiivne)' : ''));
                                     $nameParts = explode(' ', $s['userName']);
                                     $lastName = array_pop($nameParts);
                                     $firstName = implode(' ', $nameParts);
+                                    $cssClass = '';
+                                    if ($isDeleted) {
+                                        $cssClass = 'deleted-student';
+                                    } elseif ($isInactive) {
+                                        $cssClass = 'inactive-student';
+                                    }
                                 ?>
                                 <th data-bs-toggle="tooltip" title="<?= $tooltipText ?>"
-                                    class="student-name-header text-center <?= $isInactive ? 'inactive-student' : '' ?>">
+                                    class="student-name-header text-center <?= $cssClass ?>">
                                     <div class="narrow-name">
                                         <?= $firstName ?>
                                         <span class="lastname"><?= $lastName ?></span>
@@ -405,15 +418,27 @@
                                         <?php $status = $a['assignmentStatuses'][$s['userId']]; ?>
                                         <?php
                                             $isInactive = isset($s['userIsActive']) && !$s['userIsActive'];
+                                            $isDeleted = isset($s['userDeleted']) && $s['userDeleted'] == 1;
                                             $isUngraded = empty($status['grade']) || $status['assignmentStatusName'] === 'Kontrollimisel';
-                                            $inactiveClass = $isInactive ? 'inactive-student' : '';
-                                            $inactiveText = $isInactive ? ($isUngraded ? ' (Mitteaktiivne õpilane, hindamata)' : ' (Mitteaktiivne õpilane)') : '';
+                                            
+                                            $cssClass = '';
+                                            if ($isDeleted) {
+                                                $cssClass = 'deleted-student';
+                                                $statusTooltip = 'Kustutatud õpilane';
+                                            } elseif ($isInactive) {
+                                                $cssClass = 'inactive-student';
+                                                $statusTooltip = 'Mitteaktiivne õpilane';
+                                            }
+                                            
+                                            $statusTooltipText = $isUngraded ? 
+                                                ($cssClass ? "$statusTooltip, hindamata" : "Hindamata") : 
+                                                ($cssClass ? $statusTooltip : "");
                                         ?>
-                                        <td class="<?= $status['class'] ?> text-center <?= $inactiveClass ?>"
+                                        <td class="<?= $status['class'] ?> text-center <?= $cssClass ?>"
                                             data-bs-toggle="tooltip"
                                             data-bs-placement="bottom"
                                             data-bs-html="true"
-                                            title="<?= nl2br(htmlspecialchars($status['tooltipText'])) ?>"
+                                            title="<?= nl2br(htmlspecialchars(($statusTooltipText ? $statusTooltipText . "\n" : '') . $status['tooltipText'])) ?>"
                                             data-grade="<?= is_numeric($status['grade']) ? intval($status['grade']) : '' ?>"
                                             data-is-student="<?= json_encode($isStudent) ?>"
                                             data-url="assignments/<?= $a['assignmentId'] ?>">
