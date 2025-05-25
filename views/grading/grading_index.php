@@ -314,6 +314,33 @@
         font-style: italic;
     }
 
+    /* Table styling within message content */
+    .message-content table {
+        font-size: 0.9em;
+        margin: 0.5rem 0;
+    }
+
+    .message-content table th,
+    .message-content table td {
+        padding: 0.375rem 0.5rem;
+        vertical-align: top;
+        word-wrap: break-word;
+    }
+
+    .message-content table th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+        border-bottom: 2px solid #dee2e6;
+    }
+
+    /* Horizontal rule styling within message content */
+    .message-content hr {
+        margin: 1rem 0;
+        border: 0;
+        border-top: 1px solid #dee2e6;
+        opacity: 0.7;
+    }
+
     /* Style for timestamp badge */
     .id-badge {
         background-color: #e9ecef;
@@ -507,7 +534,7 @@
                 <!-- Assignment Instructions -->
                 <div class="mb-3" id="instructionsSection">
                     <h6>Ülesande kirjeldus</h6>
-                    <div id="assignmentInstructions" class="border rounded p-3 bg-light markdown-content">
+                    <div id="assignmentInstructions" class="border rounded p-3 bg-white markdown-content">
                         <p class="text-muted">Kirjeldus puudub</p>
                     </div>
                 </div>
@@ -980,7 +1007,7 @@
                             <span class="message-author">${message.userName || 'Tundmatu'}</span>
                             <span class="message-time">${messageDate}</span>
                         </div>
-                        <div class="message-content">${message.content.replace(/\n/g, '<br>')}</div>
+                        <div class="message-content">${parseMarkdown(message.content)}</div>
                     </div>
                 `;
             }
@@ -1056,15 +1083,171 @@
         // Blockquotes
         html = html.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
 
-        // Line breaks and paragraphs
-        html = html.replace(/\n\n/g, '</p><p>');
-        html = html.replace(/\n/g, '<br>');
+        // Horizontal rules
+        html = html.replace(/^---+$/gm, '<hr>');
 
-        // Wrap in paragraphs if not already wrapped
-        if (!html.startsWith('<')) {
-            html = '<p>' + html + '</p>';
-        }
+        // Tables - process before line breaks to handle multi-line table blocks
+        html = parseMarkdownTables(html);
+
+        // Clean up excessive whitespace and line breaks before processing
+        html = html.replace(/\n{3,}/g, '\n\n'); // Limit to maximum 2 consecutive newlines
+
+        // Process paragraphs and line breaks with better control
+        html = cleanupLineBreaksAndParagraphs(html);
 
         return html;
+    }
+
+    function cleanupLineBreaksAndParagraphs(text) {
+        // Split into paragraphs based on double newlines
+        const paragraphs = text.split(/\n\s*\n/);
+        const processedParagraphs = [];
+
+        paragraphs.forEach(paragraph => {
+            paragraph = paragraph.trim();
+            if (paragraph === '') return; // Skip empty paragraphs
+
+            // Check if paragraph already contains HTML tags (like tables, lists, etc.)
+            if (paragraph.includes('<table') || paragraph.includes('<ul>') ||
+                paragraph.includes('<ol>') || paragraph.includes('<blockquote>') ||
+                paragraph.includes('<h1>') || paragraph.includes('<h2>') ||
+                paragraph.includes('<h3>') || paragraph.includes('<h4>') ||
+                paragraph.includes('<pre>') || paragraph.includes('<hr>')) {
+                // Already formatted content - add as-is
+                processedParagraphs.push(paragraph);
+            } else {
+                // Regular text paragraph - convert single newlines to <br> and wrap in <p>
+                let processedParagraph = paragraph.replace(/\n/g, '<br>');
+
+                // Limit consecutive <br> tags to maximum of 2
+                processedParagraph = processedParagraph.replace(/(<br>\s*){3,}/g, '<br><br>');
+
+                // Wrap in paragraph tags if it doesn't start with a tag
+                if (!processedParagraph.startsWith('<')) {
+                    processedParagraph = '<p>' + processedParagraph + '</p>';
+                }
+
+                processedParagraphs.push(processedParagraph);
+            }
+        });
+
+        // Join paragraphs with single newlines (no extra spacing)
+        let result = processedParagraphs.join('\n');
+
+        // Final cleanup: remove any empty paragraphs that might have been created
+        result = result.replace(/<p>\s*<\/p>/g, '');
+
+        // Clean up any remaining excessive line breaks
+        result = result.replace(/(<br>\s*){3,}/g, '<br><br>');
+
+        // Remove any trailing/leading whitespace around HTML tags
+        result = result.replace(/>\s+</g, '><');
+
+        return result;
+    }
+
+    function parseMarkdownTables(text) {
+        // Split text into lines for processing
+        const lines = text.split('\n');
+        const result = [];
+        let i = 0;
+
+        while (i < lines.length) {
+            const line = lines[i].trim();
+
+            // Check if this line looks like a table header (contains |)
+            if (line.includes('|') && line.startsWith('|') && line.endsWith('|')) {
+                // Look ahead to see if next line is a separator
+                if (i + 1 < lines.length) {
+                    const nextLine = lines[i + 1].trim();
+                    if (nextLine.includes('|') && nextLine.includes('-')) {
+                        // This is a table - parse it
+                        const tableResult = parseTable(lines, i);
+                        result.push(tableResult.html);
+                        i = tableResult.nextIndex;
+                        continue;
+                    }
+                }
+            }
+
+            // Not a table, add the line as-is
+            result.push(lines[i]);
+            i++;
+        }
+
+        return result.join('\n');
+    }
+
+    function parseTable(lines, startIndex) {
+        let i = startIndex;
+        const tableLines = [];
+
+        // Collect all table lines
+        while (i < lines.length) {
+            const line = lines[i].trim();
+            if (line.includes('|') && (line.startsWith('|') || line.endsWith('|'))) {
+                tableLines.push(line);
+                i++;
+            } else {
+                break;
+            }
+        }
+
+        if (tableLines.length < 2) {
+            // Not a valid table
+            return { html: lines[startIndex], nextIndex: startIndex + 1 };
+        }
+
+        // Parse header row
+        const headerRow = tableLines[0];
+        const separatorRow = tableLines[1];
+        const dataRows = tableLines.slice(2);
+
+        // Extract header cells
+        const headerCells = headerRow.split('|')
+            .map(cell => cell.trim())
+            .filter(cell => cell !== '');
+
+        // Build table HTML with Bootstrap classes
+        let tableHtml = '<table class="table table-bordered table-sm mt-2 mb-2">\n';
+
+        // Add header
+        tableHtml += '  <thead class="table-light">\n';
+        tableHtml += '    <tr>\n';
+        headerCells.forEach(cell => {
+            tableHtml += `      <th>${cell}</th>\n`;
+        });
+        tableHtml += '    </tr>\n';
+        tableHtml += '  </thead>\n';
+
+        // Add body
+        if (dataRows.length > 0) {
+            tableHtml += '  <tbody>\n';
+            dataRows.forEach(row => {
+                const cells = row.split('|')
+                    .map(cell => cell.trim())
+                    .filter(cell => cell !== '');
+
+                if (cells.length > 0) {
+                    tableHtml += '    <tr>\n';
+                    cells.forEach((cell, index) => {
+                        // Pad with empty cells if needed
+                        if (index < headerCells.length) {
+                            tableHtml += `      <td>${cell}</td>\n`;
+                        }
+                    });
+                    // Add empty cells if row has fewer cells than headers
+                    for (let j = cells.length; j < headerCells.length; j++) {
+                        tableHtml += '      <td></td>\n';
+                    }
+                    tableHtml += '    </tr>\n';
+                }
+            });
+            tableHtml += '  </tbody>\n';
+        }
+
+        tableHtml += '</table>';
+
+        return { html: tableHtml, nextIndex: i };
     }
 </script>
