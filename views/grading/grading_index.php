@@ -186,6 +186,12 @@
         border-bottom: 1px solid #dee2e6;
     }
 
+    /* Assignment ID badge in modal title */
+    .modal-title .badge {
+        font-size: 0.8em;
+        vertical-align: middle;
+    }
+
     .modal-body {
         max-height: 70vh;
         overflow-y: auto;
@@ -658,8 +664,8 @@
         currentAssignmentId = assignmentId;
         currentUserId = userId;
 
-        // Update modal title with new format: "Student Name | Assignment Name"
-        document.getElementById('gradingModalLabel').textContent = `${studentName} | ${assignmentName}`;
+        // Update modal title with new format: "[ID] Student Name | Assignment Name"
+        document.getElementById('gradingModalLabel').innerHTML = `<span class="badge bg-secondary me-2">${assignmentId}</span>${studentName} | ${assignmentName}`;
 
         // Clear any previously selected grades to force manual selection
         const gradeButtons = document.querySelectorAll('input[name="grade"]');
@@ -1139,6 +1145,13 @@
 
         // Clean up any remaining excessive line breaks
         result = result.replace(/(<br>\s*){3,}/g, '<br><br>');
+
+        // Remove <br> tags between list items (they create unwanted spacing)
+        result = result.replace(/<\/li>\s*<br>\s*<li>/g, '</li><li>');
+        result = result.replace(/<\/li>\s*<br>\s*<\/ul>/g, '</li></ul>');
+        result = result.replace(/<\/li>\s*<br>\s*<\/ol>/g, '</li></ol>');
+        result = result.replace(/<ul>\s*<br>\s*<li>/g, '<ul><li>');
+        result = result.replace(/<ol>\s*<br>\s*<li>/g, '<ol><li>');
 
         // Remove any trailing/leading whitespace around HTML tags
         result = result.replace(/>\s+</g, '><');
