@@ -7,7 +7,7 @@
 // Project constants
 const PROJECT_NAME = 'Kriit';
 const PROJECT_SESSION_ID = 'SESSID_KRIIT'; // For separating sessions of multiple Halo projects running on same server
-const DEFAULT_CONTROLLER = 'subjects';
+const DEFAULT_CONTROLLER = 'intro';
 const DEVELOPER_EMAIL = 'henno@diarainfra.com'; // Where to send errors
 const FORCE_HTTPS = false; // Force HTTPS connections
 const DEFAULT_TIMEZONE = 'Europe/Tallinn';

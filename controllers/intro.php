@@ -6,7 +6,7 @@ class intro extends Controller
     function index()
     {
         $this->redirectAdminsToAdminPage();
-        $this->redirectTeachersToSubjectsPage();
+        $this->redirectTeachersToGradingPage();
         $this->redirectStudentsToSubjectsPage();
         $this->skipIntroIfTimerStartedOrAdmin();
     }
@@ -43,10 +43,10 @@ class intro extends Controller
         }
     }
 
-    private function redirectTeachersToSubjectsPage()
+    private function redirectTeachersToGradingPage()
     {
         if ($this->auth->userIsTeacher === 1) {
-            $this->redirect('subjects');
+            $this->redirect('grading');
         }
     }
 
