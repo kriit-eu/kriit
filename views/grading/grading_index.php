@@ -613,6 +613,7 @@
 
     let currentAssignmentId = null;
     let currentUserId = null;
+    let gradingModalInstance = null;
 
     function openGradingModal(row) {
         // Extract data from row
@@ -681,9 +682,32 @@
         gradeError.textContent = '';
         gradeError.style.display = 'none';
 
+        // Get modal element
+        const modalElement = document.getElementById('gradingModal');
+
+        // Check if modal instance already exists
+        if (gradingModalInstance) {
+            // Dispose of existing instance to prevent conflicts
+            gradingModalInstance.dispose();
+        }
+
+        // Create new modal instance
+        gradingModalInstance = new bootstrap.Modal(modalElement);
+
+        // Add event listener for proper cleanup when modal is hidden
+        modalElement.addEventListener('hidden.bs.modal', function() {
+            // Remove any lingering backdrops
+            const backdrops = document.querySelectorAll('.modal-backdrop');
+            backdrops.forEach(backdrop => backdrop.remove());
+
+            // Restore body scroll
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+        }, { once: true });
+
         // Show modal
-        const modal = new bootstrap.Modal(document.getElementById('gradingModal'));
-        modal.show();
+        gradingModalInstance.show();
     }
 
     function loadCriteria(criteriaData) {
@@ -801,22 +825,8 @@
 
                 // Auto-close modal after successful save
                 try {
-                    const modalElement = document.getElementById('gradingModal');
-                    const modalInstance = bootstrap.Modal.getInstance(modalElement);
-                    if (modalInstance) {
-                        modalInstance.hide();
-
-                        // Ensure backdrop is properly removed
-                        modalElement.addEventListener('hidden.bs.modal', function() {
-                            // Remove any lingering backdrops
-                            const backdrops = document.querySelectorAll('.modal-backdrop');
-                            backdrops.forEach(backdrop => backdrop.remove());
-
-                            // Restore body scroll
-                            document.body.classList.remove('modal-open');
-                            document.body.style.overflow = '';
-                            document.body.style.paddingRight = '';
-                        }, { once: true });
+                    if (gradingModalInstance) {
+                        gradingModalInstance.hide();
                     } else {
                         console.error('Modal instance not found for auto-close');
                     }
