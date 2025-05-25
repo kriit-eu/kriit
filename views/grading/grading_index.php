@@ -354,6 +354,80 @@
         transform: scale(1.05);
         transition: all 0.2s ease;
     }
+
+    /* Grade error styling */
+    #gradeError {
+        display: none;
+        margin-top: 0.5rem;
+    }
+
+    /* Grade button styling */
+    #gradeButtons .btn-check:checked + .btn {
+        font-weight: bold;
+    }
+
+    /* Save grade button styling */
+    #saveGradeBtn:disabled {
+        opacity: 0.6;
+    }
+
+    /* Grade badge styling for table rows */
+    .grade-badge {
+        font-weight: bold;
+        font-size: 0.9em;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.375rem;
+        display: inline-block;
+        min-width: 2rem;
+        text-align: center;
+    }
+
+    /* Graded row styling */
+    .grading-row.graded {
+        opacity: 0.7;
+        background-color: #f8f9fa !important;
+    }
+
+    /* Modal footer button consistency */
+    .modal-footer #gradeButtons .btn {
+        height: 38px; /* Match standard Bootstrap button height */
+        min-width: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-footer #saveBtn {
+        height: 38px; /* Match grade button height */
+        min-width: 100px;
+    }
+
+    /* Improved modal footer layout */
+    .modal-footer .d-flex.gap-3 {
+        gap: 1rem !important;
+    }
+
+    /* Grade button group spacing */
+    .modal-footer #gradeButtons {
+        margin-right: 0.5rem;
+    }
+
+    /* Grade cell styling */
+    .grade-cell {
+        vertical-align: middle !important;
+        padding: 0.5rem !important;
+    }
+
+    /* Grade badge in table styling */
+    .grade-cell .grade-badge {
+        font-weight: bold;
+        font-size: 0.875rem;
+        padding: 0.375rem 0.75rem;
+        border-radius: 0.375rem;
+        display: inline-block;
+        min-width: 2.5rem;
+        text-align: center;
+    }
 </style>
 
 <div class="row">
@@ -368,6 +442,7 @@
                         <th>Vanus</th>
                         <th>Õpilane</th>
                         <th>Ülesanne / Aine</th>
+                        <th style="width: 80px;">Hinne</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -379,7 +454,9 @@
                             data-student-name="<?= htmlspecialchars($submission['Õpilane']) ?>"
                             data-solution-url="<?= htmlspecialchars($submission['solutionUrl'] ?? '') ?>"
                             data-assignment-instructions="<?= htmlspecialchars($submission['assignmentInstructions'] ?? '') ?>"
-                            data-comments="<?= htmlspecialchars($submission['comments'] ?? '[]') ?>">
+                            data-comments="<?= htmlspecialchars($submission['comments'] ?? '[]') ?>"
+                            data-current-grade="<?= htmlspecialchars($submission['userGrade'] ?? '') ?>"
+                            data-criteria="<?= htmlspecialchars($submission['criteria'] ?? '[]') ?>">
                             <td><?= $index + 1 ?></td>
                             <td><?= $submission['Aeg'] ? '<span class="id-badge"><strong>' . (new DateTime($submission['Aeg']))->format('d.m.y') . '</strong> ' . (new DateTime($submission['Aeg']))->format('H:i') . '</span>' : '' ?></td>
                             <td><?= $submission['Vanus'] ?></td>
@@ -393,6 +470,9 @@
                                         <span class="comment-count"><?= $submission['commentCount'] ?></span>
                                     </span>
                                 <?php endif; ?>
+                            </td>
+                            <td class="grade-cell text-center">
+                                <!-- Grade will be populated here after grading -->
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -411,22 +491,15 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <!-- Student Info and Solution URL - Compact Layout -->
-                <div class="row mb-3">
-                    <div class="col-md-2">
-                        <h6>Õpilane</h6>
-                        <p id="studentName" class="text-muted mb-0"></p>
-                    </div>
-                    <div class="col-md-10" id="solutionUrlSection">
-                        <h6>Lahenduse URL</h6>
-                        <div class="mt-2 d-none" id="solutionUrlDetails">
-
-                            <div class="input-group">
-                                <input type="text" class="form-control form-control-sm font-monospace" id="solutionUrlInput" readonly>
-                                <button class="btn btn-outline-secondary btn-sm" type="button" id="copySolutionUrl" title="Kopeeri URL">
-                                    <i class="fas fa-copy"></i>
-                                </button>
-                            </div>
+                <!-- Solution URL Section -->
+                <div class="mb-3" id="solutionUrlSection">
+                    <h6>Lahenduse URL</h6>
+                    <div class="mt-2 d-none" id="solutionUrlDetails">
+                        <div class="input-group">
+                            <input type="text" class="form-control form-control-sm font-monospace" id="solutionUrlInput" readonly>
+                            <button class="btn btn-outline-secondary btn-sm" type="button" id="copySolutionUrl" title="Kopeeri URL">
+                                <i class="fas fa-copy"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -438,6 +511,16 @@
                         <p class="text-muted">Kirjeldus puudub</p>
                     </div>
                 </div>
+
+                <!-- Assignment Criteria Section -->
+                <div class="mb-3" id="criteriaSection">
+                    <h6>Hindamiskriteeriumid</h6>
+                    <div id="criteriaContainer" class="border rounded p-3 bg-light">
+                        <p class="text-muted">Kriteeriume pole määratud</p>
+                    </div>
+                </div>
+
+
 
                 <!-- Comments Thread -->
                 <div class="mb-3">
@@ -458,11 +541,37 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Sulge</button>
-                <button type="button" class="btn btn-primary" id="sendMessageBtn">
-                    <span id="sendBtnText">Saada kommentaar</span>
-                    <span id="sendBtnSpinner" class="loading-spinner d-none ms-2"></span>
-                </button>
+                <div class="d-flex justify-content-end w-100 align-items-center gap-3">
+                    <div class="d-flex align-items-center">
+                        <span class="me-3"><strong>Hinne:</strong></span>
+                        <div class="btn-group" role="group" aria-label="Hinded" id="gradeButtons">
+                            <input type="radio" class="btn-check" name="grade" id="grade2" value="2">
+                            <label class="btn btn-outline-danger" for="grade2">2</label>
+
+                            <input type="radio" class="btn-check" name="grade" id="grade3" value="3">
+                            <label class="btn btn-outline-warning" for="grade3">3</label>
+
+                            <input type="radio" class="btn-check" name="grade" id="grade4" value="4">
+                            <label class="btn btn-outline-success" for="grade4">4</label>
+
+                            <input type="radio" class="btn-check" name="grade" id="grade5" value="5">
+                            <label class="btn btn-outline-success" for="grade5">5</label>
+
+                            <input type="radio" class="btn-check" name="grade" id="gradeA" value="A">
+                            <label class="btn btn-outline-primary" for="gradeA">A</label>
+
+                            <input type="radio" class="btn-check" name="grade" id="gradeMA" value="MA">
+                            <label class="btn btn-outline-secondary" for="gradeMA">MA</label>
+                        </div>
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-primary" id="saveBtn" disabled>
+                            <span id="saveBtnText">Salvesta</span>
+                            <span id="saveBtnSpinner" class="loading-spinner d-none ms-2"></span>
+                        </button>
+                    </div>
+                </div>
+                <div class="invalid-feedback" id="gradeError"></div>
             </div>
         </div>
     </div>
@@ -482,14 +591,23 @@
             });
         });
 
-        // Send message button handler
-        document.getElementById('sendMessageBtn').addEventListener('click', function() {
-            sendMessage();
-        });
-
         // Copy solution URL button handler
         document.getElementById('copySolutionUrl').addEventListener('click', function() {
             copySolutionUrl();
+        });
+
+        // Grade button handlers
+        const gradeButtons = document.querySelectorAll('input[name="grade"]');
+
+        gradeButtons.forEach(button => {
+            button.addEventListener('change', function() {
+                updateSaveButtonState();
+            });
+        });
+
+        // Save button handler (consolidated save functionality)
+        document.getElementById('saveBtn').addEventListener('click', function() {
+            saveGradeAndComment();
         });
     });
 
@@ -505,14 +623,29 @@
         const solutionUrl = row.dataset.solutionUrl;
         const assignmentInstructions = row.dataset.assignmentInstructions;
         const comments = row.dataset.comments;
+        const currentGrade = row.dataset.currentGrade;
+        const criteriaData = row.dataset.criteria;
 
         // Store current IDs
         currentAssignmentId = assignmentId;
         currentUserId = userId;
 
-        // Update modal content
-        document.getElementById('gradingModalLabel').textContent = assignmentName;
-        document.getElementById('studentName').textContent = studentName;
+        // Update modal title with new format: "Student Name | Assignment Name"
+        document.getElementById('gradingModalLabel').textContent = `${studentName} | ${assignmentName}`;
+
+        // Clear any previously selected grades to force manual selection
+        const gradeButtons = document.querySelectorAll('input[name="grade"]');
+
+        gradeButtons.forEach(button => {
+            button.checked = false;
+        });
+
+        // Ensure save button starts disabled to enforce manual grade selection
+        const saveBtn = document.getElementById('saveBtn');
+        saveBtn.disabled = true;
+
+        // Load and display criteria
+        loadCriteria(criteriaData);
 
         // Update solution URL section
         const solutionUrlContainer = document.getElementById('solutionUrlContainer');
@@ -543,10 +676,246 @@
         document.getElementById('newMessageContent').value = '';
         document.getElementById('messageError').textContent = '';
 
+        // Clear grade error and hide it
+        const gradeError = document.getElementById('gradeError');
+        gradeError.textContent = '';
+        gradeError.style.display = 'none';
+
         // Show modal
         const modal = new bootstrap.Modal(document.getElementById('gradingModal'));
         modal.show();
     }
+
+    function loadCriteria(criteriaData) {
+        const criteriaContainer = document.getElementById('criteriaContainer');
+
+        try {
+            const criteria = JSON.parse(criteriaData || '[]');
+
+            if (criteria.length === 0) {
+                criteriaContainer.innerHTML = '<p class="text-muted">Kriteeriume pole määratud</p>';
+                return;
+            }
+
+            let criteriaHtml = '';
+            criteria.forEach(criterion => {
+                const checked = criterion.isCompleted ? 'checked' : '';
+                criteriaHtml += `
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="criterion${criterion.criterionId}"
+                               data-criterion-id="${criterion.criterionId}" ${checked}>
+                        <label class="form-check-label" for="criterion${criterion.criterionId}">
+                            ${criterion.criterionName}
+                        </label>
+                    </div>
+                `;
+            });
+
+            criteriaContainer.innerHTML = criteriaHtml;
+
+            // Add event listeners to criteria checkboxes
+            const criteriaCheckboxes = criteriaContainer.querySelectorAll('input[type="checkbox"]');
+            criteriaCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    updateSaveButtonState();
+                });
+            });
+
+        } catch (error) {
+            console.error('Error parsing criteria data:', error);
+            criteriaContainer.innerHTML = '<p class="text-danger">Viga kriteeriumide laadimisel</p>';
+        }
+    }
+
+    function updateSaveButtonState() {
+        const saveBtn = document.getElementById('saveBtn');
+        const selectedGrade = document.querySelector('input[name="grade"]:checked');
+
+        // Enable save button if grade is selected
+        saveBtn.disabled = !selectedGrade;
+    }
+
+    function saveGradeAndComment() {
+        const selectedGrade = document.querySelector('input[name="grade"]:checked')?.value;
+        const comment = document.getElementById('newMessageContent').value.trim();
+        const gradeError = document.getElementById('gradeError');
+        const saveBtn = document.getElementById('saveBtn');
+        const saveBtnText = document.getElementById('saveBtnText');
+        const saveBtnSpinner = document.getElementById('saveBtnSpinner');
+
+        // Clear previous errors
+        gradeError.textContent = '';
+
+        // Validate grade selection
+        if (!selectedGrade) {
+            gradeError.textContent = 'Palun valige hinne';
+            gradeError.style.display = 'block';
+            return;
+        }
+
+        // Collect criteria data
+        const criteriaData = {};
+        const criteriaCheckboxes = document.querySelectorAll('#criteriaContainer input[type="checkbox"]');
+        criteriaCheckboxes.forEach(checkbox => {
+            const criterionId = checkbox.dataset.criterionId;
+            criteriaData[criterionId] = checkbox.checked ? 'true' : 'false';
+        });
+
+        // Show loading state
+        saveBtn.disabled = true;
+        saveBtnText.textContent = 'Salvestab...';
+        saveBtnSpinner.classList.remove('d-none');
+
+        // Prepare form data
+        const formData = new URLSearchParams();
+        formData.append('assignmentId', currentAssignmentId);
+        formData.append('studentId', currentUserId);
+        formData.append('grade', selectedGrade);
+        formData.append('comment', comment);
+
+        // Add criteria data
+        Object.keys(criteriaData).forEach(criterionId => {
+            formData.append(`criteria[${criterionId}]`, criteriaData[criterionId]);
+        });
+
+        // Send grade and criteria
+        fetch('<?= BASE_URL ?>grading/saveGrade', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: formData.toString()
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 200) {
+                // Clear comment form and reload messages
+                document.getElementById('newMessageContent').value = '';
+                loadMessages(currentAssignmentId, currentUserId);
+
+                // Update the table row to reflect the new grade
+                updateTableRowGrade(currentAssignmentId, currentUserId, selectedGrade);
+
+                // Add grade badge to table row
+                addGradeBadgeToTableRow(currentAssignmentId, currentUserId, selectedGrade);
+
+                // Auto-close modal after successful save
+                try {
+                    const modalElement = document.getElementById('gradingModal');
+                    const modalInstance = bootstrap.Modal.getInstance(modalElement);
+                    if (modalInstance) {
+                        modalInstance.hide();
+
+                        // Ensure backdrop is properly removed
+                        modalElement.addEventListener('hidden.bs.modal', function() {
+                            // Remove any lingering backdrops
+                            const backdrops = document.querySelectorAll('.modal-backdrop');
+                            backdrops.forEach(backdrop => backdrop.remove());
+
+                            // Restore body scroll
+                            document.body.classList.remove('modal-open');
+                            document.body.style.overflow = '';
+                            document.body.style.paddingRight = '';
+                        }, { once: true });
+                    } else {
+                        console.error('Modal instance not found for auto-close');
+                    }
+                } catch (error) {
+                    console.error('Error auto-closing modal:', error);
+                }
+            } else {
+                gradeError.textContent = data.message || 'Viga andmete salvestamisel';
+                gradeError.style.display = 'block';
+                gradeError.classList.add('d-block');
+
+                // Re-enable button immediately on error
+                saveBtn.disabled = false;
+                saveBtnText.textContent = 'Salvesta';
+                saveBtnSpinner.classList.add('d-none');
+            }
+        })
+        .catch(error => {
+            console.error('Error saving data:', error);
+            gradeError.textContent = 'Viga andmete salvestamisel';
+            gradeError.style.display = 'block';
+            gradeError.classList.add('d-block');
+
+            // Re-enable button immediately on error
+            saveBtn.disabled = false;
+            saveBtnText.textContent = 'Salvesta';
+            saveBtnSpinner.classList.add('d-none');
+        });
+    }
+
+    function updateTableRowGrade(assignmentId, userId, grade) {
+        // Find the table row and update its data attribute
+        const rows = document.querySelectorAll('.grading-row');
+        rows.forEach(row => {
+            if (row.dataset.assignmentId === assignmentId && row.dataset.userId === userId) {
+                row.dataset.currentGrade = grade;
+            }
+        });
+    }
+
+    function addGradeBadgeToTableRow(assignmentId, userId, grade) {
+        try {
+            // Find the specific table row using the reliable selector
+            const targetRow = document.querySelector('.grading-row[data-assignment-id="' + assignmentId + '"][data-user-id="' + userId + '"]');
+
+            if (!targetRow) {
+                console.warn('Table row not found for adding grade badge:', { assignmentId, userId });
+                return;
+            }
+
+            // Find the grade cell (last cell in the row with class grade-cell)
+            const gradeCell = targetRow.querySelector('td.grade-cell');
+            if (!gradeCell) {
+                console.warn('Grade cell not found in table row');
+                return;
+            }
+
+            // Clear any existing content in the grade cell
+            gradeCell.innerHTML = '';
+
+            // Create grade badge with appropriate styling based on grade value
+            const gradeBadge = document.createElement('span');
+            gradeBadge.className = 'grade-badge badge';
+            gradeBadge.textContent = grade;
+
+            // Apply grade-specific styling
+            switch (grade) {
+                case '2':
+                    gradeBadge.classList.add('bg-danger');
+                    break;
+                case '3':
+                    gradeBadge.classList.add('bg-warning', 'text-dark');
+                    break;
+                case '4':
+                case '5':
+                    gradeBadge.classList.add('bg-success');
+                    break;
+                case 'A':
+                    gradeBadge.classList.add('bg-primary');
+                    break;
+                case 'MA':
+                    gradeBadge.classList.add('bg-secondary');
+                    break;
+                default:
+                    gradeBadge.classList.add('bg-info');
+            }
+
+            // Add the badge to the grade cell
+            gradeCell.appendChild(gradeBadge);
+
+            // Add visual indication that this row has been graded
+            targetRow.classList.add('graded');
+
+        } catch (error) {
+            console.error('Error adding grade badge to table row:', error);
+        }
+    }
+
+
 
     function loadMessages(assignmentId, studentId) {
         const messagesContainer = document.getElementById('messagesContainer');
@@ -613,60 +982,7 @@
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 
-    function sendMessage() {
-        const content = document.getElementById('newMessageContent').value.trim();
-        const messageError = document.getElementById('messageError');
-        const sendBtn = document.getElementById('sendMessageBtn');
-        const sendBtnText = document.getElementById('sendBtnText');
-        const sendBtnSpinner = document.getElementById('sendBtnSpinner');
 
-        // Clear previous errors
-        messageError.textContent = '';
-        document.getElementById('newMessageContent').classList.remove('is-invalid');
-
-        // Validate content
-        if (!content) {
-            messageError.textContent = 'Palun sisesta kommentaar';
-            document.getElementById('newMessageContent').classList.add('is-invalid');
-            return;
-        }
-
-        // Show loading state
-        sendBtn.disabled = true;
-        sendBtnText.textContent = 'Saadan...';
-        sendBtnSpinner.classList.remove('d-none');
-
-        // Send message
-        fetch('<?= BASE_URL ?>grading/saveMessage', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: `assignmentId=${currentAssignmentId}&content=${encodeURIComponent(content)}`
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 200) {
-                // Clear form and reload messages
-                document.getElementById('newMessageContent').value = '';
-                loadMessages(currentAssignmentId, currentUserId);
-            } else {
-                messageError.textContent = 'Viga sõnumi saatmisel';
-                document.getElementById('newMessageContent').classList.add('is-invalid');
-            }
-        })
-        .catch(error => {
-            console.error('Error sending message:', error);
-            messageError.textContent = 'Viga sõnumi saatmisel';
-            document.getElementById('newMessageContent').classList.add('is-invalid');
-        })
-        .finally(() => {
-            // Reset button state
-            sendBtn.disabled = false;
-            sendBtnText.textContent = 'Saada kommentaar';
-            sendBtnSpinner.classList.add('d-none');
-        });
-    }
 
     function copySolutionUrl() {
         const solutionUrlInput = document.getElementById('solutionUrlInput');

@@ -12,6 +12,10 @@ $activityLinks = [
         ACTIVITY_UPDATE_USER => 'admin/users',
         ACTIVITY_DELETE_USER => 'admin/users',
         ACTIVITY_SUBMIT_ASSIGNMENT => 'assignments',
+        ACTIVITY_TEACHER_GRADE_ASSIGNMENT => 'assignments',
+        ACTIVITY_TEACHER_ADD_COMMENT => 'assignments',
+        ACTIVITY_TEACHER_UPDATE_CRITERIA => 'assignments',
+        ACTIVITY_TEACHER_SEND_EMAIL => 'assignments',
 
 ];
 ?>

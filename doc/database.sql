@@ -1,4 +1,4 @@
--- Dump created on 2025-05-15 20:02:35 by Hennos-MacBook-Pro-2.local
+-- Dump created on 2025-05-26 01:35:18 by Hennos-MacBook-Pro-2.local
 SET FOREIGN_KEY_CHECKS=0;
 SET @@SESSION.sql_mode='NO_AUTO_VALUE_ON_ZERO';
 
@@ -26,7 +26,10 @@ INSERT INTO `activities` VALUES
 (21,'createUserSync','created user during synchronization'),(22,'gradeSync','synchronized grade'),
 (23,'updateUserName','updated user name during synchronization'),
 (24,'updateAssignmentSync','updated assignment during synchronization'),
-(25,'updateUserSync','updated user during synchronization');
+(25,'updateUserSync','updated user during synchronization'),(26,'teacherGradeAssignment','teacher graded assignment'),
+(27,'teacherAddComment','teacher added comment to assignment'),
+(28,'teacherUpdateCriteria','teacher updated assignment criteria'),
+(29,'teacherSendEmail','teacher sent email notification to student');
 /*!40000 ALTER TABLE `activities` ENABLE KEYS */;
 UNLOCK TABLES;
 
