@@ -72,20 +72,35 @@
         text-overflow: ellipsis;
     }
 
-    /* Set width for the student name column (third column) */
+    /* Set width for the age column (third column) */
     #grading-table td:nth-child(3),
     #grading-table th:nth-child(3) {
-        width: 180px;
-        min-width: 180px;
-        max-width: 180px;
+        width: 60px;
+        min-width: 60px;
+        max-width: 60px;
+        text-align: center;
+        vertical-align: middle;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-weight: normal;
+        color: #666;
+    }
+
+    /* Set width for the student name column (fourth column) - made narrower */
+    #grading-table td:nth-child(4),
+    #grading-table th:nth-child(4) {
+        width: 140px;
+        min-width: 140px;
+        max-width: 140px;
         vertical-align: middle;
         overflow: hidden;
         text-overflow: ellipsis;
     }
 
-    /* Set width for the combined subject/assignment column (fourth column) */
-    #grading-table td:nth-child(4),
-    #grading-table th:nth-child(4) {
+    /* Set width for the combined subject/assignment column (fifth column) */
+    #grading-table td:nth-child(5),
+    #grading-table th:nth-child(5) {
         vertical-align: middle;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -97,6 +112,14 @@
         font-weight: bold;
         display: inline;
         margin-right: 8px;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    /* Ensure assignment name links maintain styling on hover */
+    .assignment-name:hover {
+        text-decoration: underline;
+        color: inherit;
     }
 
     /* Style for subject name badge - keep neutral gray */
@@ -147,6 +170,150 @@
         background-color: transparent !important;
     }
 
+    /* Make table rows clickable */
+    #grading-table tbody tr {
+        cursor: pointer;
+        transition: opacity 0.2s ease;
+    }
+
+    #grading-table tbody tr:hover {
+        opacity: 0.8;
+    }
+
+    /* Modal styling */
+    .modal-header {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .modal-body {
+        max-height: 70vh;
+        overflow-y: auto;
+    }
+
+    .message-container {
+        max-height: 300px;
+        overflow-y: auto;
+        padding: 0;
+        background-color: transparent;
+    }
+
+    .message-item {
+        padding: 0.75rem 0;
+        margin-bottom: 0.75rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .message-item:last-child {
+        margin-bottom: 0;
+        border-bottom: none;
+    }
+
+    .message-author {
+        font-weight: bold;
+        color: #495057;
+        font-size: 0.9em;
+    }
+
+    .message-time {
+        color: #6c757d;
+        font-size: 0.8em;
+    }
+
+    .message-content {
+        margin-top: 0.5rem;
+        color: #212529;
+    }
+
+    .loading-spinner {
+        display: inline-block;
+        width: 1rem;
+        height: 1rem;
+        border: 2px solid #f3f3f3;
+        border-top: 2px solid #007bff;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* Solution URL styling */
+    #solutionUrlInput {
+        font-size: 0.85em;
+        background-color: #f8f9fa;
+    }
+
+    /* Markdown content styling */
+    .markdown-content {
+        line-height: 1.6;
+    }
+
+    .markdown-content h1, .markdown-content h2, .markdown-content h3,
+    .markdown-content h4, .markdown-content h5, .markdown-content h6 {
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+    }
+
+    .markdown-content h1 { font-size: 1.5rem; }
+    .markdown-content h2 { font-size: 1.3rem; }
+    .markdown-content h3 { font-size: 1.1rem; }
+    .markdown-content h4, .markdown-content h5, .markdown-content h6 { font-size: 1rem; }
+
+    .markdown-content ul, .markdown-content ol {
+        padding-left: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .markdown-content li {
+        margin-bottom: 0.25rem;
+    }
+
+    .markdown-content code {
+        background-color: #f1f3f4;
+        padding: 0.125rem 0.25rem;
+        border-radius: 0.25rem;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
+    }
+
+    .markdown-content pre {
+        background-color: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 0.375rem;
+        padding: 1rem;
+        overflow-x: auto;
+        margin-bottom: 1rem;
+    }
+
+    .markdown-content pre code {
+        background-color: transparent;
+        padding: 0;
+    }
+
+    .markdown-content blockquote {
+        border-left: 4px solid #dee2e6;
+        padding-left: 1rem;
+        margin-left: 0;
+        margin-bottom: 1rem;
+        color: #6c757d;
+    }
+
+    .markdown-content p {
+        margin-bottom: 1rem;
+    }
+
+    .markdown-content strong {
+        font-weight: 600;
+    }
+
+    .markdown-content em {
+        font-style: italic;
+    }
+
     /* Style for timestamp badge */
     .id-badge {
         background-color: #e9ecef;
@@ -154,6 +321,38 @@
         border-radius: 3px;
         font-size: 0.85em;
         color: #495057;
+    }
+
+    /* Comment bubble styling */
+    .comment-bubble {
+        display: inline-flex;
+        align-items: center;
+        background-color: #007bff;
+        color: white;
+        border-radius: 12px;
+        padding: 2px 8px;
+        font-size: 0.75em;
+        margin-left: 8px;
+        vertical-align: middle;
+        min-width: 24px;
+        justify-content: center;
+    }
+
+    .comment-bubble i {
+        font-size: 0.8em;
+        margin-right: 3px;
+    }
+
+    .comment-count {
+        font-weight: bold;
+        font-size: 0.9em;
+    }
+
+    /* Hover effect for comment bubble */
+    .comment-bubble:hover {
+        background-color: #0056b3;
+        transform: scale(1.05);
+        transition: all 0.2s ease;
     }
 </style>
 
@@ -166,19 +365,34 @@
                     <tr>
                         <th>#</th>
                         <th>Aeg</th>
+                        <th>Vanus</th>
                         <th>Õpilane</th>
                         <th>Ülesanne / Aine</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php foreach ($this->submissions as $index => $submission): ?>
-                        <tr class="subject-row-<?= $this->subjectColors[$submission['subjectId']] ?>">
+                        <tr class="subject-row-<?= $this->subjectColors[$submission['subjectId']] ?> grading-row"
+                            data-assignment-id="<?= $submission['assignmentId'] ?>"
+                            data-user-id="<?= $submission['userId'] ?>"
+                            data-assignment-name="<?= htmlspecialchars($submission['Ülesanne']) ?>"
+                            data-student-name="<?= htmlspecialchars($submission['Õpilane']) ?>"
+                            data-solution-url="<?= htmlspecialchars($submission['solutionUrl'] ?? '') ?>"
+                            data-assignment-instructions="<?= htmlspecialchars($submission['assignmentInstructions'] ?? '') ?>"
+                            data-comments="<?= htmlspecialchars($submission['comments'] ?? '[]') ?>">
                             <td><?= $index + 1 ?></td>
                             <td><?= $submission['Aeg'] ? '<span class="id-badge"><strong>' . (new DateTime($submission['Aeg']))->format('d.m.y') . '</strong> ' . (new DateTime($submission['Aeg']))->format('H:i') . '</span>' : '' ?></td>
+                            <td><?= $submission['Vanus'] ?></td>
                             <td><?= $submission['Õpilane'] ?></td>
                             <td>
-                                <span class="assignment-name"><?= $submission['Ülesanne'] ?></span>
                                 <span class="subject-name"><?= $submission['Aine'] ?></span>
+                                <a href="grading/assignments/<?= $submission['assignmentId'] ?>/students/<?= $submission['userId'] ?>" onclick="event.preventDefault(); openGradingModal(this.closest('tr')); return false;" class="assignment-name" style="text-decoration: none; color: inherit;"><?= $submission['Ülesanne'] ?></a>
+                                <?php if ($submission['commentCount'] > 0): ?>
+                                    <span class="comment-bubble">
+                                        <i class="fas fa-comment"></i>
+                                        <span class="comment-count"><?= $submission['commentCount'] ?></span>
+                                    </span>
+                                <?php endif; ?>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -188,10 +402,343 @@
     </div>
 </div>
 
+<!-- Grading Modal -->
+<div class="modal fade" id="gradingModal" tabindex="-1" aria-labelledby="gradingModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-fluid" style="max-width: 95%; width: 95%;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="gradingModalLabel">Ülesanne</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Student Info and Solution URL - Compact Layout -->
+                <div class="row mb-3">
+                    <div class="col-md-2">
+                        <h6>Õpilane</h6>
+                        <p id="studentName" class="text-muted mb-0"></p>
+                    </div>
+                    <div class="col-md-10" id="solutionUrlSection">
+                        <h6>Lahenduse URL</h6>
+                        <div class="mt-2 d-none" id="solutionUrlDetails">
+
+                            <div class="input-group">
+                                <input type="text" class="form-control form-control-sm font-monospace" id="solutionUrlInput" readonly>
+                                <button class="btn btn-outline-secondary btn-sm" type="button" id="copySolutionUrl" title="Kopeeri URL">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assignment Instructions -->
+                <div class="mb-3" id="instructionsSection">
+                    <h6>Ülesande kirjeldus</h6>
+                    <div id="assignmentInstructions" class="border rounded p-3 bg-light markdown-content">
+                        <p class="text-muted">Kirjeldus puudub</p>
+                    </div>
+                </div>
+
+                <!-- Comments Thread -->
+                <div class="mb-3">
+                    <h6>Vestlus</h6>
+                    <div id="messagesContainer" class="message-container border-top pt-2">
+                        <div class="text-center">
+                            <span class="loading-spinner"></span>
+                            <span class="ms-2">Laen sõnumeid...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- New Message Form -->
+                <div class="mb-3">
+                    <label for="newMessageContent" class="form-label">Lisa kommentaar</label>
+                    <textarea class="form-control" id="newMessageContent" rows="3" placeholder="Kirjuta kommentaar õpilasele..."></textarea>
+                    <div class="invalid-feedback" id="messageError"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Sulge</button>
+                <button type="button" class="btn btn-primary" id="sendMessageBtn">
+                    <span id="sendBtnText">Saada kommentaar</span>
+                    <span id="sendBtnSpinner" class="loading-spinner d-none ms-2"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         // Initialize tooltips
         [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
             .map(el => new bootstrap.Tooltip(el));
+
+        // Add click handlers to grading rows
+        const gradingRows = document.querySelectorAll('.grading-row');
+        gradingRows.forEach(row => {
+            row.addEventListener('click', function() {
+                openGradingModal(this);
+            });
+        });
+
+        // Send message button handler
+        document.getElementById('sendMessageBtn').addEventListener('click', function() {
+            sendMessage();
+        });
+
+        // Copy solution URL button handler
+        document.getElementById('copySolutionUrl').addEventListener('click', function() {
+            copySolutionUrl();
+        });
     });
+
+    let currentAssignmentId = null;
+    let currentUserId = null;
+
+    function openGradingModal(row) {
+        // Extract data from row
+        const assignmentId = row.dataset.assignmentId;
+        const userId = row.dataset.userId;
+        const assignmentName = row.dataset.assignmentName;
+        const studentName = row.dataset.studentName;
+        const solutionUrl = row.dataset.solutionUrl;
+        const assignmentInstructions = row.dataset.assignmentInstructions;
+        const comments = row.dataset.comments;
+
+        // Store current IDs
+        currentAssignmentId = assignmentId;
+        currentUserId = userId;
+
+        // Update modal content
+        document.getElementById('gradingModalLabel').textContent = assignmentName;
+        document.getElementById('studentName').textContent = studentName;
+
+        // Update solution URL section
+        const solutionUrlContainer = document.getElementById('solutionUrlContainer');
+        const solutionUrlDetails = document.getElementById('solutionUrlDetails');
+        const solutionUrlInput = document.getElementById('solutionUrlInput');
+
+        if (solutionUrl && solutionUrl.trim() !== '') {
+
+            solutionUrlInput.value = solutionUrl;
+            solutionUrlDetails.classList.remove('d-none');
+        } else {
+
+            solutionUrlDetails.classList.add('d-none');
+        }
+
+        // Update instructions section with Markdown rendering
+        const instructionsDiv = document.getElementById('assignmentInstructions');
+        if (assignmentInstructions && assignmentInstructions.trim() !== '') {
+            instructionsDiv.innerHTML = parseMarkdown(assignmentInstructions);
+        } else {
+            instructionsDiv.innerHTML = '<p class="text-muted">Kirjeldus puudub</p>';
+        }
+
+        // Load messages
+        loadMessages(assignmentId, userId);
+
+        // Clear new message form
+        document.getElementById('newMessageContent').value = '';
+        document.getElementById('messageError').textContent = '';
+
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('gradingModal'));
+        modal.show();
+    }
+
+    function loadMessages(assignmentId, studentId) {
+        const messagesContainer = document.getElementById('messagesContainer');
+        messagesContainer.innerHTML = `
+            <div class="text-center">
+                <span class="loading-spinner"></span>
+                <span class="ms-2">Laen sõnumeid...</span>
+            </div>
+        `;
+
+        // Make AJAX request to load messages
+        fetch('<?= BASE_URL ?>grading/getMessages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `assignmentId=${assignmentId}&studentId=${studentId}`
+        })
+        .then(response => {
+            console.log('Response status:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('Response data:', data);
+            if (data.status === 200) {
+                displayMessages(data.data);
+            } else {
+                messagesContainer.innerHTML = `<p class="text-danger">Viga sõnumite laadimisel: ${data.message || 'Tundmatu viga'}</p>`;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading messages:', error);
+            messagesContainer.innerHTML = `<p class="text-danger">Viga sõnumite laadimisel: ${error.message}</p>`;
+        });
+    }
+
+    function displayMessages(messages) {
+        const messagesContainer = document.getElementById('messagesContainer');
+
+        if (messages.length === 0) {
+            messagesContainer.innerHTML = '<p class="text-muted">Sõnumeid pole veel</p>';
+            return;
+        }
+
+        let messagesHtml = '';
+        messages.forEach(message => {
+            if (!message.isNotification) {
+                const messageDate = new Date(message.createdAt).toLocaleString('et-EE');
+                messagesHtml += `
+                    <div class="message-item">
+                        <div class="d-flex justify-content-between">
+                            <span class="message-author">${message.userName || 'Tundmatu'}</span>
+                            <span class="message-time">${messageDate}</span>
+                        </div>
+                        <div class="message-content">${message.content.replace(/\n/g, '<br>')}</div>
+                    </div>
+                `;
+            }
+        });
+
+        messagesContainer.innerHTML = messagesHtml || '<p class="text-muted">Sõnumeid pole veel</p>';
+
+        // Scroll to bottom
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    function sendMessage() {
+        const content = document.getElementById('newMessageContent').value.trim();
+        const messageError = document.getElementById('messageError');
+        const sendBtn = document.getElementById('sendMessageBtn');
+        const sendBtnText = document.getElementById('sendBtnText');
+        const sendBtnSpinner = document.getElementById('sendBtnSpinner');
+
+        // Clear previous errors
+        messageError.textContent = '';
+        document.getElementById('newMessageContent').classList.remove('is-invalid');
+
+        // Validate content
+        if (!content) {
+            messageError.textContent = 'Palun sisesta kommentaar';
+            document.getElementById('newMessageContent').classList.add('is-invalid');
+            return;
+        }
+
+        // Show loading state
+        sendBtn.disabled = true;
+        sendBtnText.textContent = 'Saadan...';
+        sendBtnSpinner.classList.remove('d-none');
+
+        // Send message
+        fetch('<?= BASE_URL ?>grading/saveMessage', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `assignmentId=${currentAssignmentId}&content=${encodeURIComponent(content)}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 200) {
+                // Clear form and reload messages
+                document.getElementById('newMessageContent').value = '';
+                loadMessages(currentAssignmentId, currentUserId);
+            } else {
+                messageError.textContent = 'Viga sõnumi saatmisel';
+                document.getElementById('newMessageContent').classList.add('is-invalid');
+            }
+        })
+        .catch(error => {
+            console.error('Error sending message:', error);
+            messageError.textContent = 'Viga sõnumi saatmisel';
+            document.getElementById('newMessageContent').classList.add('is-invalid');
+        })
+        .finally(() => {
+            // Reset button state
+            sendBtn.disabled = false;
+            sendBtnText.textContent = 'Saada kommentaar';
+            sendBtnSpinner.classList.add('d-none');
+        });
+    }
+
+    function copySolutionUrl() {
+        const solutionUrlInput = document.getElementById('solutionUrlInput');
+        solutionUrlInput.select();
+        solutionUrlInput.setSelectionRange(0, 99999); // For mobile devices
+
+        try {
+            document.execCommand('copy');
+            // Show temporary feedback
+            const copyBtn = document.getElementById('copySolutionUrl');
+            const originalHtml = copyBtn.innerHTML;
+            copyBtn.innerHTML = '<i class="fas fa-check text-success"></i>';
+            setTimeout(() => {
+                copyBtn.innerHTML = originalHtml;
+            }, 2000);
+        } catch (err) {
+            console.error('Failed to copy URL:', err);
+        }
+    }
+
+    function parseMarkdown(text) {
+        if (!text) return '';
+
+        // Simple Markdown parser for basic formatting
+        let html = text;
+
+        // Headers
+        html = html.replace(/^#### (.*$)/gim, '<h4>$1</h4>');
+        html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+        html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+        html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+
+        // Bold
+        html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        html = html.replace(/__(.*?)__/g, '<strong>$1</strong>');
+
+        // Italic
+        html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+        html = html.replace(/_(.*?)_/g, '<em>$1</em>');
+
+        // Code blocks
+        html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+
+        // Inline code
+        html = html.replace(/`(.*?)`/g, '<code>$1</code>');
+
+        // Links
+        html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+
+        // Unordered lists
+        html = html.replace(/^\* (.+)$/gm, '<li>$1</li>');
+        html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+
+        // Ordered lists
+        html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+        html = html.replace(/(<li>.*<\/li>)/s, function(match) {
+            if (match.includes('<ul>')) return match;
+            return '<ol>' + match + '</ol>';
+        });
+
+        // Blockquotes
+        html = html.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
+
+        // Line breaks and paragraphs
+        html = html.replace(/\n\n/g, '</p><p>');
+        html = html.replace(/\n/g, '<br>');
+
+        // Wrap in paragraphs if not already wrapped
+        if (!html.startsWith('<')) {
+            html = '<p>' + html + '</p>';
+        }
+
+        return html;
+    }
 </script>
