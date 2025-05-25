@@ -10,6 +10,7 @@
 <div class="container" id="container">
     <nav class="nav nav-pills flex-column flex-sm-row" style="margin-bottom: 4em">
         <a class="flex-sm-fill text-sm-center nav-link <?= $this->setActive('subjects/index') ?>"  aria-current="subjects" href="subjects">Ained</a>
+        <a class="flex-sm-fill text-sm-center nav-link <?= $this->setActive('grading/index') ?>"  aria-current="grading" href="grading">Hindamine</a>
         <a class="flex-sm-fill text-sm-center nav-link <?= $this->setActive('admin/groups') ?>" href="admin/groups">Grupid</a>
         <a class="flex-sm-fill text-sm-center nav-link <?= $this->setActive('admin/users') ?>" href="admin/users">Kasutajad</a>
         <a class="flex-sm-fill text-sm-center nav-link <?= $this->setActive('admin/logs') ?>" href="admin/logs">Logi</a>
