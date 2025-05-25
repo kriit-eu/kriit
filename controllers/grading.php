@@ -55,10 +55,10 @@ class grading extends Controller
                     WHERE c.assignmentId = ua.assignmentId
                 ) AS criteriaJson
             FROM userAssignments ua
-            JOIN users u ON ua.userId = u.userId
-            JOIN assignments a ON ua.assignmentId = a.assignmentId
-            JOIN subjects s ON a.subjectId = s.subjectId
-            WHERE ua.userAssignmentSubmittedAt IS NOT NULL
+            LEFT JOIN users u ON ua.userId = u.userId
+            LEFT JOIN assignments a ON ua.assignmentId = a.assignmentId
+            LEFT JOIN subjects s ON a.subjectId = s.subjectId
+            WHERE assignmentStatusId = 2
             ORDER BY ua.userAssignmentSubmittedAt ASC
         ");
 
