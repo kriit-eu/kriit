@@ -293,11 +293,35 @@
         padding: 1rem;
         overflow-x: auto;
         margin-bottom: 1rem;
+        line-height: 1 !important;
+        font-size: 0.875rem;
     }
 
     .markdown-content pre code {
         background-color: transparent;
-        padding: 0;
+        padding: 0 !important;
+        margin: 0 !important;
+        line-height: 1 !important;
+        white-space: pre !important;
+        display: block;
+        font-size: inherit;
+        border: none !important;
+    }
+
+    /* Specific targeting for message content code blocks */
+    .message-content pre {
+        line-height: 1 !important;
+        font-size: 0.875rem;
+    }
+
+    .message-content pre code {
+        line-height: 1 !important;
+        white-space: pre !important;
+        display: block;
+        padding: 0 !important;
+        margin: 0 !important;
+        font-size: inherit;
+        border: none !important;
     }
 
     .markdown-content blockquote {
@@ -1152,6 +1176,17 @@
         result = result.replace(/<\/li>\s*<br>\s*<\/ol>/g, '</li></ol>');
         result = result.replace(/<ul>\s*<br>\s*<li>/g, '<ul><li>');
         result = result.replace(/<ol>\s*<br>\s*<li>/g, '<ol><li>');
+
+        // Remove <br> tags inside code blocks (they break ASCII art and directory structures)
+        result = result.replace(/<pre><code>([\s\S]*?)<\/code><\/pre>/g, function(match, codeContent) {
+            // Remove all <br> tags and any extra whitespace from code content
+            let cleanedContent = codeContent.replace(/<br\s*\/?>/g, '\n');
+            // Also remove any <p> tags that might have been added
+            cleanedContent = cleanedContent.replace(/<\/?p>/g, '');
+            // Clean up any double newlines
+            cleanedContent = cleanedContent.replace(/\n\s*\n/g, '\n');
+            return `<pre><code>${cleanedContent}</code></pre>`;
+        });
 
         // Remove any trailing/leading whitespace around HTML tags
         result = result.replace(/>\s+</g, '><');
