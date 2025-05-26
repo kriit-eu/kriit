@@ -23,7 +23,10 @@ class grading extends Controller
         $submissions = Db::getAll("
             SELECT
                 ua.userAssignmentSubmittedAt AS 'Esitatud',
-                ua.userAssignmentGradedAt AS 'Hinnatud',
+                CASE
+                    WHEN ua.userGrade IS NOT NULL AND ua.userGrade != '' THEN ua.userAssignmentGradedAt
+                    ELSE NULL
+                END AS 'Hinnatud',
                 u.userName AS 'Õpilane',
                 s.subjectName AS 'Aine',
                 a.assignmentName AS 'Ülesanne',
