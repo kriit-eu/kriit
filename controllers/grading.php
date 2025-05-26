@@ -22,7 +22,8 @@ class grading extends Controller
         // Fetch all submissions with comment counts and criteria
         $submissions = Db::getAll("
             SELECT
-                ua.userAssignmentSubmittedAt AS 'Aeg',
+                ua.userAssignmentSubmittedAt AS 'Esitatud',
+                ua.userAssignmentGradedAt AS 'Hinnatud',
                 u.userName AS 'Õpilane',
                 s.subjectName AS 'Aine',
                 a.assignmentName AS 'Ülesanne',
@@ -64,8 +65,9 @@ class grading extends Controller
 
         // Calculate days ago for each submission and process criteria
         foreach ($submissions as &$submission) {
-            if ($submission['Aeg']) {
-                $submissionDate = new \DateTime($submission['Aeg']);
+            // Calculate days since submission (Vanus)
+            if ($submission['Esitatud']) {
+                $submissionDate = new \DateTime($submission['Esitatud']);
                 $today = new \DateTime();
                 $today->setTime(0, 0, 0); // Set to start of day for accurate comparison
                 $submissionDate->setTime(0, 0, 0); // Set to start of day for accurate comparison
@@ -74,6 +76,19 @@ class grading extends Controller
                 $submission['Vanus'] = $daysAgo == 0 ? '' : $daysAgo;
             } else {
                 $submission['Vanus'] = '';
+            }
+
+            // Calculate difference between submission and grading (Vahe)
+            if ($submission['Esitatud'] && $submission['Hinnatud']) {
+                $submissionDate = new \DateTime($submission['Esitatud']);
+                $gradingDate = new \DateTime($submission['Hinnatud']);
+                $submissionDate->setTime(0, 0, 0);
+                $gradingDate->setTime(0, 0, 0);
+
+                $daysDiff = $gradingDate->diff($submissionDate)->days;
+                $submission['Vahe'] = $daysDiff == 0 ? '' : $daysDiff;
+            } else {
+                $submission['Vahe'] = '';
             }
 
             // Process criteria JSON

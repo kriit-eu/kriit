@@ -47,9 +47,9 @@
     /* Set width for the position column (first column) */
     #grading-table td:first-child,
     #grading-table th:first-child {
-        width: 60px;
-        min-width: 60px;
-        max-width: 60px;
+        width: 50px;
+        min-width: 50px;
+        max-width: 50px;
         text-align: center;
         vertical-align: middle;
         white-space: nowrap;
@@ -59,12 +59,32 @@
         color: #666;
     }
 
-    /* Set width for the timestamp column (second column) */
+    /* Set width for the student name column (second column) */
     #grading-table td:nth-child(2),
     #grading-table th:nth-child(2) {
-        width: 130px;
-        min-width: 130px;
-        max-width: 130px;
+        width: 140px;
+        min-width: 140px;
+        max-width: 140px;
+        vertical-align: middle;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Set width for the assignment column (third column) */
+    #grading-table td:nth-child(3),
+    #grading-table th:nth-child(3) {
+        vertical-align: middle;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-height: 1.3;
+    }
+
+    /* Set width for the submitted timestamp column (fourth column) */
+    #grading-table td:nth-child(4),
+    #grading-table th:nth-child(4) {
+        width: 140px;
+        min-width: 140px;
+        max-width: 140px;
         text-align: center;
         vertical-align: middle;
         white-space: nowrap;
@@ -72,9 +92,9 @@
         text-overflow: ellipsis;
     }
 
-    /* Set width for the age column (third column) */
-    #grading-table td:nth-child(3),
-    #grading-table th:nth-child(3) {
+    /* Set width for the age column (fifth column) */
+    #grading-table td:nth-child(5),
+    #grading-table th:nth-child(5) {
         width: 60px;
         min-width: 60px;
         max-width: 60px;
@@ -87,24 +107,45 @@
         color: #666;
     }
 
-    /* Set width for the student name column (fourth column) - made narrower */
-    #grading-table td:nth-child(4),
-    #grading-table th:nth-child(4) {
+    /* Set width for the graded timestamp column (sixth column) */
+    #grading-table td:nth-child(6),
+    #grading-table th:nth-child(6) {
         width: 140px;
         min-width: 140px;
         max-width: 140px;
+        text-align: center;
         vertical-align: middle;
+        white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
     }
 
-    /* Set width for the combined subject/assignment column (fifth column) */
-    #grading-table td:nth-child(5),
-    #grading-table th:nth-child(5) {
+    /* Set width for the difference column (seventh column) */
+    #grading-table td:nth-child(7),
+    #grading-table th:nth-child(7) {
+        width: 60px;
+        min-width: 60px;
+        max-width: 60px;
+        text-align: center;
         vertical-align: middle;
+        white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        line-height: 1.3;
+        font-weight: normal;
+        color: #666;
+    }
+
+    /* Set width for the grade column (eighth column) */
+    #grading-table td:nth-child(8),
+    #grading-table th:nth-child(8) {
+        width: 80px;
+        min-width: 80px;
+        max-width: 80px;
+        text-align: center;
+        vertical-align: middle;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     /* Style for assignment name (bold) */
@@ -485,6 +526,39 @@
         min-width: 2.5rem;
         text-align: center;
     }
+
+    /* Sortable table headers */
+    .sortable-header {
+        cursor: pointer;
+        user-select: none;
+        position: relative;
+        padding-right: 25px !important;
+    }
+
+    .sortable-header:hover {
+        background-color: #e9ecef !important;
+    }
+
+    .sort-indicator {
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 0.8em;
+        color: #6c757d;
+        opacity: 0.7;
+    }
+
+    .sort-indicator.active {
+        color: #495057;
+        opacity: 1;
+        font-weight: bold;
+    }
+
+    /* Ensure sort indicators don't interfere with text */
+    .sortable-header .sort-indicator {
+        pointer-events: none;
+    }
 </style>
 
 <div class="row">
@@ -494,12 +568,38 @@
             <table id="grading-table" class="table table-bordered" style="background-color: transparent; table-layout: fixed !important;">
                 <thead>
                     <tr>
-                        <th>#</th>
-                        <th>Aeg</th>
-                        <th>Vanus</th>
-                        <th>Õpilane</th>
-                        <th>Ülesanne / Aine</th>
-                        <th style="width: 80px;">Hinne</th>
+                        <th class="sortable-header" data-sort="position" data-bs-toggle="tooltip" data-bs-placement="top" title="Järjekorranumber">
+                            #
+                            <span class="sort-indicator">⇅</span>
+                        </th>
+                        <th class="sortable-header" data-sort="student" data-bs-toggle="tooltip" data-bs-placement="top" title="Õpilase nimi">
+                            Õpilane
+                            <span class="sort-indicator">⇅</span>
+                        </th>
+                        <th class="sortable-header" data-sort="assignment" data-bs-toggle="tooltip" data-bs-placement="top" title="Ülesande nimi ja aine">
+                            Ülesanne
+                            <span class="sort-indicator">⇅</span>
+                        </th>
+                        <th class="sortable-header" data-sort="submitted" data-bs-toggle="tooltip" data-bs-placement="top" title="Ülesande esitamise kuupäev ja kellaaeg">
+                            Esitatud
+                            <span class="sort-indicator">⇅</span>
+                        </th>
+                        <th class="sortable-header" data-sort="age" data-bs-toggle="tooltip" data-bs-placement="top" title="Mitu päeva tagasi esitatud">
+                            Vanus
+                            <span class="sort-indicator">⇅</span>
+                        </th>
+                        <th class="sortable-header" data-sort="graded" data-bs-toggle="tooltip" data-bs-placement="top" title="Ülesande hindamise kuupäev ja kellaaeg">
+                            Hinnatud
+                            <span class="sort-indicator">⇅</span>
+                        </th>
+                        <th class="sortable-header" data-sort="difference" data-bs-toggle="tooltip" data-bs-placement="top" title="Mitu päeva kulus esitamisest hindamiseni">
+                            Vahe
+                            <span class="sort-indicator">⇅</span>
+                        </th>
+                        <th class="sortable-header" data-sort="grade" style="width: 80px;" data-bs-toggle="tooltip" data-bs-placement="top" title="Antud hinne">
+                            Hinne
+                            <span class="sort-indicator">⇅</span>
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -513,12 +613,18 @@
                             data-assignment-instructions="<?= htmlspecialchars($submission['assignmentInstructions'] ?? '') ?>"
                             data-comments="<?= htmlspecialchars($submission['comments'] ?? '[]') ?>"
                             data-current-grade="<?= htmlspecialchars($submission['userGrade'] ?? '') ?>"
-                            data-criteria="<?= htmlspecialchars($submission['criteria'] ?? '[]') ?>">
+                            data-criteria="<?= htmlspecialchars($submission['criteria'] ?? '[]') ?>"
+                            data-sort-position="<?= $index + 1 ?>"
+                            data-sort-submitted="<?= $submission['Esitatud'] ? strtotime($submission['Esitatud']) : 0 ?>"
+                            data-sort-graded="<?= $submission['Hinnatud'] ? strtotime($submission['Hinnatud']) : 0 ?>"
+                            data-sort-age="<?= $submission['Vanus'] ?: 999999 ?>"
+                            data-sort-difference="<?= $submission['Vahe'] ?: 999999 ?>"
+                            data-sort-student="<?= htmlspecialchars($submission['Õpilane']) ?>"
+                            data-sort-subject="<?= htmlspecialchars($submission['Aine']) ?>"
+                            data-sort-grade="<?= htmlspecialchars($submission['userGrade'] ?? '') ?>">
                             <td><?= $index + 1 ?></td>
-                            <td><?= $submission['Aeg'] ? '<span class="id-badge"><strong>' . (new DateTime($submission['Aeg']))->format('d.m.y') . '</strong> ' . (new DateTime($submission['Aeg']))->format('H:i') . '</span>' : '' ?></td>
-                            <td><?= $submission['Vanus'] ?></td>
-                            <td><?= $submission['Õpilane'] ?></td>
-                            <td>
+                            <td data-bs-toggle="tooltip" data-bs-placement="top" title="<?= htmlspecialchars($submission['Õpilane']) ?>"><?= $submission['Õpilane'] ?></td>
+                            <td data-bs-toggle="tooltip" data-bs-placement="top" title="<?= htmlspecialchars($submission['Aine'] . ' - ' . $submission['Ülesanne']) ?>">
                                 <span class="subject-name"><?= $submission['Aine'] ?></span>
                                 <a href="grading/assignments/<?= $submission['assignmentId'] ?>/students/<?= $submission['userId'] ?>" onclick="event.preventDefault(); openGradingModal(this.closest('tr')); return false;" class="assignment-name" style="text-decoration: none; color: inherit;"><?= $submission['Ülesanne'] ?></a>
                                 <?php if ($submission['commentCount'] > 0): ?>
@@ -528,6 +634,10 @@
                                     </span>
                                 <?php endif; ?>
                             </td>
+                            <td data-bs-toggle="tooltip" data-bs-placement="top" title="<?= $submission['Esitatud'] ? 'Esitatud: ' . (new DateTime($submission['Esitatud']))->format('d.m.Y H:i') : 'Esitamata' ?>"><?= $submission['Esitatud'] ? '<span class="id-badge"><strong>' . (new DateTime($submission['Esitatud']))->format('d.m.y') . '</strong> ' . (new DateTime($submission['Esitatud']))->format('H:i') . '</span>' : '' ?></td>
+                            <td data-bs-toggle="tooltip" data-bs-placement="top" title="<?= $submission['Vanus'] ? $submission['Vanus'] . ' päeva tagasi' : 'Täna esitatud' ?>"><?= $submission['Vanus'] ?></td>
+                            <td data-bs-toggle="tooltip" data-bs-placement="top" title="<?= $submission['Hinnatud'] ? 'Hinnatud: ' . (new DateTime($submission['Hinnatud']))->format('d.m.Y H:i') : 'Hindamata' ?>"><?= $submission['Hinnatud'] ? '<span class="id-badge"><strong>' . (new DateTime($submission['Hinnatud']))->format('d.m.y') . '</strong> ' . (new DateTime($submission['Hinnatud']))->format('H:i') . '</span>' : '' ?></td>
+                            <td data-bs-toggle="tooltip" data-bs-placement="top" title="<?= $submission['Vahe'] ? 'Hindamine võttis ' . $submission['Vahe'] . ' päeva' : 'Sama päeva jooksul hinnatud' ?>"><?= $submission['Vahe'] ?></td>
                             <td class="grade-cell text-center">
                                 <!-- Grade will be populated here after grading -->
                             </td>
@@ -666,6 +776,9 @@
         document.getElementById('saveBtn').addEventListener('click', function() {
             saveGradeAndComment();
         });
+
+        // Initialize table sorting
+        initializeTableSorting();
     });
 
     let currentAssignmentId = null;
@@ -934,8 +1047,8 @@
                 return;
             }
 
-            // Find the grade cell (last cell in the row with class grade-cell)
-            const gradeCell = targetRow.querySelector('td.grade-cell');
+            // Find the grade cell (8th column - last cell in the row with class grade-cell)
+            const gradeCell = targetRow.querySelector('td:nth-child(8).grade-cell');
             if (!gradeCell) {
                 console.warn('Grade cell not found in table row');
                 return;
@@ -973,6 +1086,14 @@
 
             // Add the badge to the grade cell
             gradeCell.appendChild(gradeBadge);
+
+            // Add tooltip to the grade badge
+            gradeCell.setAttribute('data-bs-toggle', 'tooltip');
+            gradeCell.setAttribute('data-bs-placement', 'top');
+            gradeCell.setAttribute('title', `Hinne: ${grade}`);
+
+            // Initialize tooltip for the new grade cell
+            new bootstrap.Tooltip(gradeCell);
 
             // Add visual indication that this row has been graded
             targetRow.classList.add('graded');
@@ -1297,5 +1418,197 @@
         tableHtml += '</table>';
 
         return { html: tableHtml, nextIndex: i };
+    }
+
+    // Table sorting functionality
+    let currentSort = { column: null, direction: 'asc' };
+
+    function initializeTableSorting() {
+        const sortableHeaders = document.querySelectorAll('.sortable-header');
+
+        sortableHeaders.forEach(header => {
+            header.addEventListener('click', function() {
+                const sortType = this.dataset.sort;
+                handleSort(sortType, this);
+            });
+        });
+    }
+
+    function handleSort(sortType, headerElement) {
+        const table = document.getElementById('grading-table');
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+
+        // Determine sort direction
+        let direction = 'asc';
+        if (currentSort.column === sortType && currentSort.direction === 'asc') {
+            direction = 'desc';
+        }
+
+        // Update current sort state
+        currentSort = { column: sortType, direction: direction };
+
+        // Clear all sort indicators
+        document.querySelectorAll('.sort-indicator').forEach(indicator => {
+            indicator.classList.remove('active');
+            indicator.textContent = '⇅';
+        });
+
+        // Update active sort indicator
+        const indicator = headerElement.querySelector('.sort-indicator');
+        indicator.classList.add('active');
+        indicator.textContent = direction === 'asc' ? '↑' : '↓';
+
+        // Sort rows
+        rows.sort((a, b) => {
+            return compareRows(a, b, sortType, direction);
+        });
+
+        // Re-append sorted rows
+        rows.forEach(row => tbody.appendChild(row));
+
+        // Update position numbers if sorting by position
+        if (sortType === 'position') {
+            updatePositionNumbers(rows, direction);
+        }
+
+        // Reinitialize tooltips after sorting
+        reinitializeTooltips();
+    }
+
+    function compareRows(rowA, rowB, sortType, direction) {
+        let valueA, valueB;
+
+        switch (sortType) {
+            case 'position':
+                valueA = parseInt(rowA.dataset.sortPosition);
+                valueB = parseInt(rowB.dataset.sortPosition);
+                break;
+
+            case 'submitted':
+                valueA = parseInt(rowA.dataset.sortSubmitted);
+                valueB = parseInt(rowB.dataset.sortSubmitted);
+                // Handle unsubmitted assignments (timestamp = 0) - they should appear last
+                if (valueA === 0 && valueB === 0) return 0;
+                if (valueA === 0) return direction === 'asc' ? 1 : -1;
+                if (valueB === 0) return direction === 'asc' ? -1 : 1;
+                break;
+
+            case 'graded':
+                valueA = parseInt(rowA.dataset.sortGraded);
+                valueB = parseInt(rowB.dataset.sortGraded);
+                // Handle ungraded assignments (timestamp = 0) - they should appear last
+                if (valueA === 0 && valueB === 0) return 0;
+                if (valueA === 0) return direction === 'asc' ? 1 : -1;
+                if (valueB === 0) return direction === 'asc' ? -1 : 1;
+                break;
+
+            case 'difference':
+                valueA = parseInt(rowA.dataset.sortDifference);
+                valueB = parseInt(rowB.dataset.sortDifference);
+                break;
+
+            case 'age':
+                valueA = parseInt(rowA.dataset.sortAge);
+                valueB = parseInt(rowB.dataset.sortAge);
+                break;
+
+            case 'student':
+                valueA = rowA.dataset.sortStudent.toLowerCase();
+                valueB = rowB.dataset.sortStudent.toLowerCase();
+                // Sort by surname first, then first name
+                const namePartsA = valueA.split(' ');
+                const namePartsB = valueB.split(' ');
+                const surnameA = namePartsA[namePartsA.length - 1];
+                const surnameB = namePartsB[namePartsB.length - 1];
+
+                if (surnameA !== surnameB) {
+                    valueA = surnameA;
+                    valueB = surnameB;
+                } else {
+                    valueA = namePartsA[0] || '';
+                    valueB = namePartsB[0] || '';
+                }
+                break;
+
+            case 'assignment':
+                // Sort by subject name, then assignment name
+                const subjectA = rowA.dataset.sortSubject.toLowerCase();
+                const subjectB = rowB.dataset.sortSubject.toLowerCase();
+                const assignmentA = rowA.dataset.assignmentName.toLowerCase();
+                const assignmentB = rowB.dataset.assignmentName.toLowerCase();
+
+                if (subjectA !== subjectB) {
+                    valueA = subjectA;
+                    valueB = subjectB;
+                } else {
+                    valueA = assignmentA;
+                    valueB = assignmentB;
+                }
+                break;
+
+            case 'grade':
+                valueA = getGradeValue(rowA.dataset.sortGrade);
+                valueB = getGradeValue(rowB.dataset.sortGrade);
+                break;
+
+            default:
+                return 0;
+        }
+
+        // Compare values
+        if (typeof valueA === 'string' && typeof valueB === 'string') {
+            const result = valueA.localeCompare(valueB, 'et');
+            return direction === 'asc' ? result : -result;
+        } else {
+            const result = valueA - valueB;
+            return direction === 'asc' ? result : -result;
+        }
+    }
+
+    function getGradeValue(grade) {
+        // Custom grade sorting: ->MA,1,2,3,4,5,A
+        // Ungraded assignments should appear last
+        if (!grade || grade === '') return 999;
+
+        const gradeOrder = {
+            'MA': 0,
+            '1': 1,
+            '2': 2,
+            '3': 3,
+            '4': 4,
+            '5': 5,
+            'A': 6
+        };
+
+        return gradeOrder[grade] !== undefined ? gradeOrder[grade] : 999;
+    }
+
+    function updatePositionNumbers(rows, direction) {
+        rows.forEach((row, index) => {
+            const positionCell = row.querySelector('td:first-child');
+            if (direction === 'asc') {
+                positionCell.textContent = index + 1;
+                row.dataset.sortPosition = index + 1;
+            } else {
+                positionCell.textContent = rows.length - index;
+                row.dataset.sortPosition = rows.length - index;
+            }
+        });
+    }
+
+    function reinitializeTooltips() {
+        // Dispose of existing tooltips to prevent memory leaks
+        document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(element => {
+            const existingTooltip = bootstrap.Tooltip.getInstance(element);
+            if (existingTooltip) {
+                existingTooltip.dispose();
+            }
+        });
+
+        // Initialize new tooltips
+        document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(element => {
+            new bootstrap.Tooltip(element);
+        });
     }
 </script>
