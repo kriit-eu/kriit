@@ -1239,17 +1239,8 @@
                         console.error('Error auto-closing modal:', error);
                     }
 
-                    // If "Show graded" toggle is unchecked, remove the graded row from the table
-                    const showGradedToggle = document.getElementById('showGradedToggle');
-                    if (showGradedToggle && !showGradedToggle.checked) {
-                        const targetRow = document.querySelector('.grading-row[data-assignment-id="' + currentAssignmentId + '"][data-user-id="' + currentUserId + '"]');
-                        if (targetRow) {
-                            targetRow.remove();
-                            // Update position numbers for remaining rows
-                            const remainingRows = Array.from(document.querySelectorAll('.grading-row'));
-                            updatePositionNumbers(remainingRows, 'asc');
-                        }
-                    }
+                    // Keep the row visible after grading - it should only be hidden on page refresh
+                    // when the "Show graded" toggle determines what gets loaded from the server
                 } else {
                     gradeError.textContent = data.message || 'Viga andmete salvestamisel';
                     gradeError.style.display = 'block';
