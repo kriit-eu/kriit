@@ -19,6 +19,12 @@ class grading extends Controller
             exit();
         }
 
+        // Check if we should show graded assignments
+        $this->showGraded = isset($_GET['showGraded']) && $_GET['showGraded'] == '1';
+
+        // Determine which assignment statuses to include
+        $statusFilter = $this->showGraded ? 'assignmentStatusId IN (2, 3)' : 'assignmentStatusId = 2';
+
         // Fetch all submissions with comment counts and criteria
         $submissions = Db::getAll("
             SELECT
@@ -62,7 +68,7 @@ class grading extends Controller
             LEFT JOIN users u ON ua.userId = u.userId
             LEFT JOIN assignments a ON ua.assignmentId = a.assignmentId
             LEFT JOIN subjects s ON a.subjectId = s.subjectId
-            WHERE assignmentStatusId = 2
+            WHERE $statusFilter
             ORDER BY ua.userAssignmentSubmittedAt ASC
         ");
 

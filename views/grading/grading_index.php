@@ -176,30 +176,126 @@
     }
 
     /* Rainbow colors for table rows - more visible tints */
-    .subject-row-0 { background-color: rgba(231, 76, 60, 0.25) !important; } /* Red */
-    .subject-row-1 { background-color: rgba(230, 126, 34, 0.25) !important; } /* Orange */
-    .subject-row-2 { background-color: rgba(241, 196, 15, 0.3) !important; } /* Yellow */
-    .subject-row-3 { background-color: rgba(46, 204, 113, 0.25) !important; } /* Green */
-    .subject-row-4 { background-color: rgba(52, 152, 219, 0.25) !important; } /* Blue */
-    .subject-row-5 { background-color: rgba(155, 89, 182, 0.25) !important; } /* Purple */
-    .subject-row-6 { background-color: rgba(233, 30, 99, 0.25) !important; } /* Pink */
-    .subject-row-7 { background-color: rgba(0, 188, 212, 0.25) !important; } /* Cyan */
-    .subject-row-8 { background-color: rgba(255, 152, 0, 0.25) !important; } /* Deep Orange */
-    .subject-row-9 { background-color: rgba(96, 125, 139, 0.25) !important; } /* Blue Grey */
-    .subject-row-10 { background-color: rgba(139, 195, 74, 0.25) !important; } /* Light Green */
-    .subject-row-11 { background-color: rgba(255, 87, 34, 0.25) !important; } /* Deep Orange Red */
-    .subject-row-12 { background-color: rgba(121, 85, 72, 0.25) !important; } /* Brown */
-    .subject-row-13 { background-color: rgba(0, 150, 136, 0.25) !important; } /* Teal */
-    .subject-row-14 { background-color: rgba(103, 58, 183, 0.25) !important; } /* Deep Purple */
-    .subject-row-15 { background-color: rgba(255, 64, 129, 0.25) !important; } /* Pink Accent */
-    .subject-row-16 { background-color: rgba(76, 175, 80, 0.25) !important; } /* Material Green */
-    .subject-row-17 { background-color: rgba(33, 150, 243, 0.25) !important; } /* Material Blue */
-    .subject-row-18 { background-color: rgba(255, 111, 0, 0.3) !important; } /* Amber */
-    .subject-row-19 { background-color: rgba(55, 71, 79, 0.25) !important; } /* Dark Blue Grey */
-    .subject-row-20 { background-color: rgba(211, 47, 47, 0.25) !important; } /* Dark Red */
-    .subject-row-21 { background-color: rgba(123, 31, 162, 0.25) !important; } /* Dark Purple */
-    .subject-row-22 { background-color: rgba(56, 142, 60, 0.25) !important; } /* Dark Green */
-    .subject-row-23 { background-color: rgba(25, 118, 210, 0.25) !important; } /* Dark Blue */
+    .subject-row-0 {
+        background-color: rgba(231, 76, 60, 0.25) !important;
+    }
+
+    /* Red */
+    .subject-row-1 {
+        background-color: rgba(230, 126, 34, 0.25) !important;
+    }
+
+    /* Orange */
+    .subject-row-2 {
+        background-color: rgba(241, 196, 15, 0.3) !important;
+    }
+
+    /* Yellow */
+    .subject-row-3 {
+        background-color: rgba(46, 204, 113, 0.25) !important;
+    }
+
+    /* Green */
+    .subject-row-4 {
+        background-color: rgba(52, 152, 219, 0.25) !important;
+    }
+
+    /* Blue */
+    .subject-row-5 {
+        background-color: rgba(155, 89, 182, 0.25) !important;
+    }
+
+    /* Purple */
+    .subject-row-6 {
+        background-color: rgba(233, 30, 99, 0.25) !important;
+    }
+
+    /* Pink */
+    .subject-row-7 {
+        background-color: rgba(0, 188, 212, 0.25) !important;
+    }
+
+    /* Cyan */
+    .subject-row-8 {
+        background-color: rgba(255, 152, 0, 0.25) !important;
+    }
+
+    /* Deep Orange */
+    .subject-row-9 {
+        background-color: rgba(96, 125, 139, 0.25) !important;
+    }
+
+    /* Blue Grey */
+    .subject-row-10 {
+        background-color: rgba(139, 195, 74, 0.25) !important;
+    }
+
+    /* Light Green */
+    .subject-row-11 {
+        background-color: rgba(255, 87, 34, 0.25) !important;
+    }
+
+    /* Deep Orange Red */
+    .subject-row-12 {
+        background-color: rgba(121, 85, 72, 0.25) !important;
+    }
+
+    /* Brown */
+    .subject-row-13 {
+        background-color: rgba(0, 150, 136, 0.25) !important;
+    }
+
+    /* Teal */
+    .subject-row-14 {
+        background-color: rgba(103, 58, 183, 0.25) !important;
+    }
+
+    /* Deep Purple */
+    .subject-row-15 {
+        background-color: rgba(255, 64, 129, 0.25) !important;
+    }
+
+    /* Pink Accent */
+    .subject-row-16 {
+        background-color: rgba(76, 175, 80, 0.25) !important;
+    }
+
+    /* Material Green */
+    .subject-row-17 {
+        background-color: rgba(33, 150, 243, 0.25) !important;
+    }
+
+    /* Material Blue */
+    .subject-row-18 {
+        background-color: rgba(255, 111, 0, 0.3) !important;
+    }
+
+    /* Amber */
+    .subject-row-19 {
+        background-color: rgba(55, 71, 79, 0.25) !important;
+    }
+
+    /* Dark Blue Grey */
+    .subject-row-20 {
+        background-color: rgba(211, 47, 47, 0.25) !important;
+    }
+
+    /* Dark Red */
+    .subject-row-21 {
+        background-color: rgba(123, 31, 162, 0.25) !important;
+    }
+
+    /* Dark Purple */
+    .subject-row-22 {
+        background-color: rgba(56, 142, 60, 0.25) !important;
+    }
+
+    /* Dark Green */
+    .subject-row-23 {
+        background-color: rgba(25, 118, 210, 0.25) !important;
+    }
+
+    /* Dark Blue */
 
     /* Ensure table cells maintain white background within colored rows */
     .subject-row-0 td, .subject-row-1 td, .subject-row-2 td, .subject-row-3 td,
@@ -283,8 +379,12 @@
     }
 
     @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
+        0% {
+            transform: rotate(0deg);
+        }
+        100% {
+            transform: rotate(360deg);
+        }
     }
 
     /* Solution URL styling */
@@ -305,10 +405,21 @@
         font-weight: 600;
     }
 
-    .markdown-content h1 { font-size: 1.5rem; }
-    .markdown-content h2 { font-size: 1.3rem; }
-    .markdown-content h3 { font-size: 1.1rem; }
-    .markdown-content h4, .markdown-content h5, .markdown-content h6 { font-size: 1rem; }
+    .markdown-content h1 {
+        font-size: 1.5rem;
+    }
+
+    .markdown-content h2 {
+        font-size: 1.3rem;
+    }
+
+    .markdown-content h3 {
+        font-size: 1.1rem;
+    }
+
+    .markdown-content h4, .markdown-content h5, .markdown-content h6 {
+        font-size: 1rem;
+    }
 
     .markdown-content ul, .markdown-content ol {
         padding-left: 1.5rem;
@@ -559,90 +670,181 @@
     .sortable-header .sort-indicator {
         pointer-events: none;
     }
+
+    /* -------------------------------------------------
+       MOBILE - hide unneeded columns + tighten spacing
+       -------------------------------------------------*/
+    @media (max-width: 990px) {
+        /* Hide unimportant columns in phone view */
+        /* Esitatud   */
+        #grading-table th:nth-child(4),
+        #grading-table td:nth-child(4),
+            /* Hinnatud   */
+        #grading-table th:nth-child(6),
+        #grading-table td:nth-child(6),
+            /* Vahe       */
+        #grading-table th:nth-child(7),
+        #grading-table td:nth-child(7),
+            /* Hinne      */
+        #grading-table th:nth-child(8),
+        #grading-table td:nth-child(8) {
+            display: none !important;
+        }
+
+        /* Make the remaining columns slimmer */
+        #grading-table th,
+        #grading-table td {
+            padding: 4px 6px !important; /* much tighter */
+            font-size: .80rem; /* a bit smaller text */
+        }
+
+        #grading-table td:first-child,
+        #grading-table th:first-child { /* “#” column */
+            width: 32px;
+            min-width: 32px;
+        }
+
+        #grading-table td:nth-child(2),
+        #grading-table th:nth-child(2) { /* Õpilane */
+            padding-right: 22px !important;
+            width: 60px; /* was 110px */
+            max-width: 60px;
+        }
+
+        /* Let Ülesanne grow/shrink as needed */
+        #grading-table td:nth-child(3),
+        #grading-table th:nth-child(3) {
+            width: auto;
+            max-width: initial;
+            white-space: normal; /* allow wrapping */
+        }
+
+        /* Vanus */
+        #grading-table th:nth-child(5) {
+            padding-right: 22px !important;
+            text-align: left;
+            color: black;
+            font-weight: bold;
+            width: 50px; /* was 110px */
+            max-width: 50px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis; /* show “…” when needed */
+        }
+    }
+
 </style>
+
+<?php if ($this->auth->userIsAdmin || $this->auth->userIsTeacher): ?>
+    <div class="col text-end mb-3 d-flex justify-content-end align-items-center">
+        <div class="form-check form-switch me-3">
+            <input class="form-check-input" type="checkbox"
+                   id="showGradedToggle" <?= $this->showGraded ? 'checked' : '' ?>>
+            <label class="form-check-label" for="showGradedToggle">Näita hinnatud</label>
+        </div>
+    </div>
+<?php endif; ?>
 
 <div class="row">
     <div class="col-12">
         <h1>Hindamine</h1>
         <div class="table-responsive" style="background-color: transparent;">
-            <table id="grading-table" class="table table-bordered" style="background-color: transparent; table-layout: fixed !important;">
+            <table id="grading-table" class="table table-bordered"
+                   style="background-color: transparent; table-layout: fixed !important;">
                 <thead>
-                    <tr>
-                        <th class="sortable-header" data-sort="position" data-bs-toggle="tooltip" data-bs-placement="top" title="Järjekorranumber">
-                            #
-                            <span class="sort-indicator">⇅</span>
-                        </th>
-                        <th class="sortable-header" data-sort="student" data-bs-toggle="tooltip" data-bs-placement="top" title="Õpilase nimi">
-                            Õpilane
-                            <span class="sort-indicator">⇅</span>
-                        </th>
-                        <th class="sortable-header" data-sort="assignment" data-bs-toggle="tooltip" data-bs-placement="top" title="Ülesande nimi ja aine">
-                            Ülesanne
-                            <span class="sort-indicator">⇅</span>
-                        </th>
-                        <th class="sortable-header" data-sort="submitted" data-bs-toggle="tooltip" data-bs-placement="top" title="Ülesande esitamise kuupäev ja kellaaeg">
-                            Esitatud
-                            <span class="sort-indicator">⇅</span>
-                        </th>
-                        <th class="sortable-header" data-sort="age" data-bs-toggle="tooltip" data-bs-placement="top" title="Mitu päeva tagasi esitatud">
-                            Vanus
-                            <span class="sort-indicator">⇅</span>
-                        </th>
-                        <th class="sortable-header" data-sort="graded" data-bs-toggle="tooltip" data-bs-placement="top" title="Ülesande hindamise kuupäev ja kellaaeg">
-                            Hinnatud
-                            <span class="sort-indicator">⇅</span>
-                        </th>
-                        <th class="sortable-header" data-sort="difference" data-bs-toggle="tooltip" data-bs-placement="top" title="Mitu päeva kulus esitamisest hindamiseni">
-                            Vahe
-                            <span class="sort-indicator">⇅</span>
-                        </th>
-                        <th class="sortable-header" data-sort="grade" style="width: 80px;" data-bs-toggle="tooltip" data-bs-placement="top" title="Antud hinne">
-                            Hinne
-                            <span class="sort-indicator">⇅</span>
-                        </th>
-                    </tr>
+                <tr>
+                    <th class="sortable-header" data-sort="position" data-bs-toggle="tooltip" data-bs-placement="top"
+                        title="Järjekorranumber">
+                        #
+                        <span class="sort-indicator">⇅</span>
+                    </th>
+                    <th class="sortable-header" data-sort="student" data-bs-toggle="tooltip" data-bs-placement="top"
+                        title="Õpilase nimi">
+                        Õpilane
+                        <span class="sort-indicator">⇅</span>
+                    </th>
+                    <th class="sortable-header" data-sort="assignment" data-bs-toggle="tooltip" data-bs-placement="top"
+                        title="Ülesande nimi ja aine">
+                        Ülesanne
+                        <span class="sort-indicator">⇅</span>
+                    </th>
+                    <th class="sortable-header" data-sort="submitted" data-bs-toggle="tooltip" data-bs-placement="top"
+                        title="Ülesande esitamise kuupäev ja kellaaeg">
+                        Esitatud
+                        <span class="sort-indicator">⇅</span>
+                    </th>
+                    <th class="sortable-header" data-sort="age" data-bs-toggle="tooltip" data-bs-placement="top"
+                        title="Mitu päeva tagasi esitatud">
+                        Vanus
+                        <span class="sort-indicator">⇅</span>
+                    </th>
+                    <th class="sortable-header" data-sort="graded" data-bs-toggle="tooltip" data-bs-placement="top"
+                        title="Ülesande hindamise kuupäev ja kellaaeg">
+                        Hinnatud
+                        <span class="sort-indicator">⇅</span>
+                    </th>
+                    <th class="sortable-header" data-sort="difference" data-bs-toggle="tooltip" data-bs-placement="top"
+                        title="Mitu päeva kulus esitamisest hindamiseni">
+                        Vahe
+                        <span class="sort-indicator">⇅</span>
+                    </th>
+                    <th class="sortable-header" data-sort="grade" style="width: 80px;" data-bs-toggle="tooltip"
+                        data-bs-placement="top" title="Antud hinne">
+                        Hinne
+                        <span class="sort-indicator">⇅</span>
+                    </th>
+                </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($this->submissions as $index => $submission): ?>
-                        <tr class="subject-row-<?= $this->subjectColors[$submission['subjectId']] ?> grading-row"
-                            data-assignment-id="<?= $submission['assignmentId'] ?>"
-                            data-user-id="<?= $submission['userId'] ?>"
-                            data-assignment-name="<?= htmlspecialchars($submission['Ülesanne']) ?>"
-                            data-student-name="<?= htmlspecialchars($submission['Õpilane']) ?>"
-                            data-solution-url="<?= htmlspecialchars($submission['solutionUrl'] ?? '') ?>"
-                            data-assignment-instructions="<?= htmlspecialchars($submission['assignmentInstructions'] ?? '') ?>"
-                            data-comments="<?= htmlspecialchars($submission['comments'] ?? '[]') ?>"
-                            data-current-grade="<?= htmlspecialchars($submission['userGrade'] ?? '') ?>"
-                            data-criteria="<?= htmlspecialchars($submission['criteria'] ?? '[]') ?>"
-                            data-sort-position="<?= $index + 1 ?>"
-                            data-sort-submitted="<?= $submission['Esitatud'] ? strtotime($submission['Esitatud']) : 0 ?>"
-                            data-sort-graded="<?= $submission['Hinnatud'] ? strtotime($submission['Hinnatud']) : 0 ?>"
-                            data-sort-age="<?= $submission['Vanus'] ?: 999999 ?>"
-                            data-sort-difference="<?= $submission['Vahe'] ?: 999999 ?>"
-                            data-sort-student="<?= htmlspecialchars($submission['Õpilane']) ?>"
-                            data-sort-subject="<?= htmlspecialchars($submission['Aine']) ?>"
-                            data-sort-grade="<?= htmlspecialchars($submission['userGrade'] ?? '') ?>">
-                            <td><?= $index + 1 ?></td>
-                            <td data-bs-toggle="tooltip" data-bs-placement="top" title="<?= htmlspecialchars($submission['Õpilane']) ?>"><?= $submission['Õpilane'] ?></td>
-                            <td data-bs-toggle="tooltip" data-bs-placement="top" title="<?= htmlspecialchars($submission['Aine'] . ' - ' . $submission['Ülesanne']) ?>">
-                                <span class="subject-name"><?= $submission['Aine'] ?></span>
-                                <a href="grading/assignments/<?= $submission['assignmentId'] ?>/students/<?= $submission['userId'] ?>" onclick="event.preventDefault(); openGradingModal(this.closest('tr')); return false;" class="assignment-name" style="text-decoration: none; color: inherit;"><?= $submission['Ülesanne'] ?></a>
-                                <?php if ($submission['commentCount'] > 0): ?>
-                                    <span class="comment-bubble">
+                <?php foreach ($this->submissions as $index => $submission): ?>
+                    <tr class="subject-row-<?= $this->subjectColors[$submission['subjectId']] ?> grading-row"
+                        data-assignment-id="<?= $submission['assignmentId'] ?>"
+                        data-user-id="<?= $submission['userId'] ?>"
+                        data-assignment-name="<?= htmlspecialchars($submission['Ülesanne']) ?>"
+                        data-student-name="<?= htmlspecialchars($submission['Õpilane']) ?>"
+                        data-solution-url="<?= htmlspecialchars($submission['solutionUrl'] ?? '') ?>"
+                        data-assignment-instructions="<?= htmlspecialchars($submission['assignmentInstructions'] ?? '') ?>"
+                        data-comments="<?= htmlspecialchars($submission['comments'] ?? '[]') ?>"
+                        data-current-grade="<?= htmlspecialchars($submission['userGrade'] ?? '') ?>"
+                        data-criteria="<?= htmlspecialchars($submission['criteria'] ?? '[]') ?>"
+                        data-sort-position="<?= $index + 1 ?>"
+                        data-sort-submitted="<?= $submission['Esitatud'] ? strtotime($submission['Esitatud']) : 0 ?>"
+                        data-sort-graded="<?= $submission['Hinnatud'] ? strtotime($submission['Hinnatud']) : 0 ?>"
+                        data-sort-age="<?= $submission['Vanus'] ?: 999999 ?>"
+                        data-sort-difference="<?= $submission['Vahe'] ?: 999999 ?>"
+                        data-sort-student="<?= htmlspecialchars($submission['Õpilane']) ?>"
+                        data-sort-subject="<?= htmlspecialchars($submission['Aine']) ?>"
+                        data-sort-grade="<?= htmlspecialchars($submission['userGrade'] ?? '') ?>">
+                        <td><?= $index + 1 ?></td>
+                        <td data-bs-toggle="tooltip" data-bs-placement="top"
+                            title="<?= htmlspecialchars($submission['Õpilane']) ?>"><?= $submission['Õpilane'] ?></td>
+                        <td data-bs-toggle="tooltip" data-bs-placement="top"
+                            title="<?= htmlspecialchars($submission['Aine'] . ' - ' . $submission['Ülesanne']) ?>">
+                            <span class="subject-name"><?= $submission['Aine'] ?></span>
+                            <a href="grading/assignments/<?= $submission['assignmentId'] ?>/students/<?= $submission['userId'] ?>"
+                               onclick="event.preventDefault(); openGradingModal(this.closest('tr')); return false;"
+                               class="assignment-name"
+                               style="text-decoration: none; color: inherit;"><?= $submission['Ülesanne'] ?></a>
+                            <?php if ($submission['commentCount'] > 0): ?>
+                                <span class="comment-bubble">
                                         <i class="fas fa-comment"></i>
                                         <span class="comment-count"><?= $submission['commentCount'] ?></span>
                                     </span>
-                                <?php endif; ?>
-                            </td>
-                            <td data-bs-toggle="tooltip" data-bs-placement="top" title="<?= $submission['Esitatud'] ? 'Esitatud: ' . (new DateTime($submission['Esitatud']))->format('d.m.Y H:i') : 'Esitamata' ?>"><?= $submission['Esitatud'] ? '<span class="id-badge"><strong>' . (new DateTime($submission['Esitatud']))->format('d.m.y') . '</strong> ' . (new DateTime($submission['Esitatud']))->format('H:i') . '</span>' : '' ?></td>
-                            <td data-bs-toggle="tooltip" data-bs-placement="top" title="<?= $submission['Vanus'] ? $submission['Vanus'] . ' päeva tagasi' : 'Täna esitatud' ?>"><?= $submission['Vanus'] ?></td>
-                            <td data-bs-toggle="tooltip" data-bs-placement="top" title="<?= $submission['Hinnatud'] ? 'Hinnatud: ' . (new DateTime($submission['Hinnatud']))->format('d.m.Y H:i') : 'Hindamata' ?>"><?= $submission['Hinnatud'] ? '<span class="id-badge"><strong>' . (new DateTime($submission['Hinnatud']))->format('d.m.y') . '</strong> ' . (new DateTime($submission['Hinnatud']))->format('H:i') . '</span>' : '' ?></td>
-                            <td data-bs-toggle="tooltip" data-bs-placement="top" title="<?= $submission['Vahe'] ? 'Hindamine võttis ' . $submission['Vahe'] . ' päeva' : 'Sama päeva jooksul hinnatud' ?>"><?= $submission['Vahe'] ?></td>
-                            <td class="grade-cell text-center">
-                                <!-- Grade will be populated here after grading -->
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
+                            <?php endif; ?>
+                        </td>
+                        <td data-bs-toggle="tooltip" data-bs-placement="top"
+                            title="<?= $submission['Esitatud'] ? 'Esitatud: ' . (new DateTime($submission['Esitatud']))->format('d.m.Y H:i') : 'Esitamata' ?>"><?= $submission['Esitatud'] ? '<span class="id-badge"><strong>' . (new DateTime($submission['Esitatud']))->format('d.m.y') . '</strong> ' . (new DateTime($submission['Esitatud']))->format('H:i') . '</span>' : '' ?></td>
+                        <td data-bs-toggle="tooltip" data-bs-placement="top"
+                            title="<?= $submission['Vanus'] ? $submission['Vanus'] . ' päeva tagasi' : 'Täna esitatud' ?>"><?= $submission['Vanus'] ?></td>
+                        <td data-bs-toggle="tooltip" data-bs-placement="top"
+                            title="<?= $submission['Hinnatud'] ? 'Hinnatud: ' . (new DateTime($submission['Hinnatud']))->format('d.m.Y H:i') : 'Hindamata' ?>"><?= $submission['Hinnatud'] ? '<span class="id-badge"><strong>' . (new DateTime($submission['Hinnatud']))->format('d.m.y') . '</strong> ' . (new DateTime($submission['Hinnatud']))->format('H:i') . '</span>' : '' ?></td>
+                        <td data-bs-toggle="tooltip" data-bs-placement="top"
+                            title="<?= $submission['Vahe'] ? 'Hindamine võttis ' . $submission['Vahe'] . ' päeva' : 'Sama päeva jooksul hinnatud' ?>"><?= $submission['Vahe'] ?></td>
+                        <td class="grade-cell text-center">
+                            <!-- Grade will be populated here after grading -->
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
                 </tbody>
             </table>
         </div>
@@ -659,12 +861,13 @@
             </div>
             <div class="modal-body">
                 <!-- Solution URL Section -->
-                <div class="mb-3" id="solutionUrlSection">
-                    <h6>Lahenduse URL</h6>
+                <div class="mb-3" id="solutionUrlSection"><h6>Lahenduse URL</h6>
                     <div class="mt-2 d-none" id="solutionUrlDetails">
                         <div class="input-group">
-                            <input type="text" class="form-control form-control-sm font-monospace" id="solutionUrlInput" readonly>
-                            <button class="btn btn-outline-secondary btn-sm" type="button" id="copySolutionUrl" title="Kopeeri URL">
+                            <input type="text" class="form-control form-control-sm font-monospace" id="solutionUrlInput"
+                                   readonly>
+                            <button class="btn btn-outline-secondary btn-sm" type="button" id="copySolutionUrl"
+                                    title="Kopeeri URL">
                                 <i class="fas fa-copy"></i>
                             </button>
                         </div>
@@ -688,7 +891,6 @@
                 </div>
 
 
-
                 <!-- Comments Thread -->
                 <div class="mb-3">
                     <h6>Vestlus</h6>
@@ -703,7 +905,8 @@
                 <!-- New Message Form -->
                 <div class="mb-3">
                     <label for="newMessageContent" class="form-label">Lisa kommentaar</label>
-                    <textarea class="form-control" id="newMessageContent" rows="3" placeholder="Kirjuta kommentaar õpilasele..."></textarea>
+                    <textarea class="form-control" id="newMessageContent" rows="3"
+                              placeholder="Kirjuta kommentaar õpilasele..."></textarea>
                     <div class="invalid-feedback" id="messageError"></div>
                 </div>
             </div>
@@ -753,13 +956,13 @@
         // Add click handlers to grading rows
         const gradingRows = document.querySelectorAll('.grading-row');
         gradingRows.forEach(row => {
-            row.addEventListener('click', function() {
+            row.addEventListener('click', function () {
                 openGradingModal(this);
             });
         });
 
         // Copy solution URL button handler
-        document.getElementById('copySolutionUrl').addEventListener('click', function() {
+        document.getElementById('copySolutionUrl').addEventListener('click', function () {
             copySolutionUrl();
         });
 
@@ -767,18 +970,28 @@
         const gradeButtons = document.querySelectorAll('input[name="grade"]');
 
         gradeButtons.forEach(button => {
-            button.addEventListener('change', function() {
+            button.addEventListener('change', function () {
                 updateSaveButtonState();
             });
         });
 
         // Save button handler (consolidated save functionality)
-        document.getElementById('saveBtn').addEventListener('click', function() {
+        document.getElementById('saveBtn').addEventListener('click', function () {
             saveGradeAndComment();
         });
 
         // Initialize table sorting
         initializeTableSorting();
+
+        // Handle the "Show graded" toggle
+        const showGradedToggle = document.getElementById('showGradedToggle');
+        if (showGradedToggle) {
+            showGradedToggle.addEventListener('change', function () {
+                const url = new URL(window.location.href);
+                url.searchParams.set('showGraded', this.checked ? '1' : '0');
+                window.location.href = url.toString();
+            });
+        }
     });
 
     let currentAssignmentId = null;
@@ -865,7 +1078,7 @@
         gradingModalInstance = new bootstrap.Modal(modalElement);
 
         // Add event listener for proper cleanup when modal is hidden
-        modalElement.addEventListener('hidden.bs.modal', function() {
+        modalElement.addEventListener('hidden.bs.modal', function () {
             // Remove any lingering backdrops
             const backdrops = document.querySelectorAll('.modal-backdrop');
             backdrops.forEach(backdrop => backdrop.remove());
@@ -874,7 +1087,7 @@
             document.body.classList.remove('modal-open');
             document.body.style.overflow = '';
             document.body.style.paddingRight = '';
-        }, { once: true });
+        }, {once: true});
 
         // Show modal
         gradingModalInstance.show();
@@ -910,7 +1123,7 @@
             // Add event listeners to criteria checkboxes
             const criteriaCheckboxes = criteriaContainer.querySelectorAll('input[type="checkbox"]');
             criteriaCheckboxes.forEach(checkbox => {
-                checkbox.addEventListener('change', function() {
+                checkbox.addEventListener('change', function () {
                     updateSaveButtonState();
                 });
             });
@@ -980,31 +1193,55 @@
             },
             body: formData.toString()
         })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 200) {
-                // Clear comment form and reload messages
-                document.getElementById('newMessageContent').value = '';
-                loadMessages(currentAssignmentId, currentUserId);
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 200) {
+                    // Clear comment form and reload messages
+                    document.getElementById('newMessageContent').value = '';
+                    loadMessages(currentAssignmentId, currentUserId);
 
-                // Update the table row to reflect the new grade
-                updateTableRowGrade(currentAssignmentId, currentUserId, selectedGrade);
+                    // Update the table row to reflect the new grade
+                    updateTableRowGrade(currentAssignmentId, currentUserId, selectedGrade);
 
-                // Add grade badge to table row
-                addGradeBadgeToTableRow(currentAssignmentId, currentUserId, selectedGrade);
+                    // Add grade badge to table row
+                    addGradeBadgeToTableRow(currentAssignmentId, currentUserId, selectedGrade);
 
-                // Auto-close modal after successful save
-                try {
-                    if (gradingModalInstance) {
-                        gradingModalInstance.hide();
-                    } else {
-                        console.error('Modal instance not found for auto-close');
+                    // Auto-close modal after successful save
+                    try {
+                        if (gradingModalInstance) {
+                            gradingModalInstance.hide();
+                        } else {
+                            console.error('Modal instance not found for auto-close');
+                        }
+                    } catch (error) {
+                        console.error('Error auto-closing modal:', error);
                     }
-                } catch (error) {
-                    console.error('Error auto-closing modal:', error);
+
+                    // If "Show graded" toggle is unchecked, remove the graded row from the table
+                    const showGradedToggle = document.getElementById('showGradedToggle');
+                    if (showGradedToggle && !showGradedToggle.checked) {
+                        const targetRow = document.querySelector('.grading-row[data-assignment-id="' + currentAssignmentId + '"][data-user-id="' + currentUserId + '"]');
+                        if (targetRow) {
+                            targetRow.remove();
+                            // Update position numbers for remaining rows
+                            const remainingRows = Array.from(document.querySelectorAll('.grading-row'));
+                            updatePositionNumbers(remainingRows, 'asc');
+                        }
+                    }
+                } else {
+                    gradeError.textContent = data.message || 'Viga andmete salvestamisel';
+                    gradeError.style.display = 'block';
+                    gradeError.classList.add('d-block');
+
+                    // Re-enable button immediately on error
+                    saveBtn.disabled = false;
+                    saveBtnText.textContent = 'Salvesta';
+                    saveBtnSpinner.classList.add('d-none');
                 }
-            } else {
-                gradeError.textContent = data.message || 'Viga andmete salvestamisel';
+            })
+            .catch(error => {
+                console.error('Error saving data:', error);
+                gradeError.textContent = 'Viga andmete salvestamisel';
                 gradeError.style.display = 'block';
                 gradeError.classList.add('d-block');
 
@@ -1012,19 +1249,7 @@
                 saveBtn.disabled = false;
                 saveBtnText.textContent = 'Salvesta';
                 saveBtnSpinner.classList.add('d-none');
-            }
-        })
-        .catch(error => {
-            console.error('Error saving data:', error);
-            gradeError.textContent = 'Viga andmete salvestamisel';
-            gradeError.style.display = 'block';
-            gradeError.classList.add('d-block');
-
-            // Re-enable button immediately on error
-            saveBtn.disabled = false;
-            saveBtnText.textContent = 'Salvesta';
-            saveBtnSpinner.classList.add('d-none');
-        });
+            });
     }
 
     function updateTableRowGrade(assignmentId, userId, grade) {
@@ -1043,7 +1268,7 @@
             const targetRow = document.querySelector('.grading-row[data-assignment-id="' + assignmentId + '"][data-user-id="' + userId + '"]');
 
             if (!targetRow) {
-                console.warn('Table row not found for adding grade badge:', { assignmentId, userId });
+                console.warn('Table row not found for adding grade badge:', {assignmentId, userId});
                 return;
             }
 
@@ -1104,7 +1329,6 @@
     }
 
 
-
     function loadMessages(assignmentId, studentId) {
         const messagesContainer = document.getElementById('messagesContainer');
         messagesContainer.innerHTML = `
@@ -1122,22 +1346,22 @@
             },
             body: `assignmentId=${assignmentId}&studentId=${studentId}`
         })
-        .then(response => {
-            console.log('Response status:', response.status);
-            return response.json();
-        })
-        .then(data => {
-            console.log('Response data:', data);
-            if (data.status === 200) {
-                displayMessages(data.data);
-            } else {
-                messagesContainer.innerHTML = `<p class="text-danger">Viga sõnumite laadimisel: ${data.message || 'Tundmatu viga'}</p>`;
-            }
-        })
-        .catch(error => {
-            console.error('Error loading messages:', error);
-            messagesContainer.innerHTML = `<p class="text-danger">Viga sõnumite laadimisel: ${error.message}</p>`;
-        });
+            .then(response => {
+                console.log('Response status:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Response data:', data);
+                if (data.status === 200) {
+                    displayMessages(data.data);
+                } else {
+                    messagesContainer.innerHTML = `<p class="text-danger">Viga sõnumite laadimisel: ${data.message || 'Tundmatu viga'}</p>`;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading messages:', error);
+                messagesContainer.innerHTML = `<p class="text-danger">Viga sõnumite laadimisel: ${error.message}</p>`;
+            });
     }
 
     function displayMessages(messages) {
@@ -1169,7 +1393,6 @@
         // Scroll to bottom
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
-
 
 
     function copySolutionUrl() {
@@ -1226,7 +1449,7 @@
 
         // Ordered lists
         html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
-        html = html.replace(/(<li>.*<\/li>)/s, function(match) {
+        html = html.replace(/(<li>.*<\/li>)/s, function (match) {
             if (match.includes('<ul>')) return match;
             return '<ol>' + match + '</ol>';
         });
@@ -1299,7 +1522,7 @@
         result = result.replace(/<ol>\s*<br>\s*<li>/g, '<ol><li>');
 
         // Remove <br> tags inside code blocks (they break ASCII art and directory structures)
-        result = result.replace(/<pre><code>([\s\S]*?)<\/code><\/pre>/g, function(match, codeContent) {
+        result = result.replace(/<pre><code>([\s\S]*?)<\/code><\/pre>/g, function (match, codeContent) {
             // Remove all <br> tags and any extra whitespace from code content
             let cleanedContent = codeContent.replace(/<br\s*\/?>/g, '\n');
             // Also remove any <p> tags that might have been added
@@ -1364,7 +1587,7 @@
 
         if (tableLines.length < 2) {
             // Not a valid table
-            return { html: lines[startIndex], nextIndex: startIndex + 1 };
+            return {html: lines[startIndex], nextIndex: startIndex + 1};
         }
 
         // Parse header row
@@ -1417,17 +1640,17 @@
 
         tableHtml += '</table>';
 
-        return { html: tableHtml, nextIndex: i };
+        return {html: tableHtml, nextIndex: i};
     }
 
     // Table sorting functionality
-    let currentSort = { column: null, direction: 'asc' };
+    let currentSort = {column: null, direction: 'asc'};
 
     function initializeTableSorting() {
         const sortableHeaders = document.querySelectorAll('.sortable-header');
 
         sortableHeaders.forEach(header => {
-            header.addEventListener('click', function() {
+            header.addEventListener('click', function () {
                 const sortType = this.dataset.sort;
                 handleSort(sortType, this);
             });
@@ -1446,7 +1669,7 @@
         }
 
         // Update current sort state
-        currentSort = { column: sortType, direction: direction };
+        currentSort = {column: sortType, direction: direction};
 
         // Clear all sort indicators
         document.querySelectorAll('.sort-indicator').forEach(indicator => {
@@ -1454,9 +1677,10 @@
             indicator.textContent = '⇅';
         });
 
-        // Update active sort indicator
+        // Update active sort indicator to show current sort direction
         const indicator = headerElement.querySelector('.sort-indicator');
         indicator.classList.add('active');
+        // Show the current sort direction: ↑ for ascending (A→Z, 1→9, old→new), ↓ for descending (Z→A, 9→1, new→old)
         indicator.textContent = direction === 'asc' ? '↑' : '↓';
 
         // Sort rows
