@@ -175,135 +175,18 @@
         vertical-align: middle;
     }
 
-    /* Rainbow colors for table rows - more visible tints */
-    .subject-row-0 {
-        background-color: rgba(231, 76, 60, 0.25) !important;
+    /* Grading status colors for table rows */
+    .grading-row.graded {
+        background-color: rgba(40, 167, 69, 0.15) !important; /* Light green for graded */
     }
 
-    /* Red */
-    .subject-row-1 {
-        background-color: rgba(230, 126, 34, 0.25) !important;
+    .grading-row.ungraded {
+        background-color: rgba(255, 182, 193, 0.3) !important; /* Pale pink for ungraded */
     }
 
-    /* Orange */
-    .subject-row-2 {
-        background-color: rgba(241, 196, 15, 0.3) !important;
-    }
-
-    /* Yellow */
-    .subject-row-3 {
-        background-color: rgba(46, 204, 113, 0.25) !important;
-    }
-
-    /* Green */
-    .subject-row-4 {
-        background-color: rgba(52, 152, 219, 0.25) !important;
-    }
-
-    /* Blue */
-    .subject-row-5 {
-        background-color: rgba(155, 89, 182, 0.25) !important;
-    }
-
-    /* Purple */
-    .subject-row-6 {
-        background-color: rgba(233, 30, 99, 0.25) !important;
-    }
-
-    /* Pink */
-    .subject-row-7 {
-        background-color: rgba(0, 188, 212, 0.25) !important;
-    }
-
-    /* Cyan */
-    .subject-row-8 {
-        background-color: rgba(255, 152, 0, 0.25) !important;
-    }
-
-    /* Deep Orange */
-    .subject-row-9 {
-        background-color: rgba(96, 125, 139, 0.25) !important;
-    }
-
-    /* Blue Grey */
-    .subject-row-10 {
-        background-color: rgba(139, 195, 74, 0.25) !important;
-    }
-
-    /* Light Green */
-    .subject-row-11 {
-        background-color: rgba(255, 87, 34, 0.25) !important;
-    }
-
-    /* Deep Orange Red */
-    .subject-row-12 {
-        background-color: rgba(121, 85, 72, 0.25) !important;
-    }
-
-    /* Brown */
-    .subject-row-13 {
-        background-color: rgba(0, 150, 136, 0.25) !important;
-    }
-
-    /* Teal */
-    .subject-row-14 {
-        background-color: rgba(103, 58, 183, 0.25) !important;
-    }
-
-    /* Deep Purple */
-    .subject-row-15 {
-        background-color: rgba(255, 64, 129, 0.25) !important;
-    }
-
-    /* Pink Accent */
-    .subject-row-16 {
-        background-color: rgba(76, 175, 80, 0.25) !important;
-    }
-
-    /* Material Green */
-    .subject-row-17 {
-        background-color: rgba(33, 150, 243, 0.25) !important;
-    }
-
-    /* Material Blue */
-    .subject-row-18 {
-        background-color: rgba(255, 111, 0, 0.3) !important;
-    }
-
-    /* Amber */
-    .subject-row-19 {
-        background-color: rgba(55, 71, 79, 0.25) !important;
-    }
-
-    /* Dark Blue Grey */
-    .subject-row-20 {
-        background-color: rgba(211, 47, 47, 0.25) !important;
-    }
-
-    /* Dark Red */
-    .subject-row-21 {
-        background-color: rgba(123, 31, 162, 0.25) !important;
-    }
-
-    /* Dark Purple */
-    .subject-row-22 {
-        background-color: rgba(56, 142, 60, 0.25) !important;
-    }
-
-    /* Dark Green */
-    .subject-row-23 {
-        background-color: rgba(25, 118, 210, 0.25) !important;
-    }
-
-    /* Dark Blue */
-
-    /* Ensure table cells maintain white background within colored rows */
-    .subject-row-0 td, .subject-row-1 td, .subject-row-2 td, .subject-row-3 td,
-    .subject-row-4 td, .subject-row-5 td, .subject-row-6 td, .subject-row-7 td,
-    .subject-row-8 td, .subject-row-9 td, .subject-row-10 td, .subject-row-11 td,
-    .subject-row-12 td, .subject-row-13 td, .subject-row-14 td, .subject-row-15 td,
-    .subject-row-16 td, .subject-row-17 td, .subject-row-18 td, .subject-row-19 td,
-    .subject-row-20 td, .subject-row-21 td, .subject-row-22 td, .subject-row-23 td {
+    /* Ensure table cells maintain transparent background within colored rows */
+    .grading-row.graded td,
+    .grading-row.ungraded td {
         background-color: transparent !important;
     }
 
@@ -591,10 +474,9 @@
         text-align: center;
     }
 
-    /* Graded row styling */
+    /* Graded row styling - opacity removed to keep colors visible */
     .grading-row.graded {
-        opacity: 0.7;
-        background-color: #f8f9fa !important;
+        /* Background color is now handled by the grading status colors above */
     }
 
     /* Modal footer button consistency */
@@ -797,7 +679,11 @@
                 </thead>
                 <tbody>
                 <?php foreach ($this->submissions as $index => $submission): ?>
-                    <tr class="subject-row-<?= $this->subjectColors[$submission['subjectId']] ?> grading-row"
+                    <?php
+                        // Determine grading status based on whether the submission has been graded
+                        $gradingStatus = (!empty($submission['userGrade']) || !empty($submission['Hinnatud'])) ? 'graded' : 'ungraded';
+                    ?>
+                    <tr class="grading-row <?= $gradingStatus ?>"
                         data-assignment-id="<?= $submission['assignmentId'] ?>"
                         data-user-id="<?= $submission['userId'] ?>"
                         data-assignment-name="<?= htmlspecialchars($submission['Ülesanne']) ?>"
@@ -982,6 +868,9 @@
 
         // Initialize table sorting
         initializeTableSorting();
+
+        // Initialize grading status styling for existing graded rows
+        initializeGradingStatusStyling();
 
         // Handle the "Show graded" toggle
         const showGradedToggle = document.getElementById('showGradedToggle');
@@ -1415,6 +1304,7 @@
             new bootstrap.Tooltip(gradeCell);
 
             // Add visual indication that this row has been graded
+            targetRow.classList.remove('ungraded');
             targetRow.classList.add('graded');
 
         } catch (error) {
@@ -1931,6 +1821,28 @@
         // Initialize new tooltips
         document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(element => {
             new bootstrap.Tooltip(element);
+        });
+    }
+
+    function initializeGradingStatusStyling() {
+        // Check all grading rows and ensure they have the correct grading status classes
+        const gradingRows = document.querySelectorAll('.grading-row');
+
+        gradingRows.forEach(row => {
+            const currentGrade = row.dataset.currentGrade;
+            const gradedTimestamp = row.dataset.sortGraded;
+
+            // Check if the row has been graded (has a grade or graded timestamp that's not 1)
+            const isGraded = (currentGrade && currentGrade.trim() !== '') ||
+                           (gradedTimestamp && gradedTimestamp !== '1');
+
+            if (isGraded) {
+                row.classList.remove('ungraded');
+                row.classList.add('graded');
+            } else {
+                row.classList.remove('graded');
+                row.classList.add('ungraded');
+            }
         });
     }
 </script>
