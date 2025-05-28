@@ -271,7 +271,29 @@ class grading extends Controller
         // Send notification email to student
         $this->sendGradeNotification($assignmentId, $studentId, $teacherInfo, $isUpdated);
 
-        stop(200, 'Grade saved');
+        // Get the updated grading information to return to the client
+        $userAssignment = Db::getFirst('SELECT userAssignmentGradedAt FROM userAssignments WHERE userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
+        $gradedAt = $userAssignment['userAssignmentGradedAt'];
+
+        // Get submission date to calculate difference
+        $submissionDate = Db::getOne('SELECT userAssignmentSubmittedAt FROM userAssignments WHERE userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
+
+        // Calculate difference in days
+        $daysDifference = null;
+        if ($submissionDate && $gradedAt) {
+            $submissionDateTime = new \DateTime($submissionDate);
+            $gradedDateTime = new \DateTime($gradedAt);
+            $submissionDateTime->setTime(0, 0, 0);
+            $gradedDateTime->setTime(0, 0, 0);
+            $daysDiff = $gradedDateTime->diff($submissionDateTime)->days;
+            $daysDifference = $daysDiff == 0 ? '' : $daysDiff;
+        }
+
+        stop(200, [
+            'message' => 'Grade saved',
+            'gradedAt' => $gradedAt,
+            'daysDifference' => $daysDifference
+        ]);
     }
 
     /**

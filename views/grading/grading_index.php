@@ -1217,8 +1217,11 @@
                     document.getElementById('newMessageContent').value = '';
                     loadMessages(currentAssignmentId, currentUserId);
 
-                    // Update the table row to reflect the new grade
+                    // Update the table row to reflect the new grade and timestamps
                     updateTableRowGrade(currentAssignmentId, currentUserId, selectedGrade);
+
+                    // Update the "Hinnatud" and "Vahe" columns with the new data
+                    updateTableRowTimestamps(currentAssignmentId, currentUserId, data.data.gradedAt, data.data.daysDifference);
 
                     // Add grade badge to table row
                     addGradeBadgeToTableRow(currentAssignmentId, currentUserId, selectedGrade);
@@ -1273,6 +1276,84 @@
                 row.dataset.currentGrade = grade;
             }
         });
+    }
+
+    function updateTableRowTimestamps(assignmentId, userId, gradedAt, daysDifference) {
+        try {
+            // Find the specific table row
+            const targetRow = document.querySelector('.grading-row[data-assignment-id="' + assignmentId + '"][data-user-id="' + userId + '"]');
+
+            if (!targetRow) {
+                console.warn('Table row not found for updating timestamps:', {assignmentId, userId});
+                return;
+            }
+
+            // Update "Hinnatud" column (6th column)
+            const gradedCell = targetRow.querySelector('td:nth-child(6)');
+            if (gradedCell && gradedAt) {
+                const gradedDate = new Date(gradedAt);
+                const formattedDate = gradedDate.toLocaleDateString('et-EE', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: '2-digit'
+                });
+                const formattedTime = gradedDate.toLocaleTimeString('et-EE', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                gradedCell.innerHTML = `<span class="id-badge"><strong>${formattedDate}</strong> ${formattedTime}</span>`;
+
+                // Update tooltip
+                const fullDate = gradedDate.toLocaleDateString('et-EE', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                }) + ' ' + formattedTime;
+                gradedCell.setAttribute('title', `Hinnatud: ${fullDate}`);
+
+                // Update data attribute for sorting
+                targetRow.dataset.sortGraded = Math.floor(gradedDate.getTime() / 1000);
+            }
+
+            // Update "Vahe" column (7th column)
+            const differenceCell = targetRow.querySelector('td:nth-child(7)');
+            if (differenceCell) {
+                differenceCell.textContent = daysDifference || '';
+
+                // Update tooltip
+                if (daysDifference) {
+                    differenceCell.setAttribute('title', `Hindamine võttis ${daysDifference} päeva`);
+                } else {
+                    differenceCell.setAttribute('title', 'Sama päeva jooksul hinnatud');
+                }
+
+                // Update data attribute for sorting
+                targetRow.dataset.sortDifference = daysDifference || 0;
+            }
+
+            // Reinitialize tooltips for the updated cells
+            if (gradedCell) {
+                // Dispose of old tooltip if it exists
+                const existingTooltip = bootstrap.Tooltip.getInstance(gradedCell);
+                if (existingTooltip) {
+                    existingTooltip.dispose();
+                }
+                new bootstrap.Tooltip(gradedCell);
+            }
+
+            if (differenceCell) {
+                // Dispose of old tooltip if it exists
+                const existingTooltip = bootstrap.Tooltip.getInstance(differenceCell);
+                if (existingTooltip) {
+                    existingTooltip.dispose();
+                }
+                new bootstrap.Tooltip(differenceCell);
+            }
+
+        } catch (error) {
+            console.error('Error updating table row timestamps:', error);
+        }
     }
 
     function addGradeBadgeToTableRow(assignmentId, userId, grade) {
