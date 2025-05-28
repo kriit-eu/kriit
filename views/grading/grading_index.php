@@ -1026,7 +1026,13 @@
 
         // Ensure save button starts disabled to enforce manual grade selection
         const saveBtn = document.getElementById('saveBtn');
+        const saveBtnText = document.getElementById('saveBtnText');
+        const saveBtnSpinner = document.getElementById('saveBtnSpinner');
+
         saveBtn.disabled = true;
+        // Reset button state to ensure clean state when opening modal
+        saveBtnText.textContent = 'Salvesta';
+        saveBtnSpinner.classList.add('d-none');
 
         // Load and display criteria
         loadCriteria(criteriaData);
@@ -1087,6 +1093,17 @@
             document.body.classList.remove('modal-open');
             document.body.style.overflow = '';
             document.body.style.paddingRight = '';
+
+            // Reset save button state to ensure clean state for next modal opening
+            const saveBtn = document.getElementById('saveBtn');
+            const saveBtnText = document.getElementById('saveBtnText');
+            const saveBtnSpinner = document.getElementById('saveBtnSpinner');
+
+            if (saveBtn && saveBtnText && saveBtnSpinner) {
+                saveBtn.disabled = true;
+                saveBtnText.textContent = 'Salvesta';
+                saveBtnSpinner.classList.add('d-none');
+            }
         }, {once: true});
 
         // Show modal
@@ -1205,6 +1222,11 @@
 
                     // Add grade badge to table row
                     addGradeBadgeToTableRow(currentAssignmentId, currentUserId, selectedGrade);
+
+                    // Reset button state before closing modal to ensure clean state for next modal
+                    saveBtn.disabled = false;
+                    saveBtnText.textContent = 'Salvesta';
+                    saveBtnSpinner.classList.add('d-none');
 
                     // Auto-close modal after successful save
                     try {
