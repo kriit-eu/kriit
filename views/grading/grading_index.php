@@ -808,10 +808,10 @@
                         data-current-grade="<?= htmlspecialchars($submission['userGrade'] ?? '') ?>"
                         data-criteria="<?= htmlspecialchars($submission['criteria'] ?? '[]') ?>"
                         data-sort-position="<?= $index + 1 ?>"
-                        data-sort-submitted="<?= $submission['Esitatud'] ? strtotime($submission['Esitatud']) : 0 ?>"
-                        data-sort-graded="<?= $submission['Hinnatud'] ? strtotime($submission['Hinnatud']) : 0 ?>"
-                        data-sort-age="<?= $submission['Vanus'] ?: 999999 ?>"
-                        data-sort-difference="<?= $submission['Vahe'] ?: 999999 ?>"
+                        data-sort-submitted="<?= $submission['Esitatud'] ? strtotime($submission['Esitatud']) : 1 ?>"
+                        data-sort-graded="<?= $submission['Hinnatud'] ? strtotime($submission['Hinnatud']) : 1 ?>"
+                        data-sort-age="<?= $submission['Vanus'] ?: 0 ?>"
+                        data-sort-difference="<?= $submission['Vahe'] ?: 0 ?>"
                         data-sort-student="<?= htmlspecialchars($submission['Õpilane']) ?>"
                         data-sort-subject="<?= htmlspecialchars($submission['Aine']) ?>"
                         data-sort-grade="<?= htmlspecialchars($submission['userGrade'] ?? '') ?>">
@@ -839,7 +839,7 @@
                         <td data-bs-toggle="tooltip" data-bs-placement="top"
                             title="<?= $submission['Hinnatud'] ? 'Hinnatud: ' . (new DateTime($submission['Hinnatud']))->format('d.m.Y H:i') : 'Hindamata' ?>"><?= $submission['Hinnatud'] ? '<span class="id-badge"><strong>' . (new DateTime($submission['Hinnatud']))->format('d.m.y') . '</strong> ' . (new DateTime($submission['Hinnatud']))->format('H:i') . '</span>' : '' ?></td>
                         <td data-bs-toggle="tooltip" data-bs-placement="top"
-                            title="<?= $submission['Vahe'] ? 'Hindamine võttis ' . $submission['Vahe'] . ' päeva' : 'Sama päeva jooksul hinnatud' ?>"><?= $submission['Vahe'] ?></td>
+                            title="<?= $submission['Vahe'] ? 'Hindamine võttis ' . $submission['Vahe'] . ' päeva' : 'Sama päeva jooksul hinnatud' ?>"><?= $submission['Vahe'] !== null ? $submission['Vahe'] : '' ?></td>
                         <td class="grade-cell text-center">
                             <!-- Grade will be populated here after grading -->
                         </td>
@@ -1319,7 +1319,7 @@
             // Update "Vahe" column (7th column)
             const differenceCell = targetRow.querySelector('td:nth-child(7)');
             if (differenceCell) {
-                differenceCell.textContent = daysDifference || '';
+                differenceCell.textContent = daysDifference !== null ? daysDifference : '';
 
                 // Update tooltip
                 if (daysDifference) {
@@ -1806,29 +1806,33 @@
             case 'submitted':
                 valueA = parseInt(rowA.dataset.sortSubmitted);
                 valueB = parseInt(rowB.dataset.sortSubmitted);
-                // Handle unsubmitted assignments (timestamp = 0) - they should appear last
-                if (valueA === 0 && valueB === 0) return 0;
-                if (valueA === 0) return direction === 'asc' ? 1 : -1;
-                if (valueB === 0) return direction === 'asc' ? -1 : 1;
+                // Handle unsubmitted assignments (timestamp = 1) - they should be considered "very old"
+                if (valueA === 1 && valueB === 1) return 0;
+                if (valueA === 1) return direction === 'asc' ? -1 : 1;
+                if (valueB === 1) return direction === 'asc' ? 1 : -1;
                 break;
 
             case 'graded':
                 valueA = parseInt(rowA.dataset.sortGraded);
                 valueB = parseInt(rowB.dataset.sortGraded);
-                // Handle ungraded assignments (timestamp = 0) - they should appear last
-                if (valueA === 0 && valueB === 0) return 0;
-                if (valueA === 0) return direction === 'asc' ? 1 : -1;
-                if (valueB === 0) return direction === 'asc' ? -1 : 1;
+                // Handle ungraded assignments (timestamp = 1) - they should be considered "very old"
+                if (valueA === 1 && valueB === 1) return 0;
+                if (valueA === 1) return direction === 'asc' ? -1 : 1;
+                if (valueB === 1) return direction === 'asc' ? 1 : -1;
                 break;
 
             case 'difference':
                 valueA = parseInt(rowA.dataset.sortDifference);
                 valueB = parseInt(rowB.dataset.sortDifference);
+                // Handle null difference (0) - means graded same day, should be considered "fastest"
+                // No special handling needed as 0 is naturally the smallest value
                 break;
 
             case 'age':
                 valueA = parseInt(rowA.dataset.sortAge);
                 valueB = parseInt(rowB.dataset.sortAge);
+                // Handle null age (0) - means submitted today, should be considered "newest"
+                // No special handling needed as 0 is naturally the smallest value
                 break;
 
             case 'student':
