@@ -32,9 +32,15 @@ Instead of adding a `targetStudentId` field to the messages table, I used the ex
 4. **Deprecated the old `saveMessage()` method**:
    - Marked as deprecated since comments now flow through `saveGrade()`
 
+### Additional Fix for Events Display
+Added dual-saving approach:
+- Comments saved to `userAssignments.comments` for student-specific display
+- Notification messages saved to `messages` table for "Sündmused" (events) section
+
 ### Result
 - ✅ Teacher comments are now targeted to specific students
-- ✅ Only the intended student can see teacher comments  
+- ✅ Only the intended student can see teacher comments in "Kommentaarid" 
+- ✅ All students can see teacher comment notifications in "Sündmused"
 - ✅ System notifications (grade changes) still work
 - ✅ Consistent with how subjects page handles comments
 - ✅ No database schema changes required

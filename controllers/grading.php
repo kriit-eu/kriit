@@ -406,6 +406,9 @@ class grading extends Controller
             // Use the proper comment system that targets specific students
             $this->addAssignmentCommentForStudent($studentId, $assignmentId, trim($comment), $teacherInfo['userName']);
 
+            // Also save a notification message for the events section
+            $this->saveMessageInternal($assignmentId, $teacherInfo['userId'], "$teacherInfo[userName] lisas kommentaari õpilasele $studentInfo[userName]: " . trim($comment), true);
+
             // Log comment activity
             $assignmentInfo = Db::getFirst("SELECT assignmentName, subjectId FROM assignments WHERE assignmentId = ?", [$assignmentId]);
             Activity::create(ACTIVITY_TEACHER_ADD_COMMENT, $teacherInfo['userId'], $assignmentId, [
