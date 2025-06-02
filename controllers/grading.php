@@ -152,9 +152,18 @@ class grading extends Controller
             stop(400, 'Student ID required');
         }
 
-        // Fetch messages for this assignment and student
-        // Include messages from the specific student and from teachers (who have userIsTeacher = 1)
-        $messages = Db::getAll("
+        // Fetch comments from userAssignments for this specific student
+        $userAssignment = Db::getFirst("
+            SELECT comments 
+            FROM userAssignments 
+            WHERE userId = ? AND assignmentId = ?
+        ", [$studentId, $assignmentId]);
+
+        // Get comments from the JSON field
+        $comments = $userAssignment && $userAssignment['comments'] ? json_decode($userAssignment['comments'], true) : [];
+        
+        // Also fetch system notifications from messages table (like grade changes)
+        $systemMessages = Db::getAll("
             SELECT
                 m.messageId,
                 m.content,
@@ -166,13 +175,27 @@ class grading extends Controller
             FROM messages m
             LEFT JOIN users u ON m.userId = u.userId
             WHERE m.assignmentId = ?
-            AND (m.userId = ? OR u.userIsTeacher = 1 OR u.userIsAdmin = 1)
+            AND m.isNotification = 1
             ORDER BY m.CreatedAt ASC
-        ", [$assignmentId, $studentId]);
+        ", [$assignmentId]);
 
-        // Format messages
+        // Format messages - combine comments and system notifications
         $formattedMessages = [];
-        foreach ($messages as $message) {
+        
+        // Add comments from userAssignments
+        foreach ($comments as $comment) {
+            $formattedMessages[] = [
+                'messageId' => null, // Comments don't have messageId
+                'content' => $comment['comment'],
+                'userId' => null, // We'll derive this from name if needed
+                'userName' => $comment['name'],
+                'createdAt' => $comment['createdAt'],
+                'isNotification' => false
+            ];
+        }
+        
+        // Add system notifications
+        foreach ($systemMessages as $message) {
             $formattedMessages[] = [
                 'messageId' => $message['messageId'],
                 'content' => $message['content'],
@@ -182,12 +205,18 @@ class grading extends Controller
                 'isNotification' => $message['isNotification']
             ];
         }
+        
+        // Sort by creation time
+        usort($formattedMessages, function($a, $b) {
+            return strtotime($a['createdAt']) - strtotime($b['createdAt']);
+        });
 
         stop(200, $formattedMessages);
     }
 
     /**
      * AJAX method to save a new message
+     * @deprecated This method is deprecated. Comments are now saved via saveGrade() using the userAssignments.comments field
      */
     public function saveMessage(): void
     {
@@ -374,7 +403,11 @@ class grading extends Controller
 
         // Save teacher comment if provided
         if ($comment && trim($comment)) {
-            $this->saveMessageInternal($assignmentId, $teacherInfo['userId'], trim($comment), false);
+            // Use the proper comment system that targets specific students
+            $this->addAssignmentCommentForStudent($studentId, $assignmentId, trim($comment), $teacherInfo['userName']);
+
+            // Also save a notification message for the events section
+            $this->saveMessageInternal($assignmentId, $teacherInfo['userId'], "$teacherInfo[userName] lisas kommentaari õpilasele $studentInfo[userName]: " . trim($comment), true);
 
             // Log comment activity
             $assignmentInfo = Db::getFirst("SELECT assignmentName, subjectId FROM assignments WHERE assignmentId = ?", [$assignmentId]);
@@ -440,6 +473,26 @@ class grading extends Controller
             'CreatedAt' => date('Y-m-d H:i:s'),
             'isNotification' => $isNotification
         ]);
+    }
+
+    /**
+     * Add assignment comment for specific student
+     */
+    private function addAssignmentCommentForStudent($studentId, $assignmentId, $comment, $commentAuthorName): void
+    {
+        $existingComments = Db::getOne('SELECT comments FROM userAssignments WHERE userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
+        $comments = $existingComments ? json_decode($existingComments, true) : [];
+        $currentTime = date('Y-m-d H:i:s');
+
+        $comments[] = [
+            'name' => $commentAuthorName,
+            'comment' => trim($comment),
+            'createdAt' => $currentTime
+        ];
+
+        Db::update('userAssignments', [
+            'comments' => json_encode($comments)
+        ], 'userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
     }
 
     /**
