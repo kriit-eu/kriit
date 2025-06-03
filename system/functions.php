@@ -151,7 +151,17 @@ function stop($code, $data = false)
 
 function send_error_report($exception): ?\Sentry\EventId
 {
+    // Check if offline mode is enabled
+    if (defined('OFFLINE_MODE') && OFFLINE_MODE) {
+        // OFFLINE MODE: Disable Sentry error reporting
+        // Log error locally instead
+        error_log("OFFLINE ERROR REPORT: " . $exception->getMessage() . " in " . $exception->getFile() . ":" . $exception->getLine());
 
+        // Return null since we're not using Sentry
+        return null;
+    }
+
+    // ONLINE MODE: Use Sentry for error reporting
     // Get user data from session
     $auth = empty($_SESSION['userId']) ? null : Db::getFirst("select * from users where userId = ?", [$_SESSION['userId']]);
 

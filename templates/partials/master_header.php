@@ -12,22 +12,27 @@
     <!-- Site core CSS -->
     <link href="assets/css/main.css?<?= COMMIT_HASH ?>" rel="stylesheet">
 
-    <!-- Include CodeMirror CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/theme/monokai.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <!-- Include CodeMirror CSS (Local) -->
+    <link rel="stylesheet" href="node_modules/codemirror/lib/codemirror.css?<?= COMMIT_HASH ?>">
+    <link rel="stylesheet" href="node_modules/codemirror/theme/monokai.css?<?= COMMIT_HASH ?>">
+    <link rel="stylesheet" href="node_modules/@fortawesome/fontawesome-free/css/all.min.css?<?= COMMIT_HASH ?>">
 
-    <!-- Include CodeMirror JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
+    <!-- Include CodeMirror JS (Local) -->
+    <script src="node_modules/codemirror/lib/codemirror.js?<?= COMMIT_HASH ?>"></script>
     <!-- CodeMirror mode for JSON -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/javascript/javascript.min.js"></script>
+    <script src="node_modules/codemirror/mode/javascript/javascript.js?<?= COMMIT_HASH ?>"></script>
 
 
     <!-- jQuery -->
     <script src="node_modules/jquery/dist/jquery.min.js?<?= COMMIT_HASH ?>"></script>
 
+    <!-- OFFLINE MODE: Configuration -->
+    <script>
+        const OFFLINE_MODE = <?= defined('OFFLINE_MODE') && OFFLINE_MODE ? 'true' : 'false' ?>;
+    </script>
+
     <!-- Bootstrap core CSS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.8/umd/popper.min.js"></script>
+    <script src="node_modules/@popperjs/core/dist/umd/popper.min.js?<?= COMMIT_HASH ?>"></script>
     <script src="node_modules/bootstrap/dist/js/bootstrap.min.js?<?= COMMIT_HASH ?>"></script>
     <link href="node_modules/bootstrap/dist/css/bootstrap.min.css?<?= COMMIT_HASH ?>" rel="stylesheet">
     <link rel="stylesheet" href="node_modules/bootstrap-icons/font/bootstrap-icons.css?<?= COMMIT_HASH ?>">

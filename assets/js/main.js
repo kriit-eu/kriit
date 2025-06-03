@@ -19,6 +19,7 @@ $(document).ready(function () {
     function resetPasswordHelp() {
         $userPasswordHelp.text("Sisesta parool").removeClass("text-danger text-success");
     }
+
     function showError(message) {
         $userPersonalCodeHelp.text(message).addClass("text-danger").removeClass("text-success");
         $passwordField.hide();
@@ -106,10 +107,21 @@ function tryToParseJSON(jsonString) {
 
 function ajax(url, options, callback_or_redirect_url, error_callback) {
 
-
     $.post(url, options)
         .fail(function (jqXHR, textStatus, errorThrown) {
             console.log('Xhr error: ', jqXHR, textStatus, errorThrown);
+
+            // Check if this is a network error (offline)
+            if (jqXHR.status === 0 && textStatus === 'error') {
+                const networkError = 'Network connection lost. Please check your internet connection.';
+                if (typeof error_callback === 'function') {
+                    error_callback(networkError);
+                } else {
+                    show_error_modal(networkError, 'Network Error');
+                }
+                return;
+            }
+
             let error;
             let json = tryToParseJSON(jqXHR.responseText);
             if (json === false) {
@@ -130,57 +142,30 @@ function ajax(url, options, callback_or_redirect_url, error_callback) {
 
         })
         .done(function (response) {
-            // debugger;
             let parsedResponse = (typeof response === 'object' && response !== null) ? response : tryToParseJSON(response);
 
-            console.log('.done');
             if (parsedResponse === false) {
-
-                // Send error report
-                $.post('email/send_error_report', {
-                    javascript_received_json_payload_that_caused_the_error: response
-                });
-
                 show_error_modal(response);
-
                 return false;
-
-
-            } else if (parsedResponse.status === 500) {
-
-                // Send error report
-                $.post('email/send_error_report', {
-                    javascript_received_json_payload_that_caused_the_error: parsedResponse
-                });
-
-
-                if (typeof error_callback === 'function') {
-                    error_callback(parsedResponse);
-                } else {
-                    show_error_modal(parsedResponse.data);
-                }
-
-                return false;
-
-
-            } else if (parsedResponse.status.toString()[0] !== '2') {
-
-                if (typeof error_callback === 'function') {
-                    error_callback(parsedResponse);
-                } else {
-                    show_error_modal(parsedResponse.data);
-                }
-
-            } else {
-
-                if (typeof callback_or_redirect_url === 'function') {
-                    callback_or_redirect_url(parsedResponse);
-                } else if (typeof callback_or_redirect_url === 'string') {
-                    location.href = callback_or_redirect_url;
-                } else if (callback_or_redirect_url === RELOAD) {
-                    location.reload();
-                }
             }
+
+            if (parsedResponse.status.toString()[0] !== '2') {
+                if (typeof error_callback === 'function') {
+                    error_callback(parsedResponse);
+                } else {
+                    show_error_modal(parsedResponse.data);
+                }
+                return false;
+            }
+
+            if (typeof callback_or_redirect_url === 'function') {
+                callback_or_redirect_url(parsedResponse);
+            } else if (typeof callback_or_redirect_url === 'string') {
+                location.href = callback_or_redirect_url;
+            } else if (callback_or_redirect_url === RELOAD) {
+                location.reload();
+            }
+
         });
 }
 
@@ -223,3 +208,42 @@ function show_error_modal(error, title = false) {
         class: 'small'
     }).modal('show');
 }
+
+// OFFLINE MODE: Add offline status indicator
+$(document).ready(function () {
+    // Create offline status indicator
+    function createOfflineIndicator() {
+        if ($('#offline-indicator').length === 0) {
+            $('body').prepend(`
+                <div id="offline-indicator" class="alert alert-warning" style="display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 9999; margin: 0; border-radius: 0; text-align: center;">
+                    <i class="fas fa-wifi" style="opacity: 0.5;"></i>
+                    Application is running in offline mode. Some features may be limited.
+                </div>
+            `);
+        }
+    }
+
+    // Update offline status
+    function updateOfflineStatus() {
+        createOfflineIndicator();
+        const isOffline = !navigator.onLine || (typeof OFFLINE_MODE !== 'undefined' && OFFLINE_MODE);
+
+        if (isOffline) {
+            $('#offline-indicator').show();
+        } else {
+            $('#offline-indicator').hide();
+        }
+    }
+
+    // Listen for online/offline events
+    window.addEventListener('online', updateOfflineStatus);
+    window.addEventListener('offline', updateOfflineStatus);
+
+    // Initial check
+    updateOfflineStatus();
+
+    // For development: Force offline mode if configured
+    if (typeof OFFLINE_MODE !== 'undefined' && OFFLINE_MODE) {
+        $('#offline-indicator').show();
+    }
+});
