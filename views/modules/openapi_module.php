@@ -1,5 +1,5 @@
-<?php if (!$isStudent && $assignment['assignmentInvolvesOpenApi']): ?>
-    <button type="button" class="btn btn-sm btn-info ms-2" id="openApiButton" onclick="openSwaggerModal()">OpenAPI</button>
+<?php if (!$isStudent): ?>
+    <button type="button" class="btn btn-sm btn-info ms-2" id="openApiButton" onclick="openSwaggerModal()" style="display: none;">OpenAPI</button>
 <?php endif; ?>
 
 <!-- OpenAPI Modal -->

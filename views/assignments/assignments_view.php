@@ -681,6 +681,12 @@
     document.addEventListener('DOMContentLoaded', function () {
         initializeTooltips();
         scrollToBottom();
+        
+        // Initialize OpenAPI button visibility
+        const openApiButton = document.getElementById('openApiButton');
+        if (openApiButton) {
+            openApiButton.style.display = assignment.assignmentInvolvesOpenApi ? 'inline-block' : 'none';
+        }
     });
 
     function initializeTooltips() {

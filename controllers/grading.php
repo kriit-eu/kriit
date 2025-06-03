@@ -43,6 +43,7 @@ class grading extends Controller
                 ua.comments,
                 ua.userGrade,
                 a.assignmentInstructions,
+                a.assignmentInvolvesOpenApi,
                 (
                     SELECT COUNT(m.messageId)
                     FROM messages m
