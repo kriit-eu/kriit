@@ -6,7 +6,6 @@ use FilesystemIterator;
 use RecursiveCallbackFilterIterator;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
-use Stichoza\GoogleTranslate\GoogleTranslate;
 
 class Translation
 {
@@ -116,9 +115,6 @@ class Translation
                     // Add the phrase to INSERT INTO translations
                     $valuesToInsert[$phrase] = "'$escapedPhrase'";
 
-                    // Add the phrase to phrases to be translated
-                    $phrasesToGoogleTranslate[$phrase] = $phrase;
-
                 } else {
                     // Add the phrase to UPDATE translations
                     $valuesToUpdate[$phrase] = $escapedPhrase;
@@ -149,11 +145,6 @@ class Translation
 
             // Delete strings that do not exist any more
             Db::q("DELETE FROM translations WHERE translationState='doesNotExist'");
-
-            // Google translate new strings
-            foreach ($languages as $language) {
-                self::googleTranslateMissingTranslations($language);
-            }
 
             self::deleteUnusedDynamicTranslations();
         }
@@ -274,67 +265,6 @@ class Translation
         return $matches;
     }
 
-    /**
-     * Translates max 5000 characters
-     * @param $language
-     * @throws ErrorException
-     */
-    public static function googleTranslateMissingTranslations($language): void
-    {
-
-        // No language given
-        if (empty($language))
-            return;
-
-        $payload = [];
-
-        $untranslatedStrings = Db::getCol("SELECT translationPhrase FROM translations WHERE translationIn$language IS NULL");
-
-        // Build max 5000 char string
-        foreach ($untranslatedStrings as $untranslatedString) {
-
-            // Add to array
-            $payload[] = $untranslatedString;
-
-            // Check if the imploded length is over 5000
-            if (strlen(implode("\n|\n", $payload)) >= 5000) {
-
-                // Remove last member
-                array_pop($payload);
-
-                // Cancel foreach
-                break;
-            }
-        }
-
-        // Nothing to translate
-        if (empty($payload)) {
-            return;
-        }
-
-        // Translate payload
-        $googleTranslated = GoogleTranslate::trans(implode("\n|\n", $payload), $language, DEFAULT_LANGUAGE);
-
-        // Fix broken separators (occurs in Bosnian language)
-        $googleTranslated = preg_replace('/(\n\|. \|\n)/', "\n|\n", $googleTranslated);
-
-        // Fix broken separators (occurs in Corsican language)
-        $googleTranslated = preg_replace('/(\nŒ œ\n)/', "\n|\n", $googleTranslated);
-
-        // Convert translated strings back to array
-        $googleTranslated = explode("\n|\n", $googleTranslated);
-
-        // Loop over translated array
-        for ($n = 0; $n < count($googleTranslated); $n++) {
-
-            // Add translation to DB
-            Db::update(
-                'translations', [
-                'translationIn' . ucfirst($language) => substr($googleTranslated[$n], 0, 765)
-            ], "translationPhrase = '" . addslashes($untranslatedStrings[$n]) . "'");
-        }
-
-    }
 
     public static function getUntranslated(array $languages)
     {
