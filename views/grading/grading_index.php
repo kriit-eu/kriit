@@ -163,18 +163,6 @@
         color: inherit;
     }
 
-    /* Style for subject name badge - keep neutral gray */
-    .subject-name {
-        display: inline-block;
-        background-color: #e9ecef;
-        color: #495057;
-        padding: 2px 8px;
-        border-radius: 12px;
-        font-size: 0.85em;
-        font-weight: normal;
-        vertical-align: middle;
-    }
-
     /* Grading status colors for table rows */
     .grading-row.graded {
         background-color: rgba(40, 167, 69, 0.15) !important; /* Light green for graded */
@@ -706,7 +694,7 @@
                             title="<?= htmlspecialchars($submission['Õpilane']) ?>"><?= $submission['Õpilane'] ?></td>
                         <td data-bs-toggle="tooltip" data-bs-placement="top"
                             title="<?= htmlspecialchars($submission['Aine'] . ' - ' . $submission['Ülesanne']) ?>">
-                            <span class="subject-name"><?= $submission['Aine'] ?></span>
+                            <span class="id-badge"><?= $submission['assignmentId']?></span>
                             <a href="grading/assignments/<?= $submission['assignmentId'] ?>/students/<?= $submission['userId'] ?>"
                                onclick="event.preventDefault(); openGradingModal(this.closest('tr')); return false;"
                                class="assignment-name"
