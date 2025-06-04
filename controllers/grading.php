@@ -53,6 +53,14 @@ class grading extends Controller
                     AND (m.userId = ua.userId OR mu.userIsTeacher = 1 OR mu.userIsAdmin = 1)
                 ) AS commentCount,
                 (
+                    SELECT COUNT(tn.noteId)
+                    FROM teacherNotes tn
+                    WHERE tn.assignmentId = ua.assignmentId
+                    AND tn.studentId = ua.userId
+                    AND tn.noteContent IS NOT NULL
+                    AND tn.noteContent != ''
+                ) AS teacherNotesCount,
+                (
                     SELECT GROUP_CONCAT(
                         JSON_OBJECT(
                             'criterionId', c.criterionId,

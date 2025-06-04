@@ -437,6 +437,36 @@
         transition: all 0.2s ease;
     }
 
+    /* Teacher notes bubble styling */
+    .teacher-notes-bubble {
+        display: inline-flex;
+        align-items: center;
+        background-color: #fff9e6;
+        color: #856404;
+        border-radius: 12px;
+        padding: 2px 8px;
+        font-size: 0.75em;
+        margin-left: 8px;
+        vertical-align: middle;
+        min-width: 24px;
+        justify-content: center;
+        border: 1px solid #ffd700;
+    }
+
+    .teacher-notes-bubble i {
+        font-size: 0.8em;
+        margin-right: 3px;
+    }
+
+    /* Hover effect for teacher notes bubble */
+    .teacher-notes-bubble:hover {
+        background-color: #fff3cd;
+        color: #856404;
+        transform: scale(1.05);
+        transition: all 0.2s ease;
+        border-color: #ffe066;
+    }
+
     /* Grade error styling */
     #gradeError {
         display: none;
@@ -703,9 +733,15 @@
                                class="assignment-name"
                                style="text-decoration: none; color: inherit;"><?= $submission['Ülesanne'] ?></a>
                             <?php if ($submission['commentCount'] > 0): ?>
-                                <span class="comment-bubble">
+                                <span class="comment-bubble" data-bs-toggle="tooltip" data-bs-placement="top" title="Kommentaarid: <?= $submission['commentCount'] ?>">
                                         <i class="fas fa-comment"></i>
                                         <span class="comment-count"><?= $submission['commentCount'] ?></span>
+                                    </span>
+                            <?php endif; ?>
+                            <?php if (($this->auth->userIsTeacher || $this->auth->userIsAdmin) && $submission['teacherNotesCount'] > 0): ?>
+                                <span class="teacher-notes-bubble" data-bs-toggle="tooltip" data-bs-placement="top" title="Õpetaja märkmed: <?= $submission['teacherNotesCount'] ?>">
+                                        <i class="fas fa-sticky-note"></i>
+                                        <span class="comment-count"><?= $submission['teacherNotesCount'] ?></span>
                                     </span>
                             <?php endif; ?>
                         </td>
