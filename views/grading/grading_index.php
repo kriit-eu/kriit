@@ -681,6 +681,7 @@
                         data-comments="<?= htmlspecialchars($submission['comments'] ?? '[]') ?>"
                         data-current-grade="<?= htmlspecialchars($submission['userGrade'] ?? '') ?>"
                         data-criteria="<?= htmlspecialchars($submission['criteria'] ?? '[]') ?>"
+                         data-assignment-involves-openapi="<?= htmlspecialchars($submission['assignmentInvolvesOpenApi'] ?? '0') ?>"
                         data-sort-position="<?= $index + 1 ?>"
                         data-sort-submitted="<?= $submission['Esitatud'] ? strtotime($submission['Esitatud']) : 1 ?>"
                         data-sort-graded="<?= $submission['Hinnatud'] ? strtotime($submission['Hinnatud']) : 1 ?>"
@@ -746,6 +747,11 @@
                             </button>
                         </div>
                     </div>
+                    <div id="openApiSection"><?php 
+                        $isStudent = false; 
+                        $assignment = ['assignmentInvolvesOpenApi' => false]; // Will be updated by JS
+                        include 'views/modules/openapi_module.php'; 
+                    ?></div>
                 </div>
 
                 <!-- Assignment Instructions -->
@@ -822,6 +828,8 @@
 </div>
 
 <script>
+    const userIsAdmin = <?= $this->auth->userIsAdmin ? 'true' : 'false' ?>;
+    
     document.addEventListener('DOMContentLoaded', function () {
         // Initialize tooltips
         [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
@@ -886,6 +894,7 @@
         const comments = row.dataset.comments;
         const currentGrade = row.dataset.currentGrade;
         const criteriaData = row.dataset.criteria;
+        const assignmentInvolvesOpenApi = row.dataset.assignmentInvolvesOpenapi;
 
         // Store current IDs
         currentAssignmentId = assignmentId;
@@ -926,6 +935,15 @@
         } else {
 
             solutionUrlDetails.classList.add('d-none');
+        }
+
+        // Update OpenAPI section visibility
+        const openApiSection = document.getElementById('openApiSection');
+        const openApiButton = document.getElementById('openApiButton');
+        if (assignmentInvolvesOpenApi === '1' && openApiButton) {
+            openApiButton.style.display = 'inline-block';
+        } else if (openApiButton) {
+            openApiButton.style.display = 'none';
         }
 
         // Update instructions section with Markdown rendering
