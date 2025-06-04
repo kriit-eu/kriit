@@ -5,12 +5,12 @@ use App\Db;
 
 /**
  * API Controller for Teacher Notes functionality
- * Handles CRUD operations for teacher's private notes on student assignments
+ * Handles CRUD operations for shared teacher notes on student assignments
  */
 class teachernotes extends Controller
 {
     /**
-     * Get teacher's private notes for a specific assignment and student
+     * Get shared teacher notes for a specific assignment and student
      */
     public function index(): void
     {
@@ -32,19 +32,23 @@ class teachernotes extends Controller
             }
 
             // Log the request for debugging
-            error_log("getTeacherNotes - assignmentId: $assignmentId, studentId: $studentId, teacherId: " . $this->auth->userId);
+            error_log("getTeacherNotes - assignmentId: $assignmentId, studentId: $studentId, requesterId: " . $this->auth->userId);
 
-            // Get teacher notes for this assignment and student
+            // Get the most recent shared teacher note for this assignment and student
             $notes = Db::getFirst("
-                SELECT noteContent, createdAt, updatedAt 
-                FROM teacherNotes 
-                WHERE assignmentId = ? AND studentId = ? AND teacherId = ?
-            ", [$assignmentId, $studentId, $this->auth->userId]);
+                SELECT tn.noteContent, tn.createdAt, tn.updatedAt, u.userName as updatedBy
+                FROM teacherNotes tn
+                LEFT JOIN users u ON u.userId = tn.teacherId
+                WHERE tn.assignmentId = ? AND tn.studentId = ?
+                ORDER BY tn.updatedAt DESC
+                LIMIT 1
+            ", [$assignmentId, $studentId]);
 
             stop(200, [
                 'notes' => $notes['noteContent'] ?? '',
                 'createdAt' => $notes['createdAt'] ?? null,
-                'updatedAt' => $notes['updatedAt'] ?? null
+                'updatedAt' => $notes['updatedAt'] ?? null,
+                'updatedBy' => $notes['updatedBy'] ?? null
             ]);
 
         } catch (\Exception $e) {
@@ -54,7 +58,7 @@ class teachernotes extends Controller
     }
 
     /**
-     * Save teacher's private notes for a specific assignment and student
+     * Save shared teacher notes for a specific assignment and student
      */
     public function save(): void
     {
@@ -79,22 +83,25 @@ class teachernotes extends Controller
             // Log the input for debugging
             error_log("saveTeacherNotes - assignmentId: $assignmentId, studentId: $studentId, teacherId: " . $this->auth->userId);
 
-            // Check if notes already exist for this teacher, assignment, and student
+            // Check if any notes already exist for this assignment and student
             $existingNote = Db::getFirst("
                 SELECT noteId 
                 FROM teacherNotes 
-                WHERE assignmentId = ? AND studentId = ? AND teacherId = ?
-            ", [$assignmentId, $studentId, $this->auth->userId]);
+                WHERE assignmentId = ? AND studentId = ?
+                ORDER BY updatedAt DESC
+                LIMIT 1
+            ", [$assignmentId, $studentId]);
 
             if ($existingNote) {
-                // Update existing note
+                // Update existing note with new teacher as the updater
                 if (trim($noteContent) === '') {
-                    // If content is empty, delete the note
-                    Db::delete('teacherNotes', 'noteId = ?', [$existingNote['noteId']]);
+                    // If content is empty, delete all notes for this assignment and student
+                    Db::delete('teacherNotes', 'assignmentId = ? AND studentId = ?', [$assignmentId, $studentId]);
                 } else {
                     // Update existing note
                     Db::update('teacherNotes', [
                         'noteContent' => $noteContent,
+                        'teacherId' => $this->auth->userId, // Track who last updated
                         'updatedAt' => date('Y-m-d H:i:s')
                     ], 'noteId = ?', [$existingNote['noteId']]);
                 }

@@ -24,7 +24,8 @@ function loadTeacherNotes(assignmentId, studentId) {
                 // Update status with last updated info
                 if (data.data.updatedAt) {
                     const updatedDate = new Date(data.data.updatedAt);
-                    notesStatus.textContent = `Viimati muudetud: ${updatedDate.toLocaleString('et-EE')}`;
+                    const updatedBy = data.data.updatedBy || 'Tundmatu kasutaja';
+                    notesStatus.textContent = `Viimati muudetud: ${updatedDate.toLocaleString('et-EE')} (${updatedBy})`;
                 } else {
                     notesStatus.textContent = 'Märkmeid pole veel lisatud';
                 }
@@ -136,11 +137,11 @@ document.addEventListener('DOMContentLoaded', function() {
 </style>
 
 <?php if ($this->auth->userIsAdmin || $this->auth->userIsTeacher): ?>
-<!-- Teacher Private Notes Section -->
+<!-- Teacher Shared Notes Section -->
 <div class="mb-3" id="teacherNotesSection">
-    <h6>Privaatsed märkmed <small class="text-muted">(ainult õpetajale nähtav)</small></h6>
+    <h6>Õpetajate märkmed <small class="text-muted">(kõigile õpetajatele nähtav)</small></h6>
     <textarea class="form-control" id="teacherNotesContent" rows="3"
-              placeholder="Lisa privaatseid märkmeid selle töö kohta..."></textarea>
+              placeholder="Lisa märkmeid selle töö kohta (nähtav kõigile õpetajatele ja administraatoritele)..."></textarea>
     <div class="d-flex justify-content-between align-items-center mt-2">
         <small class="text-muted" id="teacherNotesStatus"></small>
         <button type="button" class="btn btn-sm btn-outline-secondary" id="saveNotesBtn">
