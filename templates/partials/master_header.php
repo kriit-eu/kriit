@@ -15,7 +15,7 @@
     <!-- Include CodeMirror CSS (Local) -->
     <link rel="stylesheet" href="node_modules/codemirror/lib/codemirror.css?<?= COMMIT_HASH ?>">
     <link rel="stylesheet" href="node_modules/codemirror/theme/monokai.css?<?= COMMIT_HASH ?>">
-    <link rel="stylesheet" href="node_modules/@fortawesome/fontawesome-free/css/all.min.css?<?= COMMIT_HASH ?>">
+    <link rel="stylesheet" href="/assets/css/all.min.css">
 
     <!-- Include CodeMirror JS (Local) -->
     <script src="node_modules/codemirror/lib/codemirror.js?<?= COMMIT_HASH ?>"></script>
