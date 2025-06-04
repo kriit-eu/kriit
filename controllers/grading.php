@@ -556,4 +556,97 @@ class grading extends Controller
             ]);
         }
     }
+
+    /**
+     * AJAX method to get teacher's private notes for a specific assignment and student
+     */
+    public function getTeacherNotes(): void
+    {
+        // Check if user is a teacher or admin
+        if (!$this->auth->userIsTeacher && !$this->auth->userIsAdmin) {
+            stop(403, 'Access denied');
+        }
+
+        $assignmentId = $_POST['assignmentId'] ?? null;
+        $studentId = $_POST['studentId'] ?? null;
+
+        if (!$assignmentId) {
+            stop(400, 'Assignment ID required');
+        }
+
+        if (!$studentId) {
+            stop(400, 'Student ID required');
+        }
+
+        // Get teacher's private notes for this assignment and student
+        $notes = Db::getFirst("
+            SELECT noteContent, createdAt, updatedAt
+            FROM teacherNotes 
+            WHERE assignmentId = ? AND studentId = ? AND teacherId = ?
+        ", [$assignmentId, $studentId, $this->auth->userId]);
+
+        stop(200, [
+            'notes' => $notes['noteContent'] ?? '',
+            'createdAt' => $notes['createdAt'] ?? null,
+            'updatedAt' => $notes['updatedAt'] ?? null
+        ]);
+    }
+
+    /**
+     * AJAX method to save teacher's private notes for a specific assignment and student
+     */
+    public function saveTeacherNotes(): void
+    {
+        // Check if user is a teacher or admin
+        if (!$this->auth->userIsTeacher && !$this->auth->userIsAdmin) {
+            stop(403, 'Access denied');
+        }
+
+        $assignmentId = $_POST['assignmentId'] ?? null;
+        $studentId = $_POST['studentId'] ?? null;
+        $noteContent = $_POST['noteContent'] ?? '';
+
+        if (!$assignmentId) {
+            stop(400, 'Assignment ID required');
+        }
+
+        if (!$studentId) {
+            stop(400, 'Student ID required');
+        }
+
+        // Check if notes already exist for this teacher, assignment, and student
+        $existingNote = Db::getFirst("
+            SELECT noteId 
+            FROM teacherNotes 
+            WHERE assignmentId = ? AND studentId = ? AND teacherId = ?
+        ", [$assignmentId, $studentId, $this->auth->userId]);
+
+        if ($existingNote) {
+            // Update existing note
+            if (trim($noteContent) === '') {
+                // If content is empty, delete the note
+                Db::delete('teacherNotes', 'noteId = ?', [$existingNote['noteId']]);
+            } else {
+                // Update existing note
+                Db::update('teacherNotes', [
+                    'noteContent' => $noteContent,
+                    'updatedAt' => date('Y-m-d H:i:s')
+                ], 'noteId = ?', [$existingNote['noteId']]);
+            }
+        } else {
+            // Create new note only if content is not empty
+            if (trim($noteContent) !== '') {
+                Db::insert('teacherNotes', [
+                    'assignmentId' => $assignmentId,
+                    'studentId' => $studentId,
+                    'teacherId' => $this->auth->userId,
+                    'noteContent' => $noteContent,
+                    'createdAt' => date('Y-m-d H:i:s'),
+                    'updatedAt' => date('Y-m-d H:i:s')
+                ]);
+            }
+        }
+
+        stop(200, ['success' => true]);
+    }
 }
