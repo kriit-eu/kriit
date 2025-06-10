@@ -777,12 +777,16 @@ class Sync
 
         // Extract valid results (with grades)
         $validResults = array_filter($results, fn($r) => !empty($r['grade']));
-        if (empty($validResults)) {
+        
+        // Collect all student personal codes from remote results (including those without grades)
+        $remoteStudentCodes = array_column($results, 'studentPersonalCode');
+        
+        // If no students with grades, we still need to process the student list to avoid marking active students as deleted
+        if (empty($validResults) && !empty($remoteStudentCodes)) {
+            // Just ensure students exist without processing grades
+            self::ensureStudentsExist($assignmentId, $results, $systemId);
             return;
         }
-        
-        // Collect all student personal codes from remote results
-        $remoteStudentCodes = array_column($results, 'studentPersonalCode');
 
         // Get assignment info from cache if possible
         if (isset(self::$assignmentInfoCache[$assignmentId])) {
@@ -814,6 +818,62 @@ class Sync
 
         // Preload students into cache
         self::preloadStudents($personalCodes, $systemId);
+
+        // Also ensure students without grades exist and are not marked as deleted
+        $allStudentCodes = array_column($results, 'studentPersonalCode');
+        $studentsWithoutGrades = array_filter($results, fn($r) => empty($r['grade']));
+        
+        if (!empty($studentsWithoutGrades)) {
+            $codesWithoutGrades = array_column($studentsWithoutGrades, 'studentPersonalCode');
+            self::preloadStudents($codesWithoutGrades, $systemId);
+            
+            // Ensure students without grades exist and are active
+            foreach ($studentsWithoutGrades as $r) {
+                $personalCode = $r['studentPersonalCode'];
+                
+                if (isset(self::$studentCache[$personalCode])) {
+                    // Student exists - check if name needs updating
+                    $student = self::$studentCache[$personalCode];
+                    User::updateNameIfNeeded($student, $r['studentName'], $systemId);
+
+                    // Update student active status if provided
+                    if (isset($r['studentIsActive'])) {
+                        $isActive = (bool)$r['studentIsActive'];
+                        if ($student['userIsActive'] != $isActive) {
+                            User::edit($student['userId'], ['userIsActive' => $isActive ? 1 : 0]);
+                            self::$studentCache[$personalCode]['userIsActive'] = $isActive ? 1 : 0;
+                        }
+                    }
+
+                    // If student was previously marked as deleted but now appears again, undelete them
+                    if ($student['userDeleted']) {
+                        Db::update('users', ['userDeleted' => 0], "userId = {$student['userId']}");
+                        
+                        Activity::create(ACTIVITY_UPDATE_USER_SYNC, $teacherId, $student['userId'], [
+                            'systemId' => $systemId,
+                            'action' => 'unmarked_deleted',
+                            'reason' => 'Reappeared in external system data (no grade)',
+                            'subjectName' => $subjectName,
+                            'assignmentName' => $assignmentInfo['assignmentName']
+                        ]);
+                    }
+                } else {
+                    // Student doesn't exist - create them
+                    $isActive = isset($r['studentIsActive']) ? (bool)$r['studentIsActive'] : true;
+                    $newUserId = User::createStudent(
+                        $personalCode,
+                        $r['studentName'],
+                        $systemId,
+                        $groupId,
+                        $teacherId,
+                        $subjectName,
+                        $isActive
+                    );
+                    $student = User::findById($newUserId);
+                    self::$studentCache[$personalCode] = $student;
+                }
+            }
+        }
 
         // Process students first - create any missing students
         $allStudentIds = [];
@@ -894,14 +954,15 @@ class Sync
             }
         }
 
-        // Finally, create missing userAssignments
+        // Finally, create missing userAssignments and handle missing students
         // Get existing student assignments for this assignment
         $existingStudentAssignments = Db::getAll("SELECT ua.userId, u.userPersonalCode 
                                            FROM userAssignments ua 
                                            JOIN users u ON ua.userId = u.userId 
                                            WHERE ua.assignmentId = ?", [$assignmentId]);
         
-        // Extract all students that have this assignment but weren't included in remote results
+        // Only mark students as deleted if they are completely missing from remote data
+        // Students without grades but present in remote data should not be deleted
         $missingStudents = [];
         foreach ($existingStudentAssignments as $existingAssignment) {
             if (!in_array($existingAssignment['userPersonalCode'], $remoteStudentCodes)) {
@@ -909,7 +970,127 @@ class Sync
             }
         }
         
+        // Mark missing students as deleted only if they are truly absent from remote data
+        if (!empty($missingStudents)) {
+            foreach ($missingStudents as $missingUserId) {
+                $student = User::findById($missingUserId);
+                if ($student && !$student['userDeleted']) {
+                    // Mark student as deleted (logical delete)
+                    Db::update('users', ['userDeleted' => 1], "userId = {$missingUserId}");
+                    
+                    // Log the deletion with more context
+                    Activity::create(ACTIVITY_UPDATE_USER_SYNC, $teacherId, $missingUserId, [
+                        'systemId' => $systemId,
+                        'action' => 'marked_deleted',
+                        'reason' => 'Student not found in external system assignment data',
+                        'subjectName' => $subjectName,
+                        'assignmentName' => $assignmentInfo['assignmentName'],
+                        'studentPersonalCode' => $student['userPersonalCode']
+                    ]);
+                }
+            }
+        }
+    }
+
+    /**
+     * Ensure students exist for an assignment without processing grades
+     * Used when we have student data but no grades to process
+     */
+    private static function ensureStudentsExist(int $assignmentId, array $results, int $systemId = 1): void
+    {
+        // Get assignment info from cache if possible
+        if (isset(self::$assignmentInfoCache[$assignmentId])) {
+            $assignmentInfo = self::$assignmentInfoCache[$assignmentId];
+        } else {
+            // Not in cache, fetch it and store in cache
+            $assignmentInfo = Db::getFirst("
+                SELECT a.assignmentId, a.assignmentName, s.subjectId, s.subjectName, s.teacherId, s.groupId
+                FROM assignments a
+                JOIN subjects s ON a.subjectId = s.subjectId
+                WHERE a.assignmentId = ?
+            ", [$assignmentId]);
+
+            if (!$assignmentInfo) {
+                return;
+            }
+
+            self::$assignmentInfoCache[$assignmentId] = $assignmentInfo;
+        }
+
+        $groupId = $assignmentInfo['groupId'];
+        $teacherId = $assignmentInfo['teacherId'];
+        $subjectName = $assignmentInfo['subjectName'];
+
+        // Extract all student personal codes
+        $personalCodes = array_column($results, 'studentPersonalCode');
+        
+        // Preload students into cache
+        self::preloadStudents($personalCodes, $systemId);
+
+        // Process students - create any missing students and update existing ones
+        foreach ($results as $r) {
+            $personalCode = $r['studentPersonalCode'];
+
+            if (isset(self::$studentCache[$personalCode])) {
+                // Student exists - check if name needs updating
+                $student = self::$studentCache[$personalCode];
+                User::updateNameIfNeeded($student, $r['studentName'], $systemId);
+
+                // Update student active status if provided
+                if (isset($r['studentIsActive'])) {
+                    $isActive = (bool)$r['studentIsActive'];
+                    if ($student['userIsActive'] != $isActive) {
+                        User::edit($student['userId'], ['userIsActive' => $isActive ? 1 : 0]);
+                        // Update our cache
+                        self::$studentCache[$personalCode]['userIsActive'] = $isActive ? 1 : 0;
+                    }
+                }
+
+                // If student was previously marked as deleted but now appears again, undelete them
+                if ($student['userDeleted']) {
+                    Db::update('users', ['userDeleted' => 0], "userId = {$student['userId']}");
+                    
+                    // Log the undeletion
+                    Activity::create(ACTIVITY_UPDATE_USER_SYNC, $teacherId, $student['userId'], [
+                        'systemId' => $systemId,
+                        'action' => 'unmarked_deleted',
+                        'reason' => 'Reappeared in external system data',
+                        'subjectName' => $subjectName,
+                        'assignmentName' => $assignmentInfo['assignmentName']
+                    ]);
+                }
+            } else {
+                // Student doesn't exist - create them
+                $isActive = isset($r['studentIsActive']) ? (bool)$r['studentIsActive'] : true;
+                $newUserId = User::createStudent(
+                    $personalCode,
+                    $r['studentName'],
+                    $systemId,
+                    $groupId,
+                    $teacherId,
+                    $subjectName,
+                    $isActive
+                );
+                $student = User::findById($newUserId);
+                self::$studentCache[$personalCode] = $student;
+            }
+        }
+
+        // Handle students that are missing from remote data
+        $remoteStudentCodes = array_column($results, 'studentPersonalCode');
+        $existingStudentAssignments = Db::getAll("SELECT ua.userId, u.userPersonalCode 
+                                           FROM userAssignments ua 
+                                           JOIN users u ON ua.userId = u.userId 
+                                           WHERE ua.assignmentId = ?", [$assignmentId]);
+        
         // Mark missing students as deleted
+        $missingStudents = [];
+        foreach ($existingStudentAssignments as $existingAssignment) {
+            if (!in_array($existingAssignment['userPersonalCode'], $remoteStudentCodes)) {
+                $missingStudents[] = $existingAssignment['userId'];
+            }
+        }
+        
         if (!empty($missingStudents)) {
             foreach ($missingStudents as $missingUserId) {
                 $student = User::findById($missingUserId);
@@ -927,42 +1108,6 @@ class Sync
                     ]);
                 }
             }
-        }
-
-        foreach ($validResults as $r) {
-            $personalCode = $r['studentPersonalCode'];
-            $userId = $allStudentIds[$personalCode];
-            
-            // If student was previously marked as deleted but now appears again, undelete them
-            $student = User::findById($userId);
-            if ($student && $student['userDeleted']) {
-                Db::update('users', ['userDeleted' => 0], "userId = {$userId}");
-                
-                // Log the undeletion
-                Activity::create(ACTIVITY_UPDATE_USER_SYNC, $teacherId, $userId, [
-                    'systemId' => $systemId,
-                    'action' => 'unmarked_deleted',
-                    'reason' => 'Reappeared in external system data',
-                    'subjectName' => $subjectName,
-                    'assignmentName' => $assignmentInfo['assignmentName']
-                ]);
-            }
-
-            // If no userAssignment exists for this student and assignment
-            if (!isset($existingUserAssignments[$userId])) {
-                Assignment::setGrade(
-                    $assignmentId,
-                    $userId,
-                    $r['grade'],
-                    $teacherId,
-                    $systemId,
-                    $subjectName,
-                    $assignmentInfo['assignmentName'],
-                    $newStudentNames[$personalCode]
-                );
-            }
-            // If there's already a record but the grade differs, we keep it as-is for now
-            // so it will appear in final diff. (No override here, since the user wants to see the difference.)
         }
     }
 
