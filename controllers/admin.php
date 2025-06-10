@@ -473,8 +473,6 @@ class admin extends Controller
 
         if (empty($_POST['userPassword'])) {
             unset($_POST['userPassword']);
-        } else {
-            $_POST['userPassword'] = password_hash($_POST['userPassword'], PASSWORD_DEFAULT);
         }
 
         $updatedUserData = $this->getUserDataForAddingOrUpdating();
