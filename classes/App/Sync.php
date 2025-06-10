@@ -775,11 +775,12 @@ class Sync
             return;
         }
 
-        // Extract valid results (with grades)
+        // Process all results (students with and without grades)
+        // Students without grades should still be added to the system
+        $allResults = $results;
+        
+        // Extract valid results (with grades) - these will get grade assignments
         $validResults = array_filter($results, fn($r) => !empty($r['grade']));
-        if (empty($validResults)) {
-            return;
-        }
         
         // Collect all student personal codes from remote results
         $remoteStudentCodes = array_column($results, 'studentPersonalCode');
@@ -810,16 +811,16 @@ class Sync
         $subjectName = $assignmentInfo['subjectName'];
 
         // Extract all student personal codes
-        $personalCodes = array_column($validResults, 'studentPersonalCode');
+        $personalCodes = array_column($allResults, 'studentPersonalCode');
 
         // Preload students into cache
         self::preloadStudents($personalCodes, $systemId);
 
-        // Process students first - create any missing students
+        // Process students first - create any missing students (including those without grades)
         $allStudentIds = [];
         $newStudentNames = []; // Track which students were created/updated for later use
 
-        foreach ($validResults as $r) {
+        foreach ($allResults as $r) {
             $personalCode = $r['studentPersonalCode'];
 
             if (isset(self::$studentCache[$personalCode])) {
@@ -929,7 +930,8 @@ class Sync
             }
         }
 
-        foreach ($validResults as $r) {
+        // Create userAssignments for all students, but only set grades for those who have them
+        foreach ($allResults as $r) {
             $personalCode = $r['studentPersonalCode'];
             $userId = $allStudentIds[$personalCode];
             
@@ -950,19 +952,45 @@ class Sync
 
             // If no userAssignment exists for this student and assignment
             if (!isset($existingUserAssignments[$userId])) {
-                Assignment::setGrade(
-                    $assignmentId,
-                    $userId,
-                    $r['grade'],
-                    $teacherId,
-                    $systemId,
-                    $subjectName,
-                    $assignmentInfo['assignmentName'],
-                    $newStudentNames[$personalCode]
-                );
+                // Check if student has a grade
+                if (!empty($r['grade'])) {
+                    // Student has a grade - set it
+                    Assignment::setGrade(
+                        $assignmentId,
+                        $userId,
+                        $r['grade'],
+                        $teacherId,
+                        $systemId,
+                        $subjectName,
+                        $assignmentInfo['assignmentName'],
+                        $newStudentNames[$personalCode]
+                    );
+                } else {
+                    // Student has no grade - create userAssignment without grade
+                    // This ensures the student is associated with the assignment even without a grade
+                    $currentTime = date('Y-m-d H:i:s');
+                    Db::insert('userAssignments', [
+                        'assignmentId' => $assignmentId,
+                        'userId'       => $userId,
+                        'userGrade'    => null,
+                        'assignmentStatusId' => ASSIGNMENT_STATUS_NOT_SUBMITTED, // 1 = Not submitted
+                        'userAssignmentGradedAt' => null,
+                        'comments' => '[]'
+                    ]);
+                    
+                    // Log activity for creating user assignment without grade
+                    if ($teacherId !== null) {
+                        Activity::create(ACTIVITY_CREATE_ASSIGNMENT_SYNC, $teacherId, $assignmentId, [
+                            'systemId' => $systemId,
+                            'assignmentName' => $assignmentInfo['assignmentName'],
+                            'studentName' => $newStudentNames[$personalCode],
+                            'action' => 'created_user_assignment_without_grade',
+                            'subjectName' => $subjectName ?? 'Unknown'
+                        ]);
+                    }
+                }
             }
-            // If there's already a record but the grade differs, we keep it as-is for now
-            // so it will appear in final diff. (No override here, since the user wants to see the difference.)
+            // Note: If userAssignment already exists, we don't overwrite grades to preserve manual changes
         }
     }
 
