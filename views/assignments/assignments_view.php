@@ -287,7 +287,12 @@
 </style>
 <div>
     <div class="mb-3">
-        <h2 class="mb-4"><?= $assignment['assignmentName'] ?></h2>
+        <h2 class="mb-2"><?= $assignment['assignmentName'] ?></h2>
+        <?php if (!empty($assignment['primaryGroupName'])): ?>
+            <p class="text-muted mb-3">
+                <i class="bi bi-people-fill"></i> Grupp: <strong><?= $assignment['primaryGroupName'] ?></strong>
+            </p>
+        <?php endif; ?>
         <?php
         $parsedown = new Parsedown();
         $assignmentInstructions = $assignment['assignmentInstructions'];

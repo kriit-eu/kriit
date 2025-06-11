@@ -376,7 +376,7 @@
                                 <td colspan="1">
                                     <div class="assignment-container">
                                         <div class="assignment-info">
-                                            <a href="assignments/<?= $a['assignmentId'] ?>">
+                                            <a href="assignments/<?= $a['assignmentId'] ?>?group=<?= urlencode($group['groupName']) ?>">
                                                 <?php if (!empty($a['assignmentEntryDateFormatted'])): ?>
                                                     <span class="entry-date"><?= $a['assignmentEntryDateFormatted'] ?></span>
                                                 <?php endif; ?>
@@ -449,7 +449,7 @@
                                             data-grade="<?= is_numeric($status['grade']) ? intval($status['grade']) : '' ?>"
                                             data-is-student="<?= json_encode($this->isStudent) ?>"
                                             data-days-passed="<?= $status['daysPassed'] ?? 0 ?>"
-                                            data-url="assignments/<?= $a['assignmentId'] ?>">
+                                            data-url="assignments/<?= $a['assignmentId'] ?>?group=<?= urlencode($group['groupName']) ?>">
                                             <?php if ($status['class'] === 'red-cell' && isset($status['daysPassed'])): ?>
                                                 <span class="days-passed"><?= $status['daysPassed'] ?>p</span>
                                             <?php else: ?>
@@ -476,7 +476,7 @@
                                         title="<?= nl2br(htmlspecialchars($status['tooltipText'])) ?>"
                                         data-grade="<?= is_numeric($status['grade'] ?? '') ? intval($status['grade']) : '' ?>"
                                         data-is-student="true"
-                                        data-url="assignments/<?= $a['assignmentId'] ?>"
+                                        data-url="assignments/<?= $a['assignmentId'] ?>?group=<?= urlencode($group['groupName']) ?>"
                                         style="width: 120px; min-width: 120px; max-width: 120px;">
                                         <?= $status['assignmentStatusName'] == 'Kontrollimisel' ? 'Kontrollimisel' : ($status['grade'] ?: $status['assignmentStatusName']) ?>
                                     </td>

@@ -22,13 +22,13 @@ class assignments extends Controller
             // Students only see themselves
             $studentFilterClause = " AND u.userId = {$this->auth->userId}";
         } elseif ($this->isTeacher && !$this->auth->userIsAdmin) {
-            // For assignment view, teachers only see students from the assignment's subject group
-            // This prevents confusion when assignments have cross-group userAssignments
-            $studentFilterClause = " AND u.groupId = subj.groupId";
+            // For teachers: show all students who have userAssignments for this assignment
+            // regardless of group - this allows cross-group assignments to work properly
+            $studentFilterClause = "";
         } elseif ($this->auth->userIsAdmin) {
-            // Even for admins, when viewing a specific assignment, show only students 
-            // from the assignment's subject group for clarity
-            $studentFilterClause = " AND u.groupId = subj.groupId";
+            // For admins: show all students who have userAssignments for this assignment
+            // regardless of group - this allows cross-group assignments to work properly
+            $studentFilterClause = "";
         }
         
         $data = Db::getAll("
@@ -46,7 +46,7 @@ class assignments extends Controller
                 JOIN subjects subj ON a.subjectId = subj.subjectId
                 JOIN users t ON subj.teacherId = t.userId
                 INNER JOIN userAssignments ua ON ua.assignmentId = a.assignmentId
-                INNER JOIN users u ON ua.userId = u.userId AND u.groupId = subj.groupId /* Only students from correct group */
+                INNER JOIN users u ON ua.userId = u.userId
                 LEFT JOIN groups g ON u.groupId = g.groupId /* Use student's actual group */
                 LEFT JOIN assignmentStatuses ast ON ua.assignmentStatusId = ast.assignmentStatusId
                 LEFT JOIN userDoneCriteria udc ON udc.criterionId = c.criterionId AND udc.userId = u.userId
@@ -67,6 +67,11 @@ class assignments extends Controller
             'messages' => []
         ];
 
+        // Determine the primary group for this assignment
+        $groupParam = $_GET['group'] ?? null; // Get group from URL parameter
+        $primaryGroupId = $this->determinePrimaryGroup($data, $groupParam);
+        $primaryGroupName = $this->getPrimaryGroupName($data, $primaryGroupId);
+        
         $parsedown = Parsedown::instance();
 
         foreach ($data as $row) {
@@ -77,12 +82,18 @@ class assignments extends Controller
                 $assignment['assignmentInvolvesOpenApi'] = (int)$row['assignmentInvolvesOpenApi'];
                 $assignment['teacherId'] = $row['teacherId'];
                 $assignment['teacherName'] = $row['teacherName'];
+                $assignment['primaryGroupName'] = $primaryGroupName;
             }
 
             $studentId = $row['studentId'];
             $criteriaId = $row['criterionId'];
 
             if ($this->isStudent && $this->auth->userId !== $studentId) {
+                continue;
+            }
+
+            // Filter students to only show those from the primary group
+            if ($primaryGroupId && $row['groupId'] != $primaryGroupId) {
                 continue;
             }
 
@@ -955,6 +966,77 @@ class assignments extends Controller
         // Note: In the future, we should refactor this to use:
         // Assignment::addComment($assignmentId, $studentId, trim($comment), $commentAuthorName);
         // But this would require modifying the Assignment::addComment method to also accept the author name
+    }
+
+    /**
+     * Determine the primary group for an assignment based on navigation context or student distribution
+     * 
+     * @param array $data Query result data
+     * @param string|null $groupParam Group name from URL parameter (navigation context)
+     * @return int|null Primary group ID or null if no groups found
+     */
+    private function determinePrimaryGroup(array $data, ?string $groupParam = null): ?int
+    {
+        if (empty($data)) {
+            return null;
+        }
+
+        // If user is a student, use their group as primary
+        if ($this->isStudent) {
+            return $this->auth->groupId;
+        }
+
+        // Priority 1: Use group from navigation context (URL parameter) if available
+        if ($groupParam) {
+            foreach ($data as $row) {
+                if ($row['groupName'] === $groupParam) {
+                    return $row['groupId'];
+                }
+            }
+        }
+
+        // Priority 2: Count students per group and return the one with most students (fallback)
+        $groupCounts = [];
+        foreach ($data as $row) {
+            $groupId = $row['groupId'];
+            if ($groupId) {
+                if (!isset($groupCounts[$groupId])) {
+                    $groupCounts[$groupId] = 0;
+                }
+                $groupCounts[$groupId]++;
+            }
+        }
+
+        // Return the group with the most students
+        if (empty($groupCounts)) {
+            return null;
+        }
+
+        return array_key_first(array_filter($groupCounts, function($count) use ($groupCounts) {
+            return $count === max($groupCounts);
+        }));
+    }
+
+    /**
+     * Get the primary group name for display
+     * 
+     * @param array $data Query result data
+     * @param int|null $primaryGroupId Primary group ID
+     * @return string|null Primary group name or null if not found
+     */
+    private function getPrimaryGroupName(array $data, ?int $primaryGroupId): ?string
+    {
+        if (!$primaryGroupId) {
+            return null;
+        }
+
+        foreach ($data as $row) {
+            if ($row['groupId'] == $primaryGroupId) {
+                return $row['groupName'];
+            }
+        }
+
+        return null;
     }
 
 }
