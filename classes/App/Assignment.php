@@ -176,30 +176,54 @@ class Assignment
         $assignmentDueAt = !empty($assignmentData['assignmentDueAt']) ? $assignmentData['assignmentDueAt'] : null;
         $assignmentEntryDate = !empty($assignmentData['assignmentEntryDate']) ? $assignmentData['assignmentEntryDate'] : null;
 
-        Db::insert('assignments', [
-            'subjectId'             => $subjectId,
-            'assignmentName'        => $assignmentName,
-            'assignmentExternalId'  => $assignmentData['assignmentExternalId'],
-            'systemId'              => $systemId,
-            'assignmentDueAt'       => $assignmentDueAt,
-            'assignmentEntryDate'   => $assignmentEntryDate,
-            'assignmentInstructions'=> $assignmentInstructions
-        ]);
+        // Check if assignment already exists (to avoid duplicate key constraint)
+        $existingAssignment = Db::getFirst(
+            "SELECT assignmentId FROM assignments WHERE assignmentExternalId = ? AND systemId = ?",
+            [$assignmentData['assignmentExternalId'], $systemId]
+        );
 
-        $newAssignId = Db::getOne("
-            SELECT assignmentId FROM assignments
-            WHERE subjectId=? AND assignmentExternalId=? AND systemId=?
-        ", [$subjectId, $assignmentData['assignmentExternalId'], $systemId]);
-
-        // Log assignment creation if teacher ID is provided
-        if ($teacherId !== null) {
-            Activity::create(ACTIVITY_CREATE_ASSIGNMENT_SYNC, $teacherId, $newAssignId, [
-                'systemId' => $systemId,
-                'assignmentName' => $assignmentName,
-                'assignmentExternalId' => $assignmentData['assignmentExternalId'],
-                'subjectId' => $subjectId,
-                'subjectName' => $subjectName ?? 'Unknown'
+        if ($existingAssignment) {
+            // Assignment already exists, use its ID
+            $newAssignId = $existingAssignment['assignmentId'];
+            
+            // Log that we're reusing an existing assignment
+            if ($teacherId !== null) {
+                Activity::create(ACTIVITY_CREATE_ASSIGNMENT_SYNC, $teacherId, $newAssignId, [
+                    'systemId' => $systemId,
+                    'assignmentName' => $assignmentName,
+                    'assignmentExternalId' => $assignmentData['assignmentExternalId'],
+                    'action' => 'reusing_existing_assignment',
+                    'subjectId' => $subjectId,
+                    'subjectName' => $subjectName ?? 'Unknown'
+                ]);
+            }
+        } else {
+            // Create new assignment
+            Db::insert('assignments', [
+                'subjectId'             => $subjectId,
+                'assignmentName'        => $assignmentName,
+                'assignmentExternalId'  => $assignmentData['assignmentExternalId'],
+                'systemId'              => $systemId,
+                'assignmentDueAt'       => $assignmentDueAt,
+                'assignmentEntryDate'   => $assignmentEntryDate,
+                'assignmentInstructions'=> $assignmentInstructions
             ]);
+
+            $newAssignId = Db::getOne("
+                SELECT assignmentId FROM assignments
+                WHERE subjectId=? AND assignmentExternalId=? AND systemId=?
+            ", [$subjectId, $assignmentData['assignmentExternalId'], $systemId]);
+
+            // Log assignment creation if teacher ID is provided
+            if ($teacherId !== null) {
+                Activity::create(ACTIVITY_CREATE_ASSIGNMENT_SYNC, $teacherId, $newAssignId, [
+                    'systemId' => $systemId,
+                    'assignmentName' => $assignmentName,
+                    'assignmentExternalId' => $assignmentData['assignmentExternalId'],
+                    'subjectId' => $subjectId,
+                    'subjectName' => $subjectName ?? 'Unknown'
+                ]);
+            }
         }
 
         return $newAssignId;

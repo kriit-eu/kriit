@@ -99,10 +99,11 @@ class subjects extends Controller
             $this->auth->userIsAdmin ? 'true' : null
         ]));
 
-        // Fetch data from the database - include inactive students who have ungraded assignments
-        // Only include subjects that have at least one assignment
+        // Fetch data from the database - include subjects even if they don't have assignments
         $showAllValue = $this->showAll ? 1 : 0;
-        $this->data = Db::getAll("
+        
+        // First get subjects with assignments (original query)
+        $dataWithAssignments = Db::getAll("
             SELECT
                 s.subjectId, s.subjectName, s.teacherId, s.subjectExternalId, t.userName AS teacherName,
                 u.userId AS studentId, u.userName AS studentName, u.groupId, g.groupName, u.userIsActive, u.userDeleted,
@@ -111,10 +112,10 @@ class subjects extends Controller
                 ua.userAssignmentSubmittedAt, ua.userAssignmentGradedAt
             FROM subjects s
             JOIN users t ON s.teacherId = t.userId
-            JOIN groups g ON s.groupId = g.groupId
-            LEFT JOIN users u ON u.groupId = g.groupId
-            JOIN assignments a ON a.subjectId = s.subjectId  /* INNER JOIN to exclude subjects without assignments */
-            LEFT JOIN userAssignments ua ON ua.assignmentId = a.assignmentId AND ua.userId = u.userId
+            JOIN assignments a ON a.subjectId = s.subjectId
+            JOIN userAssignments ua ON ua.assignmentId = a.assignmentId
+            JOIN users u ON ua.userId = u.userId
+            LEFT JOIN groups g ON u.groupId = g.groupId
             LEFT JOIN assignmentStatuses ast ON ua.assignmentStatusId = ast.assignmentStatusId
             WHERE ({$whereClause})
             AND (
@@ -129,6 +130,29 @@ class subjects extends Controller
                 )
             )
             ORDER BY g.groupName, u.userName, s.subjectName, a.assignmentDueAt");
+        
+        // Then get subjects without assignments
+        $dataWithoutAssignments = Db::getAll("
+            SELECT
+                s.subjectId, s.subjectName, s.teacherId, s.subjectExternalId, t.userName AS teacherName,
+                u.userId AS studentId, u.userName AS studentName, u.groupId, g.groupName, u.userIsActive, u.userDeleted,
+                NULL as assignmentId, NULL as assignmentName, NULL as assignmentDueAt, NULL as assignmentEntryDate,
+                NULL as userGrade, NULL as assignmentStatusId, NULL as assignmentStatusName,
+                NULL as userAssignmentSubmittedAt, NULL as userAssignmentGradedAt
+            FROM subjects s
+            JOIN users t ON s.teacherId = t.userId
+            JOIN users u ON u.groupId = s.groupId
+            LEFT JOIN groups g ON u.groupId = g.groupId
+            WHERE ({$whereClause})
+            AND NOT EXISTS (SELECT 1 FROM assignments a WHERE a.subjectId = s.subjectId)
+            AND (
+                (u.userIsActive = 1 AND u.userDeleted = 0)
+                OR $showAllValue = 1
+            )
+            ORDER BY g.groupName, u.userName, s.subjectName");
+        
+        // Combine both datasets
+        $this->data = array_merge($dataWithAssignments, $dataWithoutAssignments);
 
 
 

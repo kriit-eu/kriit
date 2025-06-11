@@ -15,11 +15,27 @@ class assignments extends Controller
         $this->isStudent = $this->auth->groupId && !$this->auth->userIsAdmin && !$this->auth->userIsTeacher;
         $this->isTeacher = $this->auth->userIsTeacher;
         $assignmentId = $this->getId();
+        
+        // Build WHERE clause for student filtering based on user permissions
+        $studentFilterClause = '';
+        if ($this->isStudent) {
+            // Students only see themselves
+            $studentFilterClause = " AND u.userId = {$this->auth->userId}";
+        } elseif ($this->isTeacher && !$this->auth->userIsAdmin) {
+            // For assignment view, teachers only see students from the assignment's subject group
+            // This prevents confusion when assignments have cross-group userAssignments
+            $studentFilterClause = " AND u.groupId = subj.groupId";
+        } elseif ($this->auth->userIsAdmin) {
+            // Even for admins, when viewing a specific assignment, show only students 
+            // from the assignment's subject group for clarity
+            $studentFilterClause = " AND u.groupId = subj.groupId";
+        }
+        
         $data = Db::getAll("
                 SELECT
                     a.assignmentId, a.assignmentName, a.assignmentInstructions, a.assignmentDueAt, a.assignmentInvolvesOpenApi,
                     c.criterionId, c.criterionName,
-                    u.userId AS studentId, u.userName AS studentName, u.groupId,
+                    u.userId AS studentId, u.userName AS studentName, u.groupId, g.groupName,
                     ua.userGrade, ua.assignmentStatusId, ua.solutionUrl, ua.comments,
                     ast.statusName AS assignmentStatusName,
                     udc.criterionId AS userDoneCriterionId,
@@ -29,13 +45,13 @@ class assignments extends Controller
                 LEFT JOIN criteria c ON c.assignmentId = a.assignmentId
                 JOIN subjects subj ON a.subjectId = subj.subjectId
                 JOIN users t ON subj.teacherId = t.userId
-                LEFT JOIN groups g ON subj.groupId = g.groupId
-                LEFT JOIN users u ON u.groupId = g.groupId
-                LEFT JOIN userAssignments ua ON ua.assignmentId = a.assignmentId AND ua.userId = u.userId
+                INNER JOIN userAssignments ua ON ua.assignmentId = a.assignmentId
+                INNER JOIN users u ON ua.userId = u.userId AND u.groupId = subj.groupId /* Only students from correct group */
+                LEFT JOIN groups g ON u.groupId = g.groupId /* Use student's actual group */
                 LEFT JOIN assignmentStatuses ast ON ua.assignmentStatusId = ast.assignmentStatusId
                 LEFT JOIN userDoneCriteria udc ON udc.criterionId = c.criterionId AND udc.userId = u.userId
-                WHERE a.assignmentId = ?
-                ORDER BY u.userName, c.criterionId
+                WHERE a.assignmentId = ? {$studentFilterClause}
+                ORDER BY g.groupName, u.userName, c.criterionId
             ", [$assignmentId]);
 
         $assignment = [
