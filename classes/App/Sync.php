@@ -136,7 +136,7 @@ class Sync
         foreach ($remoteSubjects as $remoteSubject) {
             // Check if the subject exists in Kriit for this system
             $extId = $remoteSubject['subjectExternalId'];
-            $matchingSubjects = isset($kriitSubjects[$extId]) ? $kriitSubjects[$extId] : [];
+            $matchingSubjects = $kriitSubjects[$extId] ?? [];
 
             // If subject not found, it should have been created via addMissingEntities
             // Skip from differences, because newly inserted = no difference
@@ -291,15 +291,16 @@ class Sync
             return [];
         }
         
-        // Modified query to include student groups in addition to subject's assigned group
+        // Modified query to include student groups in addition to the subject's assigned group
         // This ensures we capture all groups that have students participating in the subject
+        // We now include deleted students in the query to support reactivation
         $rows = Db::getAll("
             SELECT s.subjectId, s.subjectName, s.subjectExternalId, s.systemId,
                    COALESCE(ug.groupName, g.groupName) as groupName,
                    t.userPersonalCode AS teacherPersonalCode, t.userName AS teacherName,
                    a.assignmentId, a.assignmentExternalId, a.systemId as assignmentSystemId, a.assignmentName,
                    a.assignmentInstructions, a.assignmentDueAt, a.assignmentEntryDate,
-                   ua.userGrade, st.userPersonalCode, st.userName
+                   ua.userGrade, st.userPersonalCode, st.userName, st.userDeleted
             FROM subjects s
             LEFT JOIN `groups` g ON s.groupId = g.groupId
             LEFT JOIN users t    ON s.teacherId = t.userId
@@ -343,8 +344,9 @@ class Sync
                     'results'                => []
                 ];
             }
-            // If there's a student record
-            if ($r['userPersonalCode']) {
+            // If there's a student record and they're not deleted, include them in the results
+            // This ensures deleted students don't appear in the response to external system
+            if ($r['userPersonalCode'] && (!isset($r['userDeleted']) || $r['userDeleted'] == 0)) {
                 $subjects[$subjectKey]['assignments'][$axId]['results'][$r['userPersonalCode']] = [
                     'grade'       => $r['userGrade'],
                     'studentName' => $r['userName']
@@ -866,6 +868,47 @@ class Sync
         }
     }
 
+    /**
+     * Ensures that all students and their grades from external system results are properly synchronized
+     * with the Kriit system for a specific assignment.
+     *
+     * This function performs comprehensive student and grade synchronization by:
+     * 1. Processing all students (with and without grades) from external system results
+     * 2. Creating missing students in the Kriit system with appropriate group assignments
+     * 3. Updating existing student information (names, active status, deleted status, group assignments)
+     * 4. Creating or updating user assignments and grades
+     * 5. Handling student deletion/undeletion based on external system data
+     * 6. Preserving manual grade changes by not overwriting existing grades
+     *
+     * The function uses caching mechanisms to optimize database queries and avoid repeated lookups
+     * for assignment info, student data, and user assignments.
+     *
+     * @param int $assignmentId The ID of the assignment in Kriit system to sync students and grades for
+     * @param array $results Array of student result data from external system. Each result should contain:
+     *                      - 'studentPersonalCode' (string): Unique identifier for the student
+     *                      - 'studentName' (string): Full name of the student
+     *                      - 'grade' (string|null): Grade value, can be empty/null for students without grades
+     *                      - 'studentIsActive' (bool|null): Active status of the student
+     *                      - 'studentIsDeleted' (bool|null): Deleted status of the student
+     * @param int $systemId The ID of the external system (default: 1) used for activity logging and tracking
+     *
+     * @return void
+     *
+     * @throws \Exception If assignment data cannot be retrieved or if database operations fail
+     *
+     * @uses self::$assignmentInfoCache Static cache for assignment information to avoid repeated DB queries
+     * @uses self::$studentCache Static cache for student data indexed by personal code
+     * @uses self::$userAssignmentsCache Static cache for user assignment data indexed by assignment and user ID
+     * @uses User::createStudent() To create new student users in the system
+     * @uses User::updateNameIfNeeded() To update student names if they've changed in external system
+     * @uses User::edit() To update student properties like active status and group assignments
+     * @uses Assignment::setGrade() To set grades for students who have them
+     * @uses Activity::create() To log various synchronization activities for audit trail
+     * @uses self::detectStudentGroups() To determine which groups students should belong to
+     * @uses self::determineStudentGroup() To assign individual students to appropriate groups
+     *
+     * @since 1.0.0
+     */
     private static function ensureStudentsAndGrades(int $assignmentId, array $results, int $systemId = 1): void
     {
         if (empty($results)) {
@@ -944,6 +987,26 @@ class Sync
                     }
                 }
 
+                // Update student deleted status if provided
+                if (isset($r['studentIsDeleted'])) {
+                    $isDeleted = (bool)$r['studentIsDeleted'];
+                    if ($student['userDeleted'] != $isDeleted) {
+                        User::edit($student['userId'], ['userDeleted' => $isDeleted ? 1 : 0]);
+
+                        // Log the deletion/undeletion
+                        Activity::create(ACTIVITY_UPDATE_USER_SYNC, $teacherId, $student['userId'], [
+                            'systemId' => $systemId,
+                            'action' => $isDeleted ? 'marked_deleted' : 'unmarked_deleted',
+                            'reason' => 'External system sync - studentIsDeleted field',
+                            'subjectName' => $subjectName,
+                            'assignmentName' => $assignmentInfo['assignmentName']
+                        ]);
+
+                        // Update our cache
+                        self::$studentCache[$personalCode]['userDeleted'] = $isDeleted ? 1 : 0;
+                    }
+                }
+
                 // Check if student needs group reassignment
                 $correctGroup = self::determineStudentGroup($r, $studentGroups, $mockSubject['groupName']);
                 if ($student['groupId'] != $correctGroup['groupId']) {
@@ -972,7 +1035,7 @@ class Sync
                 // Student doesn't exist - create them with correct group
                 $correctGroup = self::determineStudentGroup($r, $studentGroups, $mockSubject['groupName']);
                 $isActive = isset($r['studentIsActive']) ? (bool)$r['studentIsActive'] : true;
-                
+
                 $newUserId = User::createStudent(
                     $personalCode,
                     $r['studentName'],
@@ -983,6 +1046,24 @@ class Sync
                     $isActive
                 );
                 $student = User::findById($newUserId);
+
+                // If student is marked as deleted in external system, mark them as deleted immediately
+                if (isset($r['studentIsDeleted']) && (bool)$r['studentIsDeleted']) {
+                    User::edit($student['userId'], ['userDeleted' => 1]);
+
+                    // Log the deletion
+                    Activity::create(ACTIVITY_UPDATE_USER_SYNC, $teacherId, $student['userId'], [
+                        'systemId' => $systemId,
+                        'action' => 'marked_deleted_on_creation',
+                        'reason' => 'External system sync - student created as deleted',
+                        'subjectName' => $subjectName,
+                        'assignmentName' => $assignmentInfo['assignmentName']
+                    ]);
+
+                    // Update student data and cache
+                    $student['userDeleted'] = 1;
+                }
+
                 $allStudentIds[$personalCode] = $student['userId'];
                 $newStudentNames[$personalCode] = $r['studentName'];
                 self::$studentCache[$personalCode] = $student; // Add to our cache
@@ -1035,19 +1116,35 @@ class Sync
             $personalCode = $r['studentPersonalCode'];
             $userId = $allStudentIds[$personalCode];
             
-            // If student was previously marked as deleted but now appears again, undelete them
+            // Handle student deletion status based on external system data
             $student = User::findById($userId);
             if ($student && $student['userDeleted']) {
-                Db::update('users', ['userDeleted' => 0], "userId = {$userId}");
-                
-                // Log the undeletion
-                Activity::create(ACTIVITY_UPDATE_USER_SYNC, $teacherId, $userId, [
-                    'systemId' => $systemId,
-                    'action' => 'unmarked_deleted',
-                    'reason' => 'Reappeared in external system data',
-                    'subjectName' => $subjectName,
-                    'assignmentName' => $assignmentInfo['assignmentName']
-                ]);
+                // Student is currently marked as deleted in Kriit
+                // Only undelete if external system explicitly says student is not deleted
+                if (isset($r['studentIsDeleted']) && !(bool)$r['studentIsDeleted']) {
+                    Db::update('users', ['userDeleted' => 0], "userId = {$userId}");
+
+                    // Log the undeletion
+                    Activity::create(ACTIVITY_UPDATE_USER_SYNC, $teacherId, $userId, [
+                        'systemId' => $systemId,
+                        'action' => 'unmarked_deleted',
+                        'reason' => 'External system explicitly marked as not deleted',
+                        'subjectName' => $subjectName,
+                        'assignmentName' => $assignmentInfo['assignmentName']
+                    ]);
+                } elseif (!isset($r['studentIsDeleted'])) {
+                    // If no deletion status provided, assume student should be undeleted since they appear in data
+                    Db::update('users', ['userDeleted' => 0], "userId = {$userId}");
+
+                    // Log the undeletion
+                    Activity::create(ACTIVITY_UPDATE_USER_SYNC, $teacherId, $userId, [
+                        'systemId' => $systemId,
+                        'action' => 'unmarked_deleted',
+                        'reason' => 'Reappeared in external system data without deletion flag',
+                        'subjectName' => $subjectName,
+                        'assignmentName' => $assignmentInfo['assignmentName']
+                    ]);
+                }
             }
 
             // If no userAssignment exists for this student and assignment
@@ -1179,6 +1276,20 @@ class Sync
                         if ($kriitIsActive != $studentIsActive) {
                             $diffData['kriitIsActive'] = $kriitIsActive;
                             $diffData['remoteIsActive'] = $studentIsActive;
+                            $hasDifferences = true;
+                        }
+                    }
+                }
+
+                // Check for deleted status differences if provided
+                if (isset($t['studentIsDeleted'])) {
+                    $student = User::findByPersonalCode($studCode);
+                    if ($student && isset($student['userDeleted'])) {
+                        $kriitIsDeleted = (bool)$student['userDeleted'];
+                        $remoteIsDeleted = (bool)$t['studentIsDeleted'];
+                        if ($kriitIsDeleted != $remoteIsDeleted) {
+                            $diffData['kriitIsDeleted'] = $kriitIsDeleted;
+                            $diffData['remoteIsDeleted'] = $remoteIsDeleted;
                             $hasDifferences = true;
                         }
                     }
