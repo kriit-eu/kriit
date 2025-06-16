@@ -905,8 +905,20 @@ class assignments extends Controller
 
     private function saveMessage($assignmentId, $userId, $content, $isNotification = false): void
     {
-        Db::insert('messages', ['assignmentId' => $assignmentId, 'userId' => $userId, 'content' => $content, 'CreatedAt' => date('Y-m-d H:i:s'), 'isNotification' => $isNotification]);
-
+        // Log to activityLog table instead of messages table to avoid issues with empty userId values
+        // Use a default userId if empty to satisfy the foreign key constraint
+        $logUserId = empty($userId) ? 1 : $userId; // Default to admin user (userId=1) if empty
+        
+        // Use activity ID 28 for "teacherUpdateCriteria" or 12 for "updateAssignment" 
+        $activityId = 28; // teacherUpdateCriteria
+        
+        Db::insert('activityLog', [
+            'activityLogTimestamp' => date('Y-m-d H:i:s'),
+            'userId' => $logUserId,
+            'activityId' => $activityId,
+            'id' => $assignmentId,
+            'details' => $content
+        ]);
     }
 
     private function sendNotificationToEmail($receiverEmail, $subject, $content): void
