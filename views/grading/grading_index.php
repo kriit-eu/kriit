@@ -1693,7 +1693,6 @@
     function parseMarkdown(text) {
         if (!text) return '';
 
-        console.log('parseMarkdown input:', text);
 
         // Simple Markdown parser for basic formatting
         let html = text;
@@ -1720,7 +1719,6 @@
 
         // Images - handle before links to avoid conflicts
         html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, function(match, alt, src) {
-            console.log('Image match found:', match, 'alt:', alt, 'src:', src);
             return '<img src="' + src + '" alt="' + alt + '" class="message-image img-fluid rounded" style="max-height: 300px; cursor: pointer;" onclick="window.open(this.src, \'_blank\')">';
         });
 

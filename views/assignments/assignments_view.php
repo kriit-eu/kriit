@@ -1689,18 +1689,13 @@
     function parseMarkdown(text) {
         if (!text) return '';
 
-        console.log('parseMarkdown input:', text);
-
         let html = text;
 
         // Check if the text already contains HTML tags (like <p>, <img>, etc.)
         if (html.includes('<img') || html.includes('<p>') || html.includes('</p>') || html.includes('<br')) {
-            console.log('Text contains HTML, processing existing HTML');
             
             // If it contains img tags, enhance them for our modal functionality
             html = html.replace(/<img\s+([^>]*?)src=["']([^"']+)["']([^>]*?)alt=["']([^"']*?)["']([^>]*?)\/?>/gi, function(match, beforeSrc, src, betweenSrcAlt, alt, afterAlt) {
-                console.log('Found existing img tag:', match);
-                console.log('src:', src, 'alt:', alt);
                 
                 const modalId = 'imageModal_' + Math.random().toString(36).substr(2, 9);
                 return '<div class="image-preview-container mt-2 mb-2">' +
@@ -1718,8 +1713,6 @@
             
             // Also handle the alternative pattern where alt comes before src
             html = html.replace(/<img\s+([^>]*?)alt=["']([^"']*?)["']([^>]*?)src=["']([^"']+)["']([^>]*?)\/?>/gi, function(match, beforeAlt, alt, betweenAltSrc, src, afterSrc) {
-                console.log('Found existing img tag (alt first):', match);
-                console.log('src:', src, 'alt:', alt);
                 
                 const modalId = 'imageModal_' + Math.random().toString(36).substr(2, 9);
                 return '<div class="image-preview-container mt-2 mb-2">' +
@@ -1735,7 +1728,6 @@
                        '</div>';
             });
             
-            console.log('Enhanced HTML with modal functionality:', html);
             return html;
         }
 
@@ -1772,7 +1764,6 @@
 
         // Images - handle before links to avoid conflicts
         html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, function(match, alt, src) {
-            console.log('Image match found:', match, 'alt:', alt, 'src:', src);
             const modalId = 'imageModal_' + Math.random().toString(36).substr(2, 9);
             return '<div class="image-preview-container mt-2 mb-2">' +
                    '<img src="' + src + '" alt="' + alt + '" ' +
@@ -1813,32 +1804,23 @@
 
     // Process all comments on page load
     function processComments() {
-        console.log('processComments() called');
         const commentElements = document.querySelectorAll('.comment-text[data-raw-comment]');
-        console.log('Found comment elements:', commentElements.length);
         
         commentElements.forEach(function(element, index) {
-            console.log('Processing comment element', index + 1);
-            console.log('Element:', element);
-            console.log('Current innerHTML:', element.innerHTML);
             
             const rawComment = element.getAttribute('data-raw-comment');
-            console.log('Raw comment data:', rawComment);
             
             if (rawComment) {
                 const processedHtml = parseMarkdown(rawComment);
-                console.log('Processed HTML:', processedHtml);
                 
                 // Clear existing content and set new HTML
                 element.innerHTML = '';
                 element.innerHTML = processedHtml;
                 
-                console.log('Updated innerHTML:', element.innerHTML);
             } else {
                 console.log('No raw comment data found for element', index + 1);
             }
         });
         
-        console.log('processComments() finished');
     }
 </script>
