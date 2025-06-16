@@ -975,7 +975,7 @@
                                 </div>
                                 <textarea class="form-control" id="newMessageContent" rows="8"
                                           placeholder="Kirjuta kommentaar õpilasele... (pildide kleepimiseks kasuta Ctrl+V)"
-                                          style="resize: none; min-height: 200px; max-height: 600px; overflow: hidden;"></textarea>
+                                          style="resize: none; min-height: 200px; overflow: hidden;"></textarea>
                             </div>
                         </div>
                         
@@ -988,7 +988,7 @@
                                     </small>
                                 </div>
                                 <div id="messagePreview" class="form-control" 
-                                     style="min-height: 200px; max-height: 600px; background-color: #f8f9fa; overflow-y: auto; word-wrap: break-word;">
+                                     style="min-height: 200px; background-color: #f8f9fa; overflow-y: hidden; word-wrap: break-word;">
                                     <div class="text-muted text-center p-3">
                                         <i class="fas fa-eye-slash"></i><br>
                                         Eelvaade ilmub siia...
@@ -2507,25 +2507,19 @@
         return `<img src="<?= BASE_URL ?>images/${imageId}" class="message-image" alt="Attached image">`;
     }
 
-    // Auto-resize textarea to fit content
+    // Auto-resize textarea to fit content (infinite expansion)
     function autoResizeTextarea(textarea) {
         // Reset height to auto to get the correct scrollHeight
         textarea.style.height = 'auto';
         
         // Set minimum height
         const minHeight = 200;
-        const maxHeight = 3000; // Set a reasonable maximum height
         
-        // Calculate new height based on scroll height
+        // Calculate new height based on scroll height (no maximum limit)
         let newHeight = Math.max(textarea.scrollHeight, minHeight);
         
-        // If content exceeds max height, set to max and allow scrolling
-        if (textarea.scrollHeight > maxHeight) {
-            newHeight = maxHeight;
-            textarea.style.overflowY = 'auto';
-        } else {
-            textarea.style.overflowY = 'hidden';
-        }
+        // Always use hidden overflow since we expand to fit content
+        textarea.style.overflowY = 'hidden';
         
         // Apply the new height
         textarea.style.height = newHeight + 'px';
@@ -2537,9 +2531,8 @@
     function autoResizePreview(preview) {
         console.log('autoResizePreview called');
         
-        // Set minimum height
+        // Set minimum height only - no maximum limit
         const minHeight = 200;
-        const maxHeight = 3000;
         
         // Temporarily remove height constraint to measure content
         const originalHeight = preview.style.height;
@@ -2552,18 +2545,12 @@
         let contentHeight = preview.scrollHeight;
         console.log(`Preview content height: ${contentHeight}px`);
         
-        // Apply min/max constraints
+        // Apply minimum height constraint only
         let newHeight = Math.max(contentHeight, minHeight);
         
-        // If content exceeds max height, set to max and allow scrolling
-        if (contentHeight > maxHeight) {
-            newHeight = maxHeight;
-            preview.style.overflowY = 'auto';
-            console.log(`Content exceeds max height, setting to ${newHeight}px with scrolling`);
-        } else {
-            preview.style.overflowY = 'hidden';
-            console.log(`Setting preview height to ${newHeight}px without scrolling`);
-        }
+        // Always allow infinite expansion - no scrolling needed
+        preview.style.overflowY = 'hidden';
+        console.log(`Setting preview height to ${newHeight}px (infinite expansion)`);
         
         // Apply the new height
         preview.style.height = newHeight + 'px';
