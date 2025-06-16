@@ -635,6 +635,37 @@
         }
     }
 
+    /* Image upload and preview styles */
+    .message-image {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        margin: 10px 0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    #imagePreviewArea {
+        border: 2px dashed #ddd;
+        border-radius: 8px;
+        background-color: #f9f9f9;
+    }
+
+    #imagePreview {
+        border-radius: 6px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    #newMessageContent.image-paste-active {
+        border-color: #007bff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+
+    .image-upload-hint {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 4px;
+    }
+
 </style>
 
 <?php if ($this->auth->userIsAdmin || $this->auth->userIsTeacher): ?>
@@ -824,7 +855,31 @@
                 <div class="mb-3">
                     <label for="newMessageContent" class="form-label">Lisa kommentaar</label>
                     <textarea class="form-control" id="newMessageContent" rows="3"
-                              placeholder="Kirjuta kommentaar õpilasele..."></textarea>
+                              placeholder="Kirjuta kommentaar õpilasele... (pildide kleepimiseks kasuta Ctrl+V)"></textarea>
+                    
+                    <!-- Image Upload Progress -->
+                    <div id="imageUploadProgress" class="mt-2 d-none">
+                        <div class="d-flex align-items-center">
+                            <div class="spinner-border spinner-border-sm me-2" role="status">
+                                <span class="visually-hidden">Laadimine...</span>
+                            </div>
+                            <span>Pildi töötlemine...</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Image Preview Area -->
+                    <div id="imagePreviewArea" class="mt-2 d-none">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <small class="text-muted">Lisatud pilt:</small>
+                            <button type="button" class="btn btn-sm btn-outline-danger" id="removeImageBtn">
+                                <i class="fas fa-times"></i> Eemalda
+                            </button>
+                        </div>
+                        <div class="border rounded p-2">
+                            <img id="imagePreview" src="" alt="Uploaded image" class="img-fluid" style="max-height: 200px;">
+                        </div>
+                    </div>
+                    
                     <div class="invalid-feedback" id="messageError"></div>
                 </div>
 
@@ -918,11 +973,15 @@
                 window.location.href = url.toString();
             });
         }
+
+        // Initialize image pasting functionality
+        initializeImagePasting();
     });
 
     let currentAssignmentId = null;
     let currentUserId = null;
     let gradingModalInstance = null;
+    let currentImageId = null; // Track uploaded image ID
 
     function openGradingModal(row) {
         // Extract data from row
@@ -1004,6 +1063,11 @@
         // Clear new message form
         document.getElementById('newMessageContent').value = '';
         document.getElementById('messageError').textContent = '';
+        
+        // Clear image preview
+        currentImageId = null;
+        document.getElementById('imagePreviewArea').classList.add('d-none');
+        document.getElementById('imagePreview').src = '';
 
         // Clear grade error and hide it
         const gradeError = document.getElementById('gradeError');
@@ -1135,6 +1199,11 @@
         formData.append('studentId', currentUserId);
         formData.append('grade', selectedGrade);
         formData.append('comment', comment);
+        
+        // Add image ID if present
+        if (currentImageId) {
+            formData.append('imageId', currentImageId);
+        }
 
         // Add criteria data
         Object.keys(criteriaData).forEach(criterionId => {
@@ -1154,6 +1223,17 @@
                 if (data.status === 200) {
                     // Clear comment form and reload messages
                     document.getElementById('newMessageContent').value = '';
+                    
+                    // Clear image if present
+                    if (currentImageId) {
+                        const removeImageFunction = function() {
+                            currentImageId = null;
+                            document.getElementById('imagePreviewArea').classList.add('d-none');
+                            document.getElementById('imagePreview').src = '';
+                        };
+                        removeImageFunction();
+                    }
+                    
                     loadMessages(currentAssignmentId, currentUserId);
 
                     // Update the table row to reflect the new grade and timestamps
@@ -1410,6 +1490,10 @@
         messages.forEach(message => {
             if (!message.isNotification) {
                 const messageDate = new Date(message.createdAt).toLocaleString('et-EE');
+                let imageHtml = '';
+                if (message.imageId) {
+                    imageHtml = `<div class="mt-2">${displayMessageImage(message.imageId)}</div>`;
+                }
                 messagesHtml += `
                     <div class="message-item">
                         <div class="d-flex justify-content-between">
@@ -1417,6 +1501,7 @@
                             <span class="message-time">${messageDate}</span>
                         </div>
                         <div class="message-content">${parseMarkdown(message.content)}</div>
+                        ${imageHtml}
                     </div>
                 `;
             }
@@ -1894,6 +1979,119 @@
                 row.classList.add('ungraded');
             }
         });
+    }
+
+    // Image pasting functionality
+    function initializeImagePasting() {
+        const textarea = document.getElementById('newMessageContent');
+        const imagePreviewArea = document.getElementById('imagePreviewArea');
+        const imagePreview = document.getElementById('imagePreview');
+        const removeImageBtn = document.getElementById('removeImageBtn');
+        const uploadProgress = document.getElementById('imageUploadProgress');
+
+        // Handle paste events
+        textarea.addEventListener('paste', function(e) {
+            const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+            
+            for (let item of items) {
+                if (item.type.indexOf('image') !== -1) {
+                    e.preventDefault();
+                    const file = item.getAsFile();
+                    handleImageUpload(file);
+                    break;
+                }
+            }
+        });
+
+        // Handle drag and drop
+        textarea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            textarea.classList.add('image-paste-active');
+        });
+
+        textarea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            textarea.classList.remove('image-paste-active');
+        });
+
+        textarea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            textarea.classList.remove('image-paste-active');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && files[0].type.indexOf('image') !== -1) {
+                handleImageUpload(files[0]);
+            }
+        });
+
+        // Remove image button
+        removeImageBtn.addEventListener('click', function() {
+            removeImage();
+        });
+
+        function handleImageUpload(file) {
+            // Validate file size (max 10MB)
+            if (file.size > 10 * 1024 * 1024) {
+                alert('Pilt on liiga suur. Maksimaalne suurus on 10MB.');
+                return;
+            }
+
+            // Show upload progress
+            uploadProgress.classList.remove('d-none');
+            imagePreviewArea.classList.add('d-none');
+
+            // Create form data
+            const formData = new FormData();
+            formData.append('image', file);
+
+            // Upload image
+            fetch('<?= BASE_URL ?>api/images', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                console.log('Upload response status:', response.status);
+                return response.text(); // Get as text first to see what we're getting
+            })
+            .then(text => {
+                console.log('Raw response:', text);
+                try {
+                    const data = JSON.parse(text);
+                    uploadProgress.classList.add('d-none');
+                    
+                    if (data.status === 200) {
+                        currentImageId = data.data.imageId;
+                        
+                        // Show preview
+                        imagePreview.src = `<?= BASE_URL ?>api/images/display?id=${data.data.imageId}`;
+                        imagePreviewArea.classList.remove('d-none');
+                    } else {
+                        alert('Viga pildi üleslaadimisel: ' + (data.message || 'Tundmatu viga'));
+                    }
+                } catch (e) {
+                    console.error('JSON parse error:', e);
+                    console.log('Response was not JSON:', text);
+                    alert('Viga pildi üleslaadimisel: Server tagastas vigase vastuse');
+                }
+            })
+            .catch(error => {
+                uploadProgress.classList.add('d-none');
+                console.error('Image upload error:', error);
+                alert('Viga pildi üleslaadimisel: ' + error.message);
+            });
+        }
+
+        function removeImage() {
+            currentImageId = null;
+            imagePreviewArea.classList.add('d-none');
+            imagePreview.src = '';
+        }
+    }
+
+    // Function to display images in messages
+    function displayMessageImage(imageId) {
+        if (!imageId) return '';
+        return `<img src="<?= BASE_URL ?>api/images/display?id=${imageId}" class="message-image" alt="Attached image">`;
     }
 
 </script>
