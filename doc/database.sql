@@ -1,4 +1,4 @@
--- Dump created on 2025-05-26 01:35:18 by Hennos-MacBook-Pro-2.local
+-- Dump created on 2025-06-16 15:11:20 by Hennos-MacBook-Pro-2.local
 SET FOREIGN_KEY_CHECKS=0;
 SET @@SESSION.sql_mode='NO_AUTO_VALUE_ON_ZERO';
 
@@ -301,6 +301,29 @@ LOCK TABLES `systems` WRITE;
 INSERT INTO `systems` VALUES
 (1,'Tahvel',NULL,NULL);
 /*!40000 ALTER TABLE `systems` ENABLE KEYS */;
+UNLOCK TABLES;
+
+-- Table structure for table `teacherNotes`
+CREATE TABLE `teacherNotes` (
+`noteId` int unsigned NOT NULL AUTO_INCREMENT,
+`studentId` int unsigned NOT NULL COMMENT 'Student ID',
+`assignmentId` int unsigned NOT NULL COMMENT 'Assignment ID',
+`teacherId` int unsigned NOT NULL COMMENT 'Teacher who made the note',
+`noteContent` text NOT NULL COMMENT 'The private note content',
+`createdAt` datetime NOT NULL DEFAULT current_timestamp(),
+`updatedAt` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+PRIMARY KEY (`noteId`),
+UNIQUE KEY `idx_teacher_notes_unique` (`studentId`,`assignmentId`,`teacherId`),
+KEY `idx_teacher_notes_student` (`studentId`),
+KEY `idx_teacher_notes_assignment` (`assignmentId`),
+KEY `idx_teacher_notes_teacher` (`teacherId`),
+CONSTRAINT `fk_teacher_notes_assignment` FOREIGN KEY (`assignmentId`) REFERENCES `assignments` (`assignmentId`) ON DELETE CASCADE,
+CONSTRAINT `fk_teacher_notes_student` FOREIGN KEY (`studentId`) REFERENCES `users` (`userId`) ON DELETE CASCADE,
+CONSTRAINT `fk_teacher_notes_teacher` FOREIGN KEY (`teacherId`) REFERENCES `users` (`userId`) ON DELETE CASCADE
+);
+LOCK TABLES `teacherNotes` WRITE;
+/*!40000 ALTER TABLE `teacherNotes` DISABLE KEYS */;
+/*!40000 ALTER TABLE `teacherNotes` ENABLE KEYS */;
 UNLOCK TABLES;
 
 -- Table structure for table `translationLanguages`
