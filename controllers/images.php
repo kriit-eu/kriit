@@ -54,11 +54,19 @@ class images extends Controller
     }
 
     /**
-     * Default index method
+     * Default index method - handles /images/id URLs
      */
     public function index(): void
     {
-        // Redirect to admin or show image management interface
-        $this->redirect('admin');
+        // Check if there's an image ID parameter
+        $imageId = isset($this->params[0]) ? (int)$this->params[0] : 0;
+        
+        if ($imageId) {
+            // Redirect to view method for displaying the image
+            $this->view();
+        } else {
+            // No image ID provided, redirect to admin
+            $this->redirect('admin');
+        }
     }
 }

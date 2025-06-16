@@ -40,9 +40,12 @@ class images extends Controller
             $uploadedFile = $_FILES['image'];
             
             // Validate file type
-            $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            $allowedTypes = [
+                'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 
+                'image/webp', 'image/avif', 'image/bmp', 'image/tiff'
+            ];
             if (!in_array($uploadedFile['type'], $allowedTypes)) {
-                stop(400, 'Invalid image type. Only JPEG, PNG, GIF, and WebP are allowed.');
+                stop(400, 'Invalid image type. Supported formats: JPEG, PNG, GIF, WebP, AVIF, BMP, TIFF');
             }
 
             // Validate file size (max 10MB)
@@ -75,6 +78,7 @@ class images extends Controller
             // Create image resource from uploaded file
             switch ($uploadedFile['type']) {
                 case 'image/jpeg':
+                case 'image/jpg':
                     $image = \imagecreatefromjpeg($uploadedFile['tmp_name']);
                     break;
                 case 'image/png':
@@ -90,6 +94,23 @@ class images extends Controller
                         stop(400, 'WebP support not available');
                     }
                     break;
+                case 'image/avif':
+                    if (function_exists('imagecreatefromavif')) {
+                        $image = \imagecreatefromavif($uploadedFile['tmp_name']);
+                    } else {
+                        stop(400, 'AVIF support not available');
+                    }
+                    break;
+                case 'image/bmp':
+                    if (function_exists('imagecreatefrombmp')) {
+                        $image = \imagecreatefrombmp($uploadedFile['tmp_name']);
+                    } else {
+                        stop(400, 'BMP support not available');
+                    }
+                    break;
+                case 'image/tiff':
+                    // TIFF support is limited in GD, might need ImageMagick
+                    stop(400, 'TIFF format not fully supported. Please convert to JPEG, PNG, or WebP.');
                 default:
                     stop(400, 'Unsupported image type');
             }
@@ -98,33 +119,77 @@ class images extends Controller
                 stop(500, 'Failed to process image');
             }
 
-            $width = \imagesx($image);
-            $height = \imagesy($image);
-
-            // Convert to AVIF if supported, otherwise use WebP as fallback, or PNG as final fallback
-            ob_start();
-            $processedMimeType = 'image/png'; // Safe fallback
+            $originalWidth = \imagesx($image);
+            $originalHeight = \imagesy($image);
             
-            if (function_exists('imageavif')) {
-                $success = \imageavif($image, null, 80); // 80% quality
-                $processedMimeType = 'image/avif';
-            } elseif (function_exists('imagewebp')) {
-                $success = \imagewebp($image, null, 80); // 80% quality
-                $processedMimeType = 'image/webp';
-            } else {
-                $success = \imagepng($image, null, 8); // PNG compression level 8
-                $processedMimeType = 'image/png';
-            }
-            
-            if (!$success) {
+            // Resize if width exceeds 1920px
+            if ($originalWidth > 1920) {
+                $newWidth = 1920;
+                $newHeight = intval(($originalHeight * $newWidth) / $originalWidth);
+                
+                // Create new resized image
+                $resizedImage = \imagecreatetruecolor($newWidth, $newHeight);
+                
+                // Preserve transparency for PNG and GIF
+                if ($uploadedFile['type'] === 'image/png' || $uploadedFile['type'] === 'image/gif') {
+                    \imagealphablending($resizedImage, false);
+                    \imagesavealpha($resizedImage, true);
+                    $transparent = \imagecolorallocatealpha($resizedImage, 255, 255, 255, 127);
+                    \imagefill($resizedImage, 0, 0, $transparent);
+                }
+                
+                // Resize the image
+                \imagecopyresampled($resizedImage, $image, 0, 0, 0, 0, $newWidth, $newHeight, $originalWidth, $originalHeight);
+                
+                // Clean up original image
                 \imagedestroy($image);
-                ob_end_clean();
-                stop(500, 'Failed to convert image');
+                $image = $resizedImage;
+                
+                $width = $newWidth;
+                $height = $newHeight;
+                $wasResized = true;
+            } else {
+                $width = $originalWidth;
+                $height = $originalHeight;
+                $wasResized = false;
             }
 
+            // Try different formats and choose the most efficient one
+            $formats = [];
+            
+            // AVIF ONLY - No fallbacks allowed
+            if (!function_exists('imageavif')) {
+                \imagedestroy($image);
+                stop(500, [
+                    'error' => 'AVIF support not available',
+                    'details' => 'PHP GD extension does not have AVIF support compiled in',
+                    'solution' => 'Enable AVIF support in PHP or compile GD with AVIF support',
+                    'check_diagnostics' => 'Visit /api/images/diagnostics for detailed server information',
+                    'required_action' => 'Server configuration must be updated to support AVIF'
+                ]);
+            }
+            
+            ob_start();
+            $success = \imageavif($image, null, 80); // 80% quality
+            if (!$success) {
+                ob_end_clean();
+                \imagedestroy($image);
+                stop(500, [
+                    'error' => 'Failed to convert image to AVIF format',
+                    'details' => 'AVIF encoding failed during processing',
+                    'note' => 'AVIF function exists but encoding failed'
+                ]);
+            }
+            
             $processedImageData = ob_get_contents();
+            $processedMimeType = 'image/avif';
             ob_end_clean();
             \imagedestroy($image);
+
+            // Calculate compression savings
+            $originalSize = $uploadedFile['size'];
+            $compressionSavings = $originalSize > strlen($processedImageData) ? 
+                round((1 - strlen($processedImageData) / $originalSize) * 100, 1) : 0;
 
             $imageId = Db::insert('uploaded_images', [
                 'imageHash' => $imageHash,
@@ -139,14 +204,35 @@ class images extends Controller
                 'uploadedBy' => $this->auth->userId
             ]);
 
-            stop(200, [
+            $responseData = [
                 'imageId' => $imageId,
+                'originalWidth' => $originalWidth,
+                'originalHeight' => $originalHeight,
                 'width' => $width,
                 'height' => $height,
+                'originalMimeType' => $uploadedFile['type'],
                 'processedMimeType' => $processedMimeType,
+                'originalSize' => $originalSize,
                 'processedSize' => strlen($processedImageData),
-                'message' => 'Image uploaded and processed successfully'
-            ]);
+                'message' => 'Image uploaded and converted to AVIF successfully'
+            ];
+            
+            // Add additional info if image was modified
+            if ($wasResized) {
+                $responseData['wasResized'] = true;
+                $responseData['resizeInfo'] = "Resized from {$originalWidth}x{$originalHeight} to {$width}x{$height}";
+            }
+            
+            if ($compressionSavings > 0) {
+                $responseData['compressionSavings'] = $compressionSavings;
+                $responseData['compressionInfo'] = "Size reduced by {$compressionSavings}% through AVIF conversion";
+            }
+            
+            // Always mention format conversion since we convert everything to AVIF
+            $responseData['formatChanged'] = true;
+            $responseData['formatInfo'] = "Converted from {$uploadedFile['type']} to AVIF format";
+
+            stop(200, $responseData);
 
         } catch (Exception $e) {
             error_log("Image upload error: " . $e->getMessage());
@@ -222,5 +308,41 @@ class images extends Controller
             http_response_code(404);
             die('Method not found');
         }
+    }
+
+    public function diagnostics()
+    {
+        // Set JSON header
+        header('Content-Type: application/json');
+        
+        // Check if user is admin
+        if (!$this->auth->userIsAdmin) {
+            stop(403, 'Admin access required');
+        }
+        
+        $diagnostics = [
+            'php_version' => PHP_VERSION,
+            'gd_version' => gd_info()['GD Version'] ?? 'Not available',
+            'supported_formats' => [],
+            'avif_functions' => [
+                'imageavif' => function_exists('imageavif'),
+                'imagecreatefromavif' => function_exists('imagecreatefromavif')
+            ],
+            'gd_info' => gd_info()
+        ];
+        
+        // Check supported image formats
+        if (function_exists('imagetypes')) {
+            $types = imagetypes();
+            $diagnostics['supported_formats'] = [
+                'JPEG' => (bool)($types & IMG_JPG),
+                'PNG' => (bool)($types & IMG_PNG),
+                'GIF' => (bool)($types & IMG_GIF),
+                'WebP' => (bool)($types & IMG_WEBP),
+                'AVIF' => (bool)($types & IMG_AVIF ?? 0)
+            ];
+        }
+        
+        stop(200, $diagnostics);
     }
 }

@@ -645,14 +645,56 @@
     }
 
     #newMessageContent.image-paste-active {
-        border-color: #007bff;
-        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        border-color: #007bff !important;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+        background-color: #f8f9ff !important;
     }
 
     .image-upload-hint {
         font-size: 0.875rem;
         color: #6c757d;
         margin-top: 4px;
+    }
+
+    .drag-drop-zone {
+        position: relative;
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        transition: all 0.3s ease;
+        background-color: #f8f9fa;
+    }
+
+    .drag-drop-zone.drag-over {
+        border-color: #007bff;
+        background-color: #f0f8ff;
+        transform: scale(1.01);
+    }
+
+    .upload-item {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 8px 12px;
+        margin-bottom: 8px;
+    }
+
+    .upload-item.success {
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+        color: #155724;
+    }
+
+    .upload-item.error {
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+        color: #721c24;
+    }
+
+    .file-info {
+        font-size: 0.875rem;
+        color: #6c757d;
     }
 
     /* Split editor styles */
@@ -714,6 +756,15 @@
         border-radius: 6px;
         border-left: 4px solid #007bff;
         overflow-x: auto;
+    }
+
+    /* Dynamic resizing styles */
+    #newMessageContent {
+        transition: height 0.2s ease;
+    }
+
+    #messagePreview {
+        transition: height 0.2s ease;
     }
 
     /* Mobile responsiveness */
@@ -924,7 +975,7 @@
                                 </div>
                                 <textarea class="form-control" id="newMessageContent" rows="8"
                                           placeholder="Kirjuta kommentaar õpilasele... (pildide kleepimiseks kasuta Ctrl+V)"
-                                          style="resize: vertical; min-height: 200px;"></textarea>
+                                          style="resize: none; min-height: 200px; max-height: 600px; overflow: hidden;"></textarea>
                             </div>
                         </div>
                         
@@ -937,7 +988,7 @@
                                     </small>
                                 </div>
                                 <div id="messagePreview" class="form-control" 
-                                     style="min-height: 200px; background-color: #f8f9fa; overflow-y: auto;">
+                                     style="min-height: 200px; max-height: 600px; background-color: #f8f9fa; overflow-y: auto; word-wrap: break-word;">
                                     <div class="text-muted text-center p-3">
                                         <i class="fas fa-eye-slash"></i><br>
                                         Eelvaade ilmub siia...
@@ -949,20 +1000,47 @@
                     
                     <!-- Image Upload Progress -->
                     <div id="imageUploadProgress" class="mt-2 d-none">
-                        <div class="d-flex align-items-center">
-                            <div class="spinner-border spinner-border-sm me-2" role="status">
-                                <span class="visually-hidden">Laadimine...</span>
+                        <div class="card border-primary">
+                            <div class="card-body p-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="mb-0">Pildi üleslaadimine</h6>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" id="cancelUpload">
+                                        <i class="fas fa-times"></i> Tühista
+                                    </button>
+                                </div>
+                                <div class="progress mb-2" style="height: 8px;">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                         id="uploadProgressBar" role="progressbar" style="width: 0%"></div>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <div class="spinner-border spinner-border-sm me-2" role="status">
+                                        <span class="visually-hidden">Laadimine...</span>
+                                    </div>
+                                    <small class="text-muted" id="uploadStatusText">Alustamine...</small>
+                                </div>
+                                <div id="uploadResults" class="mt-2"></div>
                             </div>
-                            <span>Pildi töötlemine...</span>
                         </div>
                     </div>
                     
-                    <div class="form-text mt-2">
-                        <small class="text-muted">
-                            💡 <strong>Näpunäide:</strong> Kopeeri ükskõik milline pilt ja kleebi see otse redaktorisse (Ctrl+V)! 
-                            Pildid lisatakse automaatselt Markdown-vormingus. Kasuta <strong>**paks**</strong>, <em>*kaldkiri*</em>, 
-                            <code>`kood`</code> jne.
-                        </small>
+                    <!-- Image Upload Zone -->
+                    <div class="mt-2">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="form-text">
+                                    <small class="text-muted">
+                                        💡 <strong>Näpunäide:</strong> Kopeeri ükskõik milline pilt ja kleebi see otse redaktorisse (Ctrl+V)! 
+                                        Pildid lisatakse automaatselt Markdown-vormingus.
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <button type="button" class="btn btn-outline-primary btn-sm" id="selectImagesBtn">
+                                    <i class="fas fa-image"></i> Vali pildid
+                                </button>
+                                <input type="file" id="imageFileInput" multiple accept="image/*" style="display: none;">
+                            </div>
+                        </div>
                     </div>
                     
                     <div class="invalid-feedback" id="messageError"></div>
@@ -2074,118 +2152,513 @@
     function initializeImagePasting() {
         const textarea = document.getElementById('newMessageContent');
         const uploadProgress = document.getElementById('imageUploadProgress');
+        const uploadProgressBar = document.getElementById('uploadProgressBar');
+        const uploadStatusText = document.getElementById('uploadStatusText');
+        const uploadResults = document.getElementById('uploadResults');
+        const cancelUploadBtn = document.getElementById('cancelUpload');
+        const selectImagesBtn = document.getElementById('selectImagesBtn');
+        const imageFileInput = document.getElementById('imageFileInput');
+        
+        let currentUploads = [];
+        let uploadCounter = 0;
+
+        // Supported file types
+        const supportedTypes = [
+            'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 
+            'image/webp', 'image/avif', 'image/bmp', 'image/tiff'
+        ];
+
+        // File selection button
+        selectImagesBtn.addEventListener('click', () => {
+            imageFileInput.click();
+        });
+
+        // File input change handler
+        imageFileInput.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            if (files.length > 0) {
+                handleMultipleFiles(files);
+            }
+            e.target.value = ''; // Reset input
+        });
 
         // Handle paste events
         textarea.addEventListener('paste', function(e) {
             const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+            const imageFiles = [];
             
             for (let item of items) {
                 if (item.type.indexOf('image') !== -1) {
-                    e.preventDefault();
-                    const file = item.getAsFile();
-                    handleImageUpload(file);
-                    break;
+                    imageFiles.push(item.getAsFile());
                 }
+            }
+            
+            if (imageFiles.length > 0) {
+                e.preventDefault();
+                console.log(`Pasted ${imageFiles.length} image(s)`);
+                handleMultipleFiles(imageFiles);
             }
         });
 
-        // Handle drag and drop
+        // Enhanced drag and drop
         textarea.addEventListener('dragover', function(e) {
             e.preventDefault();
+            e.stopPropagation();
+            textarea.classList.add('image-paste-active');
+        });
+
+        textarea.addEventListener('dragenter', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
             textarea.classList.add('image-paste-active');
         });
 
         textarea.addEventListener('dragleave', function(e) {
             e.preventDefault();
-            textarea.classList.remove('image-paste-active');
+            e.stopPropagation();
+            // Only remove class if really leaving the textarea
+            if (!textarea.contains(e.relatedTarget)) {
+                textarea.classList.remove('image-paste-active');
+            }
         });
 
         textarea.addEventListener('drop', function(e) {
             e.preventDefault();
+            e.stopPropagation();
             textarea.classList.remove('image-paste-active');
             
-            const files = e.dataTransfer.files;
-            if (files.length > 0 && files[0].type.indexOf('image') !== -1) {
-                handleImageUpload(files[0]);
+            const files = Array.from(e.dataTransfer.files).filter(file => 
+                file.type.indexOf('image') !== -1
+            );
+            
+            if (files.length > 0) {
+                console.log(`Dropped ${files.length} image(s)`);
+                handleMultipleFiles(files);
             }
         });
 
-        function handleImageUpload(file) {
-            // Validate file size (max 10MB)
+        // Cancel upload functionality
+        cancelUploadBtn.addEventListener('click', () => {
+            cancelAllUploads();
+        });
+
+        function validateFile(file) {
+            const errors = [];
+            
+            // Check file type
+            if (!supportedTypes.includes(file.type)) {
+                errors.push(`Toetamata failitüüp: ${file.type}`);
+            }
+            
+            // Check file size (10MB limit)
             if (file.size > 10 * 1024 * 1024) {
-                alert('Pilt on liiga suur. Maksimaalne suurus on 10MB.');
+                const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+                errors.push(`Fail on liiga suur: ${sizeMB}MB (max 10MB)`);
+            }
+            
+            return errors;
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        function handleMultipleFiles(files) {
+            if (files.length === 0) return;
+            
+            console.log(`Processing ${files.length} files`);
+            
+            // Show upload progress container
+            uploadProgress.classList.remove('d-none');
+            uploadResults.innerHTML = '';
+            uploadProgressBar.style.width = '0%';
+            uploadStatusText.textContent = `Kontrollin ${files.length} faili...`;
+            
+            // Validate all files first
+            const validFiles = [];
+            const invalidFiles = [];
+            
+            files.forEach(file => {
+                const errors = validateFile(file);
+                if (errors.length === 0) {
+                    validFiles.push(file);
+                } else {
+                    invalidFiles.push({file, errors});
+                }
+            });
+            
+            // Show validation results
+            if (invalidFiles.length > 0) {
+                invalidFiles.forEach(({file, errors}) => {
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'upload-item error';
+                    errorDiv.innerHTML = `
+                        <div class="d-flex justify-content-between">
+                            <span><i class="fas fa-times"></i> ${file.name}</span>
+                            <span class="file-info">${formatFileSize(file.size)}</span>
+                        </div>
+                        <div class="text-danger small mt-1">${errors.join(', ')}</div>
+                    `;
+                    uploadResults.appendChild(errorDiv);
+                });
+            }
+            
+            if (validFiles.length === 0) {
+                uploadStatusText.textContent = 'Ühtegi kehtivat pilti ei leitud';
+                setTimeout(() => {
+                    uploadProgress.classList.add('d-none');
+                }, 3000);
                 return;
             }
+            
+            // Upload valid files
+            uploadStatusText.textContent = `Laen üles ${validFiles.length} pilti...`;
+            uploadFilesSequentially(validFiles);
+        }
 
-            // Show upload progress
-            uploadProgress.classList.remove('d-none');
-
-            // Create form data
-            const formData = new FormData();
-            formData.append('image', file);
-
-            // Upload image
-            fetch('<?= BASE_URL ?>api/images', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => {
-                console.log('Upload response status:', response.status);
-                return response.text(); // Get as text first to see what we're getting
-            })
-            .then(text => {
-                console.log('Raw response:', text);
+        async function uploadFilesSequentially(files) {
+            const totalFiles = files.length;
+            let completedFiles = 0;
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const uploadId = ++uploadCounter;
+                
+                // Create upload item in results
+                const uploadItem = document.createElement('div');
+                uploadItem.className = 'upload-item';
+                uploadItem.id = `upload-${uploadId}`;
+                uploadItem.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-spinner fa-spin"></i> ${file.name}</span>
+                        <span class="file-info">${formatFileSize(file.size)}</span>
+                    </div>
+                    <div class="progress mt-2" style="height: 4px;">
+                        <div class="progress-bar" id="progress-${uploadId}" style="width: 0%"></div>
+                    </div>
+                `;
+                uploadResults.appendChild(uploadItem);
+                
                 try {
-                    const data = JSON.parse(text);
-                    uploadProgress.classList.add('d-none');
+                    const result = await uploadSingleFile(file, uploadId);
                     
-                    if (data.status === 200) {
-                        // Insert markdown image syntax into textarea
-                        const textarea = document.getElementById('newMessageContent');
-                        const imageMarkdown = `![Image](<?= BASE_URL ?>api/images/${data.data.imageId})`;
-                        
-                        // Get current cursor position and insert markdown
-                        const cursorPos = textarea.selectionStart;
-                        const textBefore = textarea.value.substring(0, cursorPos);
-                        const textAfter = textarea.value.substring(cursorPos);
-                        textarea.value = textBefore + imageMarkdown + textAfter;
-                        
-                        // Move cursor after the inserted text
-                        textarea.selectionStart = textarea.selectionEnd = cursorPos + imageMarkdown.length;
-                        textarea.focus();
-                        
-                        // Trigger preview update
-                        textarea.dispatchEvent(new Event('input'));
-                        
-                        // Store image ID for form submission (in case we need it)
-                        currentImageId = data.data.imageId;
-                    } else {
-                        alert('Viga pildi üleslaadimisel: ' + (data.message || 'Tundmatu viga'));
-                    }
-                } catch (e) {
-                    console.error('JSON parse error:', e);
-                    console.log('Response was not JSON:', text);
-                    alert('Viga pildi üleslaadimisel: Server tagastas vigase vastuse');
+                    // Update item to success state
+                    uploadItem.className = 'upload-item success';
+                    uploadItem.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-check"></i> ${file.name}</span>
+                            <span class="file-info">${formatFileSize(result.processedSize || file.size)}</span>
+                        </div>
+                        ${result.compressionSavings ? `<div class="text-success small mt-1">
+                            <i class="fas fa-compress-arrows-alt"></i> Kompressioon: ${result.compressionSavings}% väiksem
+                        </div>` : ''}
+                    `;
+                    
+                    // Insert markdown into textarea
+                    insertImageMarkdown(result.imageId, file.name);
+                    
+                } catch (error) {
+                    console.error('Upload failed:', error);
+                    
+                    // Update item to error state
+                    uploadItem.className = 'upload-item error';
+                    uploadItem.innerHTML = `
+                        <div class="d-flex justify-content-between">
+                            <span><i class="fas fa-times"></i> ${file.name}</span>
+                            <span class="file-info">${formatFileSize(file.size)}</span>
+                        </div>
+                        <div class="text-danger small mt-1">${error.message}</div>
+                    `;
                 }
-            })
-            .catch(error => {
+                
+                completedFiles++;
+                const overallProgress = (completedFiles / totalFiles) * 100;
+                uploadProgressBar.style.width = overallProgress + '%';
+                uploadStatusText.textContent = `${completedFiles}/${totalFiles} pilti valmis`;
+            }
+            
+            // Hide progress after completion
+            setTimeout(() => {
                 uploadProgress.classList.add('d-none');
-                console.error('Image upload error:', error);
-                alert('Viga pildi üleslaadimisel: ' + error.message);
+            }, 3000);
+        }
+
+        function uploadSingleFile(file, uploadId) {
+            return new Promise((resolve, reject) => {
+                const formData = new FormData();
+                formData.append('image', file);
+                
+                const xhr = new XMLHttpRequest();
+                
+                // Track this upload for cancellation
+                currentUploads.push(xhr);
+                
+                // Progress tracking
+                xhr.upload.addEventListener('progress', (e) => {
+                    if (e.lengthComputable) {
+                        const progress = (e.loaded / e.total) * 100;
+                        const progressBar = document.getElementById(`progress-${uploadId}`);
+                        if (progressBar) {
+                            progressBar.style.width = progress + '%';
+                        }
+                    }
+                });
+                
+                xhr.onload = function() {
+                    // Remove from tracking
+                    currentUploads = currentUploads.filter(u => u !== xhr);
+                    
+                    if (xhr.status === 200) {
+                        try {
+                            const response = JSON.parse(xhr.responseText);
+                            if (response.status === 200) {
+                                // Calculate compression savings if applicable
+                                const originalSize = file.size;
+                                const processedSize = response.data.processedSize;
+                                const savings = originalSize > processedSize ? 
+                                    Math.round((1 - processedSize / originalSize) * 100) : 0;
+                                
+                                resolve({
+                                    imageId: response.data.imageId,
+                                    processedSize: processedSize,
+                                    compressionSavings: savings > 5 ? savings : null // Only show if significant
+                                });
+                            } else {
+                                reject(new Error(response.message || 'Upload failed'));
+                            }
+                        } catch (e) {
+                            reject(new Error('Invalid server response'));
+                        }
+                    } else {
+                        reject(new Error(`Server error: ${xhr.status}`));
+                    }
+                };
+                
+                xhr.onerror = function() {
+                    currentUploads = currentUploads.filter(u => u !== xhr);
+                    reject(new Error('Network error'));
+                };
+                
+                xhr.onabort = function() {
+                    currentUploads = currentUploads.filter(u => u !== xhr);
+                    reject(new Error('Upload cancelled'));
+                };
+                
+                xhr.open('POST', '<?= BASE_URL ?>api/images');
+                xhr.send(formData);
             });
+        }
+
+        function insertImageMarkdown(imageId, fileName) {
+            const imageMarkdown = `![${fileName}](<?= BASE_URL ?>images/${imageId})`;
+            
+            // Get current cursor position and insert markdown
+            const cursorPos = textarea.selectionStart;
+            const textBefore = textarea.value.substring(0, cursorPos);
+            const textAfter = textarea.value.substring(cursorPos);
+            
+            // Add newlines if needed for proper formatting
+            const needsNewlineBefore = textBefore.length > 0 && !textBefore.endsWith('\n');
+            const needsNewlineAfter = textAfter.length > 0 && !textAfter.startsWith('\n');
+            
+            const finalMarkdown = 
+                (needsNewlineBefore ? '\n' : '') + 
+                imageMarkdown + 
+                (needsNewlineAfter ? '\n' : '');
+            
+            textarea.value = textBefore + finalMarkdown + textAfter;
+            
+            // Move cursor after the inserted text
+            const newCursorPos = cursorPos + finalMarkdown.length;
+            textarea.selectionStart = textarea.selectionEnd = newCursorPos;
+            textarea.focus();
+            
+            // Trigger preview update
+            textarea.dispatchEvent(new Event('input'));
+        }
+
+        function cancelAllUploads() {
+            console.log(`Cancelling ${currentUploads.length} uploads`);
+            currentUploads.forEach(xhr => {
+                try {
+                    xhr.abort();
+                } catch (e) {
+                    console.error('Error aborting upload:', e);
+                }
+            });
+            currentUploads = [];
+            
+            uploadStatusText.textContent = 'Üleslaadimine tühistatud';
+            uploadProgressBar.style.width = '0%';
+            
+            setTimeout(() => {
+                uploadProgress.classList.add('d-none');
+            }, 2000);
         }
     }
 
     // Function to display images in messages
     function displayMessageImage(imageId) {
         if (!imageId) return '';
-        return `<img src="<?= BASE_URL ?>api/images/${imageId}" class="message-image" alt="Attached image">`;
+        return `<img src="<?= BASE_URL ?>images/${imageId}" class="message-image" alt="Attached image">`;
     }
+
+    // Auto-resize textarea to fit content
+    function autoResizeTextarea(textarea) {
+        // Reset height to auto to get the correct scrollHeight
+        textarea.style.height = 'auto';
+        
+        // Set minimum height
+        const minHeight = 200;
+        const maxHeight = 3000; // Set a reasonable maximum height
+        
+        // Calculate new height based on scroll height
+        let newHeight = Math.max(textarea.scrollHeight, minHeight);
+        
+        // If content exceeds max height, set to max and allow scrolling
+        if (textarea.scrollHeight > maxHeight) {
+            newHeight = maxHeight;
+            textarea.style.overflowY = 'auto';
+        } else {
+            textarea.style.overflowY = 'hidden';
+        }
+        
+        // Apply the new height
+        textarea.style.height = newHeight + 'px';
+        
+        return newHeight;
+    }
+    
+    // Auto-resize preview to fit content including images
+    function autoResizePreview(preview) {
+        console.log('autoResizePreview called');
+        
+        // Set minimum height
+        const minHeight = 200;
+        const maxHeight = 3000;
+        
+        // Temporarily remove height constraint to measure content
+        const originalHeight = preview.style.height;
+        const originalOverflow = preview.style.overflowY;
+        
+        preview.style.height = 'auto';
+        preview.style.overflowY = 'hidden';
+        
+        // Get the actual content height including images
+        let contentHeight = preview.scrollHeight;
+        console.log(`Preview content height: ${contentHeight}px`);
+        
+        // Apply min/max constraints
+        let newHeight = Math.max(contentHeight, minHeight);
+        
+        // If content exceeds max height, set to max and allow scrolling
+        if (contentHeight > maxHeight) {
+            newHeight = maxHeight;
+            preview.style.overflowY = 'auto';
+            console.log(`Content exceeds max height, setting to ${newHeight}px with scrolling`);
+        } else {
+            preview.style.overflowY = 'hidden';
+            console.log(`Setting preview height to ${newHeight}px without scrolling`);
+        }
+        
+        // Apply the new height
+        preview.style.height = newHeight + 'px';
+        
+        return newHeight;
+    }
+    
+    // Debounce mechanism for syncElementHeights
+    let syncDebounceTimeout = null;
+    
+    // Sync heights between textarea and preview
+    function syncElementHeights(textarea, preview) {
+        // Clear any pending sync operation
+        if (syncDebounceTimeout) {
+            clearTimeout(syncDebounceTimeout);
+        }
+        
+        // Debounce the actual sync operation
+        syncDebounceTimeout = setTimeout(() => {
+            performElementHeightSync(textarea, preview);
+            syncDebounceTimeout = null;
+        }, 50); // 50ms debounce
+    }
+    
+    // The actual sync logic without debouncing
+    function performElementHeightSync(textarea, preview) {
+        // Get heights for both elements
+        const textareaHeight = autoResizeTextarea(textarea);
+        
+        // Wait for images to load before calculating preview height
+        const images = preview.querySelectorAll('img');
+        if (images.length > 0) {
+            let loadedImages = 0;
+            const totalImages = images.length;
+            
+            const checkAllImagesLoaded = () => {
+                if (loadedImages === totalImages) {
+                    // All images loaded, now resize preview
+                    autoResizePreview(preview);
+                }
+            };
+            
+            // Check each image and set up loading handlers
+            images.forEach((img, index) => {
+                if (img.complete && img.naturalWidth > 0) {
+                    // Image is already loaded
+                    loadedImages++;
+                } else {
+                    // Image is still loading, set up handlers
+                    const handleImageLoad = () => {
+                        loadedImages++;
+                        checkAllImagesLoaded();
+                        // Remove event listeners to prevent multiple calls
+                        img.removeEventListener('load', handleImageLoad);
+                        img.removeEventListener('error', handleImageLoad);
+                    };
+                    
+                    img.addEventListener('load', handleImageLoad);
+                    img.addEventListener('error', handleImageLoad);
+                }
+            });
+            
+            // If all images were already loaded, resize immediately
+            if (loadedImages === totalImages) {
+                autoResizePreview(preview);
+            }
+            
+            // Removed fallback timeout that was causing infinite loops
+            
+        } else {
+            // No images, just resize preview normally
+            autoResizePreview(preview);
+        }
+    }
+
+    // Global function to manually trigger resize (useful for debugging and external calls)
+    window.manualResizeCommentBoxes = function() {
+        console.log('Manual resize triggered');
+        const textarea = document.getElementById('newMessageContent');
+        const preview = document.getElementById('messagePreview');
+        
+        if (textarea && preview) {
+            syncElementHeights(textarea, preview);
+        } else {
+            console.warn('Comment boxes not found for manual resize');
+        }
+    };
 
     // Real-time preview functionality
     function initializePreview() {
         const textarea = document.getElementById('newMessageContent');
         const preview = document.getElementById('messagePreview');
+        
+        // Initialize mutation observer for dynamic content changes
+        initializePreviewObserver(textarea, preview);
         
         // Update preview on input
         function updatePreview() {
@@ -2197,9 +2670,18 @@
                         Eelvaade ilmub siia...
                     </div>
                 `;
+                // Reset to minimum height when empty
+                preview.style.height = '200px';
+                preview.style.overflowY = 'hidden';
             } else {
                 preview.innerHTML = parseMarkdown(content);
             }
+            
+            // Auto-resize both elements after content update
+            // Use a small delay to ensure DOM is fully updated
+            setTimeout(() => {
+                syncElementHeights(textarea, preview);
+            }, 50);
         }
         
         // Update on every keystroke
@@ -2208,12 +2690,101 @@
             updatePreview();
         });
         
-        // Update on paste (with a small delay to ensure content is pasted)
+        // Update on paste (with delays to handle image pasting)
         textarea.addEventListener('paste', function() {
+            console.log('Paste event detected');
+            // First update immediately for text content
             setTimeout(updatePreview, 10);
+            // Second update with longer delay for images
+            setTimeout(() => {
+                console.log('Secondary paste update for images');
+                updatePreview();
+            }, 500);
+            // Third update with even longer delay as fallback
+            setTimeout(() => {
+                console.log('Tertiary paste update as fallback');
+                updatePreview();
+            }, 1500);
+        });
+        
+        // Handle manual resize of textarea
+        textarea.addEventListener('mouseup', function() {
+            syncElementHeights(textarea, preview);
         });
         
         // Initial update
         updatePreview();
+    }
+
+    // Monitor preview content changes for dynamic resizing
+    function initializePreviewObserver(textarea, preview) {
+        let resizeTimeout = null;
+        let isResizing = false;
+        
+        // Create a mutation observer to watch for content changes
+        const observer = new MutationObserver((mutations) => {
+            // Skip if we're currently in a resize operation
+            if (isResizing) {
+                return;
+            }
+            
+            let shouldResize = false;
+            let hasNewImages = false;
+            
+            mutations.forEach((mutation) => {
+                // Check if nodes were added/removed
+                if (mutation.type === 'childList') {
+                    // Check if any new images were added
+                    mutation.addedNodes.forEach((node) => {
+                        if (node.nodeType === Node.ELEMENT_NODE) {
+                            if (node.tagName === 'IMG' || node.querySelector('img')) {
+                                hasNewImages = true;
+                                console.log('New images detected in DOM');
+                            }
+                        }
+                    });
+                    shouldResize = true;
+                } else if (mutation.type === 'attributes') {
+                    // Only trigger on src changes, not style changes to prevent loops
+                    if (mutation.target.tagName === 'IMG' && mutation.attributeName === 'src') {
+                        hasNewImages = true;
+                        console.log('Image src changed');
+                        shouldResize = true;
+                    }
+                    // Ignore style changes to prevent infinite loops
+                }
+            });
+            
+            if (shouldResize) {
+                // Clear any pending resize
+                if (resizeTimeout) {
+                    clearTimeout(resizeTimeout);
+                }
+                
+                // If new images were added, wait a bit longer for them to start loading
+                const delay = hasNewImages ? 250 : 100;
+                console.log(`Scheduling resize with ${delay}ms delay (hasNewImages: ${hasNewImages})`);
+                
+                resizeTimeout = setTimeout(() => {
+                    isResizing = true;
+                    syncElementHeights(textarea, preview);
+                    // Reset flag after a short delay
+                    setTimeout(() => {
+                        isResizing = false;
+                    }, 50);
+                    resizeTimeout = null;
+                }, delay);
+            }
+        });
+        
+        // Start observing the preview div - removed style from attributeFilter
+        observer.observe(preview, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['src'] // Only monitor src changes, not style changes
+        });
+        
+        return observer;
     }
 </script>
