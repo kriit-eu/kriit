@@ -644,17 +644,6 @@
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
-    #imagePreviewArea {
-        border: 2px dashed #ddd;
-        border-radius: 8px;
-        background-color: #f9f9f9;
-    }
-
-    #imagePreview {
-        border-radius: 6px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-
     #newMessageContent.image-paste-active {
         border-color: #007bff;
         box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
@@ -867,17 +856,11 @@
                         </div>
                     </div>
                     
-                    <!-- Image Preview Area -->
-                    <div id="imagePreviewArea" class="mt-2 d-none">
-                        <div class="d-flex align-items-center justify-content-between mb-2">
-                            <small class="text-muted">Lisatud pilt:</small>
-                            <button type="button" class="btn btn-sm btn-outline-danger" id="removeImageBtn">
-                                <i class="fas fa-times"></i> Eemalda
-                            </button>
-                        </div>
-                        <div class="border rounded p-2">
-                            <img id="imagePreview" src="" alt="Uploaded image" class="img-fluid" style="max-height: 200px;">
-                        </div>
+                    <div class="form-text">
+                        <small class="text-muted">
+                            💡 <strong>Näpunäide:</strong> Kopeeri ükskõik milline pilt ja kleebi see otse redaktorisse (Ctrl+V)! 
+                            Pildid lisatakse automaatselt Markdown-vormingus.
+                        </small>
                     </div>
                     
                     <div class="invalid-feedback" id="messageError"></div>
@@ -1064,10 +1047,8 @@
         document.getElementById('newMessageContent').value = '';
         document.getElementById('messageError').textContent = '';
         
-        // Clear image preview
+        // Clear image tracking
         currentImageId = null;
-        document.getElementById('imagePreviewArea').classList.add('d-none');
-        document.getElementById('imagePreview').src = '';
 
         // Clear grade error and hide it
         const gradeError = document.getElementById('gradeError');
@@ -1224,15 +1205,8 @@
                     // Clear comment form and reload messages
                     document.getElementById('newMessageContent').value = '';
                     
-                    // Clear image if present
-                    if (currentImageId) {
-                        const removeImageFunction = function() {
-                            currentImageId = null;
-                            document.getElementById('imagePreviewArea').classList.add('d-none');
-                            document.getElementById('imagePreview').src = '';
-                        };
-                        removeImageFunction();
-                    }
+                    // Clear image tracking
+                    currentImageId = null;
                     
                     loadMessages(currentAssignmentId, currentUserId);
 
@@ -1561,6 +1535,9 @@
 
         // Links
         html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+
+        // Images - handle before links to avoid conflicts
+        html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="message-image img-fluid rounded" style="max-height: 300px; cursor: pointer;" onclick="window.open(this.src, \'_blank\')">');
 
         // Unordered lists
         html = html.replace(/^\* (.+)$/gm, '<li>$1</li>');
@@ -1984,9 +1961,6 @@
     // Image pasting functionality
     function initializeImagePasting() {
         const textarea = document.getElementById('newMessageContent');
-        const imagePreviewArea = document.getElementById('imagePreviewArea');
-        const imagePreview = document.getElementById('imagePreview');
-        const removeImageBtn = document.getElementById('removeImageBtn');
         const uploadProgress = document.getElementById('imageUploadProgress');
 
         // Handle paste events
@@ -2024,11 +1998,6 @@
             }
         });
 
-        // Remove image button
-        removeImageBtn.addEventListener('click', function() {
-            removeImage();
-        });
-
         function handleImageUpload(file) {
             // Validate file size (max 10MB)
             if (file.size > 10 * 1024 * 1024) {
@@ -2038,7 +2007,6 @@
 
             // Show upload progress
             uploadProgress.classList.remove('d-none');
-            imagePreviewArea.classList.add('d-none');
 
             // Create form data
             const formData = new FormData();
@@ -2060,11 +2028,22 @@
                     uploadProgress.classList.add('d-none');
                     
                     if (data.status === 200) {
-                        currentImageId = data.data.imageId;
+                        // Insert markdown image syntax into textarea
+                        const textarea = document.getElementById('newMessageContent');
+                        const imageMarkdown = `![Image](<?= BASE_URL ?>api/images/display?id=${data.data.imageId})`;
                         
-                        // Show preview
-                        imagePreview.src = `<?= BASE_URL ?>api/images/display?id=${data.data.imageId}`;
-                        imagePreviewArea.classList.remove('d-none');
+                        // Get current cursor position and insert markdown
+                        const cursorPos = textarea.selectionStart;
+                        const textBefore = textarea.value.substring(0, cursorPos);
+                        const textAfter = textarea.value.substring(cursorPos);
+                        textarea.value = textBefore + imageMarkdown + textAfter;
+                        
+                        // Move cursor after the inserted text
+                        textarea.selectionStart = textarea.selectionEnd = cursorPos + imageMarkdown.length;
+                        textarea.focus();
+                        
+                        // Store image ID for form submission (in case we need it)
+                        currentImageId = data.data.imageId;
                     } else {
                         alert('Viga pildi üleslaadimisel: ' + (data.message || 'Tundmatu viga'));
                     }
@@ -2079,12 +2058,6 @@
                 console.error('Image upload error:', error);
                 alert('Viga pildi üleslaadimisel: ' + error.message);
             });
-        }
-
-        function removeImage() {
-            currentImageId = null;
-            imagePreviewArea.classList.add('d-none');
-            imagePreview.src = '';
         }
     }
 

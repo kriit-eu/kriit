@@ -587,7 +587,14 @@
                         <?php foreach ($s['comments'] as $comment): ?>
                             <div class="comment-row p-2 border rounded bg-light mb-2">
                                 <div class="comment-name fw-bold text-dark mb-1"><?= isset($comment['name']) ? $comment['name'] : 'Tundmatu' ?></div>
-                                <div class="comment-text text-muted"><?= $comment['comment'] ?></div>
+                                <div class="comment-text text-muted">
+                                    <?php
+                                    // Simple markdown parsing for images
+                                    $commentText = $comment['comment'];
+                                    $commentText = preg_replace('/!\[([^\]]*)\]\(([^)]+)\)/', '<img src="$2" alt="$1" class="img-fluid rounded mt-2" style="max-height: 300px; cursor: pointer;" onclick="window.open(this.src, \'_blank\')">', $commentText);
+                                    echo $commentText;
+                                    ?>
+                                </div>
                                 <div class="comment-date text-secondary small"><?= $comment['createdAt'] ?></div>
                             </div>
                         <?php endforeach; ?>
