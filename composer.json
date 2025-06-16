@@ -9,7 +9,8 @@
     "sentry/sdk": "^3.5",
     "ext-mbstring": "*",
     "erusev/parsedown": "^1.7",
-    "jfcherng/php-diff": "^6.16"
+    "jfcherng/php-diff": "^6.16",
+    "ext-gd": "*"
   },
   "autoload": {
     "psr-4": {

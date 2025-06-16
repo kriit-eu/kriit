@@ -126,8 +126,7 @@ class images extends Controller
             ob_end_clean();
             \imagedestroy($image);
 
-            // Store in database
-            Db::insert('uploaded_images', [
+            $imageId = Db::insert('uploaded_images', [
                 'imageHash' => $imageHash,
                 'originalFilename' => $uploadedFile['name'],
                 'originalMimeType' => $uploadedFile['type'],
@@ -139,8 +138,6 @@ class images extends Controller
                 'height' => $height,
                 'uploadedBy' => $this->auth->userId
             ]);
-
-            $imageId = Db::getLastInsertId();
 
             stop(200, [
                 'imageId' => $imageId,
