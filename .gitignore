@@ -6,3 +6,8 @@ node_modules
 **/.DS_Store
 .certs/dkim_private_key.pem
 /.vscode/settings.json
+
+
+# dev files
+opetaja-assistent2
+logs/output.txt

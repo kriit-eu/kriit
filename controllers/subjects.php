@@ -99,38 +99,47 @@ class subjects extends Controller
             $this->auth->userIsAdmin ? 'true' : null
         ]));
 
-        // Fetch data from the database - include inactive students who have ungraded assignments
-        // Only include subjects that have at least one assignment
+        // Fetch data from the database - include subjects even if they don't have assignments
         $showAllValue = $this->showAll ? 1 : 0;
+        
+        // First get subjects with assignments
         $this->data = Db::getAll("
             SELECT
-                s.subjectId, s.subjectName, s.teacherId, s.subjectExternalId, t.userName AS teacherName,
-                u.userId AS studentId, u.userName AS studentName, u.groupId, g.groupName, u.userIsActive, u.userDeleted,
-                a.assignmentId, a.assignmentName, a.assignmentDueAt, a.assignmentEntryDate,
-                ua.userGrade, ua.assignmentStatusId, ast.statusName AS assignmentStatusName,
-                ua.userAssignmentSubmittedAt, ua.userAssignmentGradedAt
-            FROM subjects s
-            JOIN users t ON s.teacherId = t.userId
-            JOIN groups g ON s.groupId = g.groupId
-            LEFT JOIN users u ON u.groupId = g.groupId
-            JOIN assignments a ON a.subjectId = s.subjectId  /* INNER JOIN to exclude subjects without assignments */
-            LEFT JOIN userAssignments ua ON ua.assignmentId = a.assignmentId AND ua.userId = u.userId
-            LEFT JOIN assignmentStatuses ast ON ua.assignmentStatusId = ast.assignmentStatusId
-            WHERE ({$whereClause})
-            AND (
-                (u.userIsActive = 1 AND u.userDeleted = 0)
-                OR $showAllValue = 1
-                OR EXISTS (
-                    SELECT 1
-                    FROM assignments a2
-                    LEFT JOIN userAssignments ua2 ON ua2.assignmentId = a2.assignmentId AND ua2.userId = u.userId
-                    WHERE a2.subjectId = s.subjectId
-                    AND ua2.assignmentStatusId = 2
-                )
-            )
-            ORDER BY g.groupName, u.userName, s.subjectName, a.assignmentDueAt");
-
-
+                s.subjectId,
+                s.subjectName,
+                s.teacherId,
+                s.subjectExternalId,
+                t.userName                     AS teacherName,
+        
+                u.userId                       AS studentId,
+                u.userName                     AS studentName,
+                s.groupId                      AS groupId,
+                g.groupName,
+                u.userIsActive,
+            
+                a.assignmentId,
+                a.assignmentName,
+                a.assignmentDueAt,
+                a.assignmentEntryDate,
+            
+                ua.userGrade,
+                ua.assignmentStatusId,
+                ast.statusName                 AS assignmentStatusName,
+                ua.userAssignmentSubmittedAt,
+                ua.userAssignmentGradedAt
+            FROM subjects            AS s
+            JOIN groups              AS g  USING (groupId)
+            JOIN users               AS u  USING (groupId)
+            JOIN users               AS t  ON  t.userId = s.teacherId
+            LEFT JOIN assignments    AS a  USING (subjectId)
+            LEFT JOIN userAssignments AS ua
+                   ON  ua.assignmentId = a.assignmentId
+                   AND ua.userId      = u.userId
+            LEFT JOIN assignmentStatuses ast USING (assignmentStatusId)
+            WHERE u.userDeleted = 0
+              AND (u.userIsActive = 1 OR ua.assignmentStatusId = 2)
+            ORDER BY g.groupName, u.userName, s.subjectName, a.assignmentDueAt;
+            ");
 
         $groups = [];
 
