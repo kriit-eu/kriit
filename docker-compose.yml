@@ -37,6 +37,9 @@ services:
       - PMA_HOST=db
       - PMA_USER=root
       - PMA_PASSWORD=kriitkriit
+      - UPLOAD_LIMIT=50M
+      - MEMORY_LIMIT=512M
+      - MAX_EXECUTION_TIME=600
     depends_on:
       - db
 

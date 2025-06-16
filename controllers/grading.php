@@ -223,47 +223,6 @@ class grading extends Controller
         stop(200, $formattedMessages);
     }
 
-    /**
-     * AJAX method to save a new message
-     * @deprecated This method is deprecated. Comments are now saved via saveGrade() using the userAssignments.comments field
-     */
-    public function saveMessage(): void
-    {
-        // Check if user is a teacher
-        if (!$this->auth->userIsTeacher && !$this->auth->userIsAdmin) {
-            stop(403, 'Access denied');
-        }
-
-        $assignmentId = $_POST['assignmentId'] ?? null;
-        $content = $_POST['content'] ?? null;
-
-        if (!$assignmentId || !$content) {
-            stop(400, 'Assignment ID and content required');
-        }
-
-        // Get assignment and teacher information for logging
-        $assignmentInfo = Db::getFirst("SELECT assignmentName, subjectId FROM assignments WHERE assignmentId = ?", [$assignmentId]);
-        $teacherInfo = Db::getFirst("SELECT userName FROM users WHERE userId = ?", [$this->auth->userId]);
-
-        // Save the message (teacher's message in the context of this assignment)
-        Db::insert('messages', [
-            'assignmentId' => $assignmentId,
-            'userId' => $this->auth->userId,
-            'content' => trim($content),
-            'CreatedAt' => date('Y-m-d H:i:s'),
-            'isNotification' => 0
-        ]);
-
-        // Log the activity
-        Activity::create(ACTIVITY_TEACHER_ADD_COMMENT, $this->auth->userId, $assignmentId, [
-            'assignmentName' => $assignmentInfo['assignmentName'] ?? 'Unknown',
-            'teacherName' => $teacherInfo['userName'] ?? 'Unknown',
-            'commentLength' => strlen(trim($content)),
-            'action' => 'added_comment'
-        ]);
-
-        stop(200, 'Message saved');
-    }
 
     /**
      * AJAX method to save grade and comment
@@ -279,6 +238,7 @@ class grading extends Controller
         $studentId = $_POST['studentId'] ?? null;
         $grade = $_POST['grade'] ?? null;
         $comment = $_POST['comment'] ?? null;
+        $imageId = $_POST['imageId'] ?? null;
         $criteria = $_POST['criteria'] ?? [];
 
         if (!$assignmentId || !$studentId) {
@@ -304,7 +264,7 @@ class grading extends Controller
         }
 
         // Save or update the grade
-        $isUpdated = $this->saveOrUpdateUserAssignment($studentId, $assignmentId, $grade, $comment, $teacherInfo, $studentInfo);
+        $isUpdated = $this->saveOrUpdateUserAssignment($studentId, $assignmentId, $grade, $comment, $imageId, $teacherInfo, $studentInfo);
 
         // Send notification email to student
         $this->sendGradeNotification($assignmentId, $studentId, $teacherInfo, $isUpdated);
@@ -337,7 +297,7 @@ class grading extends Controller
     /**
      * Save or update user assignment with grade
      */
-    private function saveOrUpdateUserAssignment($studentId, $assignmentId, $grade, $comment, $teacherInfo, $studentInfo): bool
+    private function saveOrUpdateUserAssignment($studentId, $assignmentId, $grade, $comment, $imageId, $teacherInfo, $studentInfo): bool
     {
         $existUserAssignment = Db::getFirst('SELECT * FROM userAssignments WHERE userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
         $isUpdated = false;
@@ -413,10 +373,14 @@ class grading extends Controller
         // Save teacher comment if provided
         if ($comment && trim($comment)) {
             // Use the proper comment system that targets specific students
-            $this->addAssignmentCommentForStudent($studentId, $assignmentId, trim($comment), $teacherInfo['userName']);
+            $this->addAssignmentCommentForStudent($studentId, $assignmentId, trim($comment), $teacherInfo['userName'], $imageId);
 
             // Also save a notification message for the events section
-            $this->saveMessageInternal($assignmentId, $teacherInfo['userId'], "$teacherInfo[userName] lisas kommentaari õpilasele $studentInfo[userName]: " . trim($comment), true);
+            $messageContent = "$teacherInfo[userName] lisas kommentaari õpilasele $studentInfo[userName]: " . trim($comment);
+            if ($imageId) {
+                $messageContent .= " (koos pildiga)";
+            }
+            $this->saveMessageInternal($assignmentId, $teacherInfo['userId'], $messageContent, true, $imageId);
 
             // Log comment activity
             $assignmentInfo = Db::getFirst("SELECT assignmentName, subjectId FROM assignments WHERE assignmentId = ?", [$assignmentId]);
@@ -473,31 +437,43 @@ class grading extends Controller
     /**
      * Save message internally
      */
-    private function saveMessageInternal($assignmentId, $userId, $content, $isNotification = false): void
+    private function saveMessageInternal($assignmentId, $userId, $content, $isNotification = false, $imageId = null): void
     {
-        Db::insert('messages', [
+        $data = [
             'assignmentId' => $assignmentId,
             'userId' => $userId,
             'content' => $content,
             'CreatedAt' => date('Y-m-d H:i:s'),
             'isNotification' => $isNotification
-        ]);
+        ];
+        
+        if ($imageId) {
+            $data['imageId'] = $imageId;
+        }
+        
+        Db::insert('messages', $data);
     }
 
     /**
      * Add assignment comment for specific student
      */
-    private function addAssignmentCommentForStudent($studentId, $assignmentId, $comment, $commentAuthorName): void
+    private function addAssignmentCommentForStudent($studentId, $assignmentId, $comment, $commentAuthorName, $imageId = null): void
     {
         $existingComments = Db::getOne('SELECT comments FROM userAssignments WHERE userId = ? AND assignmentId = ?', [$studentId, $assignmentId]);
         $comments = $existingComments ? json_decode($existingComments, true) : [];
         $currentTime = date('Y-m-d H:i:s');
 
-        $comments[] = [
+        $commentData = [
             'name' => $commentAuthorName,
             'comment' => trim($comment),
             'createdAt' => $currentTime
         ];
+        
+        if ($imageId) {
+            $commentData['imageId'] = $imageId;
+        }
+
+        $comments[] = $commentData;
 
         Db::update('userAssignments', [
             'comments' => json_encode($comments)

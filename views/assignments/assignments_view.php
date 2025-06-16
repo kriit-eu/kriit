@@ -99,6 +99,64 @@
         margin-bottom: 5px;
     }
 
+    /* Image preview styles for comments */
+    .comment-image {
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+
+    .comment-image:hover {
+        transform: scale(1.02);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .image-preview-container {
+        text-align: center;
+    }
+
+    .image-modal-content {
+        max-width: 90vw;
+        max-height: 90vh;
+        object-fit: contain;
+    }
+
+    /* Modal backdrop for image viewing */
+    .image-modal-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
+
+    .image-modal-backdrop img {
+        max-width: 90%;
+        max-height: 90%;
+        object-fit: contain;
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .image-modal-close {
+        position: absolute;
+        top: 20px;
+        right: 30px;
+        color: white;
+        font-size: 30px;
+        font-weight: bold;
+        cursor: pointer;
+        z-index: 10000;
+    }
+
+    .image-modal-close:hover {
+        color: #ccc;
+    }
+
     .criteria-row {
         display: flex;
         justify-content: space-between;
@@ -587,7 +645,9 @@
                         <?php foreach ($s['comments'] as $comment): ?>
                             <div class="comment-row p-2 border rounded bg-light mb-2">
                                 <div class="comment-name fw-bold text-dark mb-1"><?= isset($comment['name']) ? $comment['name'] : 'Tundmatu' ?></div>
-                                <div class="comment-text text-muted"><?= $comment['comment'] ?></div>
+                                <div class="comment-text text-muted" data-raw-comment="<?= htmlspecialchars($comment['comment'], ENT_QUOTES, 'UTF-8') ?>">
+                                    <!-- Comment content will be processed by JavaScript -->
+                                </div>
                                 <div class="comment-date text-secondary small"><?= $comment['createdAt'] ?></div>
                             </div>
                         <?php endforeach; ?>
@@ -686,6 +746,7 @@
     document.addEventListener('DOMContentLoaded', function () {
         initializeTooltips();
         scrollToBottom();
+        processComments(); // Add comment processing
         
         // Initialize OpenAPI button visibility
         const openApiButton = document.getElementById('openApiButton');
@@ -1550,5 +1611,212 @@
                 document.body.removeChild(tempTextarea);
             }
         }
+    }
+
+    // Image modal functionality for comment images
+    function showImageModal(modalId, imageUrl, altText) {
+        // Remove any existing modal
+        const existingModal = document.querySelector('.image-modal-backdrop');
+        if (existingModal) {
+            existingModal.remove();
+        }
+
+        // Create modal backdrop
+        const modalBackdrop = document.createElement('div');
+        modalBackdrop.className = 'image-modal-backdrop';
+        modalBackdrop.onclick = function() {
+            closeImageModal();
+        };
+
+        // Create close button
+        const closeButton = document.createElement('span');
+        closeButton.className = 'image-modal-close';
+        closeButton.innerHTML = '&times;';
+        closeButton.onclick = function(e) {
+            e.stopPropagation();
+            closeImageModal();
+        };
+
+        // Create image element
+        const modalImage = document.createElement('img');
+        modalImage.src = imageUrl;
+        modalImage.alt = altText || 'Suurendatud pilt';
+        modalImage.className = 'image-modal-content';
+        modalImage.onclick = function(e) {
+            e.stopPropagation(); // Prevent closing when clicking on image
+        };
+
+        // Handle image load error
+        modalImage.onerror = function() {
+            const errorDiv = document.createElement('div');
+            errorDiv.style.color = 'white';
+            errorDiv.style.textAlign = 'center';
+            errorDiv.style.fontSize = '18px';
+            errorDiv.innerHTML = '<i class="bi bi-exclamation-triangle"></i><br>Pilti ei õnnestunud laadida';
+            
+            modalBackdrop.innerHTML = '';
+            modalBackdrop.appendChild(closeButton);
+            modalBackdrop.appendChild(errorDiv);
+        };
+
+        // Append elements
+        modalBackdrop.appendChild(closeButton);
+        modalBackdrop.appendChild(modalImage);
+
+        // Add to document
+        document.body.appendChild(modalBackdrop);
+
+        // Add keyboard event listener for ESC key
+        document.addEventListener('keydown', handleImageModalKeydown);
+    }
+
+    function closeImageModal() {
+        const modal = document.querySelector('.image-modal-backdrop');
+        if (modal) {
+            modal.remove();
+        }
+        // Remove keyboard event listener
+        document.removeEventListener('keydown', handleImageModalKeydown);
+    }
+
+    function handleImageModalKeydown(e) {
+        if (e.key === 'Escape') {
+            closeImageModal();
+        }
+    }
+
+    // Markdown parser function (handles both markdown and existing HTML)
+    function parseMarkdown(text) {
+        if (!text) return '';
+
+        let html = text;
+
+        // Check if the text already contains HTML tags (like <p>, <img>, etc.)
+        if (html.includes('<img') || html.includes('<p>') || html.includes('</p>') || html.includes('<br')) {
+            
+            // If it contains img tags, enhance them for our modal functionality
+            html = html.replace(/<img\s+([^>]*?)src=["']([^"']+)["']([^>]*?)alt=["']([^"']*?)["']([^>]*?)\/?>/gi, function(match, beforeSrc, src, betweenSrcAlt, alt, afterAlt) {
+                
+                const modalId = 'imageModal_' + Math.random().toString(36).substr(2, 9);
+                return '<div class="image-preview-container mt-2 mb-2">' +
+                       '<img src="' + src + '" alt="' + alt + '" ' +
+                       'class="comment-image img-fluid rounded shadow-sm" ' +
+                       'style="max-height: 200px; cursor: pointer; border: 1px solid #dee2e6; opacity: 0; transition: opacity 0.3s ease;" ' +
+                       'onclick="showImageModal(\'' + modalId + '\', \'' + src + '\', \'' + alt + '\')" ' +
+                       'onload="this.style.opacity=1" ' +
+                       'onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'">' +
+                       '<div class="image-error text-muted small" style="display: none; padding: 10px; border: 1px dashed #ccc; border-radius: 5px;">' +
+                       '<i class="bi bi-image"></i> Pilti ei õnnestunud laadida' +
+                       '</div>' +
+                       '</div>';
+            });
+            
+            // Also handle the alternative pattern where alt comes before src
+            html = html.replace(/<img\s+([^>]*?)alt=["']([^"']*?)["']([^>]*?)src=["']([^"']+)["']([^>]*?)\/?>/gi, function(match, beforeAlt, alt, betweenAltSrc, src, afterSrc) {
+                
+                const modalId = 'imageModal_' + Math.random().toString(36).substr(2, 9);
+                return '<div class="image-preview-container mt-2 mb-2">' +
+                       '<img src="' + src + '" alt="' + alt + '" ' +
+                       'class="comment-image img-fluid rounded shadow-sm" ' +
+                       'style="max-height: 200px; cursor: pointer; border: 1px solid #dee2e6; opacity: 0; transition: opacity 0.3s ease;" ' +
+                       'onclick="showImageModal(\'' + modalId + '\', \'' + src + '\', \'' + alt + '\')" ' +
+                       'onload="this.style.opacity=1" ' +
+                       'onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'">' +
+                       '<div class="image-error text-muted small" style="display: none; padding: 10px; border: 1px dashed #ccc; border-radius: 5px;">' +
+                       '<i class="bi bi-image"></i> Pilti ei õnnestunud laadida' +
+                       '</div>' +
+                       '</div>';
+            });
+            
+            return html;
+        }
+
+        // Escape HTML first
+        html = html.replace(/&/g, '&amp;');
+        html = html.replace(/</g, '&lt;');
+        html = html.replace(/>/g, '&gt;');
+
+        // Convert line breaks
+        html = html.replace(/\n/g, '<br>');
+
+        // Headers
+        html = html.replace(/^#### (.*$)/gim, '<h4>$1</h4>');
+        html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+        html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+        html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+
+        // Bold
+        html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        html = html.replace(/__(.*?)__/g, '<strong>$1</strong>');
+
+        // Italic
+        html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+        html = html.replace(/_(.*?)_/g, '<em>$1</em>');
+
+        // Code blocks
+        html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+
+        // Inline code
+        html = html.replace(/`(.*?)`/g, '<code>$1</code>');
+
+        // Images - handle before links to avoid conflicts
+        html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, function(match, alt, src) {
+            const modalId = 'imageModal_' + Math.random().toString(36).substr(2, 9);
+            return '<div class="image-preview-container mt-2 mb-2">' +
+                   '<img src="' + src + '" alt="' + alt + '" ' +
+                   'class="comment-image img-fluid rounded shadow-sm" ' +
+                   'style="max-height: 200px; cursor: pointer; border: 1px solid #dee2e6; opacity: 0; transition: opacity 0.3s ease;" ' +
+                   'onclick="showImageModal(\'' + modalId + '\', \'' + src + '\', \'' + alt + '\')" ' +
+                   'onload="this.style.opacity=1" ' +
+                   'onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'">' +
+                   '<div class="image-error text-muted small" style="display: none; padding: 10px; border: 1px dashed #ccc; border-radius: 5px;">' +
+                   '<i class="bi bi-image"></i> Pilti ei õnnestunud laadida' +
+                   '</div>' +
+                   '</div>';
+        });
+
+        // Links
+        html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+
+        // Unordered lists
+        html = html.replace(/^\* (.+)$/gm, '<li>$1</li>');
+        html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+
+        // Ordered lists
+        html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+        html = html.replace(/(<li>.*<\/li>)/s, function (match) {
+            if (match.includes('<ul>')) return match;
+            return '<ol>' + match + '</ol>';
+        });
+
+        // Blockquotes
+        html = html.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
+
+        // Horizontal rules
+        html = html.replace(/^---$/gm, '<hr>');
+
+        return html;
+    }
+
+    // Process all comments on page load
+    function processComments() {
+        const commentElements = document.querySelectorAll('.comment-text[data-raw-comment]');
+        
+        commentElements.forEach(function(element, index) {
+            
+            const rawComment = element.getAttribute('data-raw-comment');
+            
+            if (rawComment) {
+                const processedHtml = parseMarkdown(rawComment);
+                
+                // Clear existing content and set new HTML
+                element.innerHTML = '';
+                element.innerHTML = processedHtml;
+                
+            } else {
+                console.log('No raw comment data found for element', index + 1);
+            }
+        });
+        
     }
 </script>
