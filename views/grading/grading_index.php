@@ -655,6 +655,74 @@
         margin-top: 4px;
     }
 
+    /* Split editor styles */
+    .editor-wrapper, .preview-wrapper {
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        overflow: hidden;
+    }
+
+    .editor-header, .preview-header {
+        background-color: #f8f9fa;
+        padding: 8px 12px;
+        border-bottom: 1px solid #dee2e6;
+        font-weight: 500;
+    }
+
+    .editor-wrapper textarea {
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        padding: 12px;
+    }
+
+    .editor-wrapper textarea:focus {
+        border: none;
+        box-shadow: none;
+    }
+
+    #messagePreview {
+        border: none;
+        border-radius: 0;
+        padding: 12px;
+        font-family: inherit;
+        line-height: 1.5;
+    }
+
+    #messagePreview img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 6px;
+        margin: 8px 0;
+    }
+
+    #messagePreview h1, #messagePreview h2, #messagePreview h3, #messagePreview h4 {
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    #messagePreview code {
+        background-color: #f1f3f4;
+        padding: 2px 4px;
+        border-radius: 3px;
+        font-size: 0.9em;
+    }
+
+    #messagePreview pre {
+        background-color: #f8f9fa;
+        padding: 1rem;
+        border-radius: 6px;
+        border-left: 4px solid #007bff;
+        overflow-x: auto;
+    }
+
+    /* Mobile responsiveness */
+    @media (max-width: 768px) {
+        .editor-wrapper, .preview-wrapper {
+            margin-bottom: 1rem;
+        }
+    }
+
 </style>
 
 <?php if ($this->auth->userIsAdmin || $this->auth->userIsTeacher): ?>
@@ -843,8 +911,41 @@
                 <!-- New Message Form -->
                 <div class="mb-3">
                     <label for="newMessageContent" class="form-label">Lisa kommentaar</label>
-                    <textarea class="form-control" id="newMessageContent" rows="3"
-                              placeholder="Kirjuta kommentaar õpilasele... (pildide kleepimiseks kasuta Ctrl+V)"></textarea>
+                    
+                    <!-- Split view: Editor and Preview -->
+                    <div class="row">
+                        <!-- Text Editor Column -->
+                        <div class="col-md-6">
+                            <div class="editor-wrapper">
+                                <div class="editor-header">
+                                    <small class="text-muted">
+                                        <i class="fas fa-edit"></i> Redaktor
+                                    </small>
+                                </div>
+                                <textarea class="form-control" id="newMessageContent" rows="8"
+                                          placeholder="Kirjuta kommentaar õpilasele... (pildide kleepimiseks kasuta Ctrl+V)"
+                                          style="resize: vertical; min-height: 200px;"></textarea>
+                            </div>
+                        </div>
+                        
+                        <!-- Preview Column -->
+                        <div class="col-md-6">
+                            <div class="preview-wrapper">
+                                <div class="preview-header">
+                                    <small class="text-muted">
+                                        <i class="fas fa-eye"></i> Eelvaade
+                                    </small>
+                                </div>
+                                <div id="messagePreview" class="form-control" 
+                                     style="min-height: 200px; background-color: #f8f9fa; overflow-y: auto;">
+                                    <div class="text-muted text-center p-3">
+                                        <i class="fas fa-eye-slash"></i><br>
+                                        Eelvaade ilmub siia...
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     
                     <!-- Image Upload Progress -->
                     <div id="imageUploadProgress" class="mt-2 d-none">
@@ -856,10 +957,11 @@
                         </div>
                     </div>
                     
-                    <div class="form-text">
+                    <div class="form-text mt-2">
                         <small class="text-muted">
                             💡 <strong>Näpunäide:</strong> Kopeeri ükskõik milline pilt ja kleebi see otse redaktorisse (Ctrl+V)! 
-                            Pildid lisatakse automaatselt Markdown-vormingus.
+                            Pildid lisatakse automaatselt Markdown-vormingus. Kasuta <strong>**paks**</strong>, <em>*kaldkiri*</em>, 
+                            <code>`kood`</code> jne.
                         </small>
                     </div>
                     
@@ -959,6 +1061,9 @@
 
         // Initialize image pasting functionality
         initializeImagePasting();
+        
+        // Initialize real-time preview
+        initializePreview();
     });
 
     let currentAssignmentId = null;
@@ -1078,7 +1183,7 @@
             document.body.style.overflow = '';
             document.body.style.paddingRight = '';
 
-            // Reset save button state to ensure clean state for next modal opening
+            // Reset save button state to ensure clean state for next modal
             const saveBtn = document.getElementById('saveBtn');
             const saveBtnText = document.getElementById('saveBtnText');
             const saveBtnSpinner = document.getElementById('saveBtnSpinner');
@@ -2030,7 +2135,7 @@
                     if (data.status === 200) {
                         // Insert markdown image syntax into textarea
                         const textarea = document.getElementById('newMessageContent');
-                        const imageMarkdown = `![Image](<?= BASE_URL ?>api/images/display?id=${data.data.imageId})`;
+                        const imageMarkdown = `![Image](<?= BASE_URL ?>api/images/${data.data.imageId})`;
                         
                         // Get current cursor position and insert markdown
                         const cursorPos = textarea.selectionStart;
@@ -2041,6 +2146,9 @@
                         // Move cursor after the inserted text
                         textarea.selectionStart = textarea.selectionEnd = cursorPos + imageMarkdown.length;
                         textarea.focus();
+                        
+                        // Trigger preview update
+                        textarea.dispatchEvent(new Event('input'));
                         
                         // Store image ID for form submission (in case we need it)
                         currentImageId = data.data.imageId;
@@ -2064,7 +2172,38 @@
     // Function to display images in messages
     function displayMessageImage(imageId) {
         if (!imageId) return '';
-        return `<img src="<?= BASE_URL ?>api/images/display?id=${imageId}" class="message-image" alt="Attached image">`;
+        return `<img src="<?= BASE_URL ?>api/images/${imageId}" class="message-image" alt="Attached image">`;
     }
 
+    // Real-time preview functionality
+    function initializePreview() {
+        const textarea = document.getElementById('newMessageContent');
+        const preview = document.getElementById('messagePreview');
+        
+        // Update preview on input
+        function updatePreview() {
+            const content = textarea.value.trim();
+            if (content === '') {
+                preview.innerHTML = `
+                    <div class="text-muted text-center p-3">
+                        <i class="fas fa-eye-slash"></i><br>
+                        Eelvaade ilmub siia...
+                    </div>
+                `;
+            } else {
+                preview.innerHTML = parseMarkdown(content);
+            }
+        }
+        
+        // Update on every keystroke
+        textarea.addEventListener('input', updatePreview);
+        
+        // Update on paste (with a small delay to ensure content is pasted)
+        textarea.addEventListener('paste', function() {
+            setTimeout(updatePreview, 10);
+        });
+        
+        // Initial update
+        updatePreview();
+    }
 </script>
