@@ -1615,6 +1615,8 @@
     function parseMarkdown(text) {
         if (!text) return '';
 
+        console.log('parseMarkdown input:', text);
+
         // Simple Markdown parser for basic formatting
         let html = text;
 
@@ -1638,11 +1640,14 @@
         // Inline code
         html = html.replace(/`(.*?)`/g, '<code>$1</code>');
 
+        // Images - handle before links to avoid conflicts
+        html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, function(match, alt, src) {
+            console.log('Image match found:', match, 'alt:', alt, 'src:', src);
+            return '<img src="' + src + '" alt="' + alt + '" class="message-image img-fluid rounded" style="max-height: 300px; cursor: pointer;" onclick="window.open(this.src, \'_blank\')">';
+        });
+
         // Links
         html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
-
-        // Images - handle before links to avoid conflicts
-        html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="message-image img-fluid rounded" style="max-height: 300px; cursor: pointer;" onclick="window.open(this.src, \'_blank\')">');
 
         // Unordered lists
         html = html.replace(/^\* (.+)$/gm, '<li>$1</li>');
@@ -1669,6 +1674,8 @@
 
         // Process paragraphs and line breaks with better control
         html = cleanupLineBreaksAndParagraphs(html);
+
+        console.log('parseMarkdown output:', html);
 
         return html;
     }
@@ -2196,7 +2203,10 @@
         }
         
         // Update on every keystroke
-        textarea.addEventListener('input', updatePreview);
+        textarea.addEventListener('input', function() {
+            console.log('Input event triggered');
+            updatePreview();
+        });
         
         // Update on paste (with a small delay to ensure content is pasted)
         textarea.addEventListener('paste', function() {
