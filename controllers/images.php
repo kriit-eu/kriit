@@ -8,7 +8,6 @@ use App\Db;
  */
 class images extends Controller
 {
-    public $template = 'admin';
 
     /**
      * View method for displaying images
@@ -40,7 +39,10 @@ class images extends Controller
             header('Content-Type: ' . $image['processedMimeType']);
             header('Content-Length: ' . strlen($image['imageData']));
             header('Cache-Control: public, max-age=31536000'); // Cache for 1 year
-            header('Content-Disposition: inline; filename="' . $image['originalFilename'] . '"');
+            
+            // Sanitize filename to prevent header injection
+            $safeFilename = preg_replace('/[^\w\-_\.]/', '_', $image['originalFilename']);
+            header('Content-Disposition: inline; filename="' . $safeFilename . '"');
 
             // Output image data
             echo $image['imageData'];
@@ -50,21 +52,6 @@ class images extends Controller
             error_log("Image display error: " . $e->getMessage());
             http_response_code(500);
             die('Internal server error');
-        }
-    }
-
-    /**
-     * Default index method - handles /images/id URLs
-     */
-    public function index(): void
-    {
-        // Check if there are any parameters (image ID)
-        if (isset($this->params[0])) {
-            // Delegate to view method for displaying the image
-            $this->view();
-        } else {
-            // No image ID provided - let view method handle the error
-            $this->view();
         }
     }
 }
