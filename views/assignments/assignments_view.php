@@ -1731,9 +1731,6 @@
             return html;
         }
 
-        // If it's plain text/markdown, process it normally
-        console.log('Processing as plain text/markdown');
-
         // Escape HTML first
         html = html.replace(/&/g, '&amp;');
         html = html.replace(/</g, '&lt;');
@@ -1798,7 +1795,6 @@
         // Horizontal rules
         html = html.replace(/^---$/gm, '<hr>');
 
-        console.log('parseMarkdown output:', html);
         return html;
     }
 

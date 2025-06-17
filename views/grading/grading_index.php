@@ -1751,8 +1751,6 @@
         // Process paragraphs and line breaks with better control
         html = cleanupLineBreaksAndParagraphs(html);
 
-        console.log('parseMarkdown output:', html);
-
         return html;
     }
 
@@ -2193,7 +2191,6 @@
             
             if (imageFiles.length > 0) {
                 e.preventDefault();
-                console.log(`Pasted ${imageFiles.length} image(s)`);
                 handleMultipleFiles(imageFiles);
             }
         });
@@ -2267,9 +2264,7 @@
 
         function handleMultipleFiles(files) {
             if (files.length === 0) return;
-            
-            console.log(`Processing ${files.length} files`);
-            
+                       
             // Show upload progress container
             uploadProgress.classList.remove('d-none');
             uploadResults.innerHTML = '';
@@ -2527,7 +2522,6 @@
     
     // Auto-resize preview to fit content including images
     function autoResizePreview(preview) {
-        console.log('autoResizePreview called');
         
         // Set minimum height only - no maximum limit
         const minHeight = 200;
@@ -2541,14 +2535,12 @@
         
         // Get the actual content height including images
         let contentHeight = preview.scrollHeight;
-        console.log(`Preview content height: ${contentHeight}px`);
         
         // Apply minimum height constraint only
         let newHeight = Math.max(contentHeight, minHeight);
         
         // Always allow infinite expansion - no scrolling needed
         preview.style.overflowY = 'hidden';
-        console.log(`Setting preview height to ${newHeight}px (infinite expansion)`);
         
         // Apply the new height
         preview.style.height = newHeight + 'px';
@@ -2671,13 +2663,11 @@
         
         // Update on every keystroke
         textarea.addEventListener('input', function() {
-            console.log('Input event triggered');
             updatePreview();
         });
         
         // Update on paste (with delays to handle image pasting)
         textarea.addEventListener('paste', function() {
-            console.log('Paste event detected');
             // First update immediately for text content
             setTimeout(updatePreview, 10);
             // Second update with longer delay for images
@@ -2724,7 +2714,6 @@
                         if (node.nodeType === Node.ELEMENT_NODE) {
                             if (node.tagName === 'IMG' || node.querySelector('img')) {
                                 hasNewImages = true;
-                                console.log('New images detected in DOM');
                             }
                         }
                     });
@@ -2748,7 +2737,6 @@
                 
                 // If new images were added, wait a bit longer for them to start loading
                 const delay = hasNewImages ? 250 : 100;
-                console.log(`Scheduling resize with ${delay}ms delay (hasNewImages: ${hasNewImages})`);
                 
                 resizeTimeout = setTimeout(() => {
                     isResizing = true;
