@@ -8,12 +8,7 @@ class images extends Controller
 {
     public function index()
     {
-        // Check if this is an image display request (numeric ID in URL)
-        if (isset($_GET['id']) || (isset($this->params[0]) && is_numeric($this->params[0]))) {
-            $this->display();
-        } else {
-            $this->upload();
-        }
+        $this->upload();
     }
 
     public function upload()
@@ -153,11 +148,8 @@ class images extends Controller
                 $height = $originalHeight;
                 $wasResized = false;
             }
-
-            // Try different formats and choose the most efficient one
-            $formats = [];
             
-            // AVIF ONLY - No fallbacks allowed
+            // AVIF
             if (!function_exists('imageavif')) {
                 \imagedestroy($image);
                 stop(500, [
@@ -237,76 +229,6 @@ class images extends Controller
         } catch (Exception $e) {
             error_log("Image upload error: " . $e->getMessage());
             stop(500, 'Internal server error');
-        }
-    }
-
-    public function display()
-    {
-        // Get image ID from URL parameter or path
-        $imageId = 0;
-        
-        if (isset($_GET['id'])) {
-            $imageId = (int)$_GET['id'];
-        } elseif (isset($this->params[0]) && is_numeric($this->params[0])) {
-            $imageId = (int)$this->params[0];
-        }
-
-        if (!$imageId) {
-            http_response_code(400);
-            die('Image ID required');
-        }
-
-        try {
-            // Fetch image from database
-            $image = Db::getFirst("
-                SELECT imageData, processedMimeType, originalFilename 
-                FROM uploaded_images 
-                WHERE imageId = ?
-            ", [$imageId]);
-
-            if (!$image) {
-                http_response_code(404);
-                die('Image not found');
-            }
-
-            // Set appropriate headers
-            header('Content-Type: ' . $image['processedMimeType']);
-            header('Content-Length: ' . strlen($image['imageData']));
-            header('Cache-Control: public, max-age=31536000'); // Cache for 1 year
-            header('Content-Disposition: inline; filename="' . $image['originalFilename'] . '"');
-
-            // Output image data
-            echo $image['imageData'];
-
-        } catch (Exception $e) {
-            error_log("Image display error: " . $e->getMessage());
-            http_response_code(500);
-            die('Internal server error');
-        }
-    }
-
-    /**
-     * View method for displaying images (handles /api/images/ID routes)
-     */
-    public function view()
-    {
-        $this->display();
-    }
-
-    /**
-     * Handle numeric method calls (image IDs)
-     */
-    public function __call($method, $args)
-    {
-        // If method name is numeric, treat it as an image ID
-        if (is_numeric($method)) {
-            // Set the image ID and call display
-            $this->params = [$method];
-            $this->display();
-        } else {
-            // Unknown method
-            http_response_code(404);
-            die('Method not found');
         }
     }
 
