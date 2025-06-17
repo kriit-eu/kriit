@@ -58,15 +58,13 @@ class images extends Controller
      */
     public function index(): void
     {
-        // Check if there's an image ID parameter
-        $imageId = isset($this->params[0]) ? (int)$this->params[0] : 0;
-        
-        if ($imageId) {
-            // Redirect to view method for displaying the image
+        // Check if there are any parameters (image ID)
+        if (isset($this->params[0])) {
+            // Delegate to view method for displaying the image
             $this->view();
         } else {
-            // No image ID provided, redirect to admin
-            $this->redirect('admin');
+            // No image ID provided - let view method handle the error
+            $this->view();
         }
     }
 }
