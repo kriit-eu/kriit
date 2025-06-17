@@ -54,4 +54,13 @@ class images extends Controller
             die('Internal server error');
         }
     }
+
+    /**
+     * Default method when no action is specified
+     */
+    public function index(): void
+    {
+        http_response_code(400);
+        die('Error: Image ID is required.');
+    }
 }
