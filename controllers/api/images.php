@@ -156,7 +156,6 @@ class images extends Controller
                     'error' => 'AVIF support not available',
                     'details' => 'PHP GD extension does not have AVIF support compiled in',
                     'solution' => 'Enable AVIF support in PHP or compile GD with AVIF support',
-                    'check_diagnostics' => 'Visit /api/images/diagnostics for detailed server information',
                     'required_action' => 'Server configuration must be updated to support AVIF'
                 ]);
             }
@@ -230,41 +229,5 @@ class images extends Controller
             error_log("Image upload error: " . $e->getMessage());
             stop(500, 'Internal server error');
         }
-    }
-
-    public function diagnostics()
-    {
-        // Set JSON header
-        header('Content-Type: application/json');
-        
-        // Check if user is admin
-        if (!$this->auth->userIsAdmin) {
-            stop(403, 'Admin access required');
-        }
-        
-        $diagnostics = [
-            'php_version' => PHP_VERSION,
-            'gd_version' => gd_info()['GD Version'] ?? 'Not available',
-            'supported_formats' => [],
-            'avif_functions' => [
-                'imageavif' => function_exists('imageavif'),
-                'imagecreatefromavif' => function_exists('imagecreatefromavif')
-            ],
-            'gd_info' => gd_info()
-        ];
-        
-        // Check supported image formats
-        if (function_exists('imagetypes')) {
-            $types = imagetypes();
-            $diagnostics['supported_formats'] = [
-                'JPEG' => (bool)($types & IMG_JPG),
-                'PNG' => (bool)($types & IMG_PNG),
-                'GIF' => (bool)($types & IMG_GIF),
-                'WebP' => (bool)($types & IMG_WEBP),
-                'AVIF' => (bool)($types & IMG_AVIF ?? 0)
-            ];
-        }
-        
-        stop(200, $diagnostics);
     }
 }
