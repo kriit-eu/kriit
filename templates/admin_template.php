@@ -21,10 +21,18 @@
     <?php
     /** @var string $controller set in Application::__construct() */
     /** @var string $action set in Application::__construct() */
-    if (!file_exists("views/$controller/{$controller}_$action.php")) {
+    
+    // Check for admin-specific view first
+    $adminViewPath = "views/$controller/{$controller}_admin_$action.php";
+    $defaultViewPath = "views/$controller/{$controller}_$action.php";
+    
+    if (file_exists($adminViewPath)) {
+        @require $adminViewPath;
+    } elseif (file_exists($defaultViewPath)) {
+        @require $defaultViewPath;
+    } else {
         error_out('The view <i>views/' . $controller . '/' . $controller . '_' . $action . '.php</i> does not exist. Create that file.');
     }
-    @require "views/$controller/{$controller}_$action.php";
     ?>
 </div>
 
