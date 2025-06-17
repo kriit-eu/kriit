@@ -1,6 +1,6 @@
-# Sisseastumiskatsete rakendus
+# Kriit
 
-Käesolev rakendus on loodud kutsekooli IT erialade sisseastumiskatsete läbiviimiseks ja iseseisvate tööde haldamiseks.
+Käesolev rakendus on loodud kutsekooli IT erialade sisseastumiskatsete läbiviimiseks ja iseseisvate tööde esitamiseks ja hindamiseks.
 
 ## Funktsionaalsus
 
@@ -16,32 +16,62 @@ Käesolev rakendus on loodud kutsekooli IT erialade sisseastumiskatsete läbivii
 
 ## Eeldused
 
-- Veebiserver PHP 8.3+-ga
-- Composer
-- MariaDB 10.5+
-- Node.js 14.0+
-- npm 6.0+
+- Docker on paigaldatud
+- Bun on paigaldatud
 
-## Paigaldus
+Rakendus kasutab Docker Compose'i mitme konteineriga arhitektuuri:
+- **nginx** - veebserver
+- **app** - PHP-FPM rakendusserver
+- **db** - MariaDB andmebaasiserver
+- **phpmyadmin** - andmebaasi haldusliides
+- **mailhog** - e-kirjade testimiseks
 
-1. Kloonige see projekt oma arvutisse veebiserveri juurkausta.
-2. Käivitage käsk `composer install` rakenduse sõltuvuste paigaldamiseks.
-3. Kopeerige fail `config.php.sample` failiks `config.php` ja seadistage see vastavalt oma keskkonnale.
-4. Käivitage käsk `npm install` rakenduse sõltuvuste paigaldamiseks (jQuery, Bootstrap).
-5. Importige andmebaasi struktuur failist `doc/database.sql`.
+## Kiire juhend
 
-## Kasutamine
+1. Käivitage rakendus: `bun start`
+2. Külastage http://localhost:8080 ja logige sisse:
+   - administraatori kasutaja `41111111115`, parool `demo`
+   - tavakasutaja `31111111114`, parool `demo`
 
-1. Külastage rakenduse avalehte.
-2. Logige sisse administraatori kasutajaga (vaikimisi kasutajanimi on `admin` ja parool `admin`, mis tuleks kindlasti ära muuta).
-3. Lisage admin/applicants lehel kandidaatide andmed.
-4. Lisage admin/exercises lehel katsete ülesanded.
-5. Kandidaadid saavad oma isikukoodiga sisse logides lahendada katseid.
-6. Administraator saab kandidaatide pingerida vaadata admin/applicants lehel.
+### Peamised käsud
 
-## Täiendavad märkused Docker'i kohta
+```bash
+bun start   # Rakenduse käivitamine
+bun stop    # Rakenduse peatamine
+bun restart # Rakenduse taaskäivitamine
 
-- Docker'i käskude kasutamine:
-  - pead vahetama classes/App/Deployment-docker.php selleks classes/App/Deployment.php faili
-  - `docker compose up` käivitab kõik teenused, mis on määratud docker-compose.yml failis.
-  - `docker compose down` peatab ja eemaldab kõik teenused.
+bun logs              # Kõigi konteinerite logide vaatamine
+bun logs:nginx        # Nginx logide vaatamine
+bun logs:app          # PHP rakenduse logide vaatamine
+bun logs:db           # MariaDB logide vaatamine
+bun logs:phpmyadmin   # phpMyAdmin logide vaatamine
+bun logs:mailhog      # MailHog logide vaatamine
+
+bun composer # Composer käskude käivitamine
+bun db:import # Andmebaasi import doc/database.sql failist
+bun db:export # Andmebaasi eksport doc/database.sql faili
+
+bun shell    # PHP konteineri shelli avamine
+bun shell:db # Andmebaasi konteineri shelli avamine
+```
+
+### Juurdepääsupunktid
+
+- **Rakendus**: http://localhost:8080
+- **phpMyAdmin**: http://localhost:8081
+- **MailHog veebiliides**: http://localhost:8025
+
+### Andmebaasi andmed
+
+- **Andmebaas**: kriit
+- **Kasutajanimi**: root
+- **Parool**: kriitkriit
+- **Host**: localhost (väliselt) / db (konteinerite vahel)
+- **Port**: 8006
+
+### Otse andmebaasiga ühendamine
+
+Väliselt saate ühenduda andmebaasiga:
+```bash
+mysql -h127.0.0.1 -P8006 -uroot -pkriitkriit kriit
+```

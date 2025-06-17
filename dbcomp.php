@@ -316,7 +316,8 @@ try {
     try {
         $localDb = mysqli_init();
         $localDb->options(MYSQLI_OPT_CONNECT_TIMEOUT, 3);
-        if (!$localDb->real_connect(DATABASE_HOSTNAME, DATABASE_USERNAME, DATABASE_PASSWORD, DATABASE_DATABASE)) {
+        $localPort = defined('DATABASE_PORT') ? (int)DATABASE_PORT : 3306;
+        if (!$localDb->real_connect(DATABASE_HOSTNAME, DATABASE_USERNAME, DATABASE_PASSWORD, DATABASE_DATABASE, $localPort)) {
             // Check if it's a connection error (error numbers 2002, 2003, or 2005 indicate connection issues)
             $isConnectionFailure = in_array($localDb->connect_errno, [2002, 2003, 2005]);
             throw new Exception($localDb->connect_error);
@@ -329,7 +330,8 @@ try {
     try {
         $stagingDb = mysqli_init();
         $stagingDb->options(MYSQLI_OPT_CONNECT_TIMEOUT, 3);
-        if (!$stagingDb->real_connect(STAGING_DATABASE_HOSTNAME, STAGING_DATABASE_USERNAME, STAGING_DATABASE_PASSWORD, STAGING_DATABASE_DATABASE)) {
+        $stagingPort = defined('STAGING_DATABASE_PORT') ? (int)STAGING_DATABASE_PORT : 3306;
+        if (!$stagingDb->real_connect(STAGING_DATABASE_HOSTNAME, STAGING_DATABASE_USERNAME, STAGING_DATABASE_PASSWORD, STAGING_DATABASE_DATABASE, $stagingPort)) {
             throw new Exception($stagingDb->connect_error);
         }
     } catch (Exception $e) {

@@ -1,0 +1,85 @@
+services:
+  app:
+    build:
+      context: ./php
+      dockerfile: Dockerfile
+    image: kriit/app
+    container_name: kriit_app
+    volumes:
+      - ../:/var/www/html
+    depends_on:
+      - db
+    networks: [kriit_net]
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    image: kriit/nginx
+    container_name: kriit_nginx
+    ports:
+      - "127.0.0.1:8080:80"
+    volumes:
+      - ../:/var/www/html
+    depends_on: [app]
+    networks: [kriit_net]
+
+  db:
+    build:
+      context: ./db
+      dockerfile: Dockerfile
+    image: kriit/db
+    container_name: kriit_db
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8006:8006"
+    environment:
+      MYSQL_DATABASE: kriit
+      MYSQL_ROOT_PASSWORD: kriitkriit
+    volumes:
+      - kriit_db_data:/var/lib/mysql
+      - ./db/my.cnf:/etc/mysql/conf.d/my.cnf:ro
+      - ../doc/database.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks: [kriit_net]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-P", "8006", "-uroot", "-pkriitkriit"]
+      start_period: 30s
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  mailhog:
+    build:
+      context: ./mailhog
+      dockerfile: Dockerfile
+    image: kriit/mailhog
+    container_name: kriit_mailhog
+    ports:
+      - "127.0.0.1:8025:8025"   # UI only - IPv4 only
+    networks: [kriit_net]
+
+  phpmyadmin:
+    build:
+      context: ./phpmyadmin
+      dockerfile: Dockerfile
+    image: kriit/phpmyadmin
+    container_name: kriit_phpmyadmin
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8081:80"
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 8006
+      PMA_USER: root
+      PMA_PASSWORD: kriitkriit
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [kriit_net]
+    stop_grace_period: 1s
+
+networks:
+  kriit_net:
+
+volumes:
+  kriit_db_data:

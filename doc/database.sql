@@ -418,7 +418,7 @@ CONSTRAINT `userAssignments_users_userId_fk` FOREIGN KEY (`userId`) REFERENCES `
 LOCK TABLES `userAssignments` WRITE;
 /*!40000 ALTER TABLE `userAssignments` DISABLE KEYS */;
 INSERT INTO `userAssignments` VALUES
-(1,2,2,NULL,'https://www.google.com/','[{\"comment\":\"Kommentaar\",\"createdAt\":\"2024-11-20 12:55:28\"}]',NULL,NULL);
+(1,2,2,NULL,'https://www.google.com/','[]',NULL,NULL);
 /*!40000 ALTER TABLE `userAssignments` ENABLE KEYS */;
 UNLOCK TABLES;
 DELIMITER ;;

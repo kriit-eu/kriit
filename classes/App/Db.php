@@ -13,9 +13,9 @@ class Db
     public const GET_RESULT = 1;
     public const AFFECTED_ROWS = 2;
 
-    private function __construct(string $host, string $user, string $password, string $dbname)
+    private function __construct(string $host, string $user, string $password, string $dbname, int $port = 3306)
     {
-        $this->conn = new \mysqli($host, $user, $password, $dbname);
+        $this->conn = new \mysqli($host, $user, $password, $dbname, $port);
 
         // Set error reporting level
         mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
@@ -33,7 +33,8 @@ class Db
                     DATABASE_HOSTNAME,
                     DATABASE_USERNAME,
                     DATABASE_PASSWORD,
-                    DATABASE_DATABASE
+                    DATABASE_DATABASE,
+                    defined('DATABASE_PORT') ? (int)DATABASE_PORT : 3306
                 );
             } catch (\Exception $e) {
                 die("Database connection error: " . $e->getMessage());

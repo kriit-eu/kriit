@@ -18,8 +18,9 @@ $whitelisted_fields = [
 
 // Connect to database
 try {
+    $port = defined('DATABASE_PORT') ? (int)DATABASE_PORT : 3306;
     $pdo = new PDO(
-        "mysql:host=" . DATABASE_HOSTNAME . ";dbname=" . DATABASE_DATABASE,
+        "mysql:host=" . DATABASE_HOSTNAME . ";port=" . $port . ";dbname=" . DATABASE_DATABASE,
         DATABASE_USERNAME,
         DATABASE_PASSWORD,
         [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
