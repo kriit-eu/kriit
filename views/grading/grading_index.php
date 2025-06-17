@@ -1618,11 +1618,9 @@
             body: `assignmentId=${assignmentId}&studentId=${studentId}`
         })
             .then(response => {
-                console.log('Response status:', response.status);
                 return response.json();
             })
             .then(data => {
-                console.log('Response data:', data);
                 if (data.status === 200) {
                     displayMessages(data.data);
                 } else {
@@ -2520,8 +2518,38 @@
         return newHeight;
     }
     
-    // Auto-resize preview to fit content including images
-    function autoResizePreview(preview) {
+    // Global debounce mechanism for all resize operations
+    let globalResizeTimeout = null;
+    let isGloballyResizing = false;
+    
+    // Debounced resize function that coordinates all resize calls
+    function debouncedResize(preview, source = 'unknown') {
+        
+        // If we're already in a resize operation, ignore this call
+        if (isGloballyResizing) {
+            return;
+        }
+        
+        // Clear any pending resize operation
+        if (globalResizeTimeout) {
+            clearTimeout(globalResizeTimeout);
+        }
+        
+        globalResizeTimeout = setTimeout(() => {
+            isGloballyResizing = true;
+            actualResizePreview(preview);
+            
+            // Reset flag after operation completes
+            setTimeout(() => {
+                isGloballyResizing = false;
+            }, 200);
+            
+            globalResizeTimeout = null;
+        }, 150); // Global debounce delay
+    }
+    
+    // The actual resize implementation (renamed from autoResizePreview)
+    function actualResizePreview(preview) {
         
         // Set minimum height only - no maximum limit
         const minHeight = 200;
@@ -2548,25 +2576,25 @@
         return newHeight;
     }
     
-    // Debounce mechanism for syncElementHeights
-    let syncDebounceTimeout = null;
+    // Keep the old function name for compatibility but route through debounced version
+    function autoResizePreview(preview) {
+        debouncedResize(preview, 'autoResizePreview');
+    }
     
     // Sync heights between textarea and preview
     function syncElementHeights(textarea, preview) {
-        // Clear any pending sync operation
-        if (syncDebounceTimeout) {
-            clearTimeout(syncDebounceTimeout);
-        }
-        
-        // Debounce the actual sync operation
-        syncDebounceTimeout = setTimeout(() => {
-            performElementHeightSync(textarea, preview);
-            syncDebounceTimeout = null;
-        }, 50); // 50ms debounce
+        // Use global debouncing instead of local debouncing
+        debouncedResize(preview, 'syncElementHeights');
     }
     
     // The actual sync logic without debouncing
     function performElementHeightSync(textarea, preview) {
+        // Skip if globally resizing to prevent interference
+        if (isGloballyResizing) {
+            console.log('Skipping performElementHeightSync - global resize in progress');
+            return;
+        }
+        
         // Get heights for both elements
         const textareaHeight = autoResizeTextarea(textarea);
         
@@ -2579,7 +2607,7 @@
             const checkAllImagesLoaded = () => {
                 if (loadedImages === totalImages) {
                     // All images loaded, now resize preview
-                    autoResizePreview(preview);
+                    debouncedResize(preview, 'performElementHeightSync-imageLoad');
                 }
             };
             
@@ -2605,14 +2633,14 @@
             
             // If all images were already loaded, resize immediately
             if (loadedImages === totalImages) {
-                autoResizePreview(preview);
+                debouncedResize(preview, 'performElementHeightSync-allLoaded');
             }
             
             // Removed fallback timeout that was causing infinite loops
             
         } else {
             // No images, just resize preview normally
-            autoResizePreview(preview);
+            debouncedResize(preview, 'performElementHeightSync-noImages');
         }
     }
 
@@ -2667,19 +2695,21 @@
         });
         
         // Update on paste (with delays to handle image pasting)
+        let pasteUpdateTimeout = null;
         textarea.addEventListener('paste', function() {
+            // Clear any pending paste updates
+            if (pasteUpdateTimeout) {
+                clearTimeout(pasteUpdateTimeout);
+            }
+            
             // First update immediately for text content
             setTimeout(updatePreview, 10);
-            // Second update with longer delay for images
-            setTimeout(() => {
-                console.log('Secondary paste update for images');
+            
+            // Single delayed update for images (reduced from 3 separate calls)
+            pasteUpdateTimeout = setTimeout(() => {
                 updatePreview();
-            }, 500);
-            // Third update with even longer delay as fallback
-            setTimeout(() => {
-                console.log('Tertiary paste update as fallback');
-                updatePreview();
-            }, 1500);
+                pasteUpdateTimeout = null;
+            }, 800); // Single 800ms delay instead of multiple calls
         });
         
         // Handle manual resize of textarea
@@ -2740,11 +2770,11 @@
                 
                 resizeTimeout = setTimeout(() => {
                     isResizing = true;
-                    syncElementHeights(textarea, preview);
+                    debouncedResize(preview, 'mutationObserver');
                     // Reset flag after a short delay
                     setTimeout(() => {
                         isResizing = false;
-                    }, 50);
+                    }, 200); // Increased to match global debouncing
                     resizeTimeout = null;
                 }, delay);
             }
