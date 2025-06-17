@@ -179,7 +179,6 @@ class grading extends Controller
                 m.userId,
                 m.CreatedAt,
                 m.isNotification,
-                m.imageId,
                 u.userName,
                 u.userIsTeacher
             FROM messages m
@@ -200,8 +199,7 @@ class grading extends Controller
                 'userId' => null, // We'll derive this from name if needed
                 'userName' => $comment['name'],
                 'createdAt' => $comment['createdAt'],
-                'isNotification' => false,
-                'imageId' => $comment['imageId'] ?? null // Include imageId if present
+                'isNotification' => false
             ];
         }
         
@@ -213,8 +211,7 @@ class grading extends Controller
                 'userId' => $message['userId'],
                 'userName' => $message['userName'],
                 'createdAt' => $message['CreatedAt'],
-                'isNotification' => $message['isNotification'],
-                'imageId' => $message['imageId']
+                'isNotification' => $message['isNotification']
             ];
         }
         
@@ -226,47 +223,6 @@ class grading extends Controller
         stop(200, $formattedMessages);
     }
 
-    /**
-     * AJAX method to save a new message
-     * @deprecated This method is deprecated. Comments are now saved via saveGrade() using the userAssignments.comments field
-     */
-    public function saveMessage(): void
-    {
-        // Check if user is a teacher
-        if (!$this->auth->userIsTeacher && !$this->auth->userIsAdmin) {
-            stop(403, 'Access denied');
-        }
-
-        $assignmentId = $_POST['assignmentId'] ?? null;
-        $content = $_POST['content'] ?? null;
-
-        if (!$assignmentId || !$content) {
-            stop(400, 'Assignment ID and content required');
-        }
-
-        // Get assignment and teacher information for logging
-        $assignmentInfo = Db::getFirst("SELECT assignmentName, subjectId FROM assignments WHERE assignmentId = ?", [$assignmentId]);
-        $teacherInfo = Db::getFirst("SELECT userName FROM users WHERE userId = ?", [$this->auth->userId]);
-
-        // Save the message (teacher's message in the context of this assignment)
-        Db::insert('messages', [
-            'assignmentId' => $assignmentId,
-            'userId' => $this->auth->userId,
-            'content' => trim($content),
-            'CreatedAt' => date('Y-m-d H:i:s'),
-            'isNotification' => 0
-        ]);
-
-        // Log the activity
-        Activity::create(ACTIVITY_TEACHER_ADD_COMMENT, $this->auth->userId, $assignmentId, [
-            'assignmentName' => $assignmentInfo['assignmentName'] ?? 'Unknown',
-            'teacherName' => $teacherInfo['userName'] ?? 'Unknown',
-            'commentLength' => strlen(trim($content)),
-            'action' => 'added_comment'
-        ]);
-
-        stop(200, 'Message saved');
-    }
 
     /**
      * AJAX method to save grade and comment
