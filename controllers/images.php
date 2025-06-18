@@ -1,4 +1,6 @@
-<?php namespace App;
+<?php
+
+namespace App;
 
 use App\Db;
 
@@ -11,7 +13,7 @@ use App\Db;
 class images extends Controller
 {
 
-        /**
+    /**
      * Default method when no action is specified
      */
     public function index(): void
@@ -49,7 +51,7 @@ class images extends Controller
             header('Content-Type: ' . $image['processedMimeType']);
             header('Content-Length: ' . strlen($image['imageData']));
             header('Cache-Control: public, max-age=31536000'); // Cache for 1 year
-            
+
             // Sanitize filename to prevent header injection
             $safeFilename = preg_replace('/[^\w\-_\.]/', '_', $image['originalFilename']);
             header('Content-Disposition: inline; filename="' . $safeFilename . '"');
@@ -57,8 +59,7 @@ class images extends Controller
             // Output image data
             echo $image['imageData'];
             exit;
-
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             error_log("Image display error: " . $e->getMessage());
             http_response_code(500);
             die('Internal server error');
@@ -88,11 +89,17 @@ class images extends Controller
             }
 
             $uploadedFile = $_FILES['image'];
-            
+
             // Validate file type
             $allowedTypes = [
-                'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 
-                'image/webp', 'image/avif', 'image/bmp', 'image/tiff'
+                'image/jpeg',
+                'image/jpg',
+                'image/png',
+                'image/gif',
+                'image/webp',
+                'image/avif',
+                'image/bmp',
+                'image/tiff'
             ];
             if (!in_array($uploadedFile['type'], $allowedTypes)) {
                 stop(400, 'Invalid image type. Supported formats: JPEG, PNG, GIF, WebP, AVIF, BMP, TIFF');
@@ -106,17 +113,17 @@ class images extends Controller
             // Read and validate image
             $originalImageData = file_get_contents($uploadedFile['tmp_name']);
             $imageInfo = \getimagesizefromstring($originalImageData);
-            
+
             if (!$imageInfo) {
                 stop(400, 'Invalid image file');
             }
 
             // Calculate hash for deduplication
             $imageHash = hash('sha256', $originalImageData);
-            
+
             // Check if image already exists
             $existingImage = Db::getFirst("SELECT imageId FROM images WHERE imageHash = ?", [$imageHash]);
-            
+
             if ($existingImage) {
                 // Return existing image ID
                 stop(200, [
@@ -171,15 +178,15 @@ class images extends Controller
 
             $originalWidth = \imagesx($image);
             $originalHeight = \imagesy($image);
-            
+
             // Resize if width exceeds 1920px
             if ($originalWidth > 1920) {
                 $newWidth = 1920;
                 $newHeight = intval(($originalHeight * $newWidth) / $originalWidth);
-                
+
                 // Create new resized image
                 $resizedImage = \imagecreatetruecolor($newWidth, $newHeight);
-                
+
                 // Preserve transparency for PNG and GIF
                 if ($uploadedFile['type'] === 'image/png' || $uploadedFile['type'] === 'image/gif') {
                     \imagealphablending($resizedImage, false);
@@ -187,14 +194,14 @@ class images extends Controller
                     $transparent = \imagecolorallocatealpha($resizedImage, 255, 255, 255, 127);
                     \imagefill($resizedImage, 0, 0, $transparent);
                 }
-                
+
                 // Resize the image
                 \imagecopyresampled($resizedImage, $image, 0, 0, 0, 0, $newWidth, $newHeight, $originalWidth, $originalHeight);
-                
+
                 // Clean up original image
                 \imagedestroy($image);
                 $image = $resizedImage;
-                
+
                 $width = $newWidth;
                 $height = $newHeight;
                 $wasResized = true;
@@ -203,7 +210,7 @@ class images extends Controller
                 $height = $originalHeight;
                 $wasResized = false;
             }
-            
+
             // AVIF
             if (!function_exists('imageavif')) {
                 \imagedestroy($image);
@@ -214,9 +221,9 @@ class images extends Controller
                     'required_action' => 'Server configuration must be updated to support AVIF'
                 ]);
             }
-            
+
             ob_start();
-            $success = \imageavif($image, null, 80); // 80% quality
+            $success = \imageavif($image, null, 60); // 60% quality
             if (!$success) {
                 ob_end_clean();
                 \imagedestroy($image);
@@ -226,7 +233,7 @@ class images extends Controller
                     'note' => 'AVIF function exists but encoding failed'
                 ]);
             }
-            
+
             $processedImageData = ob_get_contents();
             $processedMimeType = 'image/avif';
             ob_end_clean();
@@ -234,7 +241,7 @@ class images extends Controller
 
             // Calculate compression savings
             $originalSize = $uploadedFile['size'];
-            $compressionSavings = $originalSize > strlen($processedImageData) ? 
+            $compressionSavings = $originalSize > strlen($processedImageData) ?
                 round((1 - strlen($processedImageData) / $originalSize) * 100, 1) : 0;
 
             $imageId = Db::insert('images', [
@@ -262,28 +269,26 @@ class images extends Controller
                 'processedSize' => strlen($processedImageData),
                 'message' => 'Image uploaded and converted to AVIF successfully'
             ];
-            
+
             // Add additional info if image was modified
             if ($wasResized) {
                 $responseData['wasResized'] = true;
                 $responseData['resizeInfo'] = "Resized from {$originalWidth}x{$originalHeight} to {$width}x{$height}";
             }
-            
+
             if ($compressionSavings > 0) {
                 $responseData['compressionSavings'] = $compressionSavings;
                 $responseData['compressionInfo'] = "Size reduced by {$compressionSavings}% through AVIF conversion";
             }
-            
+
             // Always mention format conversion since we convert everything to AVIF
             $responseData['formatChanged'] = true;
             $responseData['formatInfo'] = "Converted from {$uploadedFile['type']} to AVIF format";
 
             stop(200, $responseData);
-
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             error_log("Image upload error: " . $e->getMessage());
             stop(500, 'Internal server error');
         }
     }
 }
-

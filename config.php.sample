@@ -7,6 +7,7 @@ const DATABASE_HOSTNAME = 'mysql';
 const DATABASE_USERNAME = 'root';
 const DATABASE_PASSWORD = '';
 const DATABASE_DATABASE = 'kriit';
+const DATABASE_PORT = 8006;
 
 //Mail
 const SMTP_AUTH_PASSWORD = '';

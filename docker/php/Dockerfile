@@ -5,7 +5,7 @@ RUN apk add --no-cache \
     php84 php84-fpm php84-gd php84-intl php84-opcache php84-bcmath \
     php84-mysqli php84-pdo_mysql php84-zip php84-session php84-json \
     php84-mbstring php84-openssl php84-curl php84-dom php84-xml \
-    php84-xmlwriter php84-tokenizer php84-ctype php84-iconv \
+    php84-xmlwriter php84-tokenizer php84-ctype php84-iconv php84-phar \
     libavif-dev libjpeg-turbo-dev libpng-dev freetype-dev icu-data-full icu-dev \
     git curl unzip bash \
     mariadb-client \

@@ -1,7 +1,8 @@
--- Dump created on 2025-06-16 15:11:20 by Hennos-MacBook-Pro-2.local
+-- Dump created on 2025-06-18 10:01:10 by 2b888800cd29
 SET FOREIGN_KEY_CHECKS=0;
 SET @@SESSION.sql_mode='NO_AUTO_VALUE_ON_ZERO';
 
+/*M!100616 SET @OLD_NOTE_VERBOSITY=@@NOTE_VERBOSITY, NOTE_VERBOSITY=0 */;
 
 -- Table structure for table `activities`
 CREATE TABLE `activities` (
@@ -275,7 +276,7 @@ CREATE TABLE `subjects` (
 `teacherId` int unsigned NOT NULL,
 `isSynchronized` tinyint DEFAULT 0,
 PRIMARY KEY (`subjectId`),
-UNIQUE KEY `idx_subjects_ext_system` (`subjectExternalId`,`systemId`),
+UNIQUE KEY `idx_subjects_ext_system_group` (`subjectExternalId`,`systemId`,`groupId`),
 KEY `subjects_groups_groupId_fk` (`groupId`),
 KEY `subjects_users_userId_fk` (`teacherId`),
 CONSTRAINT `subjects_groups_groupId_fk` FOREIGN KEY (`groupId`) REFERENCES `groups` (`groupId`),
@@ -510,3 +511,4 @@ INSERT INTO `users` VALUES
 (2,'Mati Vaarikas','31111111114',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,1,NULL,NULL,'demo2',1,0,'',NULL,1);
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
+/*M!100616 SET NOTE_VERBOSITY=@OLD_NOTE_VERBOSITY */;

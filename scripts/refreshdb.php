@@ -233,6 +233,18 @@ function restoreDatabase(array $config): void
  */
 function readDatabaseCredentials(array &$config): void
 {
+    // First, include constants.php if it exists to define required constants
+    $constantsPath = './constants.php';
+    if (file_exists($constantsPath)) {
+        try {
+            ob_start();
+            require_once $constantsPath;
+            ob_end_clean();
+        } catch (Throwable $e) {
+            log_message("Error reading constants file: " . $e->getMessage());
+        }
+    }
+
     foreach ($config['configFilePaths'] as $path) {
         if (!file_exists($path)) {
             continue;
