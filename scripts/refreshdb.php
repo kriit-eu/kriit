@@ -271,18 +271,7 @@ function readDatabaseCredentials(array &$config): void
                 $config['databaseName'] = DATABASE_DATABASE;
             }
 
-            if (empty($config['databaseHostname']) && defined('DB_HOST')) {
-                $config['databaseHostname'] = DB_HOST;
-            }
-            if (empty($config['databaseUsername']) && defined('DB_USER')) {
-                $config['databaseUsername'] = DB_USER;
-            }
-            if (empty($config['databasePassword']) && defined('DB_PASSWORD')) {
-                $config['databasePassword'] = DB_PASSWORD;
-            }
-            if (empty($config['databaseName']) && defined('DB_NAME')) {
-                $config['databaseName'] = DB_NAME;
-            }
+
 
             if (!empty($config['databaseName']) && !empty($config['databaseHostname']) && !empty($config['databaseUsername'])) {
                 break;
