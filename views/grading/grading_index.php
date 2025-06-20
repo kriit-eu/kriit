@@ -494,11 +494,6 @@
         text-align: center;
     }
 
-    /* Graded row styling - opacity removed to keep colors visible */
-    .grading-row.graded {
-        /* Background color is now handled by the grading status colors above */
-    }
-
     /* Modal footer button consistency */
     .modal-footer #gradeButtons .btn {
         height: 38px; /* Match standard Bootstrap button height */
