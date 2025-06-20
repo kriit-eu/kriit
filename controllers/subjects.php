@@ -1,4 +1,6 @@
-<?php namespace App;
+<?php
+
+namespace App;
 
 class subjects extends Controller
 {
@@ -101,8 +103,9 @@ class subjects extends Controller
 
         // Fetch data from the database - include subjects even if they don't have assignments
         $showAllValue = $this->showAll ? 1 : 0;
-        
-        // First get subjects with assignments
+        $userFilter = $this->showAll
+            ? ''
+            : 'WHERE u.userDeleted = 0 AND (u.userIsActive = 1 OR ua.assignmentStatusId = 2)';
         $this->data = Db::getAll("
             SELECT
                 s.subjectId,
@@ -116,6 +119,7 @@ class subjects extends Controller
                 s.groupId                      AS groupId,
                 g.groupName,
                 u.userIsActive,
+                u.userDeleted,
             
                 a.assignmentId,
                 a.assignmentName,
@@ -136,10 +140,9 @@ class subjects extends Controller
                    ON  ua.assignmentId = a.assignmentId
                    AND ua.userId      = u.userId
             LEFT JOIN assignmentStatuses ast USING (assignmentStatusId)
-            WHERE u.userDeleted = 0
-              AND (u.userIsActive = 1 OR ua.assignmentStatusId = 2)
+            $userFilter
             ORDER BY g.groupName, u.userName, s.subjectName, a.assignmentDueAt;
-            ");
+        ");
 
         $groups = [];
 
@@ -208,8 +211,7 @@ class subjects extends Controller
                         'assignmentDueAt' => $row['assignmentDueAt'],
                         'assignmentEntryDate' => $row['assignmentEntryDate'],
                         'assignmentEntryDateFormatted' => $entryDateFormatted,
-                        'badgeClass' => $daysRemaining >= 3 ? 'badge bg-light text-dark' :
-                            ($daysRemaining > 0 ? 'badge bg-warning text-dark' : 'badge bg-danger'),
+                        'badgeClass' => $daysRemaining >= 3 ? 'badge bg-light text-dark' : ($daysRemaining > 0 ? 'badge bg-warning text-dark' : 'badge bg-danger'),
                         'daysRemaining' => $daysRemaining,
                         'assignmentStatuses' => []
                     ];
@@ -227,7 +229,8 @@ class subjects extends Controller
                     $isNegativeGrade,
                     $daysRemaining,
                     $statusId,
-                    $statusName);
+                    $statusName
+                );
 
                 // Determine the link text based on assignment status
                 $linkText = match ($statusName) {
@@ -328,7 +331,5 @@ class subjects extends Controller
 
         $this->statusClassMap = Assignment::statusClassMap($this->isStudent, $this->isTeacher);
         $this->groups = $groups;
-
-
     }
 }
