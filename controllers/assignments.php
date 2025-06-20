@@ -188,11 +188,11 @@ class assignments extends Controller
         // Separate query for fetching messages
         $messages = Db::getAll("
             SELECT
-                m.messageId, m.content AS messageContent, m.userId AS messageUserId, mu.userName AS messageUserName, m.CreatedAt, m.isNotification
-            FROM messages m
-            LEFT JOIN users mu ON mu.userId = m.userId
+                m.messageId, m.message AS messageContent, m.senderId AS messageUserId, mu.userName AS messageUserName, m.createdAt
+            FROM chatMessages m
+            LEFT JOIN users mu ON mu.userId = m.senderId
             WHERE m.assignmentId = ?
-            ORDER BY m.CreatedAt
+            ORDER BY m.createdAt
         ", [$assignmentId]);
 
         // Add the messages to the assignment
@@ -208,8 +208,7 @@ class assignments extends Controller
                 'content' => $content,
                 'userId' => $message['messageUserId'],
                 'userName' => $message['messageUserName'],
-                'createdAt' => $this->formatMessageDate($message['CreatedAt']),
-                'isNotification' => $message['isNotification']
+                'createdAt' => $this->formatMessageDate($message['createdAt'])
             ];
         }
 
@@ -922,7 +921,7 @@ class assignments extends Controller
 
     private function saveMessage($assignmentId, $userId, $content, $isNotification = false): void
     {
-        Db::insert('messages', ['assignmentId' => $assignmentId, 'userId' => $userId, 'content' => $content, 'CreatedAt' => date('Y-m-d H:i:s'), 'isNotification' => $isNotification]);
+        Db::insert('chatMessages', ['assignmentId' => $assignmentId, 'userId' => $userId, 'content' => $content, 'CreatedAt' => date('Y-m-d H:i:s'), 'isNotification' => $isNotification]);
     }
 
     private function sendNotificationToEmail($receiverEmail, $subject, $content): void

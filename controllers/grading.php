@@ -1,4 +1,6 @@
-<?php namespace App;
+<?php
+
+namespace App;
 
 /**
  * Class grading
@@ -161,62 +163,38 @@ class grading extends Controller
             stop(400, 'Student ID required');
         }
 
-        // Fetch comments from userAssignments for this specific student
-        $userAssignment = Db::getFirst("
-            SELECT comments 
-            FROM userAssignments 
-            WHERE userId = ? AND assignmentId = ?
-        ", [$studentId, $assignmentId]);
-
-        // Get comments from the JSON field
-        $comments = $userAssignment && $userAssignment['comments'] ? json_decode($userAssignment['comments'], true) : [];
-        
-        // Also fetch system notifications from messages table (like grade changes)
-        $systemMessages = Db::getAll("
+        // Fetch comments from chatMessages for this specific assignment
+        $messages = Db::getAll("
             SELECT
-                m.messageId,
-                m.content,
-                m.userId,
-                m.CreatedAt,
-                m.isNotification,
+                cm.messageId,
+                cm.message,
+                cm.senderId,
+                cm.createdAt,
                 u.userName,
                 u.userIsTeacher
-            FROM messages m
-            LEFT JOIN users u ON m.userId = u.userId
-            WHERE m.assignmentId = ?
-            AND m.isNotification = 1
-            ORDER BY m.CreatedAt ASC
-        ", [$assignmentId]);
+            FROM chatMessages cm
+            LEFT JOIN users u ON cm.senderId = u.userId
+            WHERE cm.assignmentId = ?
+            AND (cm.recipientId = ? OR cm.senderId = ?)
+            ORDER BY cm.createdAt ASC
+        ", [$assignmentId, $studentId, $studentId]);
 
         // Format messages - combine comments and system notifications
         $formattedMessages = [];
-        
-        // Add comments from userAssignments
-        foreach ($comments as $comment) {
-            $formattedMessages[] = [
-                'messageId' => null, // Comments don't have messageId
-                'content' => $comment['comment'],
-                'userId' => null, // We'll derive this from name if needed
-                'userName' => $comment['name'],
-                'createdAt' => $comment['createdAt'],
-                'isNotification' => false
-            ];
-        }
-        
-        // Add system notifications
-        foreach ($systemMessages as $message) {
+
+        // Add chat messages
+        foreach ($messages as $message) {
             $formattedMessages[] = [
                 'messageId' => $message['messageId'],
-                'content' => $message['content'],
-                'userId' => $message['userId'],
+                'content' => $message['message'],
+                'userId' => $message['senderId'],
                 'userName' => $message['userName'],
-                'createdAt' => $message['CreatedAt'],
-                'isNotification' => $message['isNotification']
+                'createdAt' => $message['createdAt']
             ];
         }
-        
+
         // Sort by creation time
-        usort($formattedMessages, function($a, $b) {
+        usort($formattedMessages, function ($a, $b) {
             return strtotime($a['createdAt']) - strtotime($b['createdAt']);
         });
 
@@ -419,9 +397,11 @@ class grading extends Controller
             BASE_URL . 'assignments/' . $assignmentId
         );
 
-        $this->sendNotificationToEmail($studentInfo['userEmail'],
+        $this->sendNotificationToEmail(
+            $studentInfo['userEmail'],
             "Teie lahendus on hinnatud",
-            $emailBody);
+            $emailBody
+        );
 
         // Log email notification activity
         Activity::create(ACTIVITY_TEACHER_SEND_EMAIL, $teacherInfo['userId'], $assignmentId, [
@@ -446,11 +426,11 @@ class grading extends Controller
             'CreatedAt' => date('Y-m-d H:i:s'),
             'isNotification' => $isNotification
         ];
-        
+
         if ($imageId) {
             $data['imageId'] = $imageId;
         }
-        
+
         Db::insert('messages', $data);
     }
 
@@ -468,7 +448,7 @@ class grading extends Controller
             'comment' => trim($comment),
             'createdAt' => $currentTime
         ];
-        
+
         if ($imageId) {
             $commentData['imageId'] = $imageId;
         }
