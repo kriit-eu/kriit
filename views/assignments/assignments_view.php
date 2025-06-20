@@ -1,5 +1,7 @@
 <!-- Bootstrap Icons -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+<!-- FontAwesome for icons used in messaging -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
 <style>
     .red-cell {
@@ -436,6 +438,352 @@
         color: #6c757d;
         font-size: 0.9em;
     }
+
+    /* Message container and message item styles from grading_index.php */
+    .message-container {
+        max-height: 300px;
+        overflow-y: auto;
+        padding: 0;
+        background-color: transparent;
+    }
+
+    .message-item {
+        padding: 0.75rem 0;
+        margin-bottom: 0.75rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .message-item:last-child {
+        margin-bottom: 0;
+        border-bottom: none;
+    }
+
+    .message-author {
+        font-weight: bold;
+        color: #495057;
+        font-size: 0.9em;
+    }
+
+    .message-time {
+        color: #6c757d;
+        font-size: 0.8em;
+    }
+
+    .message-content {
+        margin-top: 0.5rem;
+        color: #212529;
+    }
+
+    .loading-spinner {
+        display: inline-block;
+        width: 1rem;
+        height: 1rem;
+        border: 2px solid #f3f3f3;
+        border-top: 2px solid #007bff;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    /* Markdown content styling */
+    .markdown-content {
+        line-height: 1.6;
+    }
+
+    .markdown-content h1,
+    .markdown-content h2,
+    .markdown-content h3,
+    .markdown-content h4,
+    .markdown-content h5,
+    .markdown-content h6 {
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+    }
+
+    .markdown-content h1 {
+        font-size: 1.5rem;
+    }
+
+    .markdown-content h2 {
+        font-size: 1.3rem;
+    }
+
+    .markdown-content h3 {
+        font-size: 1.1rem;
+    }
+
+    .markdown-content h4,
+    .markdown-content h5,
+    .markdown-content h6 {
+        font-size: 1rem;
+    }
+
+    .markdown-content ul,
+    .markdown-content ol {
+        padding-left: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .markdown-content li {
+        margin-bottom: 0.25rem;
+    }
+
+    .markdown-content code {
+        background-color: #f1f3f4;
+        padding: 0.125rem 0.25rem;
+        border-radius: 0.25rem;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
+    }
+
+    .markdown-content pre {
+        background-color: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 0.375rem;
+        padding: 1rem;
+        overflow-x: auto;
+        margin-bottom: 1rem;
+        line-height: 1 !important;
+        font-size: 0.875rem;
+    }
+
+    .markdown-content pre code {
+        background-color: transparent;
+        padding: 0 !important;
+        margin: 0 !important;
+        line-height: 1 !important;
+        white-space: pre !important;
+        display: block;
+        font-size: inherit;
+        border: none !important;
+    }
+
+    /* Specific targeting for message content code blocks */
+    .message-content pre {
+        line-height: 1 !important;
+        font-size: 0.875rem;
+    }
+
+    .message-content pre code {
+        line-height: 1 !important;
+        white-space: pre !important;
+        display: block;
+        padding: 0 !important;
+        margin: 0 !important;
+        font-size: inherit;
+        border: none !important;
+    }
+
+    .markdown-content blockquote {
+        border-left: 4px solid #dee2e6;
+        padding-left: 1rem;
+        margin-left: 0;
+        margin-bottom: 1rem;
+        color: #6c757d;
+    }
+
+    .markdown-content p {
+        margin-bottom: 1rem;
+    }
+
+    .markdown-content strong {
+        font-weight: 600;
+    }
+
+    .markdown-content em {
+        font-style: italic;
+    }
+
+    /* Table styling within message content */
+    .message-content table {
+        font-size: 0.9em;
+        margin: 0.5rem 0;
+    }
+
+    .message-content table th,
+    .message-content table td {
+        padding: 0.375rem 0.5rem;
+        vertical-align: top;
+        word-wrap: break-word;
+    }
+
+    .message-content table th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+        border-bottom: 2px solid #dee2e6;
+    }
+
+    /* Horizontal rule styling within message content */
+    .message-content hr {
+        margin: 1rem 0;
+        border: 0;
+        border-top: 1px solid #dee2e6;
+        opacity: 0.7;
+    }
+
+    /* Image upload and preview styles */
+    .message-image {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        margin: 10px 0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    #newMessageContent.image-paste-active {
+        border-color: #007bff !important;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+        background-color: #f8f9ff !important;
+    }
+
+    .image-upload-hint {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+
+    .drag-drop-zone {
+        border: 2px dashed #dee2e6;
+        border-radius: 0.375rem;
+        padding: 2rem;
+        text-align: center;
+        background-color: #f8f9fa;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .drag-drop-zone.drag-over {
+        border-color: #007bff;
+        background-color: #e3f2fd;
+        transform: scale(1.02);
+    }
+
+    .upload-item {
+        display: flex;
+        align-items: center;
+        padding: 0.5rem;
+        margin-bottom: 0.5rem;
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        background-color: #f8f9fa;
+    }
+
+    .upload-item.success {
+        border-color: #198754;
+        background-color: #d1e7dd;
+    }
+
+    .upload-item.error {
+        border-color: #dc3545;
+        background-color: #f8d7da;
+    }
+
+    .file-info {
+        flex: 1;
+        margin-left: 0.5rem;
+    }
+
+    /* Split editor styles */
+    .editor-wrapper,
+    .preview-wrapper {
+        position: relative;
+    }
+
+    .editor-header,
+    .preview-header {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-bottom: none;
+        border-radius: 0.375rem 0.375rem 0 0;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+    }
+
+    .editor-wrapper textarea {
+        border-radius: 0 0 0.375rem 0.375rem;
+        border-top: none;
+    }
+
+    .editor-wrapper textarea:focus {
+        box-shadow: none;
+        border-color: #dee2e6;
+    }
+
+    #messagePreview {
+        border-radius: 0 0 0.375rem 0.375rem;
+        border-top: none;
+        overflow-y: auto;
+        height: auto;
+        min-height: 200px;
+    }
+
+    #messagePreview img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 4px;
+        margin: 8px 0;
+    }
+
+    #messagePreview h1,
+    #messagePreview h2,
+    #messagePreview h3,
+    #messagePreview h4 {
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    #messagePreview code {
+        background-color: #f1f3f4;
+        padding: 0.125rem 0.25rem;
+        border-radius: 0.25rem;
+        font-size: 0.875rem;
+    }
+
+    #messagePreview pre {
+        background-color: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 0.375rem;
+        padding: 0.75rem;
+        overflow-x: auto;
+        font-size: 0.875rem;
+    }
+
+    /* Dynamic resizing styles */
+    #newMessageContent {
+        resize: none;
+        overflow: hidden;
+        transition: height 0.2s ease;
+    }
+
+    #messagePreview {
+        overflow-y: hidden;
+        transition: height 0.2s ease;
+    }
+
+    /* Mobile responsiveness */
+    @media (max-width: 768px) {
+        .row .col-md-6 {
+            margin-bottom: 1rem;
+        }
+
+        #messagePreview {
+            min-height: 150px;
+        }
+
+        .editor-wrapper textarea {
+            min-height: 150px;
+        }
+    }
 </style>
 <div>
     <div class="mb-3">
@@ -710,9 +1058,9 @@
         </div>
     <?php endif; ?>
 
-    <div id="main-container">
+    <div id="main-container" style="max-width:1600px;width:95vw;margin:0 auto;">
         <div id="assignments-container">
-            <div class="assignments-body">
+            <div class="assignments-body d-flex" style="gap: 0.5rem; width: 1000px;">
                 <?php foreach ($assignment['students'] as $s): ?>
                     <div>
                         <div class="header-item" data-bs-toggle="tooltip" title="<?= $s['studentName'] ?>" style="<?= $s['studentId'] !== array_key_first($assignment['students']) ? 'border-left: 1px solid #ccc;' : '' ?>">
@@ -731,126 +1079,155 @@
                                 <span style="font-size: 8px"><?= $s['userDoneCriteriaCount'] ?>/<?= count($assignment['criteria']) ?></span>
                             <?php endif; ?>
                         </div>
-                    </div>
-                    <?php if ($isStudent): ?>
-                        <div class="assignment-item">
-                            <div class="header-item">Kommentaarid</div>
-                            <div>
-                                <?php foreach ($s['comments'] as $comment): ?>
-                                    <div class="comment-row p-2 border rounded bg-light mb-2">
-                                        <div class="comment-name fw-bold text-dark mb-1"><?= isset($comment['name']) ? $comment['name'] : 'Tundmatu' ?></div>
-                                        <div class="comment-text text-muted" data-raw-comment="<?= htmlspecialchars($comment['comment'], ENT_QUOTES, 'UTF-8') ?>">
-                                            <!-- Comment content will be processed by JavaScript -->
-                                        </div>
-                                        <div class="comment-date text-secondary small"><?= $comment['createdAt'] ?></div>
+                        <?php if ($isStudent && !empty($s['comments'])): ?>
+                            <div class="card mb-4" style="width:100%;max-width:900px;margin:0 auto 2rem auto;box-shadow:0 2px 8px rgba(0,0,0,0.04);border-radius:12px;">
+                                <div class="card-body" style="padding:1.5rem 2rem;">
+                                    <div style="display:flex;flex-direction:column;gap:1rem;">
+                                        <?php foreach ($s['comments'] as $comment): ?>
+                                            <div class="comment-row p-3 border rounded bg-light" style="width:100%;word-break:break-word;box-shadow:0 1px 2px rgba(0,0,0,0.03);border-radius:8px;">
+                                                <div class="comment-name fw-bold text-dark mb-1" style="font-size:1.1em;">
+                                                    <?= isset($comment['name']) ? $comment['name'] : 'Tundmatu' ?>
+                                                </div>
+                                                <div class="comment-text text-muted mb-2" data-raw-comment="<?= htmlspecialchars($comment['comment'], ENT_QUOTES, 'UTF-8') ?>">
+                                                    <!-- Comment content will be processed by JavaScript -->
+                                                </div>
+                                                <div class="comment-date text-secondary small" style="font-size:0.95em;">
+                                                    <?= $comment['createdAt'] ?>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
                                     </div>
-                                <?php endforeach; ?>
+                                </div>
                             </div>
-                        </div>
-
-                    <?php endif; ?>
+                        <?php endif; ?>
+                    </div>
                 <?php endforeach; ?>
             </div>
         </div>
-        <div id="messages-container">
-            <div id="notificationContainer" class="card mt-3">
+        <div id="messages-container" class="d-flex flex-row gap-4" style="margin-top: 2rem;">
+            <div id="messageContainer" class="card flex-grow-1" style="min-width: 400px; max-width: 900px;">
                 <div class="card-body">
-                    <h5>Sündmused</h5>
-                    <div class="content-part">
-                        <?php foreach ($assignment['messages'] as $message): ?>
-                            <?php if ($message['isNotification']): ?>
-                                <div class="notification-item">
-                                    <i class="fa fa-bell notification-icon"></i>
-                                    <div class="notification-text">
-                                        <p class="fw-bold mb-1"><?= htmlspecialchars($message['content'], ENT_QUOTES, 'UTF-8') ?></p>
-                                    </div>
-                                    <small class="notification-time text-muted"><?= $message['createdAt'] ?></small>
-                                </div>
-                            <?php endif; ?>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
-            </div>
-
-            <div id="messageContainer" class="card">
-                <div class="card-body">
-                    <h5>Vestlus</h5>
-                    <div class="content-part">
-                        <?php foreach ($assignment['messages'] as $message): ?>
-                            <?php if (!$message['isNotification']): ?>
-                                <div class="d-flex align-items-start mb-3 border rounded p-3">
-                                    <div class="flex-shrink-0 me-3">
-                                        <span class="avatar bg-primary text-white rounded-circle p-2"><?= strtoupper(substr($message['userName'], 0, 1)) ?></span>
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <div class="d-flex flex-wrap justify-content-between">
-                                            <h6 class="fw-bold mb-1"><?= $message['userName'] ?></h6>
-                                            <small class="text-muted"><?= $message['createdAt'] ?></small>
-                                        </div>
-                                        <p class="mb-1"><?= strip_tags($message['content'], '<br><ul><ol><h2><li><h3><p><strong><img><blockquote><em>') ?></p>
-                                        <?php if ($this->auth->userId !== $message['userId']): ?>
-                                            <div class="d-flex justify-content-end">
-                                                <button type="button" class="btn btn-secondary btn-sm"
-                                                    style="font-size: 0.75rem; padding: 2px 8px;"
-                                                    onclick='replyToMessage(<?= json_encode($message['userName']) ?>, <?= $message['messageId'] ?>, <?= json_encode($message['content']) ?>, "<?= $message['createdAt'] ?>")'>
-                                                    Vasta
-                                                </button>
-                                            </div>
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
-                            <?php else: ?>
-                                <div class="d-flex align-items-start mb-3 border rounded p-3 bg-light">
-                                    <div class="flex-shrink-0 me-3">
-                                        <span class="avatar bg-primary text-white rounded-circle p-2"><?= strtoupper(substr($message['userName'], 0, 1)) ?></span>
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <div class="d-flex flex-wrap justify-content-between">
-                                            <h6 class="fw-bold mb-1 text-muted">
-                                                <i class="fas fa-info-circle me-1"></i><?= $message['userName'] ?>
-                                            </h6>
-                                            <small class="text-muted"><?= $message['createdAt'] ?></small>
-                                        </div>
-                                        <p class="mb-1 text-muted"><?= strip_tags($message['content'], '<br><ul><ol><h2><li><h3><p><strong><img><blockquote><em>') ?></p>
-                                        <?php if ($this->auth->userId !== $message['userId']): ?>
-                                            <div class="d-flex justify-content-end">
-                                                <button type="button" class="btn btn-secondary btn-sm"
-                                                    style="font-size: 0.75rem; padding: 2px 8px;"
-                                                    onclick='replyToMessage(<?= json_encode($message['userName']) ?>, <?= $message['messageId'] ?>, <?= json_encode($message['content']) ?>, "<?= $message['createdAt'] ?>")'>
-                                                    Vasta
-                                                </button>
-                                            </div>
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
-                            <?php endif; ?>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
-            </div>
-
-
-            <div class="container mb-5">
-                <form>
+                    <!-- Comments Thread -->
                     <div class="mb-3">
-                        <label for="messageContent" class="form-label">Sisesta sõnum</label>
-                        <div id="replyInfo" class="alert alert-info " style="display:none;">
-                            <div class="d-flex justify-content-end">
-                                <button type="button" style="font-size: 0.75rem; padding: 2px 8px;"
-                                    class="btn btn-sm btn-secondary mb-2" onclick="cancelReply()">x
-                                </button>
-                            </div>
-                            <div id="replyMessage" class="border rounded bg-light p-2 mb-2"></div>
+                        <h6>Vestlus</h6>
+                        <div id="messagesContainer" class="message-container border-top pt-2">
+                            <?php if (!empty($assignment['messages'])): ?>
+                                <?php foreach ($assignment['messages'] as $message): ?>
+                                    <div class="message-item">
+                                        <div class="d-flex justify-content-between">
+                                            <span class="message-author"><?= htmlspecialchars($message['userName']) ?></span>
+                                            <span class="message-time"><?= htmlspecialchars($message['createdAt']) ?></span>
+                                        </div>
+                                        <div class="message-content" data-raw-content="<?= htmlspecialchars($message['content']) ?>">
+                                            <!-- Content will be processed by JavaScript for markdown -->
+                                        </div>
+                                        <?php if (!empty($message['imageId'])): ?>
+                                            <div class="mt-2">
+                                                <img src="<?= BASE_URL ?>images/show/<?= $message['imageId'] ?>" class="message-image img-fluid rounded" style="max-height: 300px; cursor: pointer;" onclick="window.open(this.src, '_blank')">
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <p class="text-muted">Sõnumeid pole veel</p>
+                            <?php endif; ?>
                         </div>
-                        <textarea class="form-control" id="messageContent" name="content" rows="3"
-                            placeholder="Kirjuta oma sõnum siia..."></textarea>
                     </div>
-                    <div class="d-flex justify-content-end">
-                        <button type="button" class="btn btn-primary" onclick="submitMessage()">Postita</button>
-                    </div>
-                </form>
-            </div>
 
+                    <!-- New Message Form -->
+                    <div class="mb-3">
+                        <label for="newMessageContent" class="form-label">Lisa kommentaar</label>
+
+                        <!-- Split view: Editor and Preview -->
+                        <div class="row">
+                            <!-- Text Editor Column -->
+                            <div class="col-md-6">
+                                <div class="editor-wrapper">
+                                    <div class="editor-header">
+                                        <small class="text-muted">
+                                            <i class="fas fa-edit"></i> Redaktor
+                                        </small>
+                                    </div>
+                                    <textarea class="form-control" id="newMessageContent" rows="8"
+                                        placeholder="Kirjuta kommentaar... (pildide kleepimiseks kasuta Ctrl+V)"
+                                        style="resize: none; min-height: 200px; overflow: hidden;"></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Preview Column -->
+                            <div class="col-md-6">
+                                <div class="preview-wrapper">
+                                    <div class="preview-header">
+                                        <small class="text-muted">
+                                            <i class="fas fa-eye"></i> Eelvaade
+                                        </small>
+                                    </div>
+                                    <div id="messagePreview" class="form-control"
+                                        style="min-height: 200px; background-color: #f8f9fa; overflow-y: hidden; word-wrap: break-word;">
+                                        <div class="text-muted text-center p-3">
+                                            <i class="fas fa-eye-slash"></i><br>
+                                            Eelvaade ilmub siia...
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Image Upload Progress -->
+                        <div id="imageUploadProgress" class="mt-2 d-none">
+                            <div class="card border-primary">
+                                <div class="card-body p-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="mb-0">Pildi üleslaadimine</h6>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" id="cancelUpload">
+                                            <i class="fas fa-times"></i> Tühista
+                                        </button>
+                                    </div>
+                                    <div class="progress mb-2" style="height: 8px;">
+                                        <div class="progress-bar progress-bar-striped progress-bar-animated"
+                                            id="uploadProgressBar" role="progressbar" style="width: 0%"></div>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <div class="spinner-border spinner-border-sm me-2" role="status">
+                                            <span class="visually-hidden">Laadimine...</span>
+                                        </div>
+                                        <small class="text-muted" id="uploadStatusText">Alustamine...</small>
+                                    </div>
+                                    <div id="uploadResults" class="mt-2"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Image Upload Zone -->
+                        <div class="mt-2">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="form-text">
+                                        <small class="text-muted">
+                                            💡 <strong>Näpunäide:</strong> Kopeeri ükskõik milline pilt ja kleebi see otse redaktorisse (Ctrl+V)!
+                                            Pildid lisatakse automaatselt Markdown-vormingus.
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <button type="button" class="btn btn-outline-primary btn-sm" id="selectImagesBtn">
+                                        <i class="fas fa-image"></i> Vali pildid
+                                    </button>
+                                    <input type="file" id="imageFileInput" multiple accept="image/*" style="display: none;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end mt-2">
+                            <button type="button" class="btn btn-primary" id="submitMessageBtn">Postita</button>
+                        </div>
+
+                        <div class="invalid-feedback" id="messageError"></div>
+                    </div>
+                </div>
+            </div>
+            <div id="commentsContainerBox" class="card flex-grow-1" style="min-width: 400px; max-width: 900px;">
+            </div>
         </div>
 
 
@@ -860,11 +1237,25 @@
         let currentStudentId = null;
         let newAddedCriteria = [];
         const userIsAdmin = <?= $this->auth->userIsAdmin ? 'true' : 'false' ?>;
+        let currentImageId = null; // Track uploaded image ID
 
         document.addEventListener('DOMContentLoaded', function() {
             initializeTooltips();
             scrollToBottom();
             processComments(); // Add comment processing
+            processExistingMessages(); // Process existing messages for markdown
+
+            // Initialize preview and messaging system
+            initializePreview();
+            initializeImagePasting();
+
+            // Add message submit handler
+            const submitMessageBtn = document.getElementById('submitMessageBtn');
+            if (submitMessageBtn) {
+                submitMessageBtn.addEventListener('click', function() {
+                    submitNewMessage();
+                });
+            }
 
             // Initialize OpenAPI button visibility
             const openApiButton = document.getElementById('openApiButton');
@@ -872,6 +1263,566 @@
                 openApiButton.style.display = assignment.assignmentInvolvesOpenApi ? 'inline-block' : 'none';
             }
         });
+
+        function processExistingMessages() {
+            // Process all existing message content for markdown
+            const messageContents = document.querySelectorAll('.message-content[data-raw-content]');
+            messageContents.forEach(messageContent => {
+                const rawContent = messageContent.getAttribute('data-raw-content');
+                if (rawContent) {
+                    messageContent.innerHTML = parseMarkdown(rawContent);
+                }
+            });
+
+            // Scroll messages container to bottom
+            const messagesContainer = document.getElementById('messagesContainer');
+            if (messagesContainer) {
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+        }
+
+        function submitNewMessage() {
+            const messageContent = document.getElementById('newMessageContent').value.trim();
+            const messageError = document.getElementById('messageError');
+            const submitBtn = document.getElementById('submitMessageBtn');
+
+            // Clear previous errors
+            messageError.textContent = '';
+            messageError.style.display = 'none';
+
+            // Validate message content
+            if (!messageContent) {
+                messageError.textContent = 'Palun sisesta kommentaar';
+                messageError.style.display = 'block';
+                return;
+            }
+
+            // Show loading state
+            const originalText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saadan...';
+
+            // Prepare form data
+            const formData = new URLSearchParams();
+            formData.append('assignmentId', assignment.assignmentId);
+            formData.append('content', messageContent);
+
+            // Add image ID if present
+            if (currentImageId) {
+                formData.append('imageId', currentImageId);
+            }
+
+            // Send message
+            fetch('<?= BASE_URL ?>assignments/saveMessage', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: formData.toString()
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 200) {
+                        // Clear the form
+                        document.getElementById('newMessageContent').value = '';
+                        document.getElementById('messagePreview').innerHTML = `
+                        <div class="text-muted text-center p-3">
+                            <i class="fas fa-eye-slash"></i><br>
+                            Eelvaade ilmub siia...
+                        </div>
+                    `;
+
+                        // Clear image tracking
+                        currentImageId = null;
+
+                        // Add the new message to the messages container
+                        addNewMessageToContainer(data.data);
+
+                        // Reset button
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = originalText;
+                    } else {
+                        messageError.textContent = data.message || 'Viga sõnumi saatmisel';
+                        messageError.style.display = 'block';
+
+                        // Reset button
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = originalText;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error sending message:', error);
+                    messageError.textContent = 'Viga sõnumi saatmisel: ' + error.message;
+                    messageError.style.display = 'block';
+
+                    // Reset button
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalText;
+                });
+        }
+
+        function addNewMessageToContainer(messageData) {
+            const messagesContainer = document.getElementById('messagesContainer');
+
+            // Check if container shows "no messages" text
+            if (messagesContainer.innerHTML.includes('Sõnumeid pole veel')) {
+                messagesContainer.innerHTML = '';
+            }
+
+            // Create new message element
+            const messageElement = document.createElement('div');
+            messageElement.className = 'message-item';
+
+            const messageDate = new Date(messageData.createdAt).toLocaleString('et-EE');
+            let imageHtml = '';
+            if (messageData.imageId) {
+                imageHtml = `<div class="mt-2">${displayMessageImage(messageData.imageId)}</div>`;
+            }
+
+            messageElement.innerHTML = `
+                <div class="d-flex justify-content-between">
+                    <span class="message-author">${messageData.userName || 'Sina'}</span>
+                    <span class="message-time">${messageDate}</span>
+                </div>
+                <div class="message-content">${parseMarkdown(messageData.content)}</div>
+                ${imageHtml}
+            `;
+
+            // Add to container
+            messagesContainer.appendChild(messageElement);
+
+            // Scroll to bottom
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function displayMessageImage(imageId) {
+            if (!imageId) return '';
+            return `<img src="<?= BASE_URL ?>images/show/${imageId}" class="message-image img-fluid rounded" style="max-height: 300px; cursor: pointer;" onclick="window.open(this.src, '_blank')">`;
+        }
+
+        function parseMarkdown(text) {
+            if (!text) return '';
+
+            // Simple Markdown parser for basic formatting
+            let html = text;
+
+            // Headers
+            html = html.replace(/^#### (.*$)/gim, '<h4>$1</h4>');
+            html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+            html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+            html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+
+            // Bold
+            html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            html = html.replace(/__(.*?)__/g, '<strong>$1</strong>');
+
+            // Italic
+            html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+            html = html.replace(/_(.*?)_/g, '<em>$1</em>');
+
+            // Code blocks
+            html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+
+            // Inline code
+            html = html.replace(/`(.*?)`/g, '<code>$1</code>');
+
+            // Images - handle before links to avoid conflicts
+            html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, function(match, alt, src) {
+                return '<img src="' + src + '" alt="' + alt + '" class="message-image img-fluid rounded" style="max-height: 300px; cursor: pointer;" onclick="window.open(this.src, \'_blank\')">';
+            });
+
+            // Links
+            html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+
+            // Unordered lists
+            html = html.replace(/^\* (.+)$/gm, '<li>$1</li>');
+            html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+
+            // Ordered lists
+            html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+            html = html.replace(/(<li>.*<\/li>)/s, function(match) {
+                if (match.includes('<ul>')) return match;
+                return '<ol>' + match + '</ol>';
+            });
+
+            // Blockquotes
+            html = html.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
+
+            // Horizontal rules
+            html = html.replace(/^---+$/gm, '<hr>');
+
+            // Process paragraphs and line breaks
+            html = cleanupLineBreaksAndParagraphs(html);
+
+            return html;
+        }
+
+        function cleanupLineBreaksAndParagraphs(text) {
+            // Split into paragraphs based on double newlines
+            const paragraphs = text.split(/\n\s*\n/);
+            const processedParagraphs = [];
+
+            paragraphs.forEach(paragraph => {
+                paragraph = paragraph.trim();
+                if (paragraph === '') return; // Skip empty paragraphs
+
+                // Check if paragraph already contains HTML tags
+                if (paragraph.includes('<table') || paragraph.includes('<ul>') ||
+                    paragraph.includes('<ol>') || paragraph.includes('<blockquote>') ||
+                    paragraph.includes('<h1>') || paragraph.includes('<h2>') ||
+                    paragraph.includes('<h3>') || paragraph.includes('<h4>') ||
+                    paragraph.includes('<pre>') || paragraph.includes('<hr>')) {
+                    // Already formatted content - add as-is
+                    processedParagraphs.push(paragraph);
+                } else {
+                    // Regular text paragraph - convert single newlines to <br> and wrap in <p>
+                    let processedParagraph = paragraph.replace(/\n/g, '<br>');
+
+                    // Limit consecutive <br> tags to maximum of 2
+                    processedParagraph = processedParagraph.replace(/(<br>\s*){3,}/g, '<br><br>');
+
+                    // Wrap in paragraph tags if it doesn't start with a tag
+                    if (!processedParagraph.startsWith('<')) {
+                        processedParagraph = '<p>' + processedParagraph + '</p>';
+                    }
+
+                    processedParagraphs.push(processedParagraph);
+                }
+            });
+
+            return processedParagraphs.join('\n');
+        }
+
+        // Auto-resize textarea to fit content (infinite expansion)
+        function autoResizeTextarea(textarea) {
+            // Reset height to auto to get the correct scrollHeight
+            textarea.style.height = 'auto';
+
+            // Set minimum height
+            const minHeight = 200;
+
+            // Calculate new height based on scroll height (no maximum limit)
+            let newHeight = Math.max(textarea.scrollHeight, minHeight);
+
+            // Always use hidden overflow since we expand to fit content
+            textarea.style.overflowY = 'hidden';
+
+            // Apply the new height
+            textarea.style.height = newHeight + 'px';
+
+            return newHeight;
+        }
+
+        // Global debounce mechanism for all resize operations
+        let globalResizeTimeout = null;
+        let isGloballyResizing = false;
+
+        // Debounced resize function that coordinates all resize calls
+        function debouncedResize(preview, source = 'unknown') {
+
+            // If we're already in a resize operation, ignore this call
+            if (isGloballyResizing) {
+                return;
+            }
+
+            // Clear any pending resize operation
+            if (globalResizeTimeout) {
+                clearTimeout(globalResizeTimeout);
+            }
+
+            globalResizeTimeout = setTimeout(() => {
+                isGloballyResizing = true;
+                actualResizePreview(preview);
+
+                // Reset flag after operation completes
+                setTimeout(() => {
+                    isGloballyResizing = false;
+                }, 200);
+
+                globalResizeTimeout = null;
+            }, 150); // Global debounce delay
+        }
+
+        // The actual resize implementation
+        function actualResizePreview(preview) {
+
+            // Set minimum height only - no maximum limit
+            const minHeight = 200;
+
+            // Temporarily remove height constraint to measure content
+            const originalHeight = preview.style.height;
+            const originalOverflow = preview.style.overflowY;
+
+            preview.style.height = 'auto';
+            preview.style.overflowY = 'hidden';
+
+            // Get the actual content height including images
+            let contentHeight = preview.scrollHeight;
+
+            // Apply minimum height constraint only
+            let newHeight = Math.max(contentHeight, minHeight);
+
+            // Always allow infinite expansion - no scrolling needed
+            preview.style.overflowY = 'hidden';
+
+            // Apply the new height
+            preview.style.height = newHeight + 'px';
+
+            return newHeight;
+        }
+
+        // Keep the old function name for compatibility but route through debounced version
+        function autoResizePreview(preview) {
+            debouncedResize(preview, 'autoResizePreview');
+        }
+
+        // Sync heights between textarea and preview
+        function syncElementHeights(textarea, preview) {
+            // Use global debouncing instead of local debouncing
+            debouncedResize(preview, 'syncElementHeights');
+        }
+
+        // Real-time preview functionality
+        function initializePreview() {
+            const textarea = document.getElementById('newMessageContent');
+            const preview = document.getElementById('messagePreview');
+
+            if (!textarea || !preview) return;
+
+            // Initialize mutation observer for dynamic content changes
+            initializePreviewObserver(textarea, preview);
+
+            // Update preview on input
+            function updatePreview() {
+                const content = textarea.value.trim();
+                if (content === '') {
+                    preview.innerHTML = `
+                        <div class="text-muted text-center p-3">
+                            <i class="fas fa-eye-slash"></i><br>
+                            Eelvaade ilmub siia...
+                        </div>
+                    `;
+                    // Reset to minimum height when empty
+                    preview.style.height = '200px';
+                    preview.style.overflowY = 'hidden';
+                } else {
+                    preview.innerHTML = parseMarkdown(content);
+                }
+
+                // Auto-resize both elements after content update
+                // Use a small delay to ensure DOM is fully updated
+                setTimeout(() => {
+                    syncElementHeights(textarea, preview);
+                }, 50);
+            }
+
+            // Update on every keystroke
+            textarea.addEventListener('input', function() {
+                updatePreview();
+            });
+
+            // Update on paste (with delays to handle image pasting)
+            let pasteUpdateTimeout = null;
+            textarea.addEventListener('paste', function() {
+                // Clear any pending paste updates
+                if (pasteUpdateTimeout) {
+                    clearTimeout(pasteUpdateTimeout);
+                }
+
+                // First update immediately for text content
+                setTimeout(updatePreview, 10);
+
+                // Single delayed update for images
+                pasteUpdateTimeout = setTimeout(() => {
+                    updatePreview();
+                    pasteUpdateTimeout = null;
+                }, 800);
+            });
+
+            // Handle manual resize of textarea
+            textarea.addEventListener('mouseup', function() {
+                syncElementHeights(textarea, preview);
+            });
+
+            // Initial update
+            updatePreview();
+        }
+
+        // Monitor preview content changes for dynamic resizing
+        function initializePreviewObserver(textarea, preview) {
+            let resizeTimeout = null;
+            let isResizing = false;
+
+            // Create a mutation observer to watch for content changes
+            const observer = new MutationObserver((mutations) => {
+                // Skip if we're currently in a resize operation
+                if (isResizing) {
+                    return;
+                }
+
+                let shouldResize = false;
+                let hasNewImages = false;
+
+                mutations.forEach((mutation) => {
+                    // Check if nodes were added/removed
+                    if (mutation.type === 'childList') {
+                        // Check if any new images were added
+                        mutation.addedNodes.forEach((node) => {
+                            if (node.nodeType === Node.ELEMENT_NODE) {
+                                if (node.tagName === 'IMG' || node.querySelector('img')) {
+                                    hasNewImages = true;
+                                }
+                            }
+                        });
+                        shouldResize = true;
+                    } else if (mutation.type === 'attributes') {
+                        // Only trigger on src changes, not style changes to prevent loops
+                        if (mutation.target.tagName === 'IMG' && mutation.attributeName === 'src') {
+                            hasNewImages = true;
+                            shouldResize = true;
+                        }
+                    }
+                });
+
+                if (shouldResize) {
+                    // Clear any pending resize
+                    if (resizeTimeout) {
+                        clearTimeout(resizeTimeout);
+                    }
+
+                    // If new images were added, wait a bit longer for them to start loading
+                    const delay = hasNewImages ? 250 : 100;
+
+                    resizeTimeout = setTimeout(() => {
+                        isResizing = true;
+                        debouncedResize(preview, 'mutationObserver');
+                        // Reset flag after a short delay
+                        setTimeout(() => {
+                            isResizing = false;
+                        }, 200);
+                        resizeTimeout = null;
+                    }, delay);
+                }
+            });
+
+            // Start observing the preview div
+            observer.observe(preview, {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: ['src'] // Only monitor src changes, not style changes
+            });
+
+            return observer;
+        }
+
+        // Image pasting functionality
+        function initializeImagePasting() {
+            const textarea = document.getElementById('newMessageContent');
+            if (!textarea) return;
+
+            // Add paste event listener for image handling
+            textarea.addEventListener('paste', function(e) {
+                const items = e.clipboardData.items;
+
+                for (let i = 0; i < items.length; i++) {
+                    const item = items[i];
+
+                    if (item.type.indexOf('image') !== -1) {
+                        e.preventDefault();
+
+                        const blob = item.getAsFile();
+                        uploadImageBlob(blob);
+                        break;
+                    }
+                }
+            });
+
+            // Add file input handler
+            const selectImagesBtn = document.getElementById('selectImagesBtn');
+            const imageFileInput = document.getElementById('imageFileInput');
+
+            if (selectImagesBtn && imageFileInput) {
+                selectImagesBtn.addEventListener('click', function() {
+                    imageFileInput.click();
+                });
+
+                imageFileInput.addEventListener('change', function(e) {
+                    const files = e.target.files;
+                    for (let file of files) {
+                        if (file.type.indexOf('image') !== -1) {
+                            uploadImageBlob(file);
+                        }
+                    }
+                    // Clear the input
+                    imageFileInput.value = '';
+                });
+            }
+        }
+
+        function uploadImageBlob(blob) {
+            // Show upload progress
+            const uploadProgress = document.getElementById('imageUploadProgress');
+            const uploadStatusText = document.getElementById('uploadStatusText');
+            const uploadProgressBar = document.getElementById('uploadProgressBar');
+
+            if (uploadProgress) {
+                uploadProgress.classList.remove('d-none');
+                uploadStatusText.textContent = 'Alustamine...';
+                uploadProgressBar.style.width = '0%';
+            }
+
+            // Create form data
+            const formData = new FormData();
+            formData.append('image', blob);
+
+            // Upload the image
+            fetch('<?= BASE_URL ?>images/upload', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (uploadProgress) {
+                        uploadProgress.classList.add('d-none');
+                    }
+
+                    if (data.status === 200) {
+                        // Store the image ID for later use
+                        currentImageId = data.data.imageId;
+
+                        // Insert markdown image syntax into textarea
+                        const textarea = document.getElementById('newMessageContent');
+                        const imageUrl = '<?= BASE_URL ?>images/show/' + data.data.imageId;
+                        const markdownImage = `![Pilt](${imageUrl})`;
+
+                        // Insert at cursor position or append
+                        const cursorPos = textarea.selectionStart;
+                        const textBefore = textarea.value.substring(0, cursorPos);
+                        const textAfter = textarea.value.substring(cursorPos);
+
+                        textarea.value = textBefore + '\n' + markdownImage + '\n' + textAfter;
+
+                        // Trigger input event to update preview
+                        textarea.dispatchEvent(new Event('input'));
+
+                        // Focus back on textarea
+                        textarea.focus();
+                    } else {
+                        console.error('Error uploading image:', data.message);
+                        alert('Viga pildi üleslaadimisel: ' + (data.message || 'Tundmatu viga'));
+                    }
+                })
+                .catch(error => {
+                    if (uploadProgress) {
+                        uploadProgress.classList.add('d-none');
+                    }
+                    console.error('Error uploading image:', error);
+                    alert('Viga pildi üleslaadimisel: ' + error.message);
+                });
+        }
+
+        // ...existing code...
 
         function initializeTooltips() {
             const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
@@ -1828,7 +2779,7 @@
                         '<img src="' + src + '" alt="' + alt + '" ' +
                         'class="comment-image img-fluid rounded shadow-sm" ' +
                         'style="max-height: 200px; cursor: pointer; border: 1px solid #dee2e6; opacity: 0; transition: opacity 0.3s ease;" ' +
-                        'onclick="showImageModal(\'' + modalId + '\', \'' + src + '\', \'' + alt + '\')" ' +
+                        'onclick="showImageModal(\'' + modalId + '\', \'" + src + "\', \'" + alt + "\')" ' +
                         'onload="this.style.opacity=1" ' +
                         'onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'">' +
                         '<div class="image-error text-muted small" style="display: none; padding: 10px; border: 1px dashed #ccc; border-radius: 5px;">' +
@@ -1845,7 +2796,7 @@
                         '<img src="' + src + '" alt="' + alt + '" ' +
                         'class="comment-image img-fluid rounded shadow-sm" ' +
                         'style="max-height: 200px; cursor: pointer; border: 1px solid #dee2e6; opacity: 0; transition: opacity 0.3s ease;" ' +
-                        'onclick="showImageModal(\'' + modalId + '\', \'' + src + '\', \'' + alt + '\')" ' +
+                        'onclick="showImageModal(\'' + modalId + '\', \'" + src + "\', \'" + alt + "\')" ' +
                         'onload="this.style.opacity=1" ' +
                         'onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'">' +
                         '<div class="image-error text-muted small" style="display: none; padding: 10px; border: 1px dashed #ccc; border-radius: 5px;">' +
@@ -1892,7 +2843,7 @@
                     '<img src="' + src + '" alt="' + alt + '" ' +
                     'class="comment-image img-fluid rounded shadow-sm" ' +
                     'style="max-height: 200px; cursor: pointer; border: 1px solid #dee2e6; opacity: 0; transition: opacity 0.3s ease;" ' +
-                    'onclick="showImageModal(\'' + modalId + '\', \'' + src + '\', \'' + alt + '\')" ' +
+                    'onclick="showImageModal(\'' + modalId + '\', \'" + src + "\', \'" + alt + "\')" ' +
                     'onload="this.style.opacity=1" ' +
                     'onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'">' +
                     '<div class="image-error text-muted small" style="display: none; padding: 10px; border: 1px dashed #ccc; border-radius: 5px;">' +
@@ -1916,6 +2867,7 @@
             });
 
             // Blockquotes
+
             html = html.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
 
             // Horizontal rules
@@ -1940,9 +2892,45 @@
                     element.innerHTML = processedHtml;
 
                 } else {
-                    console.log('No raw comment data found for element', index + 1);
+                    // No raw comment data found for this element
                 }
             });
 
         }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('newMessageForm');
+            const textarea = document.getElementById('newMessageContent');
+            const messageContainer = document.getElementById('assignmentMessageContainer');
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const content = textarea.value.trim();
+                if (!content) return;
+                fetch('assignments/saveMessage', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: new URLSearchParams({
+                            assignmentId: assignment.assignmentId,
+                            userId: <?= $this->auth->userId ?>,
+                            content: content,
+                            teacherId: assignment.teacherId,
+                            teacherName: assignment.teacherName
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(res => {
+                        if (res.status === 200 && res.data && res.data.message) {
+                            const msg = res.data.message;
+                            const div = document.createElement('div');
+                            div.className = 'message-item';
+                            div.innerHTML = `<span class='message-author'>${msg.userName}</span> <span class='message-time ms-2'>${msg.createdAt}</span><div class='message-content mt-1'>${msg.content.replace(/\n/g, '<br>')}</div>`;
+                            messageContainer.appendChild(div);
+                            textarea.value = '';
+                            messageContainer.scrollTop = messageContainer.scrollHeight;
+                        }
+                    });
+            });
+        });
     </script>

@@ -186,14 +186,26 @@ class assignments extends Controller
         }
 
         // Separate query for fetching messages
-        $messages = Db::getAll("
-            SELECT
-                m.messageId, m.message AS messageContent, m.senderId AS messageUserId, mu.userName AS messageUserName, m.createdAt
-            FROM chatMessages m
-            LEFT JOIN users mu ON mu.userId = m.senderId
-            WHERE m.assignmentId = ?
-            ORDER BY m.createdAt
-        ", [$assignmentId]);
+        if ($this->isStudent) {
+            $messages = Db::getAll("
+                SELECT
+                    m.messageId, m.message AS messageContent, m.senderId AS messageUserId, mu.userName AS messageUserName, m.createdAt
+                FROM chatMessages m
+                LEFT JOIN users mu ON mu.userId = m.senderId
+                WHERE m.assignmentId = ?
+                  AND (m.senderId = ? OR m.recipientId = ?)
+                ORDER BY m.createdAt
+            ", [$assignmentId, $this->auth->userId, $this->auth->userId]);
+        } else {
+            $messages = Db::getAll("
+                SELECT
+                    m.messageId, m.message AS messageContent, m.senderId AS messageUserId, mu.userName AS messageUserName, m.createdAt
+                FROM chatMessages m
+                LEFT JOIN users mu ON mu.userId = m.senderId
+                WHERE m.assignmentId = ?
+                ORDER BY m.createdAt
+            ", [$assignmentId]);
+        }
 
         // Add the messages to the assignment
         foreach ($messages as $message) {
