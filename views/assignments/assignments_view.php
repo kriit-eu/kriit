@@ -181,6 +181,19 @@
         overflow-x: auto;
         border: 1px solid #ccc;
         border-radius: 8px;
+        width: auto;
+        min-width: 0;
+        max-width: 100%;
+        box-sizing: border-box;
+        transition: width 0.2s;
+    }
+
+    #assignments-container {
+        display: flex;
+        width: fit-content;
+        min-width: 0;
+        max-width: 100vw;
+        box-sizing: border-box;
     }
 
     .assignment-item {
@@ -188,6 +201,9 @@
         flex-direction: column;
         margin: 0;
         flex: 1 0 0;
+        min-width: 80px;
+        max-width: 120px;
+        box-sizing: border-box;
     }
 
     .header-item,
@@ -199,10 +215,28 @@
         min-height: 50px;
         background-color: inherit;
         white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
-    .header-item {
-        background-color: #f2f2f2;
+    .header-item:last-child,
+    .body-item:last-child {
+        border-top-right-radius: 8px;
+        border-bottom-right-radius: 8px;
+    }
+
+    @media (max-width: 1200px) {
+        .assignment-item {
+            min-width: 70px;
+            max-width: 100px;
+        }
+    }
+
+    @media (max-width: 900px) {
+        .assignment-item {
+            min-width: 60px;
+            max-width: 80px;
+        }
     }
 
     .adaptive-background {
