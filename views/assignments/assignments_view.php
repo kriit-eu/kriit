@@ -303,9 +303,7 @@
     }
 
     #messageContainer {
-        max-height: 600px;
-        overflow-x: hidden;
-        border: 1px solid #ccc;
+        width: 100%;
     }
 
     .content-part {
@@ -441,8 +439,8 @@
 
     /* Message container and message item styles from grading_index.php */
     .message-container {
-        max-height: 300px;
-        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
         padding: 0;
         background-color: transparent;
     }
@@ -772,9 +770,7 @@
 
     /* Mobile responsiveness */
     @media (max-width: 768px) {
-        .row .col-md-6 {
-            margin-bottom: 1rem;
-        }
+        .row .col-md-6 {}
 
         #messagePreview {
             min-height: 150px;
@@ -1058,9 +1054,9 @@
         </div>
     <?php endif; ?>
 
-    <div id="main-container" style="max-width:1600px;width:95vw;margin:0 auto;">
+    <div id="main-container" style="max-width:100vw;width:100vw;margin:0 auto;">
         <div id="assignments-container">
-            <div class="assignments-body d-flex" style="gap: 0.5rem; width: 1000px;">
+            <div class="assignments-body d-flex" style="gap: 0.5rem; width: auto;">
                 <?php foreach ($assignment['students'] as $s): ?>
                     <div>
                         <div class="header-item" data-bs-toggle="tooltip" title="<?= $s['studentName'] ?>" style="<?= $s['studentId'] !== array_key_first($assignment['students']) ? 'border-left: 1px solid #ccc;' : '' ?>">
@@ -1104,13 +1100,13 @@
                 <?php endforeach; ?>
             </div>
         </div>
-        <div id="messages-container" class="d-flex flex-row gap-4" style="margin-top: 2rem;">
-            <div id="messageContainer" class="card flex-grow-1" style="min-width: 400px; max-width: 900px;">
+        <div id="messages-container" class="d-flex flex-row">
+            <div id="messageContainer" class="card" style="gap: 0.5rem; width: 1400px;margin-bottom: 4rem;">
                 <div class="card-body">
                     <!-- Comments Thread -->
-                    <div class="mb-3">
+                    <div class="mb-3" style="overflow:visible;width:100%;">
                         <h6>Vestlus</h6>
-                        <div id="messagesContainer" class="message-container border-top pt-2">
+                        <div class="message-container border-top pt-2" style="display:block;width:100%;overflow:visible;gap:1rem;border-top:1px solid #dee2e6;border-radius:0 0 12px 12px;">
                             <?php if (!empty($assignment['messages'])): ?>
                                 <?php foreach ($assignment['messages'] as $message): ?>
                                     <div class="message-item">
@@ -1123,7 +1119,7 @@
                                         </div>
                                         <?php if (!empty($message['imageId'])): ?>
                                             <div class="mt-2">
-                                                <img src="<?= BASE_URL ?>images/show/<?= $message['imageId'] ?>" class="message-image img-fluid rounded" style="max-height: 300px; cursor: pointer;" onclick="window.open(this.src, '_blank')">
+                                                <img src="<?= BASE_URL ?>images/show/<?= $message['imageId'] ?>" class="message-image img-fluid rounded" style="max-height:300px;cursor:pointer;" onclick="window.open(this.src, '_blank')">
                                             </div>
                                         <?php endif; ?>
                                     </div>
@@ -1225,8 +1221,6 @@
                         <div class="invalid-feedback" id="messageError"></div>
                     </div>
                 </div>
-            </div>
-            <div id="commentsContainerBox" class="card flex-grow-1" style="min-width: 400px; max-width: 900px;">
             </div>
         </div>
 
