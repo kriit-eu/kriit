@@ -1054,9 +1054,9 @@
         </div>
     <?php endif; ?>
 
-    <div id="main-container" style="max-width:100vw;width:100vw;margin:0 auto;">
+    <div id="main-container" style="max-width:100vw;width:100%;margin:0 auto;box-sizing:border-box;overflow-x:hidden;">
         <div id="assignments-container">
-            <div class="assignments-body d-flex" style="gap: 0.5rem; width: auto;">
+            <div class="assignments-body d-flex" style="gap:0.5rem;width:100%;box-sizing:border-box;">
                 <?php foreach ($assignment['students'] as $s): ?>
                     <div>
                         <div class="header-item" data-bs-toggle="tooltip" title="<?= $s['studentName'] ?>" style="<?= $s['studentId'] !== array_key_first($assignment['students']) ? 'border-left: 1px solid #ccc;' : '' ?>">
@@ -1100,8 +1100,8 @@
                 <?php endforeach; ?>
             </div>
         </div>
-        <div id="messages-container" class="d-flex flex-row">
-            <div id="messageContainer" class="card" style="gap: 0.5rem; width: 1400px;margin-bottom: 4rem;">
+        <div id="messages-container" class="d-flex flex-row" style="gap:0.5rem;width:100%;box-sizing:border-box;">
+            <div id="messageContainer" class="card" style="gap:0.5rem;width:100%;max-width:1400px;margin-bottom:4rem;box-sizing:border-box;">
                 <div class="card-body">
                     <!-- Comments Thread -->
                     <div class="mb-3" style="overflow:visible;width:100%;">
