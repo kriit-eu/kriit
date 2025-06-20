@@ -33,6 +33,10 @@ class assignments extends Controller
             $studentFilterClause = "";
         }
 
+        // Always filter out deleted and inactive users
+        $userStatusFilter = " AND u.userDeleted = 0 AND u.userIsActive = 1";
+        $studentFilterClause .= $userStatusFilter;
+
         $data = Db::getAll("
                 SELECT
                     a.assignmentId, a.assignmentName, a.assignmentInstructions, a.assignmentDueAt, a.assignmentInvolvesOpenApi,
