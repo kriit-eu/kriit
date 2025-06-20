@@ -6,7 +6,6 @@ class subjects extends Controller
 {
     public $template = 'master';
 
-
     /**
      * Helper method to get relative time in Estonian (e.g., "2 nädalat tagasi")
      *
@@ -102,7 +101,6 @@ class subjects extends Controller
         ]));
 
         // Fetch data from the database - include subjects even if they don't have assignments
-        $showAllValue = $this->showAll ? 1 : 0;
         $userFilter = $this->showAll
             ? ''
             : 'WHERE u.userDeleted = 0 AND (u.userIsActive = 1 OR ua.assignmentStatusId = 2)';
@@ -145,8 +143,6 @@ class subjects extends Controller
         ");
 
         $groups = [];
-
-
 
         // Process each row of data
         foreach ($this->data as $row) {
