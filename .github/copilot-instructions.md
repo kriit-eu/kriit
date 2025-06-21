@@ -35,5 +35,3 @@
 - Ensure data integrity and handle errors robustly.
 
 _These rules are mandatory for all code contributions. Review your code for compliance before submitting pull requests._
-
-DONT ask for Would you like me to locate and update this in your code now? start fixing it right away.

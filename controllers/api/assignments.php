@@ -1,6 +1,4 @@
-<?php
-
-namespace App\api;
+<?php namespace App\api;
 
 use App\Activity;
 use App\Controller;
@@ -100,6 +98,7 @@ class assignments extends Controller
                         Db::update('users', ['userEmail' => $teacher['teacherEmail']], "userId = ?", [$existingTeacherId]);
                     }
                 }
+
             }
         }
     }
@@ -188,7 +187,8 @@ class assignments extends Controller
 
     private function saveMessage($assignmentId, $userId, $content, $isNotification = false): void
     {
-        Db::insert('chatMessages', ['assignmentId' => $assignmentId, 'userId' => $userId, 'content' => $content, 'CreatedAt' => date('Y-m-d H:i:s'), 'isNotification' => $isNotification]);
+        Db::insert('messages', ['assignmentId' => $assignmentId, 'userId' => $userId, 'content' => $content, 'CreatedAt' => date('Y-m-d H:i:s'), 'isNotification' => $isNotification]);
+
     }
 
     function deleteAssignment(): void
@@ -200,21 +200,17 @@ class assignments extends Controller
         try {
             // Get the assignment to log its ID
             $assignment = Assignment::getByExternalId($_POST['assignmentExternalId'], 1);
-
+            
             if (!$assignment) {
                 stop(404, 'Assignment not found');
             }
-
+            
             // Use Assignment class to delete by external ID
             $result = Assignment::deleteByExternalId($_POST['assignmentExternalId'], 1);
-
+            
             if ($result) {
-                Activity::create(
-                    ACTIVITY_DELETE_ASSIGNMENT,
-                    $this->auth->userId,
-                    $assignment['assignmentId'],
-                    "Deleted assignment with assignmentExternalId: $_POST[assignmentExternalId]"
-                );
+                Activity::create(ACTIVITY_DELETE_ASSIGNMENT, $this->auth->userId, $assignment['assignmentId'], 
+                    "Deleted assignment with assignmentExternalId: $_POST[assignmentExternalId]");
                 stop(200, 'Assignment deleted');
             } else {
                 stop(500, 'Failed to delete assignment');
@@ -223,4 +219,5 @@ class assignments extends Controller
             stop(400, $e->getMessage());
         }
     }
+
 }
