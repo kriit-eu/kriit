@@ -1,7 +1,8 @@
--- Dump created on 2025-06-16 15:11:20 by Hennos-MacBook-Pro-2.local
+-- Dump created on 2025-06-18 10:06:52 by 2b888800cd29
 SET FOREIGN_KEY_CHECKS=0;
 SET @@SESSION.sql_mode='NO_AUTO_VALUE_ON_ZERO';
 
+/*M!100616 SET @OLD_NOTE_VERBOSITY=@@NOTE_VERBOSITY, NOTE_VERBOSITY=0 */;
 
 -- Table structure for table `activities`
 CREATE TABLE `activities` (
@@ -230,6 +231,31 @@ INSERT INTO `groups` VALUES
 /*!40000 ALTER TABLE `groups` ENABLE KEYS */;
 UNLOCK TABLES;
 
+-- Table structure for table `images`
+CREATE TABLE `images` (
+`imageId` int unsigned NOT NULL AUTO_INCREMENT,
+`imageHash` varchar(64) NOT NULL COMMENT 'SHA256 hash of the original image for deduplication',
+`originalFilename` varchar(255) NOT NULL COMMENT 'Original filename when uploaded',
+`originalMimeType` varchar(100) NOT NULL COMMENT 'Original MIME type of the uploaded image',
+`originalSize` int unsigned NOT NULL COMMENT 'Original file size in bytes',
+`processedMimeType` varchar(100) NOT NULL COMMENT 'MIME type after processing (usually image/avif)',
+`processedSize` int unsigned NOT NULL COMMENT 'Processed file size in bytes',
+`imageData` longblob NOT NULL COMMENT 'Processed image data in AVIF format',
+`width` int unsigned NOT NULL COMMENT 'Image width in pixels',
+`height` int unsigned NOT NULL COMMENT 'Image height in pixels',
+`uploadedBy` int unsigned NOT NULL COMMENT 'User ID who uploaded the image',
+`uploadedAt` datetime NOT NULL DEFAULT current_timestamp(),
+PRIMARY KEY (`imageId`),
+UNIQUE KEY `idx_image_hash` (`imageHash`),
+KEY `idx_uploaded_by` (`uploadedBy`),
+KEY `idx_uploaded_at` (`uploadedAt`),
+CONSTRAINT `fk_images_user` FOREIGN KEY (`uploadedBy`) REFERENCES `users` (`userId`) ON DELETE CASCADE
+) COMMENT='Stores uploaded images in AVIF format with deduplication';
+LOCK TABLES `images` WRITE;
+/*!40000 ALTER TABLE `images` DISABLE KEYS */;
+/*!40000 ALTER TABLE `images` ENABLE KEYS */;
+UNLOCK TABLES;
+
 -- Table structure for table `messages`
 CREATE TABLE `messages` (
 `messageId` int unsigned NOT NULL AUTO_INCREMENT,
@@ -275,7 +301,7 @@ CREATE TABLE `subjects` (
 `teacherId` int unsigned NOT NULL,
 `isSynchronized` tinyint DEFAULT 0,
 PRIMARY KEY (`subjectId`),
-UNIQUE KEY `idx_subjects_ext_system` (`subjectExternalId`,`systemId`),
+UNIQUE KEY `idx_subjects_ext_system_group` (`subjectExternalId`,`systemId`,`groupId`),
 KEY `subjects_groups_groupId_fk` (`groupId`),
 KEY `subjects_users_userId_fk` (`teacherId`),
 CONSTRAINT `subjects_groups_groupId_fk` FOREIGN KEY (`groupId`) REFERENCES `groups` (`groupId`),
@@ -418,7 +444,7 @@ CONSTRAINT `userAssignments_users_userId_fk` FOREIGN KEY (`userId`) REFERENCES `
 LOCK TABLES `userAssignments` WRITE;
 /*!40000 ALTER TABLE `userAssignments` DISABLE KEYS */;
 INSERT INTO `userAssignments` VALUES
-(1,2,2,NULL,'https://www.google.com/','[{\"comment\":\"Kommentaar\",\"createdAt\":\"2024-11-20 12:55:28\"}]',NULL,NULL);
+(1,2,2,NULL,'https://www.google.com/','[]',NULL,NULL);
 /*!40000 ALTER TABLE `userAssignments` ENABLE KEYS */;
 UNLOCK TABLES;
 DELIMITER ;;
@@ -510,3 +536,4 @@ INSERT INTO `users` VALUES
 (2,'Mati Vaarikas','31111111114',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,1,NULL,NULL,'demo2',1,0,'',NULL,1);
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
+/*M!100616 SET NOTE_VERBOSITY=@OLD_NOTE_VERBOSITY */;

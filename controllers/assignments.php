@@ -1,4 +1,6 @@
-<?php namespace App;
+<?php
+
+namespace App;
 
 use Parsedown;
 
@@ -15,7 +17,7 @@ class assignments extends Controller
         $this->isStudent = $this->auth->groupId && !$this->auth->userIsAdmin && !$this->auth->userIsTeacher;
         $this->isTeacher = $this->auth->userIsTeacher;
         $assignmentId = $this->getId();
-        
+
         // Build WHERE clause for student filtering based on user permissions
         $studentFilterClause = '';
         if ($this->isStudent) {
@@ -30,7 +32,7 @@ class assignments extends Controller
             // regardless of group - this allows cross-group assignments to work properly
             $studentFilterClause = "";
         }
-        
+
         $data = Db::getAll("
                 SELECT
                     a.assignmentId, a.assignmentName, a.assignmentInstructions, a.assignmentDueAt, a.assignmentInvolvesOpenApi,
@@ -71,7 +73,7 @@ class assignments extends Controller
         $groupParam = $_GET['group'] ?? null; // Get group from URL parameter
         $primaryGroupId = $this->determinePrimaryGroup($data, $groupParam);
         $primaryGroupName = $this->getPrimaryGroupName($data, $primaryGroupId);
-        
+
         $parsedown = Parsedown::instance();
 
         foreach ($data as $row) {
@@ -171,7 +173,8 @@ class assignments extends Controller
                 $isNegativeGrade,
                 $daysRemaining,
                 $statusId,
-                $statusName);
+                $statusName
+            );
 
             $tooltipText = $statusName . (($daysRemaining < 0 && $statusName === 'Esitamata') ? ' (Tähtaeg möödas)' : '');
             $assignment['students'][$studentId]['class'] = $class;
@@ -190,9 +193,15 @@ class assignments extends Controller
 
         // Add the messages to the assignment
         foreach ($messages as $message) {
+            // Parse Markdown content to HTML for messages
+            $content = $parsedown->setBreaksEnabled(true)->text($message['messageContent']);
+
+            // Ensure images have proper line breaks by adding <br> before img tags
+            $content = preg_replace('/(?<!<br>)(<img[^>]*>)/', '<br>$1', $content);
+
             $assignment['messages'][] = [
                 'messageId' => $message['messageId'],
-                'content' => $message['messageContent'],
+                'content' => $content,
                 'userId' => $message['messageUserId'],
                 'userName' => $message['messageUserName'],
                 'createdAt' => $this->formatMessageDate($message['CreatedAt']),
@@ -310,13 +319,15 @@ class assignments extends Controller
                 $studentId,
                 $assignmentId,
                 $commentForTeacher,
-                $studentName);
+                $studentName
+            );
 
             $this->saveMessage(
                 $assignmentId,
                 $studentId,
                 "$_POST[studentName] lisas kommentaari: '$commentForTeacher'",
-                true);
+                true
+            );
         }
 
         $mailData = $this->getSenderNameAndReceiverEmail($studentId, $_POST['teacherId']);
@@ -333,7 +344,8 @@ class assignments extends Controller
                 $solutionUrl
             ) :
             sprintf(
-                "Õpilane <strong>%s</strong> esitas lahenduse ülesandele '<a href=\"" . BASE_URL . "assignments/" . $assignmentId . "\"><strong>%s</strong></a>'.<br><br>Lahenduse link: <a href='%s'>%s</a><br>", $studentName,
+                "Õpilane <strong>%s</strong> esitas lahenduse ülesandele '<a href=\"" . BASE_URL . "assignments/" . $assignmentId . "\"><strong>%s</strong></a>'.<br><br>Lahenduse link: <a href='%s'>%s</a><br>",
+                $studentName,
                 $assignment['assignmentName'],
                 $solutionUrl,
                 $solutionUrl
@@ -453,7 +465,6 @@ class assignments extends Controller
         }
 
         stop(200, 'Assignment edited');
-
     }
 
     function ajax_validateAndCheckLinkAccessibility(): void
@@ -634,7 +645,6 @@ class assignments extends Controller
 
             // If all approaches failed
             stop(404, 'Could not find or parse swaggerDoc in the JavaScript file');
-
         } catch (\Exception $e) {
             stop(500, 'An error occurred: ' . $e->getMessage());
         }
@@ -660,7 +670,6 @@ class assignments extends Controller
                     $message = "$_POST[teacherName] märkis õpilasele $_POST[studentName] kriteeriumi '$criterionName' mittetehtuks.";
                     $this->saveMessage($_POST['assignmentId'], $_POST['teacherId'], $message, true);
                 }
-
             }
         }
     }
@@ -707,7 +716,8 @@ class assignments extends Controller
                     $assignmentId,
                     $_POST['teacherId'],
                     "$_POST[teacherName] muutis õpilase $_POST[studentName] hinnet: $existUserAssignment[userGrade] -> $grade",
-                    true);
+                    true
+                );
             }
 
             $isUpdated = true;
@@ -719,13 +729,15 @@ class assignments extends Controller
                 $studentId,
                 $assignmentId,
                 $comment,
-                $this->auth->userName);
+                $this->auth->userName
+            );
 
             $this->saveMessage(
                 $assignmentId,
                 $_POST['teacherId'],
                 "$_POST[teacherName] lisas õpilase $_POST[studentName] lahenduse tagasisideks: '$comment'",
-                true);
+                true
+            );
         }
 
         return $isUpdated;
@@ -795,7 +807,7 @@ class assignments extends Controller
             $row = $data[0];
 
             $assignment['assignmentName'] = $row['assignmentName'];
-            $assignment['assignmentDueAt'] = !empty ($assignment['assignmentDueAt']) ? date('d.m.Y', strtotime($row['assignmentDueAt'])) : null;
+            $assignment['assignmentDueAt'] = !empty($assignment['assignmentDueAt']) ? date('d.m.Y', strtotime($row['assignmentDueAt'])) : null;
             $assignment['teacherId'] = $row['teacherId'];
             $assignment['teacherName'] = $row['teacherName'];
             $assignment['subjectId'] = $row['subjectId'];
@@ -878,7 +890,8 @@ class assignments extends Controller
             $githubCommitUrl = '/\/commit\/[0-9a-fA-F]{40}/';
             $githubRepoUrl = '/\/[a-zA-Z0-9-]+\/[a-zA-Z0-9-]+/';
             $githubIssuesUrl = '/.*\/issues/';
-            if (preg_match($githubCommitUrl, $path) !== 1
+            if (
+                preg_match($githubCommitUrl, $path) !== 1
                 && preg_match($githubRepoUrl, $path) !== 1
                 && preg_match($githubIssuesUrl, $path) !== 1
             ) {
@@ -906,7 +919,6 @@ class assignments extends Controller
     private function saveMessage($assignmentId, $userId, $content, $isNotification = false): void
     {
         Db::insert('messages', ['assignmentId' => $assignmentId, 'userId' => $userId, 'content' => $content, 'CreatedAt' => date('Y-m-d H:i:s'), 'isNotification' => $isNotification]);
-
     }
 
     private function sendNotificationToEmail($receiverEmail, $subject, $content): void
@@ -936,7 +948,6 @@ class assignments extends Controller
 
         return ($this->auth->userIsAdmin || $this->auth->userId == $data['teacherId'] ||
             $this->auth->groupId && in_array((string)$this->auth->groupId, $data['groupIds']));
-
     }
 
     /**
@@ -1012,7 +1023,7 @@ class assignments extends Controller
             return null;
         }
 
-        return array_key_first(array_filter($groupCounts, function($count) use ($groupCounts) {
+        return array_key_first(array_filter($groupCounts, function ($count) use ($groupCounts) {
             return $count === max($groupCounts);
         }));
     }
@@ -1038,5 +1049,4 @@ class assignments extends Controller
 
         return null;
     }
-
 }

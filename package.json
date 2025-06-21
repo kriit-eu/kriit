@@ -1,21 +1,32 @@
 {
-  "name": "halo",
+  "name": "kriit",
   "version": "1.0.0",
-  "description": "Viljandi Kutseõppekeskuse sisseastumiskatsete rakendus",
-  "main": "index.js",
-  "directories": {
-    "doc": "doc"
-  },
+  "description": "Viljandi Kutseõppekeskuse kodutööde ja hinnete haldamise rakendus",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start":   "bun scripts/start.js",
+    "stop":    "docker compose -f docker/docker-compose.yml down",
+    "restart": "bun run stop && bun run start",
+
+    "logs":          "docker compose -f docker/docker-compose.yml logs -f",
+    "logs:app":      "docker compose -f docker/docker-compose.yml logs -f app",
+    "logs:nginx":    "docker compose -f docker/docker-compose.yml logs -f nginx",
+    "logs:db":       "docker compose -f docker/docker-compose.yml logs -f db",
+    "logs:mailhog":  "docker compose -f docker/docker-compose.yml logs -f mailhog",
+    "logs:phpmyadmin": "docker compose -f docker/docker-compose.yml logs -f phpmyadmin",
+
+    "composer":  "docker compose -f docker/docker-compose.yml exec app composer",
+    "db:import": "docker compose -f docker/docker-compose.yml exec app php scripts/refreshdb.php --restore",
+    "db:export": "docker compose -f docker/docker-compose.yml exec app php scripts/refreshdb.php --dump",
+
+    "shell":     "docker compose -f docker/docker-compose.yml exec app /bin/bash",
+    "shell:db":  "docker compose -f docker/docker-compose.yml exec db /bin/sh",
+
+    "refreshdb": "docker compose -f docker/docker-compose.yml exec app php refreshdb.php",
+
+    "build:force": "bun scripts/force-rebuild.js",
+    "build:clean": "bun scripts/clean-build.js",
+    "checksums:reset": "rm -f .docker-checksums.json && echo 'Docker checksums reset. Next start will rebuild all images.'"
   },
-  "repository": {
-    "type": "git",
-    "url": "git@bitbucket.org:diarainfra/sisseastumine.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "@fortawesome/fontawesome-free": "^6.7.2",
     "@popperjs/core": "^2.11.8",
@@ -24,5 +35,8 @@
     "codemirror": "^5.65.19",
     "jquery": "^3.7.1",
     "jsdom": "^24.1.1"
+  },
+  "devDependencies": {
+    "glob": "^10.3.0"
   }
 }

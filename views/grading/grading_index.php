@@ -2439,7 +2439,7 @@
                     reject(new Error('Upload cancelled'));
                 };
                 
-                xhr.open('POST', '<?= BASE_URL ?>api/images');
+                xhr.open('POST', '<?= BASE_URL ?>images/upload');
                 xhr.send(formData);
             });
         }

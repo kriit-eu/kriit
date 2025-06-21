@@ -8,9 +8,10 @@
     "doctrine/sql-formatter": "^1.1",
     "sentry/sdk": "^3.5",
     "ext-mbstring": "*",
-    "erusev/parsedown": "^1.7",
+    "erusev/parsedown": "1.8.0-beta-7",
     "jfcherng/php-diff": "^6.16",
-    "ext-gd": "*"
+    "ext-gd": "*",
+    "league/commonmark": "^2.0"
   },
   "autoload": {
     "psr-4": {
