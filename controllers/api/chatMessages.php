@@ -2,7 +2,6 @@
 
 namespace App\Controllers\Api;
 
-use App\ChatMessage;
 use App\Db;
 
 /**
@@ -21,23 +20,43 @@ class ChatMessagesController
     public function getMessages($assignmentId, $requestUserId = null)
     {
         global $userId;
-        
+
         // If userId was provided in the request, use that instead of the global one
         // This allows teachers to fetch messages for a specific student
         $targetUserId = $requestUserId ? $requestUserId : $userId;
-        
+
         if (empty($assignmentId)) {
             return ['status' => 400, 'message' => 'Assignment ID is required'];
         }
-        
-        $messages = ChatMessage::getMessagesForAssignment($assignmentId, $targetUserId);
-        
+
+        $messages = Db::getAll("
+            SELECT 
+                cm.messageId, 
+                cm.assignmentId, 
+                cm.senderId, 
+                cm.recipientId, 
+                cm.message, 
+                cm.createdAt,
+                sender.userName as senderName,
+                recipient.userName as recipientName
+            FROM 
+                chatMessages cm
+            JOIN 
+                users sender ON cm.senderId = sender.userId
+            JOIN 
+                users recipient ON cm.recipientId = recipient.userId
+            WHERE 
+                cm.assignmentId = ?
+            ORDER BY 
+                cm.createdAt ASC
+        ", [$assignmentId]);
+
         return [
             'status' => 200,
             'messages' => $messages
         ];
     }
-    
+
     /**
      * Add a new message for an assignment
      * 
@@ -49,14 +68,17 @@ class ChatMessagesController
     public function addMessage($assignmentId, $recipientId, $message)
     {
         global $userId;
-        
+
         if (empty($assignmentId) || empty($recipientId) || empty($message)) {
             return ['error' => 'Assignment ID, recipient ID, and message are required'];
         }
-        
+
         // Create the message
-        $messageId = ChatMessage::addMessage($assignmentId, $userId, $recipientId, $message);
-        
+        $messageId = Db::insert("
+            INSERT INTO chatMessages (assignmentId, senderId, recipientId, message, createdAt) 
+            VALUES (?, ?, ?, ?, NOW())
+        ", [$assignmentId, $userId, $recipientId, $message]);
+
         // Get the newly created message with user information
         $newMessage = Db::getFirst("
             SELECT 
@@ -77,41 +99,13 @@ class ChatMessagesController
             WHERE 
                 cm.messageId = ?
         ", [$messageId]);
-        
+
         return [
             'success' => true,
             'message' => $newMessage
         ];
     }
-    
-    /**
-     * Delete a message
-     * 
-     * @param int $messageId The ID of the message to delete
-     * @return array JSON response with status
-     */
-    public function deleteMessage($messageId)
-    {
-        global $userId;
-        
-        if (empty($messageId)) {
-            return ['error' => 'Message ID is required'];
-        }
-        
-        $success = ChatMessage::deleteMessage($messageId, $userId);
-        
-        if ($success) {
-            return [
-                'success' => true,
-                'message' => 'Message deleted successfully'
-            ];
-        } else {
-            return [
-                'error' => 'You do not have permission to delete this message'
-            ];
-        }
-    }
-    
+
     /**
      * Get recent messages for a teacher across all assignments
      * 
@@ -121,14 +115,35 @@ class ChatMessagesController
     public function getRecentMessages($limit = 10)
     {
         global $userId, $auth;
-        
+
         // Check if user is a teacher
         if ($auth->userRole !== 'teacher') {
             return ['error' => 'Only teachers can view recent messages'];
         }
-        
-        $messages = ChatMessage::getRecentMessagesForTeacher($userId, $limit);
-        
+
+        $messages = Db::getAll("
+            SELECT 
+                cm.messageId, 
+                cm.assignmentId, 
+                cm.senderId, 
+                cm.recipientId, 
+                cm.message, 
+                cm.createdAt,
+                sender.userName as senderName,
+                recipient.userName as recipientName
+            FROM 
+                chatMessages cm
+            JOIN 
+                users sender ON cm.senderId = sender.userId
+            JOIN 
+                users recipient ON cm.recipientId = recipient.userId
+            WHERE 
+                cm.recipientId = ?
+            ORDER BY 
+                cm.createdAt DESC
+            LIMIT ?
+        ", [$userId, $limit]);
+
         return [
             'success' => true,
             'messages' => $messages
