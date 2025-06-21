@@ -2,785 +2,8 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 <!-- FontAwesome for icons used in messaging -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<link rel="stylesheet" href="views/assignments/assignments_view.css">
 
-<style>
-    .red-cell {
-        background-color: rgb(255, 180, 176) !important;
-    }
-
-    .yellow-cell {
-        background-color: #fff8b3 !important;
-    }
-
-    .modal-body {
-        word-wrap: break-word;
-        word-break: break-word;
-    }
-
-    #solutionUrl {
-        display: inline-block;
-        max-width: 100%;
-        overflow-wrap: break-word;
-        word-break: break-all;
-    }
-
-    .modal-dialog {
-        max-width: 800px;
-        width: 100%;
-    }
-
-    .modal-content {
-        padding: 15px;
-    }
-
-    .text-center {
-        text-align: center;
-    }
-
-    .context-menu {
-        display: none;
-        position: absolute;
-        z-index: 1000;
-        width: 250px;
-        background-color: white;
-        border: 1px solid #ccc;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-        padding: 10px;
-        overflow-x: auto;
-    }
-
-    .context-menu .grades,
-    .context-menu .criteria {
-        display: inline-block;
-        vertical-align: top;
-    }
-
-    .context-menu .grades {
-        width: 45%;
-    }
-
-    .context-menu .criteria {
-        width: 45%;
-        max-width: 100%;
-    }
-
-    .form-check-label {
-        word-wrap: break-word;
-        word-break: break-all;
-    }
-
-    .context-menu ul {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-
-    .context-menu ul li {
-        padding: 8px 10px;
-        cursor: pointer;
-    }
-
-    .context-menu ul li:hover {
-        background-color: #f0f0f0;
-    }
-
-    .context-menu .form-check {
-        margin: 5px 2px 5px 0 !important;
-    }
-
-    .context-menu .form-check label {
-        margin-right: 10px;
-    }
-
-    .student-criteria-section h5 {
-        margin-bottom: 10px;
-    }
-
-    .form-check {
-        margin-bottom: 5px;
-    }
-
-    /* Image preview styles for comments */
-    .comment-image {
-        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-    }
-
-    .comment-image:hover {
-        transform: scale(1.02);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    }
-
-    .image-preview-container {
-        text-align: left;
-    }
-
-    .image-modal-content {
-        max-width: 90vw;
-        max-height: 90vh;
-        object-fit: contain;
-    }
-
-    /* Modal backdrop for image viewing */
-    .image-modal-backdrop {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.8);
-        z-index: 9999;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-    }
-
-    .image-modal-backdrop img {
-        max-width: 90%;
-        max-height: 90%;
-        object-fit: contain;
-        border-radius: 8px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-    }
-
-    .image-modal-close {
-        position: absolute;
-        top: 20px;
-        right: 30px;
-        color: white;
-        font-size: 30px;
-        font-weight: bold;
-        cursor: pointer;
-        z-index: 10000;
-    }
-
-    .image-modal-close:hover {
-        color: #ccc;
-    }
-
-    .criteria-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 5px 0;
-    }
-
-    .criteria-row .form-check {
-        flex-grow: 1;
-    }
-
-    .criteria-row button {
-        margin-left: 10px;
-    }
-
-    .clickable-cells-row {
-        cursor: pointer;
-    }
-
-    .assignments-body {
-        display: flex;
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        width: auto;
-        min-width: 0;
-        max-width: 100%;
-        box-sizing: border-box;
-        transition: width 0.2s;
-    }
-
-    #assignments-container {
-        display: flex;
-        width: fit-content;
-        min-width: 0;
-        max-width: 100vw;
-        box-sizing: border-box;
-    }
-
-    .assignment-item {
-        display: flex;
-        flex-direction: column;
-        margin: 0;
-        flex: 1 0 0;
-        min-width: 80px;
-        max-width: 120px;
-        box-sizing: border-box;
-    }
-
-    .header-item,
-    .body-item {
-        text-align: center;
-        padding: 10px;
-        box-sizing: border-box;
-        border-bottom: 1px solid #ccc;
-        min-height: 50px;
-        background-color: inherit;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .header-item:last-child,
-    .body-item:last-child {
-        border-top-right-radius: 8px;
-        border-bottom-right-radius: 8px;
-    }
-
-    @media (max-width: 1200px) {
-        .assignment-item {
-            min-width: 70px;
-            max-width: 100px;
-        }
-    }
-
-    @media (max-width: 900px) {
-        .assignment-item {
-            min-width: 60px;
-            max-width: 80px;
-        }
-    }
-
-    .adaptive-background {
-        width: 100%;
-        max-width: 500px;
-        min-width: 250px;
-        padding: 15px;
-        margin: 0;
-        background-color: #f8f9fa;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-    }
-
-    #notificationContainer {
-        max-height: 500px;
-        border: 2px solid #4a90e2;
-        background-color: #e8f4ff;
-        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-        border-radius: 8px;
-        padding: 5px;
-        margin-bottom: 20px;
-    }
-
-    #notificationContainer .content-part {
-        max-height: 400px;
-        overflow-y: auto;
-        padding: 5px;
-    }
-
-    .notification-item {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        margin-bottom: 10px;
-        padding: 5px;
-        border-radius: 5px;
-        background-color: #fff;
-        box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.05);
-        transition: background-color 0.3s ease;
-    }
-
-    .notification-item:hover {
-        background-color: #f0f8ff;
-    }
-
-    .notification-icon {
-        margin-right: 2px;
-        color: #4a90e2;
-        font-size: 24px;
-    }
-
-    .notification-text {
-        flex-grow: 1;
-        font-size: 14px;
-        color: #333;
-    }
-
-    .notification-time {
-        font-size: 12px;
-        color: #777;
-        margin-left: 2px;
-    }
-
-    #messageContainer {
-        width: 100%;
-    }
-
-    .content-part {
-        max-height: 300px;
-        overflow-y: auto;
-        word-wrap: break-word;
-        word-break: break-word;
-        overflow-wrap: break-word;
-        white-space: normal;
-    }
-
-    #messageContainer .content-part {
-        max-height: 500px;
-    }
-
-    .card-body {
-        word-wrap: break-word;
-        /* Ensure long words break and wrap to the next line */
-    }
-
-
-    /* Grades column */
-    #assignments-container {
-        flex: 1;
-        max-width: 100%;
-        overflow-x: auto;
-        /* Set a max-width for the grades section */
-        border-radius: 8px;
-    }
-
-    #messages-container {
-        flex: 2;
-        /* Take the remaining space */
-        display: flex;
-        flex-direction: column;
-        gap: 2em;
-        margin-top: 3em;
-    }
-
-    @media (min-width: 769px) {
-        .adaptive-background {
-            margin-left: 0;
-        }
-
-        #messageContainer {
-            max-width: 100%;
-            /* Ensures it doesn't take the full width */
-        }
-    }
-
-    .pre-wrap {
-        white-space: pre-wrap;
-        text-align: left;
-    }
-
-    .comment-row {
-        border: 1px solid #ddd;
-        padding: 5px;
-        margin-bottom: 5px;
-        border-radius: 3px;
-        background-color: #f9f9f9;
-    }
-
-    .comment-name {
-        font-weight: bold;
-        color: #333;
-        margin-bottom: 2px;
-    }
-
-    .comment-text {
-        margin-top: 2px;
-        color: #555;
-    }
-
-    .comment-date {
-        margin-top: 2px;
-        font-size: 0.8em;
-        color: #999;
-    }
-
-    /* Message content image styles */
-    .content-part img {
-        display: block;
-        margin: 10px 0;
-        max-width: 100%;
-        height: auto;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        clear: both;
-    }
-
-    /* Ensure text before images has proper spacing */
-    .content-part p {
-        line-height: 1.5;
-        word-wrap: break-word;
-    }
-
-    /* Add spacing around images in message content */
-    .content-part p img {
-        margin: 15px 0;
-    }
-
-    /* Quoted message styling */
-    .content-part blockquote {
-        background-color: #f8f9fa;
-        border-left: 4px solid #007bff;
-        margin: 10px 0;
-        padding: 10px 15px;
-        border-radius: 4px;
-        font-style: italic;
-        color: #6c757d;
-    }
-
-    .content-part blockquote p {
-        margin-bottom: 5px;
-        line-height: 1.4;
-    }
-
-    .content-part blockquote p:last-child {
-        margin-bottom: 0;
-    }
-
-    /* Style for quoted content within blockquotes */
-    .content-part blockquote strong {
-        color: #495057;
-        font-weight: 600;
-    }
-
-    .content-part blockquote em {
-        color: #6c757d;
-        font-size: 0.9em;
-    }
-
-    /* Message container and message item styles from grading_index.php */
-    .message-container {
-        display: flex;
-        flex-direction: column;
-        padding: 0;
-        background-color: transparent;
-    }
-
-    .message-item {
-        padding: 0.75rem 0;
-        margin-bottom: 0.75rem;
-        border-bottom: 1px solid #e9ecef;
-    }
-
-    .message-item:last-child {
-        margin-bottom: 0;
-        border-bottom: none;
-    }
-
-    .message-author {
-        font-weight: bold;
-        color: #495057;
-        font-size: 0.9em;
-    }
-
-    .message-time {
-        color: #6c757d;
-        font-size: 0.8em;
-    }
-
-    .message-content {
-        margin-top: 0.5rem;
-        color: #212529;
-    }
-
-    .loading-spinner {
-        display: inline-block;
-        width: 1rem;
-        height: 1rem;
-        border: 2px solid #f3f3f3;
-        border-top: 2px solid #007bff;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-        0% {
-            transform: rotate(0deg);
-        }
-
-        100% {
-            transform: rotate(360deg);
-        }
-    }
-
-    /* Markdown content styling */
-    .markdown-content {
-        line-height: 1.6;
-    }
-
-    .markdown-content h1,
-    .markdown-content h2,
-    .markdown-content h3,
-    .markdown-content h4,
-    .markdown-content h5,
-    .markdown-content h6 {
-        margin-top: 1rem;
-        margin-bottom: 0.5rem;
-        font-weight: 600;
-    }
-
-    .markdown-content h1 {
-        font-size: 1.5rem;
-    }
-
-    .markdown-content h2 {
-        font-size: 1.3rem;
-    }
-
-    .markdown-content h3 {
-        font-size: 1.1rem;
-    }
-
-    .markdown-content h4,
-    .markdown-content h5,
-    .markdown-content h6 {
-        font-size: 1rem;
-    }
-
-    .markdown-content ul,
-    .markdown-content ol {
-        padding-left: 1.5rem;
-        margin-bottom: 1rem;
-    }
-
-    .markdown-content li {
-        margin-bottom: 0.25rem;
-    }
-
-    .markdown-content code {
-        background-color: #f1f3f4;
-        padding: 0.125rem 0.25rem;
-        border-radius: 0.25rem;
-        font-family: 'Courier New', monospace;
-        font-size: 0.9em;
-    }
-
-    .markdown-content pre {
-        background-color: #f8f9fa;
-        border: 1px solid #e9ecef;
-        border-radius: 0.375rem;
-        padding: 1rem;
-        overflow-x: auto;
-        margin-bottom: 1rem;
-        line-height: 1 !important;
-        font-size: 0.875rem;
-    }
-
-    .markdown-content pre code {
-        background-color: transparent;
-        padding: 0 !important;
-        margin: 0 !important;
-        line-height: 1 !important;
-        white-space: pre !important;
-        display: block;
-        font-size: inherit;
-        border: none !important;
-    }
-
-    /* Specific targeting for message content code blocks */
-    .message-content pre {
-        line-height: 1 !important;
-        font-size: 0.875rem;
-    }
-
-    .message-content pre code {
-        line-height: 1 !important;
-        white-space: pre !important;
-        display: block;
-        padding: 0 !important;
-        margin: 0 !important;
-        font-size: inherit;
-        border: none !important;
-    }
-
-    .markdown-content blockquote {
-        border-left: 4px solid #dee2e6;
-        padding-left: 1rem;
-        margin-left: 0;
-        margin-bottom: 1rem;
-        color: #6c757d;
-    }
-
-    .markdown-content p {
-        margin-bottom: 1rem;
-    }
-
-    .markdown-content strong {
-        font-weight: 600;
-    }
-
-    .markdown-content em {
-        font-style: italic;
-    }
-
-    /* Table styling within message content */
-    .message-content table {
-        font-size: 0.9em;
-        margin: 0.5rem 0;
-    }
-
-    .message-content table th,
-    .message-content table td {
-        padding: 0.375rem 0.5rem;
-        vertical-align: top;
-        word-wrap: break-word;
-    }
-
-    .message-content table th {
-        background-color: #f8f9fa;
-        font-weight: 600;
-        border-bottom: 2px solid #dee2e6;
-    }
-
-    /* Horizontal rule styling within message content */
-    .message-content hr {
-        margin: 1rem 0;
-        border: 0;
-        border-top: 1px solid #dee2e6;
-        opacity: 0.7;
-    }
-
-    /* Image upload and preview styles */
-    .message-image {
-        max-width: 100%;
-        height: auto;
-        border-radius: 8px;
-        margin: 10px 0;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    #newMessageContent.image-paste-active {
-        border-color: #007bff !important;
-        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
-        background-color: #f8f9ff !important;
-    }
-
-    .image-upload-hint {
-        font-size: 0.875rem;
-        color: #6c757d;
-        margin-top: 0.25rem;
-    }
-
-    .drag-drop-zone {
-        border: 2px dashed #dee2e6;
-        border-radius: 0.375rem;
-        padding: 2rem;
-        text-align: center;
-        background-color: #f8f9fa;
-        transition: all 0.3s ease;
-        cursor: pointer;
-    }
-
-    .drag-drop-zone.drag-over {
-        border-color: #007bff;
-        background-color: #e3f2fd;
-        transform: scale(1.02);
-    }
-
-    .upload-item {
-        display: flex;
-        align-items: center;
-        padding: 0.5rem;
-        margin-bottom: 0.5rem;
-        border: 1px solid #dee2e6;
-        border-radius: 0.375rem;
-        background-color: #f8f9fa;
-    }
-
-    .upload-item.success {
-        border-color: #198754;
-        background-color: #d1e7dd;
-    }
-
-    .upload-item.error {
-        border-color: #dc3545;
-        background-color: #f8d7da;
-    }
-
-    .file-info {
-        flex: 1;
-        margin-left: 0.5rem;
-    }
-
-    /* Split editor styles */
-    .editor-wrapper,
-    .preview-wrapper {
-        position: relative;
-    }
-
-    .editor-header,
-    .preview-header {
-        background-color: #f8f9fa;
-        border: 1px solid #dee2e6;
-        border-bottom: none;
-        border-radius: 0.375rem 0.375rem 0 0;
-        padding: 0.5rem 0.75rem;
-        font-size: 0.875rem;
-    }
-
-    .editor-wrapper textarea {
-        border-radius: 0 0 0.375rem 0.375rem;
-        border-top: none;
-    }
-
-    .editor-wrapper textarea:focus {
-        box-shadow: none;
-        border-color: #dee2e6;
-    }
-
-    #messagePreview {
-        border-radius: 0 0 0.375rem 0.375rem;
-        border-top: none;
-        overflow-y: auto;
-        height: auto;
-        min-height: 200px;
-    }
-
-    #messagePreview img {
-        max-width: 100%;
-        height: auto;
-        border-radius: 4px;
-        margin: 8px 0;
-    }
-
-    #messagePreview h1,
-    #messagePreview h2,
-    #messagePreview h3,
-    #messagePreview h4 {
-        margin-top: 1rem;
-        margin-bottom: 0.5rem;
-    }
-
-    #messagePreview code {
-        background-color: #f1f3f4;
-        padding: 0.125rem 0.25rem;
-        border-radius: 0.25rem;
-        font-size: 0.875rem;
-    }
-
-    #messagePreview pre {
-        background-color: #f8f9fa;
-        border: 1px solid #e9ecef;
-        border-radius: 0.375rem;
-        padding: 0.75rem;
-        overflow-x: auto;
-        font-size: 0.875rem;
-    }
-
-    /* Dynamic resizing styles */
-    #newMessageContent {
-        resize: none;
-        overflow: hidden;
-        transition: height 0.2s ease;
-    }
-
-    #messagePreview {
-        overflow-y: hidden;
-        transition: height 0.2s ease;
-    }
-
-    /* Mobile responsiveness */
-    @media (max-width: 768px) {
-        .row .col-md-6 {}
-
-        #messagePreview {
-            min-height: 150px;
-        }
-
-        .editor-wrapper textarea {
-            min-height: 150px;
-        }
-    }
-</style>
 <div>
     <div class="mb-3">
         <h2 class="mb-2"><?= $assignment['assignmentName'] ?></h2>
@@ -1100,13 +323,13 @@
                 <?php endforeach; ?>
             </div>
         </div>
-        <div id="messages-container" class="d-flex flex-row" style="gap:0.5rem;width:100%;box-sizing:border-box;">
-            <div id="messageContainer" class="card" style="gap:0.5rem;width:100%;max-width:1400px;margin-bottom:4rem;box-sizing:border-box;">
+        <div id="messages-container" class="d-flex flex-row">
+            <div id="messageContainer" class="card">
                 <div class="card-body">
                     <!-- Comments Thread -->
-                    <div class="mb-3" style="overflow:visible;width:100%;">
+                    <div class="mb-3">
                         <h6>Vestlus</h6>
-                        <div class="message-container border-top pt-2" style="display:block;width:100%;overflow:visible;gap:1rem;border-top:1px solid #dee2e6;border-radius:0 0 12px 12px;">
+                        <div class="message-container border-top pt-2">
                             <?php if (!empty($assignment['messages'])): ?>
                                 <?php foreach ($assignment['messages'] as $message): ?>
                                     <div class="message-item">
@@ -1131,249 +354,246 @@
                     </div>
 
                     <!-- New Message Form -->
-                    <div class="mb-3">
-                        <label for="newMessageContent" class="form-label">Lisa kommentaar</label>
-
-                        <!-- Split view: Editor and Preview -->
-                        <div class="row">
-                            <!-- Text Editor Column -->
-                            <div class="col-md-6">
-                                <div class="editor-wrapper">
-                                    <div class="editor-header">
-                                        <small class="text-muted">
-                                            <i class="fas fa-edit"></i> Redaktor
-                                        </small>
-                                    </div>
-                                    <textarea class="form-control" id="newMessageContent" rows="8"
-                                        placeholder="Kirjuta kommentaar... (pildide kleepimiseks kasuta Ctrl+V)"
-                                        style="resize: none; min-height: 200px; overflow: hidden;"></textarea>
+                    <!-- Split view: Editor and Preview -->
+                    <div class="row">
+                        <!-- Text Editor Column -->
+                        <div class="col-md-6">
+                            <div class="editor-wrapper">
+                                <div class="editor-header">
+                                    <small class="text-muted">
+                                        <i class="fas fa-edit"></i> Redaktor
+                                    </small>
                                 </div>
+                                <textarea class="form-control" id="newMessageContent" rows="8"
+                                    placeholder="Kirjuta kommentaar... (pildide kleepimiseks kasuta Ctrl+V)"
+                                    style="resize: none; min-height: 200px; overflow: hidden;"></textarea>
                             </div>
+                        </div>
 
-                            <!-- Preview Column -->
-                            <div class="col-md-6">
-                                <div class="preview-wrapper">
-                                    <div class="preview-header">
-                                        <small class="text-muted">
-                                            <i class="fas fa-eye"></i> Eelvaade
-                                        </small>
-                                    </div>
-                                    <div id="messagePreview" class="form-control"
-                                        style="min-height: 200px; background-color: #f8f9fa; overflow-y: hidden; word-wrap: break-word;">
-                                        <div class="text-muted text-center p-3">
-                                            <i class="fas fa-eye-slash"></i><br>
-                                            Eelvaade ilmub siia...
-                                        </div>
+                        <!-- Preview Column -->
+                        <div class="col-md-6">
+                            <div class="preview-wrapper">
+                                <div class="preview-header">
+                                    <small class="text-muted">
+                                        <i class="fas fa-eye"></i> Eelvaade
+                                    </small>
+                                </div>
+                                <div id="messagePreview" class="form-control"
+                                    style="min-height: 200px; background-color: #f8f9fa; overflow-y: hidden; word-wrap: break-word;">
+                                    <div class="text-muted text-center p-3">
+                                        <i class="fas fa-eye-slash"></i><br>
+                                        Eelvaade ilmub siia...
                                     </div>
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Image Upload Progress -->
-                        <div id="imageUploadProgress" class="mt-2 d-none">
-                            <div class="card border-primary">
-                                <div class="card-body p-3">
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <h6 class="mb-0">Pildi üleslaadimine</h6>
-                                        <button type="button" class="btn btn-sm btn-outline-danger" id="cancelUpload">
-                                            <i class="fas fa-times"></i> Tühista
-                                        </button>
-                                    </div>
-                                    <div class="progress mb-2" style="height: 8px;">
-                                        <div class="progress-bar progress-bar-striped progress-bar-animated"
-                                            id="uploadProgressBar" role="progressbar" style="width: 0%"></div>
-                                    </div>
-                                    <div class="d-flex align-items-center">
-                                        <div class="spinner-border spinner-border-sm me-2" role="status">
-                                            <span class="visually-hidden">Laadimine...</span>
-                                        </div>
-                                        <small class="text-muted" id="uploadStatusText">Alustamine...</small>
-                                    </div>
-                                    <div id="uploadResults" class="mt-2"></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Image Upload Zone -->
-                        <div class="mt-2">
-                            <div class="row">
-                                <div class="col-md-8">
-                                    <div class="form-text">
-                                        <small class="text-muted">
-                                            💡 <strong>Näpunäide:</strong> Kopeeri ükskõik milline pilt ja kleebi see otse redaktorisse (Ctrl+V)!
-                                            Pildid lisatakse automaatselt Markdown-vormingus.
-                                        </small>
-                                    </div>
-                                </div>
-                                <div class="col-md-4 text-end">
-                                    <button type="button" class="btn btn-outline-primary btn-sm" id="selectImagesBtn">
-                                        <i class="fas fa-image"></i> Vali pildid
-                                    </button>
-                                    <input type="file" id="imageFileInput" multiple accept="image/*" style="display: none;">
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="d-flex justify-content-end mt-2">
-                            <button type="button" class="btn btn-primary" id="submitMessageBtn">Postita</button>
-                        </div>
-
-                        <div class="invalid-feedback" id="messageError"></div>
                     </div>
+
+                    <!-- Image Upload Progress -->
+                    <div id="imageUploadProgress" class="mt-2 d-none">
+                        <div class="card border-primary">
+                            <div class="card-body p-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="mb-0">Pildi üleslaadimine</h6>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" id="cancelUpload">
+                                        <i class="fas fa-times"></i> Tühista
+                                    </button>
+                                </div>
+                                <div class="progress mb-2" style="height: 8px;">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated"
+                                        id="uploadProgressBar" role="progressbar" style="width: 0%"></div>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <div class="spinner-border spinner-border-sm me-2" role="status">
+                                        <span class="visually-hidden">Laadimine...</span>
+                                    </div>
+                                    <small class="text-muted" id="uploadStatusText">Alustamine...</small>
+                                </div>
+                                <div id="uploadResults" class="mt-2"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Image Upload Zone -->
+                    <div class="mt-2">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="form-text">
+                                    <small class="text-muted">
+                                        💡 <strong>Näpunäide:</strong> Kopeeri ükskõik milline pilt ja kleebi see otse redaktorisse (Ctrl+V)!
+                                        Pildid lisatakse automaatselt Markdown-vormingus.
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <button type="button" class="btn btn-outline-primary btn-sm" id="selectImagesBtn">
+                                    <i class="fas fa-image"></i> Vali pildid
+                                </button>
+                                <input type="file" id="imageFileInput" multiple accept="image/*" style="display: none;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end mt-2">
+                        <button type="button" class="btn btn-primary" id="submitMessageBtn">Postita</button>
+                    </div>
+
+                    <div class="invalid-feedback" id="messageError"></div>
                 </div>
             </div>
         </div>
-
-
     </div>
-    <script>
-        const assignment = <?= json_encode($assignment) ?>;
-        let currentStudentId = null;
-        let newAddedCriteria = [];
-        const userIsAdmin = <?= $this->auth->userIsAdmin ? 'true' : 'false' ?>;
-        let currentImageId = null; // Track uploaded image ID
 
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeTooltips();
-            scrollToBottom();
-            processComments(); // Add comment processing
-            processExistingMessages(); // Process existing messages for markdown
 
-            // Initialize preview and messaging system
-            initializePreview();
-            initializeImagePasting();
+</div>
+<script>
+    const assignment = <?= json_encode($assignment) ?>;
+    let currentStudentId = null;
+    let newAddedCriteria = [];
+    const userIsAdmin = <?= $this->auth->userIsAdmin ? 'true' : 'false' ?>;
+    let currentImageId = null; // Track uploaded image ID
 
-            // Add message submit handler
-            const submitMessageBtn = document.getElementById('submitMessageBtn');
-            if (submitMessageBtn) {
-                submitMessageBtn.addEventListener('click', function() {
-                    submitNewMessage();
-                });
-            }
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeTooltips();
+        scrollToBottom();
+        processComments(); // Add comment processing
+        processExistingMessages(); // Process existing messages for markdown
 
-            // Initialize OpenAPI button visibility
-            const openApiButton = document.getElementById('openApiButton');
-            if (openApiButton) {
-                openApiButton.style.display = assignment.assignmentInvolvesOpenApi ? 'inline-block' : 'none';
+        // Initialize preview and messaging system
+        initializePreview();
+        initializeImagePasting();
+
+        // Add message submit handler
+        const submitMessageBtn = document.getElementById('submitMessageBtn');
+        if (submitMessageBtn) {
+            submitMessageBtn.addEventListener('click', function() {
+                submitNewMessage();
+            });
+        }
+
+        // Initialize OpenAPI button visibility
+        const openApiButton = document.getElementById('openApiButton');
+        if (openApiButton) {
+            openApiButton.style.display = assignment.assignmentInvolvesOpenApi ? 'inline-block' : 'none';
+        }
+    });
+
+    function processExistingMessages() {
+        // Process all existing message content for markdown
+        const messageContents = document.querySelectorAll('.message-content[data-raw-content]');
+        messageContents.forEach(messageContent => {
+            const rawContent = messageContent.getAttribute('data-raw-content');
+            if (rawContent) {
+                messageContent.innerHTML = parseMarkdown(rawContent);
             }
         });
 
-        function processExistingMessages() {
-            // Process all existing message content for markdown
-            const messageContents = document.querySelectorAll('.message-content[data-raw-content]');
-            messageContents.forEach(messageContent => {
-                const rawContent = messageContent.getAttribute('data-raw-content');
-                if (rawContent) {
-                    messageContent.innerHTML = parseMarkdown(rawContent);
-                }
-            });
+        // Scroll messages container to bottom
+        const messagesContainer = document.getElementById('messagesContainer');
+        if (messagesContainer) {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+    }
 
-            // Scroll messages container to bottom
-            const messagesContainer = document.getElementById('messagesContainer');
-            if (messagesContainer) {
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            }
+    function submitNewMessage() {
+        const messageContent = document.getElementById('newMessageContent').value.trim();
+        const messageError = document.getElementById('messageError');
+        const submitBtn = document.getElementById('submitMessageBtn');
+
+        // Clear previous errors
+        messageError.textContent = '';
+        messageError.style.display = 'none';
+
+        // Validate message content
+        if (!messageContent) {
+            messageError.textContent = 'Palun sisesta kommentaar';
+            messageError.style.display = 'block';
+            return;
         }
 
-        function submitNewMessage() {
-            const messageContent = document.getElementById('newMessageContent').value.trim();
-            const messageError = document.getElementById('messageError');
-            const submitBtn = document.getElementById('submitMessageBtn');
+        // Show loading state
+        const originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saadan...';
 
-            // Clear previous errors
-            messageError.textContent = '';
-            messageError.style.display = 'none';
+        // Prepare form data
+        const formData = new URLSearchParams();
+        formData.append('assignmentId', assignment.assignmentId);
+        formData.append('content', messageContent);
 
-            // Validate message content
-            if (!messageContent) {
-                messageError.textContent = 'Palun sisesta kommentaar';
-                messageError.style.display = 'block';
-                return;
-            }
+        // Add image ID if present
+        if (currentImageId) {
+            formData.append('imageId', currentImageId);
+        }
 
-            // Show loading state
-            const originalText = submitBtn.textContent;
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saadan...';
-
-            // Prepare form data
-            const formData = new URLSearchParams();
-            formData.append('assignmentId', assignment.assignmentId);
-            formData.append('content', messageContent);
-
-            // Add image ID if present
-            if (currentImageId) {
-                formData.append('imageId', currentImageId);
-            }
-
-            // Send message
-            fetch('<?= BASE_URL ?>assignments/saveMessage', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: formData.toString()
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 200) {
-                        // Clear the form
-                        document.getElementById('newMessageContent').value = '';
-                        document.getElementById('messagePreview').innerHTML = `
+        // Send message
+        fetch('<?= BASE_URL ?>assignments/saveMessage', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: formData.toString()
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 200) {
+                    // Clear the form
+                    document.getElementById('newMessageContent').value = '';
+                    document.getElementById('messagePreview').innerHTML = `
                         <div class="text-muted text-center p-3">
                             <i class="fas fa-eye-slash"></i><br>
                             Eelvaade ilmub siia...
                         </div>
                     `;
 
-                        // Clear image tracking
-                        currentImageId = null;
+                    // Clear image tracking
+                    currentImageId = null;
 
-                        // Add the new message to the messages container
-                        addNewMessageToContainer(data.data);
+                    // Add the new message to the messages container
+                    addNewMessageToContainer(data.data);
 
-                        // Reset button
-                        submitBtn.disabled = false;
-                        submitBtn.textContent = originalText;
-                    } else {
-                        messageError.textContent = data.message || 'Viga sõnumi saatmisel';
-                        messageError.style.display = 'block';
-
-                        // Reset button
-                        submitBtn.disabled = false;
-                        submitBtn.textContent = originalText;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error sending message:', error);
-                    messageError.textContent = 'Viga sõnumi saatmisel: ' + error.message;
+                    // Reset button
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalText;
+                } else {
+                    messageError.textContent = data.message || 'Viga sõnumi saatmisel';
                     messageError.style.display = 'block';
 
                     // Reset button
                     submitBtn.disabled = false;
                     submitBtn.textContent = originalText;
-                });
+                }
+            })
+            .catch(error => {
+                console.error('Error sending message:', error);
+                messageError.textContent = 'Viga sõnumi saatmisel: ' + error.message;
+                messageError.style.display = 'block';
+
+                // Reset button
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            });
+    }
+
+    function addNewMessageToContainer(messageData) {
+        const messagesContainer = document.getElementById('messagesContainer');
+
+        // Check if container shows "no messages" text
+        if (messagesContainer.innerHTML.includes('Sõnumeid pole veel')) {
+            messagesContainer.innerHTML = '';
         }
 
-        function addNewMessageToContainer(messageData) {
-            const messagesContainer = document.getElementById('messagesContainer');
+        // Create new message element
+        const messageElement = document.createElement('div');
+        messageElement.className = 'message-item';
 
-            // Check if container shows "no messages" text
-            if (messagesContainer.innerHTML.includes('Sõnumeid pole veel')) {
-                messagesContainer.innerHTML = '';
-            }
+        const messageDate = new Date(messageData.createdAt).toLocaleString('et-EE');
+        let imageHtml = '';
+        if (messageData.imageId) {
+            imageHtml = `<div class="mt-2">${displayMessageImage(messageData.imageId)}</div>`;
+        }
 
-            // Create new message element
-            const messageElement = document.createElement('div');
-            messageElement.className = 'message-item';
-
-            const messageDate = new Date(messageData.createdAt).toLocaleString('et-EE');
-            let imageHtml = '';
-            if (messageData.imageId) {
-                imageHtml = `<div class="mt-2">${displayMessageImage(messageData.imageId)}</div>`;
-            }
-
-            messageElement.innerHTML = `
+        messageElement.innerHTML = `
                 <div class="d-flex justify-content-between">
                     <span class="message-author">${messageData.userName || 'Sina'}</span>
                     <span class="message-time">${messageDate}</span>
@@ -1382,557 +602,557 @@
                 ${imageHtml}
             `;
 
-            // Add to container
-            messagesContainer.appendChild(messageElement);
+        // Add to container
+        messagesContainer.appendChild(messageElement);
 
-            // Scroll to bottom
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        }
+        // Scroll to bottom
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
 
-        function displayMessageImage(imageId) {
-            if (!imageId) return '';
-            return `<img src="<?= BASE_URL ?>images/show/${imageId}" class="message-image img-fluid rounded" style="max-height: 300px; cursor: pointer;" onclick="window.open(this.src, '_blank')">`;
-        }
+    function displayMessageImage(imageId) {
+        if (!imageId) return '';
+        return `<img src="<?= BASE_URL ?>images/show/${imageId}" class="message-image img-fluid rounded" style="max-height: 300px; cursor: pointer;" onclick="window.open(this.src, '_blank')">`;
+    }
 
-        function parseMarkdown(text) {
-            if (!text) return '';
+    function parseMarkdown(text) {
+        if (!text) return '';
 
-            // Simple Markdown parser for basic formatting
-            let html = text;
+        // Simple Markdown parser for basic formatting
+        let html = text;
 
-            // Headers
-            html = html.replace(/^#### (.*$)/gim, '<h4>$1</h4>');
-            html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
-            html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
-            html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+        // Headers
+        html = html.replace(/^#### (.*$)/gim, '<h4>$1</h4>');
+        html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+        html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+        html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
 
-            // Bold
-            html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-            html = html.replace(/__(.*?)__/g, '<strong>$1</strong>');
+        // Bold
+        html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        html = html.replace(/__(.*?)__/g, '<strong>$1</strong>');
 
-            // Italic
-            html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
-            html = html.replace(/_(.*?)_/g, '<em>$1</em>');
+        // Italic
+        html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+        html = html.replace(/_(.*?)_/g, '<em>$1</em>');
 
-            // Code blocks
-            html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+        // Code blocks
+        html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
 
-            // Inline code
-            html = html.replace(/`(.*?)`/g, '<code>$1</code>');
+        // Inline code
+        html = html.replace(/`(.*?)`/g, '<code>$1</code>');
 
-            // Images - handle before links to avoid conflicts
-            html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, function(match, alt, src) {
-                return '<img src="' + src + '" alt="' + alt + '" class="message-image img-fluid rounded" style="max-height: 300px; cursor: pointer;" onclick="window.open(this.src, \'_blank\')">';
-            });
+        // Images - handle before links to avoid conflicts
+        html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, function(match, alt, src) {
+            return '<img src="' + src + '" alt="' + alt + '" class="message-image img-fluid rounded" style="max-height: 300px; cursor: pointer;" onclick="window.open(this.src, \'_blank\')">';
+        });
 
-            // Links
-            html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+        // Links
+        html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
 
-            // Unordered lists
-            html = html.replace(/^\* (.+)$/gm, '<li>$1</li>');
-            html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+        // Unordered lists
+        html = html.replace(/^\* (.+)$/gm, '<li>$1</li>');
+        html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
 
-            // Ordered lists
-            html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
-            html = html.replace(/(<li>.*<\/li>)/s, function(match) {
-                if (match.includes('<ul>')) return match;
-                return '<ol>' + match + '</ol>';
-            });
+        // Ordered lists
+        html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+        html = html.replace(/(<li>.*<\/li>)/s, function(match) {
+            if (match.includes('<ul>')) return match;
+            return '<ol>' + match + '</ol>';
+        });
 
-            // Blockquotes
-            html = html.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
+        // Blockquotes
+        html = html.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
 
-            // Horizontal rules
-            html = html.replace(/^---+$/gm, '<hr>');
+        // Horizontal rules
+        html = html.replace(/^---+$/gm, '<hr>');
 
-            // Process paragraphs and line breaks
-            html = cleanupLineBreaksAndParagraphs(html);
+        // Process paragraphs and line breaks
+        html = cleanupLineBreaksAndParagraphs(html);
 
-            return html;
-        }
+        return html;
+    }
 
-        function cleanupLineBreaksAndParagraphs(text) {
-            // Split into paragraphs based on double newlines
-            const paragraphs = text.split(/\n\s*\n/);
-            const processedParagraphs = [];
+    function cleanupLineBreaksAndParagraphs(text) {
+        // Split into paragraphs based on double newlines
+        const paragraphs = text.split(/\n\s*\n/);
+        const processedParagraphs = [];
 
-            paragraphs.forEach(paragraph => {
-                paragraph = paragraph.trim();
-                if (paragraph === '') return; // Skip empty paragraphs
+        paragraphs.forEach(paragraph => {
+            paragraph = paragraph.trim();
+            if (paragraph === '') return; // Skip empty paragraphs
 
-                // Check if paragraph already contains HTML tags
-                if (paragraph.includes('<table') || paragraph.includes('<ul>') ||
-                    paragraph.includes('<ol>') || paragraph.includes('<blockquote>') ||
-                    paragraph.includes('<h1>') || paragraph.includes('<h2>') ||
-                    paragraph.includes('<h3>') || paragraph.includes('<h4>') ||
-                    paragraph.includes('<pre>') || paragraph.includes('<hr>')) {
-                    // Already formatted content - add as-is
-                    processedParagraphs.push(paragraph);
-                } else {
-                    // Regular text paragraph - convert single newlines to <br> and wrap in <p>
-                    let processedParagraph = paragraph.replace(/\n/g, '<br>');
+            // Check if paragraph already contains HTML tags
+            if (paragraph.includes('<table') || paragraph.includes('<ul>') ||
+                paragraph.includes('<ol>') || paragraph.includes('<blockquote>') ||
+                paragraph.includes('<h1>') || paragraph.includes('<h2>') ||
+                paragraph.includes('<h3>') || paragraph.includes('<h4>') ||
+                paragraph.includes('<pre>') || paragraph.includes('<hr>')) {
+                // Already formatted content - add as-is
+                processedParagraphs.push(paragraph);
+            } else {
+                // Regular text paragraph - convert single newlines to <br> and wrap in <p>
+                let processedParagraph = paragraph.replace(/\n/g, '<br>');
 
-                    // Limit consecutive <br> tags to maximum of 2
-                    processedParagraph = processedParagraph.replace(/(<br>\s*){3,}/g, '<br><br>');
+                // Limit consecutive <br> tags to maximum of 2
+                processedParagraph = processedParagraph.replace(/(<br>\s*){3,}/g, '<br><br>');
 
-                    // Wrap in paragraph tags if it doesn't start with a tag
-                    if (!processedParagraph.startsWith('<')) {
-                        processedParagraph = '<p>' + processedParagraph + '</p>';
-                    }
-
-                    processedParagraphs.push(processedParagraph);
+                // Wrap in paragraph tags if it doesn't start with a tag
+                if (!processedParagraph.startsWith('<')) {
+                    processedParagraph = '<p>' + processedParagraph + '</p>';
                 }
-            });
 
-            return processedParagraphs.join('\n');
-        }
-
-        // Auto-resize textarea to fit content (infinite expansion)
-        function autoResizeTextarea(textarea) {
-            // Reset height to auto to get the correct scrollHeight
-            textarea.style.height = 'auto';
-
-            // Set minimum height
-            const minHeight = 200;
-
-            // Calculate new height based on scroll height (no maximum limit)
-            let newHeight = Math.max(textarea.scrollHeight, minHeight);
-
-            // Always use hidden overflow since we expand to fit content
-            textarea.style.overflowY = 'hidden';
-
-            // Apply the new height
-            textarea.style.height = newHeight + 'px';
-
-            return newHeight;
-        }
-
-        // Global debounce mechanism for all resize operations
-        let globalResizeTimeout = null;
-        let isGloballyResizing = false;
-
-        // Debounced resize function that coordinates all resize calls
-        function debouncedResize(preview, source = 'unknown') {
-
-            // If we're already in a resize operation, ignore this call
-            if (isGloballyResizing) {
-                return;
+                processedParagraphs.push(processedParagraph);
             }
+        });
 
-            // Clear any pending resize operation
-            if (globalResizeTimeout) {
-                clearTimeout(globalResizeTimeout);
-            }
+        return processedParagraphs.join('\n');
+    }
 
-            globalResizeTimeout = setTimeout(() => {
-                isGloballyResizing = true;
-                actualResizePreview(preview);
+    // Auto-resize textarea to fit content (infinite expansion)
+    function autoResizeTextarea(textarea) {
+        // Reset height to auto to get the correct scrollHeight
+        textarea.style.height = 'auto';
 
-                // Reset flag after operation completes
-                setTimeout(() => {
-                    isGloballyResizing = false;
-                }, 200);
+        // Set minimum height
+        const minHeight = 200;
 
-                globalResizeTimeout = null;
-            }, 150); // Global debounce delay
+        // Calculate new height based on scroll height (no maximum limit)
+        let newHeight = Math.max(textarea.scrollHeight, minHeight);
+
+        // Always use hidden overflow since we expand to fit content
+        textarea.style.overflowY = 'hidden';
+
+        // Apply the new height
+        textarea.style.height = newHeight + 'px';
+
+        return newHeight;
+    }
+
+    // Global debounce mechanism for all resize operations
+    let globalResizeTimeout = null;
+    let isGloballyResizing = false;
+
+    // Debounced resize function that coordinates all resize calls
+    function debouncedResize(preview, source = 'unknown') {
+
+        // If we're already in a resize operation, ignore this call
+        if (isGloballyResizing) {
+            return;
         }
 
-        // The actual resize implementation
-        function actualResizePreview(preview) {
-
-            // Set minimum height only - no maximum limit
-            const minHeight = 200;
-
-            // Temporarily remove height constraint to measure content
-            const originalHeight = preview.style.height;
-            const originalOverflow = preview.style.overflowY;
-
-            preview.style.height = 'auto';
-            preview.style.overflowY = 'hidden';
-
-            // Get the actual content height including images
-            let contentHeight = preview.scrollHeight;
-
-            // Apply minimum height constraint only
-            let newHeight = Math.max(contentHeight, minHeight);
-
-            // Always allow infinite expansion - no scrolling needed
-            preview.style.overflowY = 'hidden';
-
-            // Apply the new height
-            preview.style.height = newHeight + 'px';
-
-            return newHeight;
+        // Clear any pending resize operation
+        if (globalResizeTimeout) {
+            clearTimeout(globalResizeTimeout);
         }
 
-        // Keep the old function name for compatibility but route through debounced version
-        function autoResizePreview(preview) {
-            debouncedResize(preview, 'autoResizePreview');
-        }
+        globalResizeTimeout = setTimeout(() => {
+            isGloballyResizing = true;
+            actualResizePreview(preview);
 
-        // Sync heights between textarea and preview
-        function syncElementHeights(textarea, preview) {
-            // Use global debouncing instead of local debouncing
-            debouncedResize(preview, 'syncElementHeights');
-        }
+            // Reset flag after operation completes
+            setTimeout(() => {
+                isGloballyResizing = false;
+            }, 200);
 
-        // Real-time preview functionality
-        function initializePreview() {
-            const textarea = document.getElementById('newMessageContent');
-            const preview = document.getElementById('messagePreview');
+            globalResizeTimeout = null;
+        }, 150); // Global debounce delay
+    }
 
-            if (!textarea || !preview) return;
+    // The actual resize implementation
+    function actualResizePreview(preview) {
 
-            // Initialize mutation observer for dynamic content changes
-            initializePreviewObserver(textarea, preview);
+        // Set minimum height only - no maximum limit
+        const minHeight = 200;
 
-            // Update preview on input
-            function updatePreview() {
-                const content = textarea.value.trim();
-                if (content === '') {
-                    preview.innerHTML = `
+        // Temporarily remove height constraint to measure content
+        const originalHeight = preview.style.height;
+        const originalOverflow = preview.style.overflowY;
+
+        preview.style.height = 'auto';
+        preview.style.overflowY = 'hidden';
+
+        // Get the actual content height including images
+        let contentHeight = preview.scrollHeight;
+
+        // Apply minimum height constraint only
+        let newHeight = Math.max(contentHeight, minHeight);
+
+        // Always allow infinite expansion - no scrolling needed
+        preview.style.overflowY = 'hidden';
+
+        // Apply the new height
+        preview.style.height = newHeight + 'px';
+
+        return newHeight;
+    }
+
+    // Keep the old function name for compatibility but route through debounced version
+    function autoResizePreview(preview) {
+        debouncedResize(preview, 'autoResizePreview');
+    }
+
+    // Sync heights between textarea and preview
+    function syncElementHeights(textarea, preview) {
+        // Use global debouncing instead of local debouncing
+        debouncedResize(preview, 'syncElementHeights');
+    }
+
+    // Real-time preview functionality
+    function initializePreview() {
+        const textarea = document.getElementById('newMessageContent');
+        const preview = document.getElementById('messagePreview');
+
+        if (!textarea || !preview) return;
+
+        // Initialize mutation observer for dynamic content changes
+        initializePreviewObserver(textarea, preview);
+
+        // Update preview on input
+        function updatePreview() {
+            const content = textarea.value.trim();
+            if (content === '') {
+                preview.innerHTML = `
                         <div class="text-muted text-center p-3">
                             <i class="fas fa-eye-slash"></i><br>
                             Eelvaade ilmub siia...
                         </div>
                     `;
-                    // Reset to minimum height when empty
-                    preview.style.height = '200px';
-                    preview.style.overflowY = 'hidden';
-                } else {
-                    preview.innerHTML = parseMarkdown(content);
-                }
-
-                // Auto-resize both elements after content update
-                // Use a small delay to ensure DOM is fully updated
-                setTimeout(() => {
-                    syncElementHeights(textarea, preview);
-                }, 50);
-            }
-
-            // Update on every keystroke
-            textarea.addEventListener('input', function() {
-                updatePreview();
-            });
-
-            // Update on paste (with delays to handle image pasting)
-            let pasteUpdateTimeout = null;
-            textarea.addEventListener('paste', function() {
-                // Clear any pending paste updates
-                if (pasteUpdateTimeout) {
-                    clearTimeout(pasteUpdateTimeout);
-                }
-
-                // First update immediately for text content
-                setTimeout(updatePreview, 10);
-
-                // Single delayed update for images
-                pasteUpdateTimeout = setTimeout(() => {
-                    updatePreview();
-                    pasteUpdateTimeout = null;
-                }, 800);
-            });
-
-            // Handle manual resize of textarea
-            textarea.addEventListener('mouseup', function() {
-                syncElementHeights(textarea, preview);
-            });
-
-            // Initial update
-            updatePreview();
-        }
-
-        // Monitor preview content changes for dynamic resizing
-        function initializePreviewObserver(textarea, preview) {
-            let resizeTimeout = null;
-            let isResizing = false;
-
-            // Create a mutation observer to watch for content changes
-            const observer = new MutationObserver((mutations) => {
-                // Skip if we're currently in a resize operation
-                if (isResizing) {
-                    return;
-                }
-
-                let shouldResize = false;
-                let hasNewImages = false;
-
-                mutations.forEach((mutation) => {
-                    // Check if nodes were added/removed
-                    if (mutation.type === 'childList') {
-                        // Check if any new images were added
-                        mutation.addedNodes.forEach((node) => {
-                            if (node.nodeType === Node.ELEMENT_NODE) {
-                                if (node.tagName === 'IMG' || node.querySelector('img')) {
-                                    hasNewImages = true;
-                                }
-                            }
-                        });
-                        shouldResize = true;
-                    } else if (mutation.type === 'attributes') {
-                        // Only trigger on src changes, not style changes to prevent loops
-                        if (mutation.target.tagName === 'IMG' && mutation.attributeName === 'src') {
-                            hasNewImages = true;
-                            shouldResize = true;
-                        }
-                    }
-                });
-
-                if (shouldResize) {
-                    // Clear any pending resize
-                    if (resizeTimeout) {
-                        clearTimeout(resizeTimeout);
-                    }
-
-                    // If new images were added, wait a bit longer for them to start loading
-                    const delay = hasNewImages ? 250 : 100;
-
-                    resizeTimeout = setTimeout(() => {
-                        isResizing = true;
-                        debouncedResize(preview, 'mutationObserver');
-                        // Reset flag after a short delay
-                        setTimeout(() => {
-                            isResizing = false;
-                        }, 200);
-                        resizeTimeout = null;
-                    }, delay);
-                }
-            });
-
-            // Start observing the preview div
-            observer.observe(preview, {
-                childList: true,
-                subtree: true,
-                attributes: true,
-                attributeFilter: ['src'] // Only monitor src changes, not style changes
-            });
-
-            return observer;
-        }
-
-        // Image pasting functionality
-        function initializeImagePasting() {
-            const textarea = document.getElementById('newMessageContent');
-            if (!textarea) return;
-
-            // Add paste event listener for image handling
-            textarea.addEventListener('paste', function(e) {
-                const items = e.clipboardData.items;
-
-                for (let i = 0; i < items.length; i++) {
-                    const item = items[i];
-
-                    if (item.type.indexOf('image') !== -1) {
-                        e.preventDefault();
-
-                        const blob = item.getAsFile();
-                        uploadImageBlob(blob);
-                        break;
-                    }
-                }
-            });
-
-            // Add file input handler
-            const selectImagesBtn = document.getElementById('selectImagesBtn');
-            const imageFileInput = document.getElementById('imageFileInput');
-
-            if (selectImagesBtn && imageFileInput) {
-                selectImagesBtn.addEventListener('click', function() {
-                    imageFileInput.click();
-                });
-
-                imageFileInput.addEventListener('change', function(e) {
-                    const files = e.target.files;
-                    for (let file of files) {
-                        if (file.type.indexOf('image') !== -1) {
-                            uploadImageBlob(file);
-                        }
-                    }
-                    // Clear the input
-                    imageFileInput.value = '';
-                });
-            }
-        }
-
-        function uploadImageBlob(blob) {
-            // Show upload progress
-            const uploadProgress = document.getElementById('imageUploadProgress');
-            const uploadStatusText = document.getElementById('uploadStatusText');
-            const uploadProgressBar = document.getElementById('uploadProgressBar');
-
-            if (uploadProgress) {
-                uploadProgress.classList.remove('d-none');
-                uploadStatusText.textContent = 'Alustamine...';
-                uploadProgressBar.style.width = '0%';
-            }
-
-            // Create form data
-            const formData = new FormData();
-            formData.append('image', blob);
-
-            // Upload the image
-            fetch('<?= BASE_URL ?>images/upload', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (uploadProgress) {
-                        uploadProgress.classList.add('d-none');
-                    }
-
-                    if (data.status === 200) {
-                        // Store the image ID for later use
-                        currentImageId = data.data.imageId;
-
-                        // Insert markdown image syntax into textarea
-                        const textarea = document.getElementById('newMessageContent');
-                        const imageUrl = '<?= BASE_URL ?>images/show/' + data.data.imageId;
-                        const markdownImage = `![Pilt](${imageUrl})`;
-
-                        // Insert at cursor position or append
-                        const cursorPos = textarea.selectionStart;
-                        const textBefore = textarea.value.substring(0, cursorPos);
-                        const textAfter = textarea.value.substring(cursorPos);
-
-                        textarea.value = textBefore + '\n' + markdownImage + '\n' + textAfter;
-
-                        // Trigger input event to update preview
-                        textarea.dispatchEvent(new Event('input'));
-
-                        // Focus back on textarea
-                        textarea.focus();
-                    } else {
-                        console.error('Error uploading image:', data.message);
-                        alert('Viga pildi üleslaadimisel: ' + (data.message || 'Tundmatu viga'));
-                    }
-                })
-                .catch(error => {
-                    if (uploadProgress) {
-                        uploadProgress.classList.add('d-none');
-                    }
-                    console.error('Error uploading image:', error);
-                    alert('Viga pildi üleslaadimisel: ' + error.message);
-                });
-        }
-
-        // ...existing code...
-
-        function initializeTooltips() {
-            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            const tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl);
-            });
-        }
-
-        // If no criteria exists, display warning (add class 'warning-bg' to element of id 'criterionDisplay')
-
-        if (Array.isArray(assignment['criteria']) && assignment['criteria'].length === 0 || assignment['criteria'] === null) {
-            document.getElementById('criterionDisplay').classList.add('bg-warning');
-            document.getElementById('requiredCriteria').innerHTML = '<p class="text-center">Kriteeriumid puuduvad</p>';
-        }
-
-        document.getElementById('requiredCriteria').addEventListener('change', function(event) {
-            if (event.target && event.target.type === 'checkbox') {
-                document.querySelector('#studentCriteriaForm .btn-primary').hidden = false;
-            }
-        });
-
-        document.getElementById('submitButton').addEventListener('click', function() {
-            const gradeRadioGroup = document.querySelectorAll('#gradeRadioGroup input[type="radio"]');
-            let gradeSelected = false;
-
-            gradeRadioGroup.forEach(radio => {
-                if (radio.checked) {
-                    gradeSelected = true;
-                }
-            });
-
-            <?php if (!$isStudent): ?>
-                if (!gradeSelected) {
-                    alert('Palun vali hinne.');
-                    return;
-                }
-            <?php endif ?>
-
-            if (submitButton.textContent === 'Esita' || submitButton.textContent === 'Muuda') {
-                const solutionUrl = solutionInput.value;
-                const criteria = getCriteriaList();
-                const comment = document.getElementById('studentComment').value;
-
-                ajax(`assignments/saveStudentSolutionUrl`, {
-                        assignmentId: assignment.assignmentId,
-                        studentId: <?= $this->auth->userId ?>,
-                        studentName: assignment.students[<?= $this->auth->userId ?>].studentName,
-                        solutionUrl: solutionUrl,
-                        criteria: criteria,
-                        teacherId: assignment.teacherId,
-                        teacherName: assignment.teacherName,
-                        comment: comment
-                    },
-                    function(res) {
-                        if (res.status === 200) {
-                            location.reload();
-                        }
-                    },
-                    function(error) {
-                        alert(error ?? 'Tekkis viga serveriga suhtlemisel.');
-                    });
-
+                // Reset to minimum height when empty
+                preview.style.height = '200px';
+                preview.style.overflowY = 'hidden';
             } else {
-                const grade = document.querySelector('#gradeSection input[type="radio"]:checked')?.value;
-                const criteria = getCriteriaList();
+                preview.innerHTML = parseMarkdown(content);
+            }
 
-                const comment = document.getElementById('studentComment').value;
+            // Auto-resize both elements after content update
+            // Use a small delay to ensure DOM is fully updated
+            setTimeout(() => {
+                syncElementHeights(textarea, preview);
+            }, 50);
+        }
 
-                ajax(`assignments/saveAssignmentGrade`, {
-                        assignmentId: assignment.assignmentId,
-                        studentId: currentStudentId,
-                        grade: grade,
-                        criteria: criteria,
-                        comment: comment,
-                        teacherId: assignment.teacherId,
-                        teacherName: assignment.teacherName,
-                        studentName: assignment.students[currentStudentId].studentName
-                    },
-                    function(res) {
-                        if (res.status === 200) {
-                            location.reload();
+        // Update on every keystroke
+        textarea.addEventListener('input', function() {
+            updatePreview();
+        });
+
+        // Update on paste (with delays to handle image pasting)
+        let pasteUpdateTimeout = null;
+        textarea.addEventListener('paste', function() {
+            // Clear any pending paste updates
+            if (pasteUpdateTimeout) {
+                clearTimeout(pasteUpdateTimeout);
+            }
+
+            // First update immediately for text content
+            setTimeout(updatePreview, 10);
+
+            // Single delayed update for images
+            pasteUpdateTimeout = setTimeout(() => {
+                updatePreview();
+                pasteUpdateTimeout = null;
+            }, 800);
+        });
+
+        // Handle manual resize of textarea
+        textarea.addEventListener('mouseup', function() {
+            syncElementHeights(textarea, preview);
+        });
+
+        // Initial update
+        updatePreview();
+    }
+
+    // Monitor preview content changes for dynamic resizing
+    function initializePreviewObserver(textarea, preview) {
+        let resizeTimeout = null;
+        let isResizing = false;
+
+        // Create a mutation observer to watch for content changes
+        const observer = new MutationObserver((mutations) => {
+            // Skip if we're currently in a resize operation
+            if (isResizing) {
+                return;
+            }
+
+            let shouldResize = false;
+            let hasNewImages = false;
+
+            mutations.forEach((mutation) => {
+                // Check if nodes were added/removed
+                if (mutation.type === 'childList') {
+                    // Check if any new images were added
+                    mutation.addedNodes.forEach((node) => {
+                        if (node.nodeType === Node.ELEMENT_NODE) {
+                            if (node.tagName === 'IMG' || node.querySelector('img')) {
+                                hasNewImages = true;
+                            }
                         }
-                    },
-                    function(error) {
-                        alert(error ?? 'Tekkis viga serveriga suhtlemisel.');
                     });
+                    shouldResize = true;
+                } else if (mutation.type === 'attributes') {
+                    // Only trigger on src changes, not style changes to prevent loops
+                    if (mutation.target.tagName === 'IMG' && mutation.attributeName === 'src') {
+                        hasNewImages = true;
+                        shouldResize = true;
+                    }
+                }
+            });
+
+            if (shouldResize) {
+                // Clear any pending resize
+                if (resizeTimeout) {
+                    clearTimeout(resizeTimeout);
+                }
+
+                // If new images were added, wait a bit longer for them to start loading
+                const delay = hasNewImages ? 250 : 100;
+
+                resizeTimeout = setTimeout(() => {
+                    isResizing = true;
+                    debouncedResize(preview, 'mutationObserver');
+                    // Reset flag after a short delay
+                    setTimeout(() => {
+                        isResizing = false;
+                    }, 200);
+                    resizeTimeout = null;
+                }, delay);
             }
         });
 
-
-        document.querySelectorAll('#studentGradeCriteriaContainer input[type="checkbox"]').forEach(checkbox => {
-            checkbox.addEventListener('change', () => {
-                const allChecked = Array.from(document.querySelectorAll('#studentGradeCriteriaContainer input[type="checkbox"]'))
-                    .every(cb => cb.checked);
-                document.getElementById('submitButton').disabled = !allChecked;
-            });
+        // Start observing the preview div
+        observer.observe(preview, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['src'] // Only monitor src changes, not style changes
         });
 
-        function showContextMenu(event, studentId) {
-            event.preventDefault();
-            currentStudentId = studentId;
+        return observer;
+    }
 
-            const menu = document.getElementById('context-menu');
-            const criteriaContainer = menu.querySelector('.criteria');
+    // Image pasting functionality
+    function initializeImagePasting() {
+        const textarea = document.getElementById('newMessageContent');
+        if (!textarea) return;
 
-            criteriaContainer.innerHTML = '';
+        // Add paste event listener for image handling
+        textarea.addEventListener('paste', function(e) {
+            const items = e.clipboardData.items;
 
-            const student = assignment.students[studentId];
-            const allCriteria = assignment.criteria;
+            for (let i = 0; i < items.length; i++) {
+                const item = items[i];
 
-            if (student && allCriteria) {
-                Object.keys(assignment.criteria).forEach(criteriaId => {
-                    const criterion = assignment.criteria[criteriaId];
-                    const isCompleted = assignment.students[studentId]?.userDoneCriteria[criteriaId]?.completed;
+                if (item.type.indexOf('image') !== -1) {
+                    e.preventDefault();
 
-                    criteriaContainer.innerHTML += `
+                    const blob = item.getAsFile();
+                    uploadImageBlob(blob);
+                    break;
+                }
+            }
+        });
+
+        // Add file input handler
+        const selectImagesBtn = document.getElementById('selectImagesBtn');
+        const imageFileInput = document.getElementById('imageFileInput');
+
+        if (selectImagesBtn && imageFileInput) {
+            selectImagesBtn.addEventListener('click', function() {
+                imageFileInput.click();
+            });
+
+            imageFileInput.addEventListener('change', function(e) {
+                const files = e.target.files;
+                for (let file of files) {
+                    if (file.type.indexOf('image') !== -1) {
+                        uploadImageBlob(file);
+                    }
+                }
+                // Clear the input
+                imageFileInput.value = '';
+            });
+        }
+    }
+
+    function uploadImageBlob(blob) {
+        // Show upload progress
+        const uploadProgress = document.getElementById('imageUploadProgress');
+        const uploadStatusText = document.getElementById('uploadStatusText');
+        const uploadProgressBar = document.getElementById('uploadProgressBar');
+
+        if (uploadProgress) {
+            uploadProgress.classList.remove('d-none');
+            uploadStatusText.textContent = 'Alustamine...';
+            uploadProgressBar.style.width = '0%';
+        }
+
+        // Create form data
+        const formData = new FormData();
+        formData.append('image', blob);
+
+        // Upload the image
+        fetch('<?= BASE_URL ?>images/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (uploadProgress) {
+                    uploadProgress.classList.add('d-none');
+                }
+
+                if (data.status === 200) {
+                    // Store the image ID for later use
+                    currentImageId = data.data.imageId;
+
+                    // Insert markdown image syntax into textarea
+                    const textarea = document.getElementById('newMessageContent');
+                    const imageUrl = '<?= BASE_URL ?>images/show/' + data.data.imageId;
+                    const markdownImage = `![Pilt](${imageUrl})`;
+
+                    // Insert at cursor position or append
+                    const cursorPos = textarea.selectionStart;
+                    const textBefore = textarea.value.substring(0, cursorPos);
+                    const textAfter = textarea.value.substring(cursorPos);
+
+                    textarea.value = textBefore + '\n' + markdownImage + '\n' + textAfter;
+
+                    // Trigger input event to update preview
+                    textarea.dispatchEvent(new Event('input'));
+
+                    // Focus back on textarea
+                    textarea.focus();
+                } else {
+                    console.error('Error uploading image:', data.message);
+                    alert('Viga pildi üleslaadimisel: ' + (data.message || 'Tundmatu viga'));
+                }
+            })
+            .catch(error => {
+                if (uploadProgress) {
+                    uploadProgress.classList.add('d-none');
+                }
+                console.error('Error uploading image:', error);
+                alert('Viga pildi üleslaadimisel: ' + error.message);
+            });
+    }
+
+    // ...existing code...
+
+    function initializeTooltips() {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        const tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    }
+
+    // If no criteria exists, display warning (add class 'warning-bg' to element of id 'criterionDisplay')
+
+    if (Array.isArray(assignment['criteria']) && assignment['criteria'].length === 0 || assignment['criteria'] === null) {
+        document.getElementById('criterionDisplay').classList.add('bg-warning');
+        document.getElementById('requiredCriteria').innerHTML = '<p class="text-center">Kriteeriumid puuduvad</p>';
+    }
+
+    document.getElementById('requiredCriteria').addEventListener('change', function(event) {
+        if (event.target && event.target.type === 'checkbox') {
+            document.querySelector('#studentCriteriaForm .btn-primary').hidden = false;
+        }
+    });
+
+    document.getElementById('submitButton').addEventListener('click', function() {
+        const gradeRadioGroup = document.querySelectorAll('#gradeRadioGroup input[type="radio"]');
+        let gradeSelected = false;
+
+        gradeRadioGroup.forEach(radio => {
+            if (radio.checked) {
+                gradeSelected = true;
+            }
+        });
+
+        <?php if (!$isStudent): ?>
+            if (!gradeSelected) {
+                alert('Palun vali hinne.');
+                return;
+            }
+        <?php endif ?>
+
+        if (submitButton.textContent === 'Esita' || submitButton.textContent === 'Muuda') {
+            const solutionUrl = solutionInput.value;
+            const criteria = getCriteriaList();
+            const comment = document.getElementById('studentComment').value;
+
+            ajax(`assignments/saveStudentSolutionUrl`, {
+                    assignmentId: assignment.assignmentId,
+                    studentId: <?= $this->auth->userId ?>,
+                    studentName: assignment.students[<?= $this->auth->userId ?>].studentName,
+                    solutionUrl: solutionUrl,
+                    criteria: criteria,
+                    teacherId: assignment.teacherId,
+                    teacherName: assignment.teacherName,
+                    comment: comment
+                },
+                function(res) {
+                    if (res.status === 200) {
+                        location.reload();
+                    }
+                },
+                function(error) {
+                    alert(error ?? 'Tekkis viga serveriga suhtlemisel.');
+                });
+
+        } else {
+            const grade = document.querySelector('#gradeSection input[type="radio"]:checked')?.value;
+            const criteria = getCriteriaList();
+
+            const comment = document.getElementById('studentComment').value;
+
+            ajax(`assignments/saveAssignmentGrade`, {
+                    assignmentId: assignment.assignmentId,
+                    studentId: currentStudentId,
+                    grade: grade,
+                    criteria: criteria,
+                    comment: comment,
+                    teacherId: assignment.teacherId,
+                    teacherName: assignment.teacherName,
+                    studentName: assignment.students[currentStudentId].studentName
+                },
+                function(res) {
+                    if (res.status === 200) {
+                        location.reload();
+                    }
+                },
+                function(error) {
+                    alert(error ?? 'Tekkis viga serveriga suhtlemisel.');
+                });
+        }
+    });
+
+
+    document.querySelectorAll('#studentGradeCriteriaContainer input[type="checkbox"]').forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+            const allChecked = Array.from(document.querySelectorAll('#studentGradeCriteriaContainer input[type="checkbox"]'))
+                .every(cb => cb.checked);
+            document.getElementById('submitButton').disabled = !allChecked;
+        });
+    });
+
+    function showContextMenu(event, studentId) {
+        event.preventDefault();
+        currentStudentId = studentId;
+
+        const menu = document.getElementById('context-menu');
+        const criteriaContainer = menu.querySelector('.criteria');
+
+        criteriaContainer.innerHTML = '';
+
+        const student = assignment.students[studentId];
+        const allCriteria = assignment.criteria;
+
+        if (student && allCriteria) {
+            Object.keys(assignment.criteria).forEach(criteriaId => {
+                const criterion = assignment.criteria[criteriaId];
+                const isCompleted = assignment.students[studentId]?.userDoneCriteria[criteriaId]?.completed;
+
+                criteriaContainer.innerHTML += `
                 <div class="form-check">
                     <input class="form-check-input" type="checkbox" id="check_criterion_${criteriaId}" ${isCompleted ? 'checked' : ''}>
                     <label class="form-check-label" for="check_criterion_${criteriaId}">
@@ -1940,189 +1160,189 @@
                     </label>
                 </div>
             `;
-                });
-            }
-
-            menu.style.display = 'block';
-            menu.style.left = `${event.pageX}px`;
-            menu.style.top = `${event.pageY}px`;
-
-            adjustDropdownPosition(menu, event.pageX, event.pageY);
-
-            document.addEventListener('click', hideContextMenu);
+            });
         }
 
-        function adjustDropdownPosition(menu, pageX, pageY) {
-            const menuRect = menu.getBoundingClientRect();
-            const windowWidth = window.innerWidth;
-            const windowHeight = window.innerHeight;
+        menu.style.display = 'block';
+        menu.style.left = `${event.pageX}px`;
+        menu.style.top = `${event.pageY}px`;
 
-            if (menuRect.right > windowWidth) {
-                menu.style.left = `${pageX - menuRect.width}px`;
-            }
+        adjustDropdownPosition(menu, event.pageX, event.pageY);
 
-            if (menuRect.bottom > windowHeight) {
-                menu.style.top = `${pageY - menuRect.height}px`;
-            }
+        document.addEventListener('click', hideContextMenu);
+    }
+
+    function adjustDropdownPosition(menu, pageX, pageY) {
+        const menuRect = menu.getBoundingClientRect();
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
+
+        if (menuRect.right > windowWidth) {
+            menu.style.left = `${pageX - menuRect.width}px`;
         }
 
-        function hideContextMenu() {
-            const menu = document.getElementById('context-menu');
-            menu.style.display = 'none';
-            document.removeEventListener('click', hideContextMenu);
+        if (menuRect.bottom > windowHeight) {
+            menu.style.top = `${pageY - menuRect.height}px`;
         }
+    }
 
-        function openStudentModal(isStudent, studentId = null) {
-            const modalTitle = document.getElementById('studentName');
-            const solutionInputContainer = document.getElementById('solutionInputContainer');
-            const solutionInput = document.getElementById('solutionInput');
-            const solutionUrlContainer = document.getElementById('solutionUrlContainer');
-            const submitButton = document.getElementById('submitButton');
-            const criteriaContainer = document.getElementById('checkboxesContainer');
-            const commentsContainer = document.getElementById('commentsContainer'); // Container for comments
-            const student = assignment.students[studentId];
-            currentStudentId = studentId;
+    function hideContextMenu() {
+        const menu = document.getElementById('context-menu');
+        menu.style.display = 'none';
+        document.removeEventListener('click', hideContextMenu);
+    }
 
-            // Reset comments container to ensure it's cleared before populating with new comments
-            commentsContainer.innerHTML = '';
+    function openStudentModal(isStudent, studentId = null) {
+        const modalTitle = document.getElementById('studentName');
+        const solutionInputContainer = document.getElementById('solutionInputContainer');
+        const solutionInput = document.getElementById('solutionInput');
+        const solutionUrlContainer = document.getElementById('solutionUrlContainer');
+        const submitButton = document.getElementById('submitButton');
+        const criteriaContainer = document.getElementById('checkboxesContainer');
+        const commentsContainer = document.getElementById('commentsContainer'); // Container for comments
+        const student = assignment.students[studentId];
+        currentStudentId = studentId;
 
-            // Populate comments section with Bootstrap cards
-            if (student && student.comments && student.comments.length > 0) {
-                student.comments.forEach(comment => {
-                    const card = document.createElement('div');
-                    card.classList.add('card', 'mb-3'); // Add Bootstrap card classes
+        // Reset comments container to ensure it's cleared before populating with new comments
+        commentsContainer.innerHTML = '';
 
-                    // Card body
-                    const cardBody = document.createElement('div');
-                    cardBody.classList.add('card-body');
+        // Populate comments section with Bootstrap cards
+        if (student && student.comments && student.comments.length > 0) {
+            student.comments.forEach(comment => {
+                const card = document.createElement('div');
+                card.classList.add('card', 'mb-3'); // Add Bootstrap card classes
 
-                    // Add comment content inside the card body
-                    const commentContent = document.createElement('p');
-                    commentContent.innerHTML = `
+                // Card body
+                const cardBody = document.createElement('div');
+                cardBody.classList.add('card-body');
+
+                // Add comment content inside the card body
+                const commentContent = document.createElement('p');
+                commentContent.innerHTML = `
                     ${comment.createdAt} <strong>${comment.name || 'Tundmatu'}</strong><br>
                     <em>${comment.comment}</em>
                 `;
-                    cardBody.appendChild(commentContent);
+                cardBody.appendChild(commentContent);
 
-                    // Append the card body to the card
-                    card.appendChild(cardBody);
+                // Append the card body to the card
+                card.appendChild(cardBody);
 
-                    // Append the card to the comments container
-                    commentsContainer.appendChild(card);
-                });
-            } else {
-                commentsContainer.innerHTML = '<p>Kommentaare pole.</p>';
-            }
+                // Append the card to the comments container
+                commentsContainer.appendChild(card);
+            });
+        } else {
+            commentsContainer.innerHTML = '<p>Kommentaare pole.</p>';
+        }
 
-            if (isStudent) {
-                modalTitle.textContent = 'Sisesta Lahendus';
-                solutionInputContainer.style.display = 'block'; // Show the input for students to enter a link
-                submitButton.textContent = student.studentActionButtonName;
-                submitButton.disabled = true; // Initially disable the "Esita" button
+        if (isStudent) {
+            modalTitle.textContent = 'Sisesta Lahendus';
+            solutionInputContainer.style.display = 'block'; // Show the input for students to enter a link
+            submitButton.textContent = student.studentActionButtonName;
+            submitButton.disabled = true; // Initially disable the "Esita" button
 
-                solutionInput.addEventListener('input', updateSubmitButtonState);
+            solutionInput.addEventListener('input', updateSubmitButtonState);
 
-                document.getElementById('checkboxesContainer').addEventListener('change', function(event) {
-                    if (event.target && event.target.type === 'checkbox') {
-                        updateButtonState();
-                    }
-                });
+            document.getElementById('checkboxesContainer').addEventListener('change', function(event) {
+                if (event.target && event.target.type === 'checkbox') {
+                    updateButtonState();
+                }
+            });
 
-                solutionInput.addEventListener('input', updateSubmitButtonState);
+            solutionInput.addEventListener('input', updateSubmitButtonState);
 
-                let isValidUrl = false;
+            let isValidUrl = false;
 
-                async function updateSubmitButtonState() {
-                    const solutionUrlValue = solutionInput.value.trim();
-                    const solutionInputFeedback = document.getElementById('solutionInputFeedback');
+            async function updateSubmitButtonState() {
+                const solutionUrlValue = solutionInput.value.trim();
+                const solutionInputFeedback = document.getElementById('solutionInputFeedback');
 
-                    if (solutionUrlValue === '') {
-                        solutionInputFeedback.textContent = '';
-                        submitButton.disabled = true;
-                        return;
-                    }
-                    try {
-                        ajax('assignments/validateAndCheckLinkAccessibility', {
-                            solutionUrl: solutionUrlValue
-                        }, function(res) {
-                            if (res.status === 200) {
-                                solutionInputFeedback.textContent = 'Link on valideeritud ja kättesaadav.';
-                                solutionInputFeedback.style.color = 'green';
-                                isValidUrl = true;
-                                updateButtonState();
-                            }
-                        }, function(error) {
-                            solutionInputFeedback.textContent = error || 'Link on vigane või kättesaamatu.';
-                            solutionInputFeedback.style.color = 'red';
-                            isValidUrl = false;
+                if (solutionUrlValue === '') {
+                    solutionInputFeedback.textContent = '';
+                    submitButton.disabled = true;
+                    return;
+                }
+                try {
+                    ajax('assignments/validateAndCheckLinkAccessibility', {
+                        solutionUrl: solutionUrlValue
+                    }, function(res) {
+                        if (res.status === 200) {
+                            solutionInputFeedback.textContent = 'Link on valideeritud ja kättesaadav.';
+                            solutionInputFeedback.style.color = 'green';
+                            isValidUrl = true;
                             updateButtonState();
-                        });
-                    } catch (error) {
-                        solutionInputFeedback.textContent = 'Tekkis viga URL-i valideerimisel';
+                        }
+                    }, function(error) {
+                        solutionInputFeedback.textContent = error || 'Link on vigane või kättesaamatu.';
                         solutionInputFeedback.style.color = 'red';
                         isValidUrl = false;
                         updateButtonState();
-                    }
-
+                    });
+                } catch (error) {
+                    solutionInputFeedback.textContent = 'Tekkis viga URL-i valideerimisel';
+                    solutionInputFeedback.style.color = 'red';
+                    isValidUrl = false;
                     updateButtonState();
                 }
 
-                function updateButtonState() {
-                    const allChecked = Array.from(document.querySelectorAll('#checkboxesContainer input[type="checkbox"]'))
-                        .every(cb => cb.checked);
-
-                    submitButton.disabled = !(allChecked && isValidUrl);
-                }
-
-            } else {
-                const gradeSection = document.getElementById('gradeSection');
-                const commentSection = document.getElementById('commentSection');
-                const openApiButton = document.getElementById('openApiButton');
-
-                modalTitle.textContent = student.studentName;
-                gradeSection.style.display = 'block';
-                commentSection.style.display = 'block';
-                solutionInputContainer.style.display = 'none';
-                submitButton.textContent = 'Salvesta';
-                submitButton.disabled = false;
-
-                // Show/hide the OpenAPI button based on the assignment's assignmentInvolvesOpenApi value
-                if (openApiButton) {
-                    openApiButton.style.display = assignment.assignmentInvolvesOpenApi ? 'inline-block' : 'none';
-                }
-
-                if (student.grade) {
-                    document.querySelector(`#gradeRadioGroup input[value="${student.grade}"]`).checked = true;
-                } else {
-                    document.querySelectorAll('#gradeRadioGroup input[type="radio"]').forEach(rb => {
-                        rb.checked = false;
-                    });
-                }
-
-                if (student.comment) {
-                    document.getElementById('studentComment').value = student.comment;
-                } else {
-                    document.getElementById('studentComment').value = '';
-                }
+                updateButtonState();
             }
 
-            if (student.solutionUrl) {
-                solutionUrlContainer.innerHTML = `
+            function updateButtonState() {
+                const allChecked = Array.from(document.querySelectorAll('#checkboxesContainer input[type="checkbox"]'))
+                    .every(cb => cb.checked);
+
+                submitButton.disabled = !(allChecked && isValidUrl);
+            }
+
+        } else {
+            const gradeSection = document.getElementById('gradeSection');
+            const commentSection = document.getElementById('commentSection');
+            const openApiButton = document.getElementById('openApiButton');
+
+            modalTitle.textContent = student.studentName;
+            gradeSection.style.display = 'block';
+            commentSection.style.display = 'block';
+            solutionInputContainer.style.display = 'none';
+            submitButton.textContent = 'Salvesta';
+            submitButton.disabled = false;
+
+            // Show/hide the OpenAPI button based on the assignment's assignmentInvolvesOpenApi value
+            if (openApiButton) {
+                openApiButton.style.display = assignment.assignmentInvolvesOpenApi ? 'inline-block' : 'none';
+            }
+
+            if (student.grade) {
+                document.querySelector(`#gradeRadioGroup input[value="${student.grade}"]`).checked = true;
+            } else {
+                document.querySelectorAll('#gradeRadioGroup input[type="radio"]').forEach(rb => {
+                    rb.checked = false;
+                });
+            }
+
+            if (student.comment) {
+                document.getElementById('studentComment').value = student.comment;
+            } else {
+                document.getElementById('studentComment').value = '';
+            }
+        }
+
+        if (student.solutionUrl) {
+            solutionUrlContainer.innerHTML = `
             <?php if ($isStudent): ?>
                 <p class="pt-2 mb-0">Juba esitatud lahendus:</p>
             <?php endif ?>
             <a href="${student.solutionUrl}" id="solutionUrl" target="_blank" rel="noopener noreferrer">${student.solutionUrl}</a>`;
-            } else {
-                solutionUrlContainer.innerHTML = 'Link puudub'; // Display plain text if no link
-            }
+        } else {
+            solutionUrlContainer.innerHTML = 'Link puudub'; // Display plain text if no link
+        }
 
-            criteriaContainer.innerHTML = '';
+        criteriaContainer.innerHTML = '';
 
-            Object.keys(assignment.criteria).forEach((criteriaId, index) => {
-                const criterion = assignment.criteria[criteriaId];
-                const isCompleted = assignment.students[studentId]?.userDoneCriteria[criteriaId]?.completed;
+        Object.keys(assignment.criteria).forEach((criteriaId, index) => {
+            const criterion = assignment.criteria[criteriaId];
+            const isCompleted = assignment.students[studentId]?.userDoneCriteria[criteriaId]?.completed;
 
-                criteriaContainer.innerHTML += `
+            criteriaContainer.innerHTML += `
     <div class="form-check">
         <input class="form-check-input" type="checkbox" id="criterion_${criteriaId}" ${isCompleted ? 'checked' : ''}>
         <label class="form-check-label" for="criterion_${criteriaId}">
@@ -2130,146 +1350,146 @@
         </label>
     </div>
     `;
-            });
+        });
 
 
-            const modal = new bootstrap.Modal(document.getElementById('studentModal'));
-            modal.show();
-        }
+        const modal = new bootstrap.Modal(document.getElementById('studentModal'));
+        modal.show();
+    }
 
-        function saveStudentCriteria() {
-            const criteria = getCriteriaList('#requiredCriteria input[type="checkbox"]');
-            ajax(`assignments/saveStudentCriteria`, {
-                    assignmentId: assignment.assignmentId,
-                    studentId: <?= $this->auth->userId ?>,
-                    criteria: criteria,
-                    teacherId: assignment.teacherId,
-                    teacherName: assignment.teacherName
-                },
-                function(res) {
-                    if (res.status === 200) {
-                        location.reload();
-                    }
-                },
-                function(error) {
-                    alert(error ?? 'Tekkis viga serveriga suhtlemisel.');
-                });
-        }
-
-        function getCriteriaList(selector = '#studentGradeCriteriaContainer input[type="checkbox"]') {
-            const criteria = {};
-            document.querySelectorAll(selector).forEach(cb => {
-                if (selector.startsWith('#edit')) {
-                    criteria[parseInt(cb.id.replace('edit_criterion_', ''))] = cb.checked;
-                } else if (selector.startsWith('#context-menu') || selector.startsWith('#check')) {
-                    criteria[parseInt(cb.id.replace('check_criterion_', ''))] = cb.checked;
-                } else {
-                    criteria[parseInt(cb.id.replace('criterion_', ''))] = cb.checked;
-                }
-            });
-            return criteria;
-        }
-
-        function scrollToBottom() {
-            const messageContainer = document.querySelector('#messageContainer .content-part');
-            const notificationContainer = document.querySelector('#notificationContainer .content-part');
-
-
-            if (messageContainer) {
-                messageContainer.scrollTop = messageContainer.scrollHeight;
-            }
-
-            if (notificationContainer) {
-                notificationContainer.scrollTop = notificationContainer.scrollHeight;
-            }
-        }
-
-
-        function editAssignment() {
-            const modal = new bootstrap.Modal(document.getElementById('editAssignmentModal'));
-            modal.show();
-        }
-
-        function removeOldCriterion(param) {
-            const editCriteriaContainer = document.getElementById('editCriteriaContainer');
-            const criterionElement = document.getElementById(`edit_criterion_${param}`);
-
-            if (criterionElement) {
-                const criterionRow = criterionElement.closest('.criteria-row');
-                if (criterionRow) {
-                    editCriteriaContainer.removeChild(criterionRow);
-                } else {
-                    console.error("Criterion row not found");
-                }
-            } else {
-                console.error("Criterion element not found");
-            }
-        }
-
-        function saveEditedAssignment() {
-            const assignmentName = document.getElementById('assignmentName').value;
-            const assignmentInstructions = document.getElementById('assignmentInstructions').value;
-            const assignmentDueAt = document.getElementById('assignmentDueAt').value;
-            const assignmentInvolvesOpenApi = document.getElementById('assignmentInvolvesOpenApi').checked ? 1 : 0;
-            const criteria = getCriteriaList('#editCriteriaContainer input[type="checkbox"]');
-            ajax(`assignments/editAssignment`, {
-                    assignmentId: assignment.assignmentId,
-                    teacherId: assignment.teacherId,
-                    teacherName: assignment.teacherName,
-                    assignmentName: assignmentName,
-                    assignmentInstructions: assignmentInstructions,
-                    assignmentDueAt: assignmentDueAt,
-                    assignmentInvolvesOpenApi: assignmentInvolvesOpenApi,
-                    oldCriteria: criteria,
-                    newCriteria: newAddedCriteria ?? [],
-                },
-                function(res) {
-                    if (res.status === 200) {
-                        location.reload();
-                        scrollToBottom();
-                    }
-                },
-                function(error) {
-                    alert(error ?? 'Tekkis viga serveriga suhtlemisel.');
-                }
-            );
-        }
-
-        <?php if (!$isStudent): ?>
-            document.getElementById('addCriterionButton').addEventListener('click', function() {
-                const modal = new bootstrap.Modal(document.getElementById('addCriterionModal'));
-                modal.show();
-            });
-        <?php endif; ?>
-
-        function addNewCriterion() {
-            const criterionName = document.getElementById('newCriterionName').value.trim();
-
-            if (!criterionName) {
-                alert('Sisestage kriteeriumi nimi!');
-                return;
-            }
-
-            ajax('assignments/checkCriterionNameSize', {
-                criterionName: criterionName
-            }, function(res) {
+    function saveStudentCriteria() {
+        const criteria = getCriteriaList('#requiredCriteria input[type="checkbox"]');
+        ajax(`assignments/saveStudentCriteria`, {
+                assignmentId: assignment.assignmentId,
+                studentId: <?= $this->auth->userId ?>,
+                criteria: criteria,
+                teacherId: assignment.teacherId,
+                teacherName: assignment.teacherName
+            },
+            function(res) {
                 if (res.status === 200) {
-                    const existingCriteria = Array.from(document.querySelectorAll('#editCriteriaContainer .form-check-label'))
-                        .map(label => label.textContent.trim());
+                    location.reload();
+                }
+            },
+            function(error) {
+                alert(error ?? 'Tekkis viga serveriga suhtlemisel.');
+            });
+    }
 
-                    if (existingCriteria.includes(criterionName) || newAddedCriteria.includes(criterionName)) {
-                        alert('Selline kriteerium on juba olemas!');
-                        return;
-                    }
+    function getCriteriaList(selector = '#studentGradeCriteriaContainer input[type="checkbox"]') {
+        const criteria = {};
+        document.querySelectorAll(selector).forEach(cb => {
+            if (selector.startsWith('#edit')) {
+                criteria[parseInt(cb.id.replace('edit_criterion_', ''))] = cb.checked;
+            } else if (selector.startsWith('#context-menu') || selector.startsWith('#check')) {
+                criteria[parseInt(cb.id.replace('check_criterion_', ''))] = cb.checked;
+            } else {
+                criteria[parseInt(cb.id.replace('criterion_', ''))] = cb.checked;
+            }
+        });
+        return criteria;
+    }
 
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('addCriterionModal'));
-                    modal.hide();
+    function scrollToBottom() {
+        const messageContainer = document.querySelector('#messageContainer .content-part');
+        const notificationContainer = document.querySelector('#notificationContainer .content-part');
 
-                    newAddedCriteria.push(criterionName);
 
-                    const editCriteriaContainer = document.getElementById('editCriteriaContainer');
+        if (messageContainer) {
+            messageContainer.scrollTop = messageContainer.scrollHeight;
+        }
 
-                    const criterionHTML = `
+        if (notificationContainer) {
+            notificationContainer.scrollTop = notificationContainer.scrollHeight;
+        }
+    }
+
+
+    function editAssignment() {
+        const modal = new bootstrap.Modal(document.getElementById('editAssignmentModal'));
+        modal.show();
+    }
+
+    function removeOldCriterion(param) {
+        const editCriteriaContainer = document.getElementById('editCriteriaContainer');
+        const criterionElement = document.getElementById(`edit_criterion_${param}`);
+
+        if (criterionElement) {
+            const criterionRow = criterionElement.closest('.criteria-row');
+            if (criterionRow) {
+                editCriteriaContainer.removeChild(criterionRow);
+            } else {
+                console.error("Criterion row not found");
+            }
+        } else {
+            console.error("Criterion element not found");
+        }
+    }
+
+    function saveEditedAssignment() {
+        const assignmentName = document.getElementById('assignmentName').value;
+        const assignmentInstructions = document.getElementById('assignmentInstructions').value;
+        const assignmentDueAt = document.getElementById('assignmentDueAt').value;
+        const assignmentInvolvesOpenApi = document.getElementById('assignmentInvolvesOpenApi').checked ? 1 : 0;
+        const criteria = getCriteriaList('#editCriteriaContainer input[type="checkbox"]');
+        ajax(`assignments/editAssignment`, {
+                assignmentId: assignment.assignmentId,
+                teacherId: assignment.teacherId,
+                teacherName: assignment.teacherName,
+                assignmentName: assignmentName,
+                assignmentInstructions: assignmentInstructions,
+                assignmentDueAt: assignmentDueAt,
+                assignmentInvolvesOpenApi: assignmentInvolvesOpenApi,
+                oldCriteria: criteria,
+                newCriteria: newAddedCriteria ?? [],
+            },
+            function(res) {
+                if (res.status === 200) {
+                    location.reload();
+                    scrollToBottom();
+                }
+            },
+            function(error) {
+                alert(error ?? 'Tekkis viga serveriga suhtlemisel.');
+            }
+        );
+    }
+
+    <?php if (!$isStudent): ?>
+        document.getElementById('addCriterionButton').addEventListener('click', function() {
+            const modal = new bootstrap.Modal(document.getElementById('addCriterionModal'));
+            modal.show();
+        });
+    <?php endif; ?>
+
+    function addNewCriterion() {
+        const criterionName = document.getElementById('newCriterionName').value.trim();
+
+        if (!criterionName) {
+            alert('Sisestage kriteeriumi nimi!');
+            return;
+        }
+
+        ajax('assignments/checkCriterionNameSize', {
+            criterionName: criterionName
+        }, function(res) {
+            if (res.status === 200) {
+                const existingCriteria = Array.from(document.querySelectorAll('#editCriteriaContainer .form-check-label'))
+                    .map(label => label.textContent.trim());
+
+                if (existingCriteria.includes(criterionName) || newAddedCriteria.includes(criterionName)) {
+                    alert('Selline kriteerium on juba olemas!');
+                    return;
+                }
+
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addCriterionModal'));
+                modal.hide();
+
+                newAddedCriteria.push(criterionName);
+
+                const editCriteriaContainer = document.getElementById('editCriteriaContainer');
+
+                const criterionHTML = `
                 <div class="criteria-row">
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" checked disabled>
@@ -2278,26 +1498,26 @@
                     <button type="button" class="btn btn-danger btn-sm" onclick="removeNewCriterion('${criterionName}')">X</button>
                 </div>
             `;
-                    document.getElementById('newCriterionName').value = '';
-                    editCriteriaContainer.insertAdjacentHTML('beforeend', criterionHTML);
-                }
-            }, function(error) {
-                alert(error ?? 'Tekkis viga serveriga suhtlemisel.');
-            });
-        }
-
-        function removeNewCriterion(criterionName) {
-            newAddedCriteria = newAddedCriteria.filter(name => name !== criterionName);
-
-            const criterionRow = Array.from(document.querySelectorAll('.criteria-row')).find(row => row.textContent.includes(criterionName));
-            if (criterionRow) {
-                criterionRow.remove();
+                document.getElementById('newCriterionName').value = '';
+                editCriteriaContainer.insertAdjacentHTML('beforeend', criterionHTML);
             }
-        }
+        }, function(error) {
+            alert(error ?? 'Tekkis viga serveriga suhtlemisel.');
+        });
+    }
 
-        function replyToMessage(userName, messageId, messageContent, createdAt) {
-            document.getElementById('replyInfo').style.display = 'block';
-            document.getElementById('replyMessage').innerHTML = `
+    function removeNewCriterion(criterionName) {
+        newAddedCriteria = newAddedCriteria.filter(name => name !== criterionName);
+
+        const criterionRow = Array.from(document.querySelectorAll('.criteria-row')).find(row => row.textContent.includes(criterionName));
+        if (criterionRow) {
+            criterionRow.remove();
+        }
+    }
+
+    function replyToMessage(userName, messageId, messageContent, createdAt) {
+        document.getElementById('replyInfo').style.display = 'block';
+        document.getElementById('replyMessage').innerHTML = `
         <div class="d-flex text-break align-items-start border rounded p-2" style="background-color: #f0f0f0;">
             <div class="me-3">
                 <span class="avatar bg-primary text-white rounded-circle p-2">${userName[0]}</span>
@@ -2308,530 +1528,466 @@
             </div>
         </div>
     `;
-            const content = document.getElementById('messageContent')
-            content.setAttribute('data-reply-id', messageId)
-            content.setAttribute('data-reply-user', userName)
-            content.setAttribute('data-reply-time', createdAt)
-            content.setAttribute('data-reply-content', messageContent)
-            content.focus();
+        const content = document.getElementById('messageContent')
+        content.setAttribute('data-reply-id', messageId)
+        content.setAttribute('data-reply-user', userName)
+        content.setAttribute('data-reply-time', createdAt)
+        content.setAttribute('data-reply-content', messageContent)
+        content.focus();
+    }
+
+    function cancelReply() {
+        document.getElementById('replyInfo').style.display = 'none';
+        document.getElementById('messageContent').removeAttribute('data-reply-id');
+    }
+
+    function submitMessage() {
+        const messageContent = document.getElementById('messageContent');
+        const answerToId = messageContent.getAttribute('data-reply-id') || null;
+
+        let replyContent = '';
+        if (answerToId) {
+            const replyUser = messageContent.getAttribute('data-reply-user');
+            const replyTime = messageContent.getAttribute('data-reply-time');
+            const replyText = messageContent.getAttribute('data-reply-content');
+
+            replyContent = `> **${replyUser}** kirjutas *${replyTime}*:\n> ${replyText}\n\n`;
         }
 
-        function cancelReply() {
-            document.getElementById('replyInfo').style.display = 'none';
-            document.getElementById('messageContent').removeAttribute('data-reply-id');
-        }
+        const finalContent = replyContent + messageContent.value;
 
-        function submitMessage() {
-            const messageContent = document.getElementById('messageContent');
-            const answerToId = messageContent.getAttribute('data-reply-id') || null;
-
-            let replyContent = '';
-            if (answerToId) {
-                const replyUser = messageContent.getAttribute('data-reply-user');
-                const replyTime = messageContent.getAttribute('data-reply-time');
-                const replyText = messageContent.getAttribute('data-reply-content');
-
-                replyContent = `> **${replyUser}** kirjutas *${replyTime}*:\n> ${replyText}\n\n`;
+        ajax('assignments/saveMessage', {
+            assignmentId: assignment.assignmentId,
+            userId: <?= $this->auth->userId ?>,
+            content: finalContent,
+            answerToId: answerToId,
+            teacherId: assignment.teacherId,
+            teacherName: assignment.teacherName
+        }, function(res) {
+            if (res.status === 200) {
+                location.reload();
+                scrollToBottom();
             }
+        }, function(error) {
+            alert(error ?? 'Tekkis viga serveriga suhtlemisel.');
+        });
+    }
 
-            const finalContent = replyContent + messageContent.value;
+    function setGrade(grade) {
 
-            ajax('assignments/saveMessage', {
+        ajax(`assignments/saveAssignmentGrade`, {
                 assignmentId: assignment.assignmentId,
-                userId: <?= $this->auth->userId ?>,
-                content: finalContent,
-                answerToId: answerToId,
-                teacherId: assignment.teacherId,
-                teacherName: assignment.teacherName
-            }, function(res) {
+                studentId: currentStudentId,
+                grade: grade,
+                teacherName: assignment.teacherName,
+                studentName: assignment.students[currentStudentId].studentName,
+                teacherId: assignment.teacherId
+            },
+            function(res) {
                 if (res.status === 200) {
                     location.reload();
-                    scrollToBottom();
                 }
-            }, function(error) {
-                alert(error ?? 'Tekkis viga serveriga suhtlemisel.');
             });
+    }
+
+    // OpenAPI functionality
+    function openSwaggerModal() {
+        const solutionUrl = document.getElementById('solutionUrl').getAttribute('href');
+        const swaggerUrlInput = document.getElementById('swaggerUrlInput');
+        const promptTextarea = document.getElementById('promptTextarea');
+
+        // Set the default URL by appending /swagger-ui-init.js to the solution URL
+        if (solutionUrl && solutionUrl !== '#') {
+            let swaggerUrl = solutionUrl;
+
+            // Handle specific SwaggerUI links like https://docs.foo.me/en/#/forms/createForm
+            // Extract the base URL (everything before the #)
+            if (swaggerUrl.includes('#/')) {
+                swaggerUrl = swaggerUrl.split('#/')[0];
+            }
+
+            // Make sure the URL ends with a slash before appending swagger-ui-init.js
+            if (!swaggerUrl.endsWith('/')) {
+                swaggerUrl += '/';
+            }
+            swaggerUrl += 'swagger-ui-init.js';
+            swaggerUrlInput.value = swaggerUrl;
+        } else {
+            swaggerUrlInput.value = '';
         }
 
-        function setGrade(grade) {
+        // Clear previous output
+        document.getElementById('swaggerDocOutput').value = '';
 
-            ajax(`assignments/saveAssignmentGrade`, {
-                    assignmentId: assignment.assignmentId,
-                    studentId: currentStudentId,
-                    grade: grade,
-                    teacherName: assignment.teacherName,
-                    studentName: assignment.students[currentStudentId].studentName,
-                    teacherId: assignment.teacherId
-                },
-                function(res) {
-                    if (res.status === 200) {
-                        location.reload();
+        // Load the prompt from settings
+        loadPromptFromSettings();
+
+        // Show the modal
+        const modalElement = document.getElementById('swaggerModal');
+        const modal = new bootstrap.Modal(modalElement);
+
+        // Initialize tooltips when the modal is fully shown
+        modalElement.addEventListener('shown.bs.modal', function() {
+            // Initialize all tooltips within the modal
+            const tooltipTriggerList = [].slice.call(modalElement.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function(tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+
+        modal.show();
+    }
+
+    function loadPromptFromSettings() {
+        const promptTextarea = document.getElementById('promptTextarea');
+        const promptDisplay = document.getElementById('promptDisplay');
+
+        // Use AJAX to fetch the prompt from settings
+        ajax('assignments/getOpenApiPrompt', {}, function(response) {
+            const promptText = (response.status === 200 && response.data && response.data.prompt !== undefined) ?
+                response.data.prompt :
+                '';
+
+            // Set the prompt text in the appropriate element
+            if (userIsAdmin) {
+                // For admins: set the value of the textarea
+                promptTextarea.value = promptText;
+
+                // Add event listener to save the prompt when it changes
+                promptTextarea.addEventListener('input', function() {
+                    // Debounce the save operation
+                    if (promptTextarea.saveTimeout) {
+                        clearTimeout(promptTextarea.saveTimeout);
                     }
+                    promptTextarea.saveTimeout = setTimeout(function() {
+                        savePromptToSettings(promptTextarea.value);
+                    }, 1000); // Save after 1 second of inactivity
                 });
-        }
-
-        // OpenAPI functionality
-        function openSwaggerModal() {
-            const solutionUrl = document.getElementById('solutionUrl').getAttribute('href');
-            const swaggerUrlInput = document.getElementById('swaggerUrlInput');
-            const promptTextarea = document.getElementById('promptTextarea');
-
-            // Set the default URL by appending /swagger-ui-init.js to the solution URL
-            if (solutionUrl && solutionUrl !== '#') {
-                let swaggerUrl = solutionUrl;
-
-                // Handle specific SwaggerUI links like https://docs.foo.me/en/#/forms/createForm
-                // Extract the base URL (everything before the #)
-                if (swaggerUrl.includes('#/')) {
-                    swaggerUrl = swaggerUrl.split('#/')[0];
-                }
-
-                // Make sure the URL ends with a slash before appending swagger-ui-init.js
-                if (!swaggerUrl.endsWith('/')) {
-                    swaggerUrl += '/';
-                }
-                swaggerUrl += 'swagger-ui-init.js';
-                swaggerUrlInput.value = swaggerUrl;
             } else {
-                swaggerUrlInput.value = '';
+                // For non-admins: set the text content of the pre element and the hidden textarea
+                if (promptDisplay) {
+                    promptDisplay.textContent = promptText;
+                }
+                promptTextarea.value = promptText; // Still set the hidden textarea for copying
             }
-
-            // Clear previous output
-            document.getElementById('swaggerDocOutput').value = '';
-
-            // Load the prompt from settings
-            loadPromptFromSettings();
-
-            // Show the modal
-            const modalElement = document.getElementById('swaggerModal');
-            const modal = new bootstrap.Modal(modalElement);
-
-            // Initialize tooltips when the modal is fully shown
-            modalElement.addEventListener('shown.bs.modal', function() {
-                // Initialize all tooltips within the modal
-                const tooltipTriggerList = [].slice.call(modalElement.querySelectorAll('[data-bs-toggle="tooltip"]'));
-                tooltipTriggerList.map(function(tooltipTriggerEl) {
-                    return new bootstrap.Tooltip(tooltipTriggerEl);
-                });
-            });
-
-            modal.show();
-        }
-
-        function loadPromptFromSettings() {
-            const promptTextarea = document.getElementById('promptTextarea');
-            const promptDisplay = document.getElementById('promptDisplay');
-
-            // Use AJAX to fetch the prompt from settings
-            ajax('assignments/getOpenApiPrompt', {}, function(response) {
-                const promptText = (response.status === 200 && response.data && response.data.prompt !== undefined) ?
-                    response.data.prompt :
-                    '';
-
-                // Set the prompt text in the appropriate element
-                if (userIsAdmin) {
-                    // For admins: set the value of the textarea
-                    promptTextarea.value = promptText;
-
-                    // Add event listener to save the prompt when it changes
-                    promptTextarea.addEventListener('input', function() {
-                        // Debounce the save operation
-                        if (promptTextarea.saveTimeout) {
-                            clearTimeout(promptTextarea.saveTimeout);
-                        }
-                        promptTextarea.saveTimeout = setTimeout(function() {
-                            savePromptToSettings(promptTextarea.value);
-                        }, 1000); // Save after 1 second of inactivity
-                    });
-                } else {
-                    // For non-admins: set the text content of the pre element and the hidden textarea
-                    if (promptDisplay) {
-                        promptDisplay.textContent = promptText;
-                    }
-                    promptTextarea.value = promptText; // Still set the hidden textarea for copying
-                }
-            }, function(error) {
-                console.error('Failed to load prompt from settings:', error);
-                if (userIsAdmin) {
-                    promptTextarea.value = '';
-                } else if (promptDisplay) {
-                    promptDisplay.textContent = '';
-                    promptTextarea.value = ''; // Also clear the hidden textarea
-                }
-            });
-        }
-
-        function savePromptToSettings(promptText) {
-            // Only admins can save the prompt
-            if (!userIsAdmin) return;
-
-            ajax('assignments/saveOpenApiPrompt', {
-                prompt: promptText
-            }, function(response) {
-                if (response.status === 200) {
-                    console.log('Prompt saved successfully');
-                } else {
-                    console.error('Failed to save prompt:', response.error);
-                }
-            }, function(error) {
-                console.error('Failed to save prompt:', error);
-            });
-        }
-
-        function fetchSwaggerDoc() {
-            const swaggerUrl = document.getElementById('swaggerUrlInput').value.trim();
-            const outputTextarea = document.getElementById('swaggerDocOutput');
-            const fetchButton = document.getElementById('fetchSwaggerButton');
-            const copyButton = document.getElementById('copyButton');
-            const loadingSpinner = document.getElementById('swaggerLoadingSpinner');
-
-            if (!swaggerUrl) {
-                showError(outputTextarea, 'Palun sisesta kehtiv URL');
-                return;
+        }, function(error) {
+            console.error('Failed to load prompt from settings:', error);
+            if (userIsAdmin) {
+                promptTextarea.value = '';
+            } else if (promptDisplay) {
+                promptDisplay.textContent = '';
+                promptTextarea.value = ''; // Also clear the hidden textarea
             }
+        });
+    }
 
-            // Disable the buttons while fetching
-            fetchButton.disabled = true;
-            copyButton.disabled = true;
-            fetchButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
-            outputTextarea.value = '';
+    function savePromptToSettings(promptText) {
+        // Only admins can save the prompt
+        if (!userIsAdmin) return;
 
-            // Show the loading spinner
-            loadingSpinner.classList.remove('d-none');
+        ajax('assignments/saveOpenApiPrompt', {
+            prompt: promptText
+        }, function(response) {
+            if (response.status === 200) {
+                console.log('Prompt saved successfully');
+            } else {
+                console.error('Failed to save prompt:', response.error);
+            }
+        }, function(error) {
+            console.error('Failed to save prompt:', error);
+        });
+    }
 
-            // Use AJAX to fetch the swagger-ui-init.js file through a PHP proxy
-            ajax('assignments/fetchSwaggerDoc', {
-                url: swaggerUrl
-            }, function(response) {
-                // Reset UI elements
-                fetchButton.disabled = false;
-                fetchButton.innerHTML = 'Hangi OpenAPI spekk';
-                loadingSpinner.classList.add('d-none');
+    function fetchSwaggerDoc() {
+        const swaggerUrl = document.getElementById('swaggerUrlInput').value.trim();
+        const outputTextarea = document.getElementById('swaggerDocOutput');
+        const fetchButton = document.getElementById('fetchSwaggerButton');
+        const copyButton = document.getElementById('copyButton');
+        const loadingSpinner = document.getElementById('swaggerLoadingSpinner');
 
-                if (response.status === 200 && response.data && response.data.swaggerDoc) {
-                    // Format the JSON for better readability
-                    try {
-                        // Get the base URL from the swagger URL
-                        const swaggerDocObj = response.data.swaggerDoc;
-                        const swaggerUrl = document.getElementById('swaggerUrlInput').value.trim();
-                        const baseUrl = getBaseUrlFromSwaggerUrl(swaggerUrl);
+        if (!swaggerUrl) {
+            showError(outputTextarea, 'Palun sisesta kehtiv URL');
+            return;
+        }
 
-                        // Check if we need to modify the servers array
-                        if (baseUrl) {
-                            // If servers array doesn't exist or first server is "/", add/replace with the base URL
-                            if (!swaggerDocObj.servers ||
-                                !swaggerDocObj.servers.length ||
-                                (swaggerDocObj.servers.length > 0 && swaggerDocObj.servers[0].url === '/')) {
+        // Disable the buttons while fetching
+        fetchButton.disabled = true;
+        copyButton.disabled = true;
+        fetchButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
+        outputTextarea.value = '';
 
-                                // Create servers array if it doesn't exist
-                                if (!swaggerDocObj.servers) {
-                                    swaggerDocObj.servers = [];
-                                }
+        // Show the loading spinner
+        loadingSpinner.classList.remove('d-none');
 
-                                // Add or replace the first server with the base URL
-                                if (swaggerDocObj.servers.length === 0) {
-                                    swaggerDocObj.servers.push({
-                                        url: baseUrl,
-                                        description: 'API Server'
-                                    });
-                                } else {
-                                    swaggerDocObj.servers[0] = {
-                                        url: baseUrl,
-                                        description: 'API Server'
-                                    };
-                                }
+        // Use AJAX to fetch the swagger-ui-init.js file through a PHP proxy
+        ajax('assignments/fetchSwaggerDoc', {
+            url: swaggerUrl
+        }, function(response) {
+            // Reset UI elements
+            fetchButton.disabled = false;
+            fetchButton.innerHTML = 'Hangi OpenAPI spekk';
+            loadingSpinner.classList.add('d-none');
+
+            if (response.status === 200 && response.data && response.data.swaggerDoc) {
+                // Format the JSON for better readability
+                try {
+                    // Get the base URL from the swagger URL
+                    const swaggerDocObj = response.data.swaggerDoc;
+                    const swaggerUrl = document.getElementById('swaggerUrlInput').value.trim();
+                    const baseUrl = getBaseUrlFromSwaggerUrl(swaggerUrl);
+
+                    // Check if we need to modify the servers array
+                    if (baseUrl) {
+                        // If servers array doesn't exist or first server is "/", add/replace with the base URL
+                        if (!swaggerDocObj.servers ||
+                            !swaggerDocObj.servers.length ||
+                            (swaggerDocObj.servers.length > 0 && swaggerDocObj.servers[0].url === '/')) {
+
+                            // Create servers array if it doesn't exist
+                            if (!swaggerDocObj.servers) {
+                                swaggerDocObj.servers = [];
+                            }
+
+                            // Add or replace the first server with the base URL
+                            if (swaggerDocObj.servers.length === 0) {
+                                swaggerDocObj.servers.push({
+                                    url: baseUrl,
+                                    description: 'API Server'
+                                });
+                            } else {
+                                swaggerDocObj.servers[0] = {
+                                    url: baseUrl,
+                                    description: 'API Server'
+                                };
                             }
                         }
+                    }
 
-                        const formattedJson = JSON.stringify(swaggerDocObj, null, 2);
-                        outputTextarea.value = formattedJson;
-                        copyButton.disabled = false; // Enable the copy button only when we have content
-                    } catch (e) {
-                        showError(outputTextarea, 'Viga JSON-i vormindamisel: ' + e.message);
-                        copyButton.disabled = true;
-                    }
-                } else {
-                    let errorMessage = 'OpenAPI spetsifikatsiooni hankimine või parsimine ebaõnnestus';
-                    if (response.error) {
-                        errorMessage = response.error;
-                    }
-                    showError(outputTextarea, errorMessage);
+                    const formattedJson = JSON.stringify(swaggerDocObj, null, 2);
+                    outputTextarea.value = formattedJson;
+                    copyButton.disabled = false; // Enable the copy button only when we have content
+                } catch (e) {
+                    showError(outputTextarea, 'Viga JSON-i vormindamisel: ' + e.message);
                     copyButton.disabled = true;
                 }
-            }, function(error) {
-                // Reset UI elements
-                fetchButton.disabled = false;
-                fetchButton.innerHTML = 'Hangi OpenAPI spekk';
-                loadingSpinner.classList.add('d-none');
-
-                let errorMessage = 'OpenAPI spetsifikatsiooni hankimisel tekkis viga';
-                if (error) {
-                    if (error.includes('404')) {
-                        errorMessage = 'OpenAPI spetsifikatsiooni faili ei leitud (404). Palun kontrolli URL-i.';
-                    } else if (error.includes('403')) {
-                        errorMessage = 'Juurdepääs OpenAPI spetsifikatsioonile on keelatud (403). Sul ei pruugi olla õigusi sellele ressursile jõuda.';
-                    } else if (error.includes('500')) {
-                        errorMessage = 'Serveril tekkis viga (500) OpenAPI spetsifikatsiooni hankimisel.';
-                    } else if (error.includes('timeout')) {
-                        errorMessage = 'Päring aegus. Server võib olla aeglane või kättesaamatu.';
-                    } else {
-                        errorMessage = error;
-                    }
+            } else {
+                let errorMessage = 'OpenAPI spetsifikatsiooni hankimine või parsimine ebaõnnestus';
+                if (response.error) {
+                    errorMessage = response.error;
                 }
-
                 showError(outputTextarea, errorMessage);
                 copyButton.disabled = true;
-            });
-        }
-
-        // Helper function to show formatted error messages
-        function showError(textarea, message) {
-            textarea.value = '⚠️ VIGA: ' + message;
-            textarea.style.color = 'red';
-            setTimeout(() => {
-                textarea.style.color = ''; // Reset color after a delay
-            }, 5000);
-        }
-
-        // Helper function to extract the base URL from the swagger-ui-init.js URL
-        function getBaseUrlFromSwaggerUrl(swaggerUrl) {
-            if (!swaggerUrl) return null;
-
-            try {
-                // Create a URL object from the swagger URL
-                const urlObj = new URL(swaggerUrl);
-
-                // Just return the origin (protocol + hostname) without any path
-                // This ensures we get the root of the server (e.g., https://docs.eerovallistu.site)
-                return urlObj.origin;
-            } catch (e) {
-                console.error('Viga URL-i parsimisel:', e);
-                return null;
             }
-        }
+        }, function(error) {
+            // Reset UI elements
+            fetchButton.disabled = false;
+            fetchButton.innerHTML = 'Hangi OpenAPI spekk';
+            loadingSpinner.classList.add('d-none');
 
-        function copyPromptAndSpec() {
-            const promptTextarea = document.getElementById('promptTextarea');
-            const swaggerTextarea = document.getElementById('swaggerDocOutput');
-            const copyButton = document.getElementById('copyButton');
-            const originalButtonText = copyButton.innerHTML;
-
-            // Only proceed if there's content to copy
-            if (!swaggerTextarea.value.trim()) {
-                alert('OpenAPI spetsifikatsioon puudub. Palun hangi spetsifikatsioon enne kopeerimist.');
-                return;
-            }
-
-            // Get the prompt text from the textarea (which exists for both admins and non-admins)
-            // For non-admins, this is a hidden textarea that still contains the prompt text
-            const promptText = promptTextarea.value;
-
-            // Combine the content from both textareas
-            const combinedText = promptText + '\n\n' + swaggerTextarea.value;
-
-            // Use the modern Clipboard API if available
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(combinedText)
-                    .then(() => {
-                        // Visual feedback that copy was successful
-                        copyButton.innerHTML = '<i class="bi bi-check"></i> Kopeeritud!';
-                        setTimeout(() => {
-                            copyButton.innerHTML = originalButtonText;
-                        }, 1500);
-                    })
-                    .catch(err => {
-                        console.error('Teksti kopeerimine ebaõnnestus: ', err);
-                        // Fallback to the older method
-                        fallbackCopyTextToClipboard(combinedText);
-                    });
-            } else {
-                // Fallback for browsers that don't support the Clipboard API
-                fallbackCopyTextToClipboard(combinedText);
-            }
-
-            // Fallback copy method using execCommand
-            function fallbackCopyTextToClipboard(text) {
-                // Create a temporary textarea
-                const tempTextarea = document.createElement('textarea');
-                tempTextarea.style.position = 'fixed';
-                tempTextarea.style.left = '-9999px';
-                tempTextarea.style.top = '0';
-                tempTextarea.value = text;
-                document.body.appendChild(tempTextarea);
-
-                // Select and copy the text
-                tempTextarea.focus();
-                tempTextarea.select();
-
-                try {
-                    const successful = document.execCommand('copy');
-                    if (successful) {
-                        // Visual feedback that copy was successful
-                        copyButton.innerHTML = '<i class="bi bi-check"></i> Kopeeritud!';
-                        setTimeout(() => {
-                            copyButton.innerHTML = originalButtonText;
-                        }, 1500);
-                    } else {
-                        alert('Teksti kopeerimine ebaõnnestus');
-                    }
-                } catch (err) {
-                    console.error('Teksti kopeerimine ebaõnnestus: ', err);
-                    alert('Teksti kopeerimine ebaõnnestus: ' + err);
-                } finally {
-                    // Remove the temporary textarea
-                    document.body.removeChild(tempTextarea);
+            let errorMessage = 'OpenAPI spetsifikatsiooni hankimisel tekkis viga';
+            if (error) {
+                if (error.includes('404')) {
+                    errorMessage = 'OpenAPI spetsifikatsiooni faili ei leitud (404). Palun kontrolli URL-i.';
+                } else if (error.includes('403')) {
+                    errorMessage = 'Juurdepääs OpenAPI spetsifikatsioonile on keelatud (403). Sul ei pruugi olla õigusi sellele ressursile jõuda.';
+                } else if (error.includes('500')) {
+                    errorMessage = 'Serveril tekkis viga (500) OpenAPI spetsifikatsiooni hankimisel.';
+                } else if (error.includes('timeout')) {
+                    errorMessage = 'Päring aegus. Server võib olla aeglane või kättesaamatu.';
+                } else {
+                    errorMessage = error;
                 }
             }
+
+            showError(outputTextarea, errorMessage);
+            copyButton.disabled = true;
+        });
+    }
+
+    // Helper function to show formatted error messages
+    function showError(textarea, message) {
+        textarea.value = '⚠️ VIGA: ' + message;
+        textarea.style.color = 'red';
+        setTimeout(() => {
+            textarea.style.color = ''; // Reset color after a delay
+        }, 5000);
+    }
+
+    // Helper function to extract the base URL from the swagger-ui-init.js URL
+    function getBaseUrlFromSwaggerUrl(swaggerUrl) {
+        if (!swaggerUrl) return null;
+
+        try {
+            // Create a URL object from the swagger URL
+            const urlObj = new URL(swaggerUrl);
+
+            // Just return the origin (protocol + hostname) without any path
+            // This ensures we get the root of the server (e.g., https://docs.eerovallistu.site)
+            return urlObj.origin;
+        } catch (e) {
+            console.error('Viga URL-i parsimisel:', e);
+            return null;
+        }
+    }
+
+    function copyPromptAndSpec() {
+        const promptTextarea = document.getElementById('promptTextarea');
+        const swaggerTextarea = document.getElementById('swaggerDocOutput');
+        const copyButton = document.getElementById('copyButton');
+        const originalButtonText = copyButton.innerHTML;
+
+        // Only proceed if there's content to copy
+        if (!swaggerTextarea.value.trim()) {
+            alert('OpenAPI spetsifikatsioon puudub. Palun hangi spetsifikatsioon enne kopeerimist.');
+            return;
         }
 
-        // Image modal functionality for comment images
-        function showImageModal(modalId, imageUrl, altText) {
-            // Remove any existing modal
-            const existingModal = document.querySelector('.image-modal-backdrop');
-            if (existingModal) {
-                existingModal.remove();
+        // Get the prompt text from the textarea (which exists for both admins and non-admins)
+        // For non-admins, this is a hidden textarea that still contains the prompt text
+        const promptText = promptTextarea.value;
+
+        // Combine the content from both textareas
+        const combinedText = promptText + '\n\n' + swaggerTextarea.value;
+
+        // Use the modern Clipboard API if available
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(combinedText)
+                .then(() => {
+                    // Visual feedback that copy was successful
+                    copyButton.innerHTML = '<i class="bi bi-check"></i> Kopeeritud!';
+                    setTimeout(() => {
+                        copyButton.innerHTML = originalButtonText;
+                    }, 1500);
+                })
+                .catch(err => {
+                    console.error('Teksti kopeerimine ebaõnnestus: ', err);
+                    // Fallback to the older method
+                    fallbackCopyTextToClipboard(combinedText);
+                });
+        } else {
+            // Fallback for browsers that don't support the Clipboard API
+            fallbackCopyTextToClipboard(combinedText);
+        }
+
+        // Fallback copy method using execCommand
+        function fallbackCopyTextToClipboard(text) {
+            // Create a temporary textarea
+            const tempTextarea = document.createElement('textarea');
+            tempTextarea.style.position = 'fixed';
+            tempTextarea.style.left = '-9999px';
+            tempTextarea.style.top = '0';
+            tempTextarea.value = text;
+            document.body.appendChild(tempTextarea);
+
+            // Select and copy the text
+            tempTextarea.focus();
+            tempTextarea.select();
+
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    // Visual feedback that copy was successful
+                    copyButton.innerHTML = '<i class="bi bi-check"></i> Kopeeritud!';
+                    setTimeout(() => {
+                        copyButton.innerHTML = originalButtonText;
+                    }, 1500);
+                } else {
+                    alert('Teksti kopeerimine ebaõnnestus');
+                }
+            } catch (err) {
+                console.error('Teksti kopeerimine ebaõnnestus: ', err);
+                alert('Teksti kopeerimine ebaõnnestus: ' + err);
+            } finally {
+                // Remove the temporary textarea
+                document.body.removeChild(tempTextarea);
             }
+        }
+    }
 
-            // Create modal backdrop
-            const modalBackdrop = document.createElement('div');
-            modalBackdrop.className = 'image-modal-backdrop';
-            modalBackdrop.onclick = function() {
-                closeImageModal();
-            };
+    // Image modal functionality for comment images
+    function showImageModal(modalId, imageUrl, altText) {
+        // Remove any existing modal
+        const existingModal = document.querySelector('.image-modal-backdrop');
+        if (existingModal) {
+            existingModal.remove();
+        }
 
-            // Create close button
-            const closeButton = document.createElement('span');
-            closeButton.className = 'image-modal-close';
-            closeButton.innerHTML = '&times;';
-            closeButton.onclick = function(e) {
-                e.stopPropagation();
-                closeImageModal();
-            };
+        // Create modal backdrop
+        const modalBackdrop = document.createElement('div');
+        modalBackdrop.className = 'image-modal-backdrop';
+        modalBackdrop.onclick = function() {
+            closeImageModal();
+        };
 
-            // Create image element
-            const modalImage = document.createElement('img');
-            modalImage.src = imageUrl;
-            modalImage.alt = altText || 'Suurendatud pilt';
-            modalImage.className = 'image-modal-content';
-            modalImage.onclick = function(e) {
-                e.stopPropagation(); // Prevent closing when clicking on image
-            };
+        // Create close button
+        const closeButton = document.createElement('span');
+        closeButton.className = 'image-modal-close';
+        closeButton.innerHTML = '&times;';
+        closeButton.onclick = function(e) {
+            e.stopPropagation();
+            closeImageModal();
+        };
 
-            // Handle image load error
-            modalImage.onerror = function() {
-                const errorDiv = document.createElement('div');
-                errorDiv.style.color = 'white';
-                errorDiv.style.textAlign = 'center';
-                errorDiv.style.fontSize = '18px';
-                errorDiv.innerHTML = '<i class="bi bi-exclamation-triangle"></i><br>Pilti ei õnnestunud laadida';
+        // Create image element
+        const modalImage = document.createElement('img');
+        modalImage.src = imageUrl;
+        modalImage.alt = altText || 'Suurendatud pilt';
+        modalImage.className = 'image-modal-content';
+        modalImage.onclick = function(e) {
+            e.stopPropagation(); // Prevent closing when clicking on image
+        };
 
-                modalBackdrop.innerHTML = '';
-                modalBackdrop.appendChild(closeButton);
-                modalBackdrop.appendChild(errorDiv);
-            };
+        // Handle image load error
+        modalImage.onerror = function() {
+            const errorDiv = document.createElement('div');
+            errorDiv.style.color = 'white';
+            errorDiv.style.textAlign = 'center';
+            errorDiv.style.fontSize = '18px';
+            errorDiv.innerHTML = '<i class="bi bi-exclamation-triangle"></i><br>Pilti ei õnnestunud laadida';
 
-            // Append elements
+            modalBackdrop.innerHTML = '';
             modalBackdrop.appendChild(closeButton);
-            modalBackdrop.appendChild(modalImage);
+            modalBackdrop.appendChild(errorDiv);
+        };
 
-            // Add to document
-            document.body.appendChild(modalBackdrop);
+        // Append elements
+        modalBackdrop.appendChild(closeButton);
+        modalBackdrop.appendChild(modalImage);
 
-            // Add keyboard event listener for ESC key
-            document.addEventListener('keydown', handleImageModalKeydown);
+        // Add to document
+        document.body.appendChild(modalBackdrop);
+
+        // Add keyboard event listener for ESC key
+        document.addEventListener('keydown', handleImageModalKeydown);
+    }
+
+    function closeImageModal() {
+        const modal = document.querySelector('.image-modal-backdrop');
+        if (modal) {
+            modal.remove();
         }
+        // Remove keyboard event listener
+        document.removeEventListener('keydown', handleImageModalKeydown);
+    }
 
-        function closeImageModal() {
-            const modal = document.querySelector('.image-modal-backdrop');
-            if (modal) {
-                modal.remove();
-            }
-            // Remove keyboard event listener
-            document.removeEventListener('keydown', handleImageModalKeydown);
+    function handleImageModalKeydown(e) {
+        if (e.key === 'Escape') {
+            closeImageModal();
         }
+    }
 
-        function handleImageModalKeydown(e) {
-            if (e.key === 'Escape') {
-                closeImageModal();
-            }
-        }
+    // Markdown parser function (handles both markdown and existing HTML)
+    function parseMarkdown(text) {
+        if (!text) return '';
 
-        // Markdown parser function (handles both markdown and existing HTML)
-        function parseMarkdown(text) {
-            if (!text) return '';
+        let html = text;
 
-            let html = text;
+        // Check if the text already contains HTML tags (like <p>, <img>, etc.)
+        if (html.includes('<img') || html.includes('<p>') || html.includes('</p>') || html.includes('<br')) {
 
-            // Check if the text already contains HTML tags (like <p>, <img>, etc.)
-            if (html.includes('<img') || html.includes('<p>') || html.includes('</p>') || html.includes('<br')) {
+            // If it contains img tags, enhance them for our modal functionality
+            html = html.replace(/<img\s+([^>]*?)src=["']([^"']+)["']([^>]*?)alt=["']([^"']*?)["']([^>]*?)\/?>/gi, function(match, beforeSrc, src, betweenSrcAlt, alt, afterAlt) {
 
-                // If it contains img tags, enhance them for our modal functionality
-                html = html.replace(/<img\s+([^>]*?)src=["']([^"']+)["']([^>]*?)alt=["']([^"']*?)["']([^>]*?)\/?>/gi, function(match, beforeSrc, src, betweenSrcAlt, alt, afterAlt) {
-
-                    const modalId = 'imageModal_' + Math.random().toString(36).substr(2, 9);
-                    return '<div class="image-preview-container mt-2 mb-2">' +
-                        '<img src="' + src + '" alt="' + alt + '" ' +
-                        'class="comment-image img-fluid rounded shadow-sm" ' +
-                        'style="max-height: 200px; cursor: pointer; border: 1px solid #dee2e6; opacity: 0; transition: opacity 0.3s ease;" ' +
-                        'onclick="showImageModal(\'' + modalId + '\', \'" + src + "\', \'" + alt + "\')" ' +
-                        'onload="this.style.opacity=1" ' +
-                        'onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'">' +
-                        '<div class="image-error text-muted small" style="display: none; padding: 10px; border: 1px dashed #ccc; border-radius: 5px;">' +
-                        '<i class="bi bi-image"></i> Pilti ei õnnestunud laadida' +
-                        '</div>' +
-                        '</div>';
-                });
-
-                // Also handle the alternative pattern where alt comes before src
-                html = html.replace(/<img\s+([^>]*?)alt=["']([^"']*?)["']([^>]*?)src=["']([^"']+)["']([^>]*?)\/?>/gi, function(match, beforeAlt, alt, betweenAltSrc, src, afterSrc) {
-
-                    const modalId = 'imageModal_' + Math.random().toString(36).substr(2, 9);
-                    return '<div class="image-preview-container mt-2 mb-2">' +
-                        '<img src="' + src + '" alt="' + alt + '" ' +
-                        'class="comment-image img-fluid rounded shadow-sm" ' +
-                        'style="max-height: 200px; cursor: pointer; border: 1px solid #dee2e6; opacity: 0; transition: opacity 0.3s ease;" ' +
-                        'onclick="showImageModal(\'' + modalId + '\', \'" + src + "\', \'" + alt + "\')" ' +
-                        'onload="this.style.opacity=1" ' +
-                        'onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'">' +
-                        '<div class="image-error text-muted small" style="display: none; padding: 10px; border: 1px dashed #ccc; border-radius: 5px;">' +
-                        '<i class="bi bi-image"></i> Pilti ei õnnestunud laadida' +
-                        '</div>' +
-                        '</div>';
-                });
-
-                return html;
-            }
-
-            // Escape HTML first
-            html = html.replace(/&/g, '&amp;');
-            html = html.replace(/</g, '&lt;');
-            html = html.replace(/>/g, '&gt;');
-
-            // Convert line breaks
-            html = html.replace(/\n/g, '<br>');
-
-            // Headers
-            html = html.replace(/^#### (.*$)/gim, '<h4>$1</h4>');
-            html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
-            html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
-            html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
-
-            // Bold
-            html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-            html = html.replace(/__(.*?)__/g, '<strong>$1</strong>');
-
-            // Italic
-            html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
-            html = html.replace(/_(.*?)_/g, '<em>$1</em>');
-
-            // Code blocks
-            html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
-
-            // Inline code
-            html = html.replace(/`(.*?)`/g, '<code>$1</code>');
-
-            // Images - handle before links to avoid conflicts
-            html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, function(match, alt, src) {
                 const modalId = 'imageModal_' + Math.random().toString(36).substr(2, 9);
                 return '<div class="image-preview-container mt-2 mb-2">' +
                     '<img src="' + src + '" alt="' + alt + '" ' +
@@ -2846,85 +2002,149 @@
                     '</div>';
             });
 
-            // Links
-            html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+            // Also handle the alternative pattern where alt comes before src
+            html = html.replace(/<img\s+([^>]*?)alt=["']([^"']*?)["']([^>]*?)src=["']([^"']+)["']([^>]*?)\/?>/gi, function(match, beforeAlt, alt, betweenAltSrc, src, afterSrc) {
 
-            // Unordered lists
-            html = html.replace(/^\* (.+)$/gm, '<li>$1</li>');
-            html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
-
-            // Ordered lists
-            html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
-            html = html.replace(/(<li>.*<\/li>)/s, function(match) {
-                if (match.includes('<ul>')) return match;
-                return '<ol>' + match + '</ol>';
+                const modalId = 'imageModal_' + Math.random().toString(36).substr(2, 9);
+                return '<div class="image-preview-container mt-2 mb-2">' +
+                    '<img src="' + src + '" alt="' + alt + '" ' +
+                    'class="comment-image img-fluid rounded shadow-sm" ' +
+                    'style="max-height: 200px; cursor: pointer; border: 1px solid #dee2e6; opacity: 0; transition: opacity 0.3s ease;" ' +
+                    'onclick="showImageModal(\'' + modalId + '\', \'" + src + "\', \'" + alt + "\')" ' +
+                    'onload="this.style.opacity=1" ' +
+                    'onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'">' +
+                    '<div class="image-error text-muted small" style="display: none; padding: 10px; border: 1px dashed #ccc; border-radius: 5px;">' +
+                    '<i class="bi bi-image"></i> Pilti ei õnnestunud laadida' +
+                    '</div>' +
+                    '</div>';
             });
-
-            // Blockquotes
-
-            html = html.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
-
-            // Horizontal rules
-            html = html.replace(/^---$/gm, '<hr>');
 
             return html;
         }
 
-        // Process all comments on page load
-        function processComments() {
-            const commentElements = document.querySelectorAll('.comment-text[data-raw-comment]');
+        // Escape HTML first
+        html = html.replace(/&/g, '&amp;');
+        html = html.replace(/</g, '&lt;');
+        html = html.replace(/>/g, '&gt;');
 
-            commentElements.forEach(function(element, index) {
+        // Convert line breaks
+        html = html.replace(/\n/g, '<br>');
 
-                const rawComment = element.getAttribute('data-raw-comment');
+        // Headers
+        html = html.replace(/^#### (.*$)/gim, '<h4>$1</h4>');
+        html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+        html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+        html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
 
-                if (rawComment) {
-                    const processedHtml = parseMarkdown(rawComment);
+        // Bold
+        html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        html = html.replace(/__(.*?)__/g, '<strong>$1</strong>');
 
-                    // Clear existing content and set new HTML
-                    element.innerHTML = '';
-                    element.innerHTML = processedHtml;
+        // Italic
+        html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+        html = html.replace(/_(.*?)_/g, '<em>$1</em>');
 
-                } else {
-                    // No raw comment data found for this element
-                }
-            });
+        // Code blocks
+        html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
 
-        }
+        // Inline code
+        html = html.replace(/`(.*?)`/g, '<code>$1</code>');
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const form = document.getElementById('newMessageForm');
-            const textarea = document.getElementById('newMessageContent');
-            const messageContainer = document.getElementById('assignmentMessageContainer');
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                const content = textarea.value.trim();
-                if (!content) return;
-                fetch('assignments/saveMessage', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded'
-                        },
-                        body: new URLSearchParams({
-                            assignmentId: assignment.assignmentId,
-                            userId: <?= $this->auth->userId ?>,
-                            content: content,
-                            teacherId: assignment.teacherId,
-                            teacherName: assignment.teacherName
-                        })
-                    })
-                    .then(res => res.json())
-                    .then(res => {
-                        if (res.status === 200 && res.data && res.data.message) {
-                            const msg = res.data.message;
-                            const div = document.createElement('div');
-                            div.className = 'message-item';
-                            div.innerHTML = `<span class='message-author'>${msg.userName}</span> <span class='message-time ms-2'>${msg.createdAt}</span><div class='message-content mt-1'>${msg.content.replace(/\n/g, '<br>')}</div>`;
-                            messageContainer.appendChild(div);
-                            textarea.value = '';
-                            messageContainer.scrollTop = messageContainer.scrollHeight;
-                        }
-                    });
-            });
+        // Images - handle before links to avoid conflicts
+        html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, function(match, alt, src) {
+            const modalId = 'imageModal_' + Math.random().toString(36).substr(2, 9);
+            return '<div class="image-preview-container mt-2 mb-2">' +
+                '<img src="' + src + '" alt="' + alt + '" ' +
+                'class="comment-image img-fluid rounded shadow-sm" ' +
+                'style="max-height: 200px; cursor: pointer; border: 1px solid #dee2e6; opacity: 0; transition: opacity 0.3s ease;" ' +
+                'onclick="showImageModal(\'' + modalId + '\', \'" + src + "\', \'" + alt + "\')" ' +
+                'onload="this.style.opacity=1" ' +
+                'onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'">' +
+                '<div class="image-error text-muted small" style="display: none; padding: 10px; border: 1px dashed #ccc; border-radius: 5px;">' +
+                '<i class="bi bi-image"></i> Pilti ei õnnestunud laadida' +
+                '</div>' +
+                '</div>';
         });
-    </script>
+
+        // Links
+        html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+
+        // Unordered lists
+        html = html.replace(/^\* (.+)$/gm, '<li>$1</li>');
+        html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+
+        // Ordered lists
+        html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+        html = html.replace(/(<li>.*<\/li>)/s, function(match) {
+            if (match.includes('<ul>')) return match;
+            return '<ol>' + match + '</ol>';
+        });
+
+        // Blockquotes
+
+        html = html.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
+
+        // Horizontal rules
+        html = html.replace(/^---$/gm, '<hr>');
+
+        return html;
+    }
+
+    // Process all comments on page load
+    function processComments() {
+        const commentElements = document.querySelectorAll('.comment-text[data-raw-comment]');
+
+        commentElements.forEach(function(element, index) {
+
+            const rawComment = element.getAttribute('data-raw-comment');
+
+            if (rawComment) {
+                const processedHtml = parseMarkdown(rawComment);
+
+                // Clear existing content and set new HTML
+                element.innerHTML = '';
+                element.innerHTML = processedHtml;
+
+            } else {
+                // No raw comment data found for this element
+            }
+        });
+
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('newMessageForm');
+        const textarea = document.getElementById('newMessageContent');
+        const messageContainer = document.getElementById('assignmentMessageContainer');
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const content = textarea.value.trim();
+            if (!content) return;
+            fetch('assignments/saveMessage', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: new URLSearchParams({
+                        assignmentId: assignment.assignmentId,
+                        userId: <?= $this->auth->userId ?>,
+                        content: content,
+                        teacherId: assignment.teacherId,
+                        teacherName: assignment.teacherName
+                    })
+                })
+                .then(res => res.json())
+                .then(res => {
+                    if (res.status === 200 && res.data && res.data.message) {
+                        const msg = res.data.message;
+                        const div = document.createElement('div');
+                        div.className = 'message-item';
+                        div.innerHTML = `<span class='message-author'>${msg.userName}</span> <span class='message-time ms-2'>${msg.createdAt}</span><div class='message-content mt-1'>${msg.content.replace(/\n/g, '<br>')}</div>`;
+                        messageContainer.appendChild(div);
+                        textarea.value = '';
+                        messageContainer.scrollTop = messageContainer.scrollHeight;
+                    }
+                });
+        });
+    });
+</script>
