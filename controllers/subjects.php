@@ -326,6 +326,47 @@ class subjects extends Controller
             }
         }
 
+        // Calculate pending grades for each student across all subjects in each group
+        if (!$this->isStudent) {
+            foreach ($groups as $groupName => &$group) {
+                // Initialize pending grades for each student
+                $pendingGrades = [];
+
+                foreach ($group['students'] as $studentId => $student) {
+                    $pendingCount = 0;
+
+                    // Count pending grades for this student across all subjects in this group
+                    foreach ($group['subjects'] as $subject) {
+                        foreach ($subject['assignments'] as $assignment) {
+                            if (isset($assignment['assignmentStatuses'][$studentId])) {
+                                $status = $assignment['assignmentStatuses'][$studentId];
+                                $grade = $status['grade'];
+                                $statusName = $status['assignmentStatusName'];
+
+                                // Count negative grades (1, 2, MA)
+                                if ($grade == 'MA' || $grade == '1' || $grade == '2') {
+                                    $pendingCount++;
+                                }
+                                // Count missing submissions where due date has passed
+                                elseif ($statusName === 'Esitamata' && $assignment['daysRemaining'] < 0) {
+                                    $pendingCount++;
+                                }
+                            } else {
+                                // No submission record and due date has passed
+                                if ($assignment['daysRemaining'] < 0) {
+                                    $pendingCount++;
+                                }
+                            }
+                        }
+                    }
+
+                    $pendingGrades[$studentId] = $pendingCount;
+                }
+
+                $group['pendingGrades'] = $pendingGrades;
+            }
+        }
+
         $this->statusClassMap = Assignment::statusClassMap($this->isStudent, $this->isTeacher);
         $this->groups = $groups;
 

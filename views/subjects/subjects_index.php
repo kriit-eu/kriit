@@ -34,6 +34,39 @@
         background-color: #fff8b3 !important;
     }
 
+    /* Student summary table styling */
+    .student-summary-table {
+        border-collapse: collapse !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+    }
+
+    .student-summary-table th {
+        background-color: #f2f2f2 !important;
+        border: 1px solid #dee2e6 !important;
+        padding: 8px 12px !important;
+    }
+
+    .student-summary-table td {
+        background-color: white !important;
+        border: 1px solid #dee2e6 !important;
+        padding: 8px 12px !important;
+    }
+
+    .student-summary-table th:hover {
+        background-color: #e9ecef !important;
+    }
+
+    /* Student row selection styling */
+    .student-row.selected {
+        background-color: #0d6efd !important;
+        color: white !important;
+    }
+
+    .student-row.selected td {
+        background-color: #0d6efd !important;
+        color: white !important;
+    }
+
     .text-center {
         text-align: center;
     }
@@ -311,6 +344,54 @@
 <div class="row <?= $isStudent ? 'student-view' : 'teacher-view' ?>">
     <?php foreach ($groups as $group): ?>
         <h1><?= $group['groupName'] ?></h1>
+
+        <?php if (!$isStudent && !empty($group['subjects'])): ?>
+            <!-- Student Summary Table -->
+            <div class="mb-4">
+                <h5>Õpilaste kokkuvõte</h5>
+                <table class="table table-bordered student-summary-table" data-group="<?= htmlspecialchars($group['groupName']) ?>" style="width: auto; background-color: white;">
+                    <thead>
+                        <tr>
+                            <th style="cursor: pointer; background-color: #f2f2f2;" onclick="sortStudentTableByElement(this, 'name')">
+                                <b>Õpilane</b>
+                                <i class="fas fa-sort"></i>
+                            </th>
+                            <th style="cursor: pointer; background-color: #f2f2f2; text-align: center;" onclick="sortStudentTableByElement(this, 'pending')">
+                                <b>Võlad</b>
+                                <i class="fas fa-sort"></i>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($group['students'] as $s): ?>
+                            <?php
+                                $pendingCount = $group['pendingGrades'][$s['userId']] ?? 0;
+                                $isInactive = isset($s['userIsActive']) && !$s['userIsActive'];
+                                $isDeleted = isset($s['userDeleted']) && $s['userDeleted'] == 1;
+                                $statusText = '';
+                                $cssClass = '';
+                                if ($isDeleted) {
+                                    $statusText = ' (kustutatud)';
+                                    $cssClass = 'deleted-student';
+                                } elseif ($isInactive) {
+                                    $statusText = ' (mitteaktiivne)';
+                                    $cssClass = 'inactive-student';
+                                }
+                            ?>
+                            <tr class="<?= $cssClass ?> student-row" data-student-id="<?= $s['userId'] ?>" data-student-name="<?= htmlspecialchars($s['userName']) ?>" style="cursor: pointer;" onclick="toggleStudentFilter(this)">
+                                <td data-sort-value="<?= htmlspecialchars($s['userName']) ?>" style="background-color: white;">
+                                    <?= htmlspecialchars($s['userName']) ?><?= $statusText ?>
+                                </td>
+                                <td data-sort-value="<?= $pendingCount ?>" class="text-center" style="background-color: white; color: <?= $pendingCount > 0 ? '#dc3545' : '#28a745' ?>; font-weight: bold;">
+                                    <?= $pendingCount ?>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        <?php endif; ?>
+
         <div class="table-responsive" style="background-color: transparent;">
             <table id="subject-table" class="table table-bordered" style="background-color: transparent; table-layout: fixed !important;">
 
@@ -365,6 +446,7 @@
                             <?php endforeach; ?>
                         <?php endif; ?>
                     </tr>
+
                     <?php if (!empty($subject['assignments'])): ?>
                         <?php foreach ($subject['assignments'] as $a): ?>
                             <tr>
@@ -437,8 +519,8 @@
                                                 $statusTooltip = 'Mitteaktiivne õpilane';
                                             }
 
-                                            $statusTooltipText = $isUngraded ? 
-                                                ($cssClass ? "$statusTooltip, hindamata" : "Hindamata") : 
+                                            $statusTooltipText = $isUngraded ?
+                                                ($cssClass ? "$statusTooltip, hindamata" : "Hindamata") :
                                                 ($cssClass ? $statusTooltip : "");
                                         ?>
                                         <td class="<?= $status['class'] ?> text-center <?= $cssClass ?> <?= ($status['class'] === 'red-cell' && isset($status['daysPassed']) && $status['daysPassed'] > 0) ? 'red-cell-intensity' : '' ?>"
@@ -446,7 +528,8 @@
                                             data-bs-placement="bottom"
                                             data-bs-html="true"
                                             title="<?= nl2br(htmlspecialchars(($statusTooltipText ? $statusTooltipText . "\n" : '') . $status['tooltipText'])) ?>"
-                                            data-grade="<?= is_numeric($status['grade']) ? intval($status['grade']) : '' ?>"
+                                            data-grade="<?= is_numeric($status['grade']) ? intval($status['grade']) : ($status['grade'] ?: '') ?>"
+                                            data-student-id="<?= $s['userId'] ?>"
                                             data-is-student="<?= json_encode($this->isStudent) ?>"
                                             data-days-passed="<?= $status['daysPassed'] ?? 0 ?>"
                                             data-url="assignments/<?= $a['assignmentId'] ?>?group=<?= urlencode($group['groupName']) ?>">
@@ -492,6 +575,269 @@
 </div>
 
 <script>
+    // Student table sorting functionality - make functions global
+    var sortStates = {}; // Track sort state for each group
+
+    // Make functions global so onclick handlers can access them
+    window.sortStudentTableByElement = function(element, column) {
+        console.log('sortStudentTableByElement called with column:', column);
+        // Get the group name from the table element
+        const table = element.closest('table');
+        const groupName = table.getAttribute('data-group');
+        console.log('Found group name:', groupName);
+        window.sortStudentTable(groupName, column);
+    };
+
+    window.sortStudentTable = function(groupName, column) {
+        console.log('sortStudentTable called for group:', groupName, 'column:', column);
+        // Find table using a more robust selector
+        const tables = document.querySelectorAll('table.student-summary-table');
+        let table = null;
+
+        for (let t of tables) {
+            if (t.getAttribute('data-group') === groupName) {
+                table = t;
+                break;
+            }
+        }
+
+        if (!table) {
+            console.log('Table not found for group:', groupName);
+            return;
+        }
+
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+
+        if (rows.length === 0) {
+            console.log('No rows found in table');
+            return;
+        }
+
+        // Initialize sort state if not exists
+        if (!sortStates[groupName]) {
+            sortStates[groupName] = { name: 'none', pending: 'none' };
+        }
+
+        // Determine new sort direction
+        let newDirection;
+        if (sortStates[groupName][column] === 'none' || sortStates[groupName][column] === 'desc') {
+            newDirection = 'asc';
+        } else {
+            newDirection = 'desc';
+        }
+
+        // Reset all sort states for this group
+        sortStates[groupName] = { name: 'none', pending: 'none' };
+        sortStates[groupName][column] = newDirection;
+
+        // Update sort icons
+        updateSortIcons(groupName);
+
+        // Sort rows
+        rows.sort((a, b) => {
+            let aValue, bValue;
+
+            if (column === 'name') {
+                const aCell = a.querySelector('td[data-sort-value]');
+                const bCell = b.querySelector('td[data-sort-value]');
+                aValue = aCell ? aCell.getAttribute('data-sort-value').toLowerCase() : '';
+                bValue = bCell ? bCell.getAttribute('data-sort-value').toLowerCase() : '';
+            } else if (column === 'pending') {
+                const aCells = a.querySelectorAll('td[data-sort-value]');
+                const bCells = b.querySelectorAll('td[data-sort-value]');
+                aValue = aCells.length > 1 ? parseInt(aCells[1].getAttribute('data-sort-value')) : 0;
+                bValue = bCells.length > 1 ? parseInt(bCells[1].getAttribute('data-sort-value')) : 0;
+            }
+
+            if (newDirection === 'asc') {
+                return aValue > bValue ? 1 : -1;
+            } else {
+                return aValue < bValue ? 1 : -1;
+            }
+        });
+
+        // Re-append sorted rows
+        rows.forEach(row => tbody.appendChild(row));
+
+        console.log(`Sorted ${rows.length} rows by ${column} in ${newDirection} order`);
+    };
+
+    // Student filtering functionality
+    var selectedStudentId = null;
+
+    window.toggleStudentFilter = function(rowElement) {
+        const studentId = rowElement.getAttribute('data-student-id');
+        const studentName = rowElement.getAttribute('data-student-name');
+
+        console.log('Toggling filter for student:', studentName, 'ID:', studentId);
+
+        // Clear previous selection styling
+        document.querySelectorAll('.student-row').forEach(row => {
+            row.classList.remove('selected');
+        });
+
+        // If clicking the same student, remove filter
+        if (selectedStudentId === studentId) {
+            selectedStudentId = null;
+            showAllAssignments();
+            console.log('Filter removed');
+        } else {
+            // Select new student and apply filter
+            selectedStudentId = studentId;
+
+            // Add selected class for styling
+            rowElement.classList.add('selected');
+
+            // Apply filter to show only problematic assignments for this student
+            filterAssignmentsByStudent(studentId);
+            console.log('Filter applied for student:', studentName);
+        }
+    };
+
+    function filterAssignmentsByStudent(studentId) {
+        console.log('Filtering assignments for student ID:', studentId);
+
+        // Get all assignment tables (the main grade tables)
+        const assignmentTables = document.querySelectorAll('#subject-table');
+
+        assignmentTables.forEach(table => {
+            const assignmentRows = table.querySelectorAll('tr');
+            const subjectVisibility = new Map(); // Track which subjects have visible assignments
+
+            // First pass: process assignment rows and track subject visibility
+            assignmentRows.forEach(row => {
+                // Skip student summary table rows
+                if (row.closest('.student-summary-table')) {
+                    return;
+                }
+
+                // Check if this is a subject header row (has th elements)
+                const isSubjectHeader = row.querySelector('th');
+
+                if (isSubjectHeader) {
+                    // Initialize subject visibility tracking
+                    const subjectText = row.textContent.trim();
+                    if (!subjectVisibility.has(subjectText)) {
+                        subjectVisibility.set(subjectText, false);
+                    }
+                    return;
+                }
+
+                // This is an assignment row - check if student has problems
+                const studentCell = row.querySelector(`td[data-student-id="${studentId}"]`);
+                let hasProblems = false;
+
+                if (studentCell) {
+                    const grade = studentCell.getAttribute('data-grade');
+                    const cellClass = studentCell.className;
+
+                    // Check if this is a problematic assignment
+                    // Problems: red cells (missing/late), grades 1, 2, MA
+                    if (cellClass.includes('red-cell') ||
+                        grade === '1' || grade === '2' || grade === 'MA') {
+                        hasProblems = true;
+                    }
+                }
+
+                // Show/hide the assignment row based on whether it has problems
+                if (hasProblems) {
+                    row.style.display = '';
+                    // Mark this subject as having visible assignments
+                    const subjectName = findSubjectForRow(row);
+                    if (subjectName) {
+                        subjectVisibility.set(subjectName, true);
+                    }
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            // Second pass: handle subject header visibility and entire table visibility
+            let tableHasVisibleContent = false;
+
+            assignmentRows.forEach(row => {
+                // Skip student summary table rows
+                if (row.closest('.student-summary-table')) {
+                    return;
+                }
+
+                const isSubjectHeader = row.querySelector('th');
+
+                if (isSubjectHeader) {
+                    const subjectText = row.textContent.trim();
+                    const hasVisibleAssignments = subjectVisibility.get(subjectText) || false;
+
+                    if (hasVisibleAssignments) {
+                        row.style.display = '';
+                        tableHasVisibleContent = true;
+                        console.log('Showing subject header:', subjectText);
+                    } else {
+                        row.style.display = 'none';
+                        console.log('Hiding subject header:', subjectText);
+                    }
+                }
+            });
+
+            // Hide the entire table and its preceding spacing div if no content is visible
+            if (!tableHasVisibleContent) {
+                table.style.display = 'none';
+
+                // Also hide the spacing div that precedes this table
+                const prevElement = table.previousElementSibling;
+                if (prevElement && prevElement.tagName === 'DIV' && prevElement.style.height === '20px') {
+                    prevElement.style.display = 'none';
+                    console.log('Hiding spacing div before empty table');
+                }
+            } else {
+                table.style.display = '';
+
+                // Show the spacing div if the table is visible
+                const prevElement = table.previousElementSibling;
+                if (prevElement && prevElement.tagName === 'DIV' && prevElement.style.height === '20px') {
+                    prevElement.style.display = '';
+                }
+            }
+        });
+    }
+
+    function findSubjectForRow(assignmentRow) {
+        // Find the subject header that precedes this assignment row
+        let currentRow = assignmentRow.previousElementSibling;
+        while (currentRow) {
+            const isSubjectHeader = currentRow.querySelector('th');
+            if (isSubjectHeader) {
+                return currentRow.textContent.trim();
+            }
+            currentRow = currentRow.previousElementSibling;
+        }
+        return null;
+    }
+
+    function showAllAssignments() {
+        console.log('Showing all assignments');
+
+        // Show all assignment tables and their spacing divs
+        const assignmentTables = document.querySelectorAll('#subject-table');
+
+        assignmentTables.forEach(table => {
+            // Show the table
+            table.style.display = '';
+
+            // Show the spacing div that precedes this table
+            const prevElement = table.previousElementSibling;
+            if (prevElement && prevElement.tagName === 'DIV' && prevElement.style.height === '20px') {
+                prevElement.style.display = '';
+            }
+
+            // Show all rows in the table
+            const rows = table.querySelectorAll('tr');
+            rows.forEach(row => {
+                row.style.display = '';
+            });
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         // Initialize tooltips
         [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
@@ -582,5 +928,60 @@
 
             // Note: For teachers, we don't need to modify badges here as it's handled server-side
         });
+
+        // Initialize student table sorting
+        initializeStudentTableSorting();
     });
+
+    function initializeStudentTableSorting() {
+        console.log('Initializing student table sorting...');
+        const tables = document.querySelectorAll('.student-summary-table');
+        console.log('Found', tables.length, 'student summary tables');
+
+        // Initialize sort states for all groups and apply default sorting
+        tables.forEach(table => {
+            const groupName = table.getAttribute('data-group');
+            console.log('Initializing table for group:', groupName);
+            sortStates[groupName] = { name: 'none', pending: 'none' };
+
+            // Apply default sort by pending grades (ascending - least missing at top)
+            window.sortStudentTable(groupName, 'pending');
+        });
+    }
+
+    function updateSortIcons(groupName) {
+        // Find icons using a more robust method
+        const tables = document.querySelectorAll('table.student-summary-table');
+        let table = null;
+
+        for (let t of tables) {
+            if (t.getAttribute('data-group') === groupName) {
+                table = t;
+                break;
+            }
+        }
+
+        if (!table) return;
+
+        const nameIcon = table.querySelector('th:first-child i');
+        const pendingIcon = table.querySelector('th:last-child i');
+
+        if (nameIcon) {
+            nameIcon.className = 'fas fa-sort';
+            if (sortStates[groupName] && sortStates[groupName].name === 'asc') {
+                nameIcon.className = 'fas fa-sort-up';
+            } else if (sortStates[groupName] && sortStates[groupName].name === 'desc') {
+                nameIcon.className = 'fas fa-sort-down';
+            }
+        }
+
+        if (pendingIcon) {
+            pendingIcon.className = 'fas fa-sort';
+            if (sortStates[groupName] && sortStates[groupName].pending === 'asc') {
+                pendingIcon.className = 'fas fa-sort-up';
+            } else if (sortStates[groupName] && sortStates[groupName].pending === 'desc') {
+                pendingIcon.className = 'fas fa-sort-down';
+            }
+        }
+    }
 </script>
