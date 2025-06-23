@@ -1,88 +1,119 @@
 # Kriit
 
-Käesolev rakendus on loodud kutsekooli IT erialade sisseastumiskatsete läbiviimiseks ja iseseisvate tööde esitamiseks ja hindamiseks.
+Veebirakendus kutsekoolide IT-erialadele
 
-## Funktsionaalsus
+* sisseastumiskatsete korraldamiseks
+* iseseisvate tööde esitamiseks ja hindamiseks
 
-- Administraator saab lisada kandidaate ja nende isikukoodi alusel kandidaatidele katseid määrata.
-- Administraator saab lisada katseülesandeid.
-- Kandidaadid saavad isikukoodi alusel sisse logida ja katseid lahendada.
-- Administraator saab vaadata kandidaatide tulemusi ja pingerida kandidaate.
-- Administraator saab vaadata kandidaatide poolt lahendatud katseid.
-- Administraator saab vaadata sündmuslogisid.
-- Õpetajad saavad Tahvlisse lisatud ülesandeid automaatselt ka Kriiti lisada, et saada keskne ülevaade, kes mis ülesande on (mitte)esitanud ja võimaldada ülesandeid hõlpsasti tagasi lükata või hinnata (nõuab [Õpetaja assistent](http://kriit.eu/opetaja-assistent) Chrome'i laiendust ja õpetajale API võtme genereerimist administraatori poolt)
-- Õpilased saavad ülesannetele lahendusi ja nende parandusi esitada.
-- Õpetajad saavad esitatud ülesannete kohta teavitusi.
+---
 
-## Eeldused
+## Peamised võimalused
 
-- Docker on paigaldatud
-- Bun on paigaldatud
+### Administraator saab
 
-Rakendus kasutab Docker Compose'i mitme konteineriga arhitektuuri:
-- **nginx** - veebserver
-- **app** - PHP-FPM rakendusserver
-- **db** - MariaDB andmebaasiserver
-- **phpmyadmin** - andmebaasi haldusliides
-- **mailhog** - e-kirjade testimiseks
+- lisada kandidaate ja katseülesandeid
+- määrata katseülesannete lahendamiseks piiraja
+- näha pingerida ja sündmuslogisid
+- näha, kes millised katseülesanded lahendas
+- piirata kandidaatide sisselogimist IP-aadressi põhiselt
 
-## Kiire juhend
+### Õpetaja saab
 
-1. Käivitage rakendus: `bun start`
-2. Külastage http://localhost:8080 ja logige sisse:
-   - administraatori kasutaja `41111111115`, parool `demo`
-   - tavakasutaja `31111111114`, parool `demo`
+- sünkroonida Tahvli iseseisvaid töid Kriiti<sup>📌</sup>
+- teavitusi lahenduste esitustest
+- hinnata või tagasilükata ja kommenteerida lahendusi
+- sünkroonida hinded Tahvlisse<sup>📌</sup>
 
-### Peamised käsud
+<sup>📌 Vajab [Õpetaja assistent 2](http://kriit.eu/opetaja-assistent2) Chrome'i laiendust ja API võtme määramist.</sup>
+
+### Kandidaat saab
+
+- isikukoodiga sisselogida
+- lahendada katseülesandeid
+- näha, palju aega järel on
+- näha, millised katseülesanded on olemas
+- näha, millised katseülesanded on lahendatud
+
+### Õppija saab
+
+- näha oma iseseisvaid töid:
+    - mis vaja esitada,
+    - mis kontrollimisel,
+    - mis hinnatud ja mis hindega
+- meeldetuletusi tööde tähtaegade kohta
+- teavitusi hinnatud tööde kohta
+- vastata õpetaja kommentaaridele
+
+---
+
+## Nõuded keskkonnale
+
+- **Docker** või muu konteinerihaldustarkvara
+    - macOS-i kasutajatele on Dockeri jõudlusprobleemide tõttu parem valik [OrbStack](https://orbstack.dev/).
+- [Bun](https://bun.sh/) - Node'i kiirem alternatiiv, millele see projekt üles ehitatud on.
+
+## Kiire start
+
+1. Tee koopia config.php failist ja seadista see vastavalt oma keskkonnale. Kui kasutada Dockerit, siis pole vaja muuta midagi, kuid meilid tulevad siis MailHogi:
+   ```bash
+   cp config.php.sample config.php
+   ```
+2. Käivita alljärgnev käsk, et paigaldada sõltuvused ja käivitada konteinerid
+   ```bash
+   bun start 
+   ```
+2. Ava **[http://localhost:8080](http://localhost:8080)** ja logi sisse:
+    - *admin* — `41111111115` `demo`
+    - *õppija* — `31111111114` `demo`
+
+### Konteinerid
+
+| Teenus     | Kirjeldus   | Aadress                                            |
+|------------|-------------|----------------------------------------------------|
+| nginx      | veebiserver | [http://localhost:8080](http://localhost:8080)     |
+| phpMyAdmin | DB-haldus   | [http://localhost:8081](http://localhost:8081)     |
+| MailHog    | testmeilid  | [http://localhost:8025](http://localhost:8025)     |
+| MariaDB    | andmebaas   | Konteineritest `db:8006`, väljast `localhost:8006` |
+
+### Kasulikud käsud
 
 ```bash
-bun start   # Rakenduse käivitamine
-bun stop    # Rakenduse peatamine
-bun restart # Rakenduse taaskäivitamine
+bun stop            # peata ja eemalda kõik konteinerid
+bun restart         # taaskäivita rakendus
+bun logs[:teenus]   # logid (nginx, app, db …)
 
-bun logs              # Kõigi konteinerite logide vaatamine
-bun logs:nginx        # Nginx logide vaatamine
-bun logs:app          # PHP rakenduse logide vaatamine
-bun logs:db           # MariaDB logide vaatamine
-bun logs:phpmyadmin   # phpMyAdmin logide vaatamine
-bun logs:mailhog      # MailHog logide vaatamine
+bun composer        # Composer: nt bun composer install
+bun db:import       # impordib doc/database.sql failist andmed andmebaasi
+bun db:export       # ekspordib andmebaasist andmed doc/database.sql faili
 
-bun composer # Composer käskude käivitamine
-bun db:import # Andmebaasi import doc/database.sql failist
-bun db:export # Andmebaasi eksport doc/database.sql faili
-
-bun shell    # PHP konteineri shelli avamine
-bun shell:db # Andmebaasi konteineri shelli avamine
+bun shell           # PHP konteiner
+bun shell:db        # DB konteiner
 ```
+
+---
 
 ## Arendus
 
-### Harunimede konventsioon
+### Harunimed
 
-Selles projektis kasutame kindlat harunimede formaati, et hoida ajalugu selge ja seostatuna tööülesannetega. Iga haru nimi peab sellele mustrile:
+Enne iga uue haru loomist tuleb luua uus GitHub'i issue ja kasutada selle numbrit haru nime alguses:
 
-- **Formaat:** `<issue-number>_<description_in_snake_case>`
-- **Näide:** `42_lisa_kasutaja_profiil`
+`<issue-number>_<kirjeldus_snake_case>`
 
-Selle reegli jõustamiseks kasutame `pre-push` Git hook'i, mida haldab **Husky**. See tähendab, et enne koodi üleslaadimist (`git push`) kontrollitakse automaatselt, kas haru nimi vastab formaadile.
+Näide: `42_lisa_kasutaja_profiil`
 
-### Juurdepääsupunktid
+### MariaDB sätted
 
-- **Rakendus**: http://localhost:8080
-- **phpMyAdmin**: http://localhost:8081
-- **MailHog veebiliides**: http://localhost:8025
+```text
+host: (konteineris: db, väljastpoolt 127.0.0.1)
+port: 8006
+user: root
+pass: kriitkriit
+db:   kriit
+```
 
-### Andmebaasi andmed
+Näide:
 
-- **Andmebaas**: kriit
-- **Kasutajanimi**: root
-- **Parool**: kriitkriit
-- **Host**: localhost (väliselt) / db (konteinerite vahel)
-- **Port**: 8006
-
-### Otse andmebaasiga ühendamine
-
-Väliselt saate ühenduda andmebaasiga:
 ```bash
-mysql -h127.0.0.1 -P8006 -uroot -pkriitkriit kriit
+mysql -h 127.0.0.1 -P8006 -uroot -pkriitkriit kriit
 ```
