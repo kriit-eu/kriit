@@ -50,7 +50,11 @@ class images extends Controller
             // Set appropriate headers
             header('Content-Type: ' . $image['processedMimeType']);
             header('Content-Length: ' . strlen($image['imageData']));
-            header('Cache-Control: public, max-age=31536000'); // Cache for 1 year
+
+            // Override session cache-busting headers for images
+            header('Cache-Control: public, max-age=2592000'); // Cache for 30 days
+            header('Expires: ' . gmdate('D, d M Y H:i:s', time() + 2592000) . ' GMT'); // 30 days from now
+            header('Pragma: cache'); // Override session's no-cache
 
             // Sanitize filename to prevent header injection
             $safeFilename = preg_replace('/[^\w\-_\.]/', '_', $image['originalFilename']);

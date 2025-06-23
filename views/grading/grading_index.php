@@ -2445,7 +2445,7 @@
         }
 
         function insertImageMarkdown(imageId, fileName) {
-            const imageMarkdown = `![${fileName}](<?= BASE_URL ?>images/${imageId})`;
+            const imageMarkdown = `![${fileName}](images/${imageId})`;
             
             // Get current cursor position and insert markdown
             const cursorPos = textarea.selectionStart;
@@ -2495,7 +2495,7 @@
     // Function to display images in messages
     function displayMessageImage(imageId) {
         if (!imageId) return '';
-        return `<img src="<?= BASE_URL ?>images/${imageId}" class="message-image" alt="Attached image">`;
+        return `<img src="images/${imageId}" class="message-image" alt="Attached image">`;
     }
 
     // Auto-resize textarea to fit content (infinite expansion)
