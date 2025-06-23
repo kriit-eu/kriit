@@ -119,6 +119,9 @@ class grading extends Controller
             }
         }
 
+        // Unset the reference to prevent bugs in subsequent loops
+        unset($submission);
+
         // Get distinct subjects and assign rainbow colors
         $distinctSubjects = [];
         foreach ($submissions as $submission) {
