@@ -82,12 +82,32 @@ class subjects extends Controller
         }
     }
 
+    private function userMeta(array $user): array
+    {
+        $inactive = isset($user['userIsActive']) && !$user['userIsActive'];
+        $deleted = isset($user['userDeleted']) && $user['userDeleted'] == 1;
+
+        return [
+            'inactive' => $inactive,
+            'deleted' => $deleted,
+            'css' => $deleted ? 'deleted-student' : ($inactive ? 'inactive-student' : ''),
+            'status' => $deleted ? ' (kustutatud)' : ($inactive ? ' (mitteaktiivne)' : '')
+        ];
+    }
+
+    private function splitName(string $full): array
+    {
+        $parts = explode(' ', $full);
+        return ['first' => implode(' ', array_slice($parts, 0, -1)), 'last' => end($parts)];
+    }
+
     public function index()
     {
         $this->template = $this->auth->userIsAdmin ? 'admin' : 'master';
-        // Define user roles
+
         $this->isStudent = $this->auth->groupId && !$this->auth->userIsAdmin && !$this->auth->userIsTeacher;
         $this->isTeacher = $this->auth->userIsTeacher;
+        $this->isTeacherOrAdmin = $this->auth->userIsAdmin || $this->auth->userIsTeacher;
 
         // Check if we should show inactive students
         $this->showAll = isset($_GET['showAll']) && $_GET['showAll'] == '1';
@@ -166,7 +186,7 @@ class subjects extends Controller
             }
 
             // Add or update student in group
-            $groups[$groupName]['students'][$studentId] = [
+            $studentData = [
                 'userName' => $row['studentName'],
                 'subjectId' => $subjectId,
                 'status' => $row['assignmentStatusName'] ?? 'Esitamata',
@@ -176,6 +196,14 @@ class subjects extends Controller
                 'initials' => mb_substr($row['studentName'] ?? '', 0, 1)
                     . mb_substr(mb_strrpos($row['studentName'] ?? '', ' ') + 1, 1)
             ];
+
+            $meta = $this->userMeta($studentData);
+            $split = $this->splitName($studentData['userName']);
+
+            $studentData['meta'] = $meta;
+            $studentData['nameSplit'] = $split;
+
+            $groups[$groupName]['students'][$studentId] = $studentData;
 
             // Add or update subject in group
             if (!isset($groups[$groupName]['subjects'][$subjectId])) {
@@ -367,9 +395,42 @@ class subjects extends Controller
             }
         }
 
+        // Process assignment badge logic for each assignment
+        foreach ($groups as &$group) {
+            foreach ($group['subjects'] as &$subject) {
+                foreach ($subject['assignments'] as &$assignment) {
+                    $assignment['showDueDate'] = $this->shouldShowDueDate($assignment);
+                    $assignment['finalBadgeClass'] = $this->getFinalBadgeClass($assignment);
+                }
+            }
+        }
+
         $this->statusClassMap = Assignment::statusClassMap($this->isStudent, $this->isTeacher);
         $this->groups = $groups;
+    }
 
+    private function shouldShowDueDate(array $assignment): bool
+    {
+        if ($this->isStudent) {
+            $uid = $this->auth->userId;
+            if (isset($assignment['assignmentStatuses'][$uid])) {
+                $status = $assignment['assignmentStatuses'][$uid];
+                $grade = $status['grade'] ?? '';
+                $passed = (is_numeric($grade) && intval($grade) >= 3) || ($grade !== '' && $grade !== 'MA');
+                return !$passed;
+            }
+            return true;
+        } else {
+            return empty($assignment['assignmentDueAt']);
+        }
+    }
 
+    private function getFinalBadgeClass(array $assignment): string
+    {
+        if ($this->isStudent) {
+            return $assignment['badgeClass'];
+        } else {
+            return empty($assignment['assignmentDueAt']) ? 'badge bg-danger' : $assignment['badgeClass'];
+        }
     }
 }
