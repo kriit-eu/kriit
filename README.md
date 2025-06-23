@@ -55,6 +55,19 @@ bun shell    # PHP konteineri shelli avamine
 bun shell:db # Andmebaasi konteineri shelli avamine
 ```
 
+## Arendus
+
+### Harunimede konventsioon
+
+Selles projektis kasutame kindlat harunimede formaati, et hoida ajalugu selge ja seostatuna tööülesannetega. Iga haru nimi peab sellele mustrile:
+
+- **Formaat:** `<issue-number>_<description_in_snake_case>`
+- **Näide:** `42_lisa_kasutaja_profiil`
+
+Selle reegli jõustamiseks kasutame `pre-push` Git hook'i, mida haldab **Husky**. See tähendab, et enne koodi üleslaadimist (`git push`) kontrollitakse automaatselt, kas haru nimi vastab formaadile.
+
+**NB!** Veendu, et oled käivitanud `bun install`, et Husky ja sellega seotud hookid oleksid sinu lokaalses arenduskeskkonnas aktiveeritud.
+
 ### Juurdepääsupunktid
 
 - **Rakendus**: http://localhost:8080

@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# Hangi aktiivne haru
+branch_name=$(git rev-parse --abbrev-ref HEAD)
+
+# Luba pushid 'main' ja 'master' harudele
+if [[ "$branch_name" == "main" || "$branch_name" == "master" ]]; then
+  exit 0
+fi
+
+# Kontrolli mustrit: number + alakriips + sõnad alakriipsudega
+if [[ ! "$branch_name" =~ ^[0-9]+_[a-z0-9_]+$ ]]; then
+  echo "❌ Viga: Haru nimi '$branch_name' ei vasta formaadile: number_snake_case_nimi"
+  echo "Näide: 42_edit_assignment_criteria"
+  exit 1
+fi
+
+exit 0

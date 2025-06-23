@@ -1,0 +1,22 @@
+name: Check branch name format
+
+on:
+  push:
+    branches-ignore:
+      - main
+  pull_request:
+
+jobs:
+  check_branch_name:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check branch name matches pattern
+        run: |
+          BRANCH_NAME="${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
+          echo "Current branch: $BRANCH_NAME"
+
+          if [[ ! "$BRANCH_NAME" =~ ^[0-9]+_[a-z0-9_]+$ ]]; then
+            echo "❌ Haru nimi peab olema kujul: number_snake_case_nimi"
+            echo "Näide: 42_edit_assignment_criteria"
+            exit 1
+          fi

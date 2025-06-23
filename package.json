@@ -3,29 +3,25 @@
   "version": "1.0.0",
   "description": "Viljandi Kutseõppekeskuse kodutööde ja hinnete haldamise rakendus",
   "scripts": {
-    "start":   "bun scripts/start.js",
-    "stop":    "docker compose -f docker/docker-compose.yml down",
+    "start": "bun install && bun scripts/start.js",
+    "stop": "docker compose -f docker/docker-compose.yml down",
     "restart": "bun run stop && bun run start",
-
-    "logs":          "docker compose -f docker/docker-compose.yml logs -f",
-    "logs:app":      "docker compose -f docker/docker-compose.yml logs -f app",
-    "logs:nginx":    "docker compose -f docker/docker-compose.yml logs -f nginx",
-    "logs:db":       "docker compose -f docker/docker-compose.yml logs -f db",
-    "logs:mailhog":  "docker compose -f docker/docker-compose.yml logs -f mailhog",
+    "logs": "docker compose -f docker/docker-compose.yml logs -f",
+    "logs:app": "docker compose -f docker/docker-compose.yml logs -f app",
+    "logs:nginx": "docker compose -f docker/docker-compose.yml logs -f nginx",
+    "logs:db": "docker compose -f docker/docker-compose.yml logs -f db",
+    "logs:mailhog": "docker compose -f docker/docker-compose.yml logs -f mailhog",
     "logs:phpmyadmin": "docker compose -f docker/docker-compose.yml logs -f phpmyadmin",
-
-    "composer":  "docker compose -f docker/docker-compose.yml exec app composer",
+    "composer": "docker compose -f docker/docker-compose.yml exec app composer",
     "db:import": "docker compose -f docker/docker-compose.yml exec app php scripts/refreshdb.php --restore",
     "db:export": "docker compose -f docker/docker-compose.yml exec app php scripts/refreshdb.php --dump",
-
-    "shell":     "docker compose -f docker/docker-compose.yml exec app /bin/bash",
-    "shell:db":  "docker compose -f docker/docker-compose.yml exec db /bin/sh",
-
+    "shell": "docker compose -f docker/docker-compose.yml exec app /bin/bash",
+    "shell:db": "docker compose -f docker/docker-compose.yml exec db /bin/sh",
     "refreshdb": "docker compose -f docker/docker-compose.yml exec app php refreshdb.php",
-
     "build:force": "bun scripts/force-rebuild.js",
     "build:clean": "bun scripts/clean-build.js",
-    "checksums:reset": "rm -f .docker-checksums.json && echo 'Docker checksums reset. Next start will rebuild all images.'"
+    "checksums:reset": "rm -f .docker-checksums.json && echo 'Docker checksums reset. Next start will rebuild all images.'",
+    "prepare": "husky"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^6.7.2",
@@ -37,6 +33,7 @@
     "jsdom": "^24.1.1"
   },
   "devDependencies": {
-    "glob": "^10.3.0"
+    "glob": "^10.3.0",
+    "husky": "^9.1.7"
   }
 }
