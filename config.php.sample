@@ -1,13 +1,20 @@
 <?php
 
-const ENV = 'ENV_DEVELOPMENT';
+const ENV = 0; // ENV_DEVELOPMENT;
 
 // Local configuration
-const DATABASE_HOSTNAME = 'mysql';
+const DATABASE_HOSTNAME = 'db';
+const DATABASE_PORT = '8006';
 const DATABASE_USERNAME = 'root';
-const DATABASE_PASSWORD = '';
+const DATABASE_PASSWORD = 'kriitkriit';
 const DATABASE_DATABASE = 'kriit';
-const DATABASE_PORT = 8006;
+
+// Use http://localhost:8080/dbcomp.php to put your IP in staging firewall in order for these credentials to work
+const STAGING_DATABASE_HOSTNAME = 'kriit.vikk.ee';
+const STAGING_DATABASE_PORT = '3306';
+const STAGING_DATABASE_USERNAME = 'kriit';
+const STAGING_DATABASE_PASSWORD = 'OMn5Ev94d-fdT@e@';
+const STAGING_DATABASE_DATABASE = 'kriit';
 
 //Mail
 const SMTP_AUTH_PASSWORD = '';
@@ -42,3 +49,5 @@ const SENTRY_DSN = '';
 
 // Enable SQL debugging (shows all SQL queries at the end of the page for admin users only)
 const SQL_DEBUG = false;
+
+const OFFLINE_MODE = false;
