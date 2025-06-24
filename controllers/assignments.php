@@ -181,14 +181,14 @@ class assignments extends Controller
             $assignment['students'][$studentId]['tooltipText'] = $tooltipText;
         }
 
-        // Separate query for fetching messages
+        // Separate query for fetching messages (newest first)
         $messages = Db::getAll("
             SELECT
-                m.messageId, m.content AS messageContent, m.userId AS messageUserId, mu.userName AS messageUserName, m.CreatedAt, m.isNotification
+                m.messageId, m.content AS messageContent, m.userId AS messageUserId, mu.userName AS messageUserName, mu.userEmail AS messageUserEmail, m.CreatedAt, m.isNotification
             FROM messages m
             LEFT JOIN users mu ON mu.userId = m.userId
             WHERE m.assignmentId = ?
-            ORDER BY m.CreatedAt
+            ORDER BY m.CreatedAt DESC
         ", [$assignmentId]);
 
         // Add the messages to the assignment
@@ -204,7 +204,9 @@ class assignments extends Controller
                 'content' => $content,
                 'userId' => $message['messageUserId'],
                 'userName' => $message['messageUserName'],
+                'userEmail' => $message['messageUserEmail'],
                 'createdAt' => $this->formatMessageDate($message['CreatedAt']),
+                'createdAtRaw' => $message['CreatedAt'], // Keep raw timestamp for sorting
                 'isNotification' => $message['isNotification']
             ];
         }

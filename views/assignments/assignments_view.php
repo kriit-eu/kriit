@@ -2,12 +2,52 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
 <style>
+    :root {
+        --primary-blue: #3b82f6;
+        --primary-blue-light: #dbeafe;
+        --primary-blue-dark: #1e40af;
+        --success-green: #10b981;
+        --success-green-light: #d1fae5;
+        --warning-orange: #f59e0b;
+        --warning-orange-light: #fef3c7;
+        --purple: #8b5cf6;
+        --purple-light: #ede9fe;
+        --gray-50: #f9fafb;
+        --gray-100: #f3f4f6;
+        --gray-200: #e5e7eb;
+        --gray-300: #d1d5db;
+        --gray-400: #9ca3af;
+        --gray-500: #6b7280;
+        --gray-600: #4b5563;
+        --gray-700: #374151;
+        --gray-800: #1f2937;
+        --gray-900: #111827;
+        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        --border-radius: 12px;
+        --border-radius-lg: 16px;
+        --border-radius-sm: 8px;
+    }
+
+    body {
+        background-color: var(--gray-50);
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        line-height: 1.6;
+        color: var(--gray-700);
+    }
+
     .red-cell {
-        background-color: rgb(255, 180, 176) !important;
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%) !important;
+        border-color: #f87171 !important;
+        color: #b91c1c !important;
     }
 
     .yellow-cell {
-        background-color: #fff8b3 !important;
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%) !important;
+        border-color: #f59e0b !important;
+        color: #92400e !important;
     }
 
     .modal-body {
@@ -23,12 +63,25 @@
     }
 
     .modal-dialog {
-        max-width: 800px;
+        max-width: 900px;
         width: 100%;
     }
 
     .modal-content {
-        padding: 15px;
+        padding: 20px;
+        border: none;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow-xl);
+    }
+
+    .modal-header {
+        border-bottom: 1px solid var(--gray-200);
+        padding-bottom: 1rem;
+    }
+
+    .modal-title {
+        font-weight: 600;
+        color: var(--gray-900);
     }
 
     .text-center {
@@ -39,11 +92,12 @@
         display: none;
         position: absolute;
         z-index: 1000;
-        width: 250px;
-        background-color: white;
-        border: 1px solid #ccc;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-        padding: 10px;
+        width: 280px;
+        background: white;
+        border: 1px solid var(--gray-200);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-lg);
+        padding: 16px;
         overflow-x: auto;
     }
 
@@ -65,6 +119,8 @@
     .form-check-label {
         word-wrap: break-word;
         word-break: break-all;
+        font-weight: 500;
+        color: var(--gray-700);
     }
 
     .context-menu ul {
@@ -74,16 +130,20 @@
     }
 
     .context-menu ul li {
-        padding: 8px 10px;
+        padding: 10px 12px;
         cursor: pointer;
+        border-radius: var(--border-radius-sm);
+        transition: all 0.2s ease;
+        font-weight: 500;
     }
 
     .context-menu ul li:hover {
-        background-color: #f0f0f0;
+        background-color: var(--primary-blue-light);
+        color: var(--primary-blue-dark);
     }
 
     .context-menu .form-check {
-        margin: 5px 2px 5px 0 !important;
+        margin: 8px 2px 8px 0 !important;
     }
 
     .context-menu .form-check label {
@@ -91,21 +151,88 @@
     }
 
     .student-criteria-section h5 {
-        margin-bottom: 10px;
+        margin-bottom: 12px;
+        color: var(--gray-800);
+        font-weight: 600;
     }
 
     .form-check {
-        margin-bottom: 5px;
+        margin-bottom: 8px;
+    }
+
+    .form-check-input:checked {
+        background-color: var(--primary-blue);
+        border-color: var(--primary-blue);
+    }
+
+    .form-check-input:focus {
+        box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.25);
+        border-color: var(--primary-blue);
+    }
+
+    /* Enhanced Button Styles */
+    .btn {
+        font-weight: 500;
+        border-radius: var(--border-radius-sm);
+        padding: 0.5rem 1rem;
+        transition: all 0.2s ease;
+        border: none;
+        font-size: 0.875rem;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-dark) 100%);
+        color: white;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .btn-primary:hover {
+        background: linear-gradient(135deg, var(--primary-blue-dark) 0%, #1d4ed8 100%);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .btn-secondary {
+        background: var(--gray-100);
+        color: var(--gray-700);
+        border: 1px solid var(--gray-300);
+    }
+
+    .btn-secondary:hover {
+        background: var(--gray-200);
+        border-color: var(--gray-400);
+        transform: translateY(-1px);
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, var(--success-green) 0%, #059669 100%);
+        color: white;
+    }
+
+    .btn-success:hover {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        transform: translateY(-1px);
+    }
+
+    .btn-danger {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+    }
+
+    .btn-danger:hover {
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        transform: translateY(-1px);
     }
 
     /* Image preview styles for comments */
     .comment-image {
-        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        transition: all 0.3s ease;
+        border-radius: var(--border-radius-sm);
     }
 
     .comment-image:hover {
         transform: scale(1.02);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        box-shadow: var(--shadow-lg);
     }
 
     .image-preview-container {
@@ -116,6 +243,7 @@
         max-width: 90vw;
         max-height: 90vh;
         object-fit: contain;
+        border-radius: var(--border-radius);
     }
 
     /* Modal backdrop for image viewing */
@@ -125,42 +253,57 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(0, 0, 0, 0.8);
+        background: rgba(0, 0, 0, 0.9);
         z-index: 9999;
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
+        backdrop-filter: blur(4px);
     }
 
     .image-modal-backdrop img {
         max-width: 90%;
         max-height: 90%;
         object-fit: contain;
-        border-radius: 8px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-xl);
     }
 
     .image-modal-close {
         position: absolute;
-        top: 20px;
-        right: 30px;
+        top: 30px;
+        right: 40px;
         color: white;
-        font-size: 30px;
+        font-size: 32px;
         font-weight: bold;
         cursor: pointer;
         z-index: 10000;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
     }
 
     .image-modal-close:hover {
-        color: #ccc;
+        background: rgba(0, 0, 0, 0.7);
+        transform: scale(1.1);
     }
 
     .criteria-row {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 5px 0;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--gray-100);
+    }
+
+    .criteria-row:last-child {
+        border-bottom: none;
     }
 
     .criteria-row .form-check {
@@ -168,108 +311,259 @@
     }
 
     .criteria-row button {
-        margin-left: 10px;
+        margin-left: 12px;
     }
 
     .clickable-cells-row {
         cursor: pointer;
+        transition: all 0.2s ease;
     }
 
-    .assignments-body {
-        display: flex;
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        border: 1px solid #ccc;
-        border-radius: 8px;
+    .clickable-cells-row:hover {
+        background-color: var(--gray-50);
     }
 
-    .assignment-item {
-        display: flex;
-        flex-direction: column;
-        margin: 0;
-        flex: 1 0 0;
+    .assignments-table {
+        width: 100%;
+        border-collapse: collapse;
+        border: 1px solid var(--gray-200);
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        box-shadow: var(--shadow-sm);
+        background: white;
     }
 
     .header-item,
     .body-item {
         text-align: center;
-        padding: 10px;
-        box-sizing: border-box;
-        border-bottom: 1px solid #ccc;
-        min-height: 50px;
-        background-color: inherit;
+        padding: 16px;
+        border: 1px solid var(--gray-200);
+        min-height: 60px;
+        vertical-align: middle;
         white-space: nowrap;
+        font-weight: 500;
     }
 
     .header-item {
-        background-color: #f2f2f2;
+        background: linear-gradient(135deg, var(--gray-100) 0%, var(--gray-200) 100%);
+        font-weight: 600;
+        color: var(--gray-800);
+    }
+
+    .comment-cell {
+        padding: 12px;
+        border: 1px solid var(--gray-200);
+        vertical-align: top;
+        max-width: 200px;
+    }
+
+    .comments-container {
+        max-height: 320px;
+        overflow-y: auto;
+    }
+
+    .comment-item {
+        background: var(--gray-50);
+        border: 1px solid var(--gray-200);
+        border-radius: var(--border-radius-sm);
+        padding: 12px;
+        margin-bottom: 10px;
+        font-size: 0.875rem;
+        transition: all 0.2s ease;
+    }
+
+    .comment-item:hover {
+        background: white;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .comment-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .comment-name {
+        font-weight: 600;
+        color: var(--gray-800);
+        margin-bottom: 6px;
+    }
+
+    .comment-text {
+        color: var(--gray-600);
+        margin-bottom: 6px;
+        word-wrap: break-word;
+        line-height: 1.4;
+    }
+
+    .comment-date {
+        font-size: 0.75rem;
+        color: var(--gray-400);
     }
 
     .adaptive-background {
         width: 100%;
-        max-width: 500px;
-        min-width: 250px;
-        padding: 15px;
+        max-width: 600px;
+        min-width: 300px;
+        padding: 20px;
         margin: 0;
-        background-color: #f8f9fa;
-        border: 1px solid #ccc;
-        border-radius: 8px;
+        background: white;
+        border: 1px solid var(--gray-200);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-sm);
     }
 
     #notificationContainer {
         max-height: 500px;
-        border: 2px solid #4a90e2;
-        background-color: #e8f4ff;
-        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-        border-radius: 8px;
-        padding: 5px;
-        margin-bottom: 20px;
+        border: 2px solid var(--primary-blue);
+        background: linear-gradient(135deg, var(--primary-blue-light) 0%, #f0f9ff 100%);
+        box-shadow: var(--shadow-md);
+        border-radius: var(--border-radius);
+        padding: 8px;
+        margin-bottom: 24px;
     }
 
     #notificationContainer .content-part {
         max-height: 400px;
         overflow-y: auto;
-        padding: 5px;
+        padding: 8px;
+        word-wrap: break-word;
+        word-break: break-word;
+        overflow-wrap: break-word;
     }
 
     .notification-item {
         display: flex;
         flex-wrap: wrap;
-        align-items: center;
-        margin-bottom: 10px;
-        padding: 5px;
-        border-radius: 5px;
-        background-color: #fff;
-        box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.05);
-        transition: background-color 0.3s ease;
+        align-items: flex-start;
+        margin-bottom: 12px;
+        padding: 12px;
+        border-radius: var(--border-radius-sm);
+        background: white;
+        box-shadow: var(--shadow-sm);
+        transition: all 0.2s ease;
+        border: 1px solid var(--gray-100);
     }
 
     .notification-item:hover {
-        background-color: #f0f8ff;
+        background: var(--gray-50);
+        box-shadow: var(--shadow-md);
+        transform: translateY(-1px);
     }
 
     .notification-icon {
-        margin-right: 2px;
-        color: #4a90e2;
-        font-size: 24px;
+        margin-right: 8px;
+        color: var(--primary-blue);
+        font-size: 20px;
+        flex-shrink: 0;
     }
 
     .notification-text {
         flex-grow: 1;
-        font-size: 14px;
-        color: #333;
+        font-size: 0.875rem;
+        color: var(--gray-700);
+        word-wrap: break-word;
+        word-break: break-word;
+        overflow-wrap: break-word;
+        white-space: normal;
+        min-width: 0;
+        font-weight: 500;
+    }
+
+    .notification-text p {
+        word-wrap: break-word;
+        word-break: break-word;
+        overflow-wrap: break-word;
+        white-space: normal;
+        margin-bottom: 0;
     }
 
     .notification-time {
-        font-size: 12px;
-        color: #777;
-        margin-left: 2px;
+        font-size: 0.75rem;
+        color: var(--gray-400);
+        margin-left: 8px;
+        flex-shrink: 0;
+        font-weight: 500;
     }
 
     #messageContainer {
         max-height: 600px;
         overflow-x: hidden;
-        border: 1px solid #ccc;
+        border: 1px solid var(--gray-200);
+        border-radius: var(--border-radius);
+        background: white;
+    }
+
+    /* Enhanced typography for message container */
+    #messageContainer,
+    #messageContainer * {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+        font-weight: normal !important;
+        font-style: normal !important;
+        font-variant: normal !important;
+        text-rendering: optimizeLegibility !important;
+        -webkit-font-smoothing: antialiased !important;
+        -moz-osx-font-smoothing: grayscale !important;
+    }
+
+    #messageContainer .fw-bold {
+        font-weight: 600 !important;
+    }
+
+    #messageContainer h6 {
+        font-size: 1rem !important;
+        font-weight: 600 !important;
+        margin-bottom: 0.5rem !important;
+        color: var(--gray-800) !important;
+    }
+
+    #messageContainer p {
+        font-size: 0.875rem !important;
+        line-height: 1.6 !important;
+        margin-bottom: 1rem !important;
+        color: var(--gray-700) !important;
+    }
+
+    #messageContainer small {
+        font-size: 0.75rem !important;
+        color: var(--gray-500) !important;
+    }
+
+    #messageContainer .btn {
+        font-size: 0.75rem !important;
+        font-weight: 500 !important;
+    }
+
+    .info-icon {
+        color: var(--gray-500) !important;
+        font-size: 1rem !important;
+        margin-right: 0.5rem !important;
+        font-weight: normal !important;
+        display: inline-block !important;
+    }
+
+    .reply-button {
+        display: inline-block !important;
+        padding: 4px 10px !important;
+        font-size: 0.75rem !important;
+        font-weight: 500 !important;
+        color: var(--gray-600) !important;
+        background: var(--gray-100) !important;
+        border: 1px solid var(--gray-300) !important;
+        border-radius: var(--border-radius-sm) !important;
+        cursor: pointer !important;
+        text-decoration: none !important;
+        transition: all 0.2s ease !important;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+    }
+
+    .reply-button:hover {
+        color: var(--gray-800) !important;
+        background: var(--gray-200) !important;
+        border-color: var(--gray-400) !important;
+        transform: translateY(-1px) !important;
+    }
+
+    .reply-button:active {
+        transform: translateY(0) !important;
     }
 
     .content-part {
@@ -287,26 +581,22 @@
 
     .card-body {
         word-wrap: break-word;
-        /* Ensure long words break and wrap to the next line */
     }
 
-
-    /* Grades column */
+    /* Enhanced main layout */
     #assignments-container {
         flex: 1;
         max-width: 100%;
         overflow-x: auto;
-        /* Set a max-width for the grades section */
-        border-radius: 8px;
+        border-radius: var(--border-radius);
     }
 
     #messages-container {
         flex: 2;
-        /* Take the remaining space */
         display: flex;
         flex-direction: column;
-        gap: 2em;
-        margin-top: 3em;
+        gap: 2rem;
+        margin-top: 2rem;
     }
 
     @media (min-width: 769px) {
@@ -316,7 +606,6 @@
 
         #messageContainer {
             max-width: 100%;
-            /* Ensures it doesn't take the full width */
         }
     }
 
@@ -326,81 +615,692 @@
     }
 
     .comment-row {
-        border: 1px solid #ddd;
-        padding: 5px;
-        margin-bottom: 5px;
-        border-radius: 3px;
-        background-color: #f9f9f9;
+        border: 1px solid var(--gray-200);
+        padding: 8px;
+        margin-bottom: 8px;
+        border-radius: var(--border-radius-sm);
+        background: var(--gray-50);
+        transition: all 0.2s ease;
     }
 
-    .comment-name {
-        font-weight: bold;
-        color: #333;
-        margin-bottom: 2px;
-    }
-
-    .comment-text {
-        margin-top: 2px;
-        color: #555;
-    }
-
-    .comment-date {
-        margin-top: 2px;
-        font-size: 0.8em;
-        color: #999;
+    .comment-row:hover {
+        background: white;
+        box-shadow: var(--shadow-sm);
     }
 
     /* Message content image styles */
     .content-part img {
         display: block;
-        margin: 10px 0;
+        margin: 12px 0;
         max-width: 100%;
         height: auto;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        border-radius: var(--border-radius-sm);
+        box-shadow: var(--shadow-sm);
         clear: both;
+        border: 1px solid var(--gray-200);
     }
 
-    /* Ensure text before images has proper spacing */
     .content-part p {
-        line-height: 1.5;
+        line-height: 1.6;
         word-wrap: break-word;
     }
 
-    /* Add spacing around images in message content */
     .content-part p img {
-        margin: 15px 0;
+        margin: 16px 0;
     }
 
-    /* Quoted message styling */
+    /* Enhanced blockquote styling */
     .content-part blockquote {
-        background-color: #f8f9fa;
-        border-left: 4px solid #007bff;
-        margin: 10px 0;
-        padding: 10px 15px;
-        border-radius: 4px;
+        background: linear-gradient(135deg, var(--gray-50) 0%, var(--gray-100) 100%);
+        border-left: 4px solid var(--primary-blue);
+        margin: 12px 0;
+        padding: 16px 20px;
+        border-radius: var(--border-radius-sm);
         font-style: italic;
-        color: #6c757d;
+        color: var(--gray-600);
+        box-shadow: var(--shadow-sm);
     }
 
     .content-part blockquote p {
-        margin-bottom: 5px;
-        line-height: 1.4;
+        margin-bottom: 6px;
+        line-height: 1.5;
     }
 
     .content-part blockquote p:last-child {
         margin-bottom: 0;
     }
 
-    /* Style for quoted content within blockquotes */
     .content-part blockquote strong {
-        color: #495057;
+        color: var(--gray-700);
         font-weight: 600;
     }
 
     .content-part blockquote em {
-        color: #6c757d;
+        color: var(--gray-500);
         font-size: 0.9em;
+    }
+
+    .message-content {
+        font-family: 'JetBrains Mono', 'Monaco', 'Menlo', 'Ubuntu Mono', monospace !important;
+    }
+
+    /* Enhanced message item styling */
+    .message-item {
+        background: white !important;
+        border: 1px solid var(--gray-200) !important;
+        border-radius: var(--border-radius) !important;
+        margin-bottom: 1.5rem !important;
+        transition: all 0.2s ease !important;
+        box-shadow: var(--shadow-sm) !important;
+        min-height: 80px !important;
+    }
+
+    .message-item:hover {
+        background: var(--gray-50) !important;
+        border-color: var(--primary-blue) !important;
+        box-shadow: var(--shadow-md) !important;
+        transform: translateY(-1px) !important;
+    }
+
+    .notification-item {
+        background: linear-gradient(135deg, var(--warning-orange-light) 0%, #fef3c7 100%) !important;
+        border-color: var(--warning-orange) !important;
+    }
+
+    .notification-item:hover {
+        background: linear-gradient(135deg, #fde68a 0%, #f59e0b 10%) !important;
+        border-color: #d97706 !important;
+    }
+
+    .message-item .avatar {
+        width: 44px !important;
+        height: 44px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 1rem !important;
+        font-weight: 600 !important;
+        flex-shrink: 0 !important;
+        border-radius: 50% !important;
+        background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-dark) 100%) !important;
+        color: white !important;
+    }
+
+    .message-item .flex-grow-1 {
+        min-width: 0 !important;
+    }
+
+    /* Enhanced Unified Communication Bar Styles */
+    .unified-communication-bar {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+
+    .communication-section {
+        width: 100%;
+        background: white;
+        border: 1px solid var(--gray-200);
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow-md);
+        overflow: hidden;
+        transition: all 0.2s ease;
+    }
+
+    .communication-section:hover {
+        box-shadow: var(--shadow-lg);
+        transform: translateY(-2px);
+    }
+
+    .section-header {
+        padding: 1.25rem;
+        border-bottom: 1px solid var(--gray-200);
+        background: linear-gradient(135deg, var(--gray-50) 0%, white 100%);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    /* Enhanced section themes */
+    #commentsSection .section-header {
+        background: linear-gradient(135deg, var(--primary-blue-light) 0%, #f0f9ff 100%);
+        border-bottom-color: var(--primary-blue);
+    }
+
+    #commentsSection .section-header h5 {
+        color: var(--primary-blue-dark);
+    }
+
+    #activitiesSection .section-header {
+        background: linear-gradient(135deg, var(--warning-orange-light) 0%, #fef3c7 100%);
+        border-bottom-color: var(--warning-orange);
+    }
+
+    #activitiesSection .section-header h5 {
+        color: #d97706;
+    }
+
+    #criteriaSection .section-header {
+        background: linear-gradient(135deg, var(--purple-light) 0%, #f3e8ff 100%);
+        border-bottom-color: var(--purple);
+    }
+
+    #criteriaSection .section-header h5 {
+        color: #7c3aed;
+    }
+
+    #chatSection .section-header {
+        background: linear-gradient(135deg, var(--success-green-light) 0%, #ecfdf5 100%);
+        border-bottom-color: var(--success-green);
+    }
+
+    #chatSection .section-header h5 {
+        color: #047857;
+    }
+
+    .section-header h5 {
+        margin: 0;
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--gray-800);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-shrink: 0;
+    }
+
+    .section-content {
+        padding: 1.25rem;
+        max-height: 600px;
+        overflow-y: auto;
+        word-wrap: break-word;
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
+    
+    /* Increase height for chat section specifically */
+    #chatSection .section-content {
+        max-height: 800px;
+    }
+    
+    /* Increase height for activities section */
+    #activitiesSection .section-content {
+        max-height: 750px;
+    }
+    
+    /* Increase height for comments section */
+    #commentsSection .section-content {
+        max-height: 700px;
+    }
+
+    /* Custom scrollbar */
+    .section-content::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .section-content::-webkit-scrollbar-track {
+        background: var(--gray-100);
+        border-radius: 3px;
+    }
+
+    .section-content::-webkit-scrollbar-thumb {
+        background: var(--gray-300);
+        border-radius: 3px;
+    }
+
+    .section-content::-webkit-scrollbar-thumb:hover {
+        background: var(--gray-400);
+    }
+
+    .unified-item {
+        background: var(--gray-50);
+        border: 1px solid var(--gray-200);
+        border-radius: var(--border-radius);
+        padding: 1rem;
+        margin-bottom: 1rem;
+        transition: all 0.2s ease;
+    }
+
+    .unified-item:hover {
+        background: white;
+        border-color: var(--gray-300);
+        box-shadow: var(--shadow-sm);
+        transform: translateY(-1px);
+    }
+
+    .unified-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .item-author {
+        font-weight: 600;
+        color: var(--gray-800);
+        font-size: 0.9rem;
+    }
+
+    .item-time {
+        color: var(--gray-500);
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .item-content {
+        color: var(--gray-700);
+        font-size: 0.875rem;
+        line-height: 1.5;
+        word-wrap: break-word;
+        word-break: break-word;
+        overflow-wrap: break-word;
+        white-space: pre-wrap;
+        text-align: left;
+    }
+
+    .item-meta {
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid var(--gray-200);
+        font-size: 0.75rem;
+        color: var(--gray-500);
+        font-style: italic;
+    }
+
+    .no-content {
+        text-align: center;
+        color: var(--gray-500);
+        font-style: italic;
+        padding: 3rem;
+        font-size: 0.9rem;
+    }
+
+    /* Enhanced Message Form Integration Styles */
+    .section-footer {
+        border-top: 1px solid var(--gray-200);
+        background: linear-gradient(135deg, var(--gray-50) 0%, white 100%);
+        padding: 1.25rem;
+    }
+
+    .message-form {
+        margin: 0;
+    }
+
+    .message-input {
+        border-radius: var(--border-radius-sm) 0 0 var(--border-radius-sm) !important;
+        border-right: none !important;
+        resize: none;
+        font-size: 0.9rem;
+        border-color: var(--gray-300) !important;
+        transition: all 0.2s ease;
+    }
+
+    .message-input:focus {
+        border-color: var(--primary-blue) !important;
+        box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25) !important;
+    }
+
+    .message-submit {
+        border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0 !important;
+        padding: 0.5rem 1.25rem;
+        font-size: 0.9rem;
+        white-space: nowrap;
+        font-weight: 500;
+    }
+
+    .reply-info {
+        margin-bottom: 1rem;
+        padding: 1rem;
+        background: linear-gradient(135deg, var(--primary-blue-light) 0%, #f0f9ff 100%);
+        border: 1px solid var(--primary-blue);
+        border-radius: var(--border-radius);
+        font-size: 0.875rem;
+    }
+
+    .reply-preview {
+        flex-grow: 1;
+        color: var(--primary-blue-dark);
+        font-style: italic;
+        font-weight: 500;
+    }
+
+    .btn-close-reply {
+        background: none;
+        border: none;
+        font-size: 1.25rem;
+        color: var(--gray-500);
+        cursor: pointer;
+        padding: 0;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: all 0.2s ease;
+    }
+
+    .btn-close-reply:hover {
+        background: rgba(0,0,0,0.1);
+        color: var(--gray-700);
+        transform: scale(1.1);
+    }
+
+    /* Enhanced Student Summary Integration Styles */
+    .students-summary {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--gray-200);
+    }
+
+    /* Current student header badge for student view */
+    .current-student-header-badge {
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
+    }
+
+    .current-student-header-badge .student-badge {
+        margin: 0;
+        border: 2px solid var(--primary-blue);
+        box-shadow: var(--shadow-md);
+        transform: scale(1.1);
+    }
+
+    .current-student-header-badge .student-badge:hover {
+        transform: scale(1.15);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .student-badge {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-width: 70px;
+        padding: 0.75rem;
+        border: 2px solid var(--gray-200);
+        border-radius: var(--border-radius);
+        background: white;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 0.8rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .student-badge::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.1) 100%);
+        pointer-events: none;
+    }
+
+    .student-badge:hover {
+        background: var(--gray-50);
+        border-color: var(--primary-blue);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .student-badge.red-cell {
+        background: linear-gradient(135deg, #fee2e2 0%, #fca5a5 100%) !important;
+        border-color: #f87171 !important;
+        color: #b91c1c !important;
+    }
+
+    .student-badge.yellow-cell {
+        background: linear-gradient(135deg, var(--warning-orange-light) 0%, #fde68a 100%) !important;
+        border-color: var(--warning-orange) !important;
+        color: #92400e !important;
+    }
+
+    .student-initials {
+        font-weight: 700;
+        color: var(--gray-800);
+        margin-bottom: 0.25rem;
+        font-size: 0.9rem;
+    }
+
+    .student-grade {
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: var(--primary-blue);
+    }
+
+    .student-criteria {
+        font-size: 0.7rem;
+        color: var(--gray-500);
+        margin-top: 0.25rem;
+        font-weight: 500;
+    }
+
+    /* Enhanced criteria specific styling */
+    .criteria-item {
+        border: none !important;
+        background: none !important;
+        padding: 0.75rem 0 !important;
+        margin-bottom: 0.5rem !important;
+        border-bottom: 1px solid var(--gray-100) !important;
+    }
+
+    .criteria-item:last-child {
+        border-bottom: none !important;
+    }
+
+    .criteria-item:hover {
+        background: var(--gray-50) !important;
+        border-radius: var(--border-radius-sm) !important;
+        box-shadow: none !important;
+    }
+
+    .criteria-item .form-check {
+        margin: 0;
+    }
+
+    .criteria-item .form-check-label {
+        font-size: 0.9rem;
+        line-height: 1.5;
+        color: var(--gray-700);
+        cursor: pointer;
+        padding-left: 0.5rem;
+        font-weight: 500;
+    }
+
+    .criteria-item .form-check-input {
+        margin-top: 0.25rem;
+        width: 1.1em;
+        height: 1.1em;
+    }
+
+    /* Enhanced section content scrolling */
+    #commentsSection .section-content {
+        max-height: 450px;
+        overflow-y: auto;
+        scroll-behavior: smooth;
+    }
+
+    #criteriaSection .section-content {
+        max-height: 350px;
+        overflow-y: auto;
+    }
+
+    /* Enhanced responsive adjustments */
+    @media (max-width: 768px) {
+        .section-content {
+            max-height: 300px;
+            padding: 1rem;
+        }
+        
+        .unified-item {
+            padding: 0.75rem;
+        }
+        
+        .item-content {
+            font-size: 0.8rem;
+        }
+
+        .communication-section {
+            border-radius: var(--border-radius);
+        }
+
+        .section-header {
+            padding: 1rem;
+        }
+
+        .students-summary {
+            gap: 0.5rem;
+        }
+
+        .student-badge {
+            min-width: 60px;
+            padding: 0.5rem;
+        }
+    }
+
+    /* Enhanced form styling */
+    .form-control {
+        border: 1px solid var(--gray-300);
+        border-radius: var(--border-radius-sm);
+        padding: 0.75rem;
+        font-size: 0.9rem;
+        transition: all 0.2s ease;
+    }
+
+    .form-control:focus {
+        border-color: var(--primary-blue);
+        box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+        outline: none;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: var(--gray-800);
+        margin-bottom: 0.5rem;
+    }
+
+    /* Enhanced loading states */
+    .spinner-border-sm {
+        width: 1rem;
+        height: 1rem;
+    }
+
+    /* Enhanced hover effects for interactive elements */
+    .clickable-cells-row:hover td {
+        background-color: var(--gray-50) !important;
+    }
+
+    /* Animation classes */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .fade-in {
+        animation: fadeIn 0.3s ease;
+    }
+
+    /* Current User Highlighting */
+    .current-user-content {
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
+        border-left: 4px solid var(--primary-blue) !important;
+        border-color: var(--primary-blue) !important;
+        position: relative;
+    }
+
+    .current-user-content::before {
+        content: '👤';
+        position: absolute;
+        top: 0.75rem;
+        right: 0.75rem;
+        font-size: 0.75rem;
+        opacity: 0.8;
+        color: var(--primary-blue);
+    }
+
+    .current-user-content .item-author {
+        color: var(--primary-blue-dark) !important;
+        font-weight: 700 !important;
+    }
+
+    .current-user-content:hover {
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%) !important;
+        border-left-color: var(--primary-blue-dark) !important;
+    }
+
+    /* Modal Comments Section Styling */
+    #commentsContainer {
+        max-height: 300px;
+        overflow-y: auto;
+        border: 1px solid var(--gray-200);
+        border-radius: var(--border-radius);
+        background: var(--gray-50);
+        padding: 0.5rem;
+        margin-top: 0.5rem;
+    }
+
+    #commentsContainer:empty::before {
+        content: "Kommentaare pole.";
+        display: block;
+        text-align: center;
+        color: var(--gray-500);
+        font-style: italic;
+        padding: 2rem;
+    }
+
+    #commentsContainer .unified-item {
+        margin-bottom: 0.75rem;
+        background: white;
+        border: 1px solid var(--gray-200);
+        padding: 0.75rem;
+    }
+
+    #commentsContainer .unified-item:last-child {
+        margin-bottom: 0;
+    }
+
+    #commentsContainer .item-header {
+        margin-bottom: 0.5rem;
+    }
+
+    #commentsContainer .item-content {
+        font-size: 0.875rem;
+        line-height: 1.5;
+    }
+
+    /* Modal comments scrollbar */
+    #commentsContainer::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    #commentsContainer::-webkit-scrollbar-track {
+        background: var(--gray-100);
+        border-radius: 3px;
+    }
+
+    #commentsContainer::-webkit-scrollbar-thumb {
+        background: var(--gray-300);
+        border-radius: 3px;
+    }
+
+    #commentsContainer::-webkit-scrollbar-thumb:hover {
+        background: var(--gray-400);
     }
 </style>
 <div>
@@ -450,38 +1350,7 @@
     </div>
 
 
-    <div id="criterionDisplay" class="adaptive-background p-3 mb-5 mt-5">
-        <h5 class="mb-3">Kriteeriumid</h5>
-        <form id="studentCriteriaForm">
-            <div id="requiredCriteria">
-                <?php foreach ($assignment['criteria'] as $criterion): ?>
-                    <?php
-                    $isCompleted = true;
-                    $studentId = $this->auth->userId;
 
-                    if ($isStudent && isset($assignment['students'][$studentId]['userDoneCriteria'][$criterion['criteriaId']])) {
-                        $isCompleted = $assignment['students'][$studentId]['userDoneCriteria'][$criterion['criteriaId']]['completed'];
-                    }
-                    ?>
-                    <div class="form-check">
-                        <input class="form-check-input" id="criterion_<?= $criterion['criteriaId'] ?>"
-                            type="checkbox"
-                            name="criteria[<?= $criterion['criteriaId'] ?>]"
-                            value="1" <?= $isCompleted ? 'checked' : '' ?>
-                            <?= $isStudent ? '' : 'disabled' ?>>
-                        <label class="form-check-label" for="criterion_<?= $criterion['criteriaId'] ?>">
-                            <?= htmlspecialchars($criterion['criteriaName'], ENT_QUOTES, 'UTF-8') ?>
-                        </label>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-            <?php if ($isStudent): ?>
-                <button type="button" class="btn btn-primary mt-3" onclick="saveStudentCriteria()" hidden="hidden">
-                    Salvesta
-                </button>
-            <?php endif; ?>
-        </form>
-    </div>
 
     <?php if (!$isStudent): ?>
         <div class="modal fade " id="editAssignmentModal" tabindex="-1" aria-labelledby="editAssignmentModalLabel"
@@ -677,145 +1546,242 @@
     <?php endif; ?>
 
     <div id="main-container">
-        <div id="assignments-container">
-            <div class="assignments-body">
-                <?php foreach ($assignment['students'] as $s): ?>
-                    <div>
-                        <div class="header-item" data-bs-toggle="tooltip" title="<?= $s['studentName'] ?>" style="<?= $s['studentId'] !== array_key_first($assignment['students']) ? 'border-left: 1px solid #ccc;' : '' ?>">
-                            <?= $s['initials'] ?>
-                        </div>
-                        <div class="body-item <?= $s['class'] ?> text-center clickable-cells-row"
-                            data-bs-toggle="tooltip"
-                            style="<?= $s['studentId'] !== array_key_first($assignment['students']) ? 'border-left: 1px solid #ccc;' : '' ?>"
-                            title="<?= $s['tooltipText'] ?>"
-                            <?php if (!$isStudent): ?>
-                            oncontextmenu="showContextMenu(event, <?= $s['studentId'] ?>)"
-                            <?php endif; ?>
-                            onclick="openStudentModal(<?= $isStudent ? 'true' : 'false' ?>, <?= $s['studentId'] ?>)">
-                            <?= $s['grade'] ?? '' ?>
-                            <?php if ($s['assignmentStatusName'] !== 'Esitamata'): ?>
-                                <span style="font-size: 8px"><?= $s['userDoneCriteriaCount'] ?>/<?= count($assignment['criteria']) ?></span>
-                            <?php endif; ?>
-                        </div>
+        <div id="messages-container">
+            <div class="unified-communication-bar">
+                <!-- Criteria Section -->
+                <div class="communication-section" id="criteriaSection">
+                    <div class="section-header">
+                        <h5>✓ Kriteeriumid</h5>
                     </div>
-                    <?php if ($isStudent): ?>
-                        <div class="assignment-item">
-                            <div class="header-item">Kommentaarid</div>
-                            <div>
-                                <?php foreach ($s['comments'] as $comment): ?>
-                                    <div class="comment-row p-2 border rounded bg-light mb-2">
-                                        <div class="comment-name fw-bold text-dark mb-1"><?= isset($comment['name']) ? $comment['name'] : 'Tundmatu' ?></div>
-                                        <div class="comment-text text-muted" data-raw-comment="<?= htmlspecialchars($comment['comment'], ENT_QUOTES, 'UTF-8') ?>">
-                                            <!-- Comment content will be processed by JavaScript -->
+                    <div class="section-content" id="criterionDisplay">
+                        <form id="studentCriteriaForm">
+                            <div id="requiredCriteria">
+                                <?php foreach ($assignment['criteria'] as $criterion): ?>
+                                    <?php
+                                    $isCompleted = true;
+                                    $studentId = $this->auth->userId;
+
+                                    if ($isStudent && isset($assignment['students'][$studentId]['userDoneCriteria'][$criterion['criteriaId']])) {
+                                        $isCompleted = $assignment['students'][$studentId]['userDoneCriteria'][$criterion['criteriaId']]['completed'];
+                                    }
+                                    ?>
+                                    <div class="unified-item criteria-item">
+                                        <div class="form-check">
+                                            <input class="form-check-input" id="criterion_<?= $criterion['criteriaId'] ?>"
+                                                type="checkbox"
+                                                name="criteria[<?= $criterion['criteriaId'] ?>]"
+                                                value="1" <?= $isCompleted ? 'checked' : '' ?>
+                                                <?= $isStudent ? '' : 'disabled' ?>>
+                                            <label class="form-check-label" for="criterion_<?= $criterion['criteriaId'] ?>">
+                                                <?= htmlspecialchars($criterion['criteriaName'], ENT_QUOTES, 'UTF-8') ?>
+                                            </label>
                                         </div>
-                                        <div class="comment-date text-secondary small"><?= $comment['createdAt'] ?></div>
                                     </div>
                                 <?php endforeach; ?>
                             </div>
-                        </div>
-
-                    <?php endif; ?>
-                <?php endforeach; ?>
-            </div>
-        </div>
-        <div id="messages-container">
-            <div id="notificationContainer" class="card mt-3">
-                <div class="card-body">
-                    <h5>Sündmused</h5>
-                    <div class="content-part">
-                        <?php foreach ($assignment['messages'] as $message): ?>
-                            <?php if ($message['isNotification']): ?>
-                                <div class="notification-item">
-                                    <i class="fa fa-bell notification-icon"></i>
-                                    <div class="notification-text">
-                                        <p class="fw-bold mb-1"><?= strip_tags($message['content'], '<br><ul><ol><h2><li><h3><p><strong><img><blockquote><em><code><pre>') ?></p>
-                                    </div>
-                                    <small class="notification-time text-muted"><?= $message['createdAt'] ?></small>
+                            <?php if ($isStudent): ?>
+                                <div class="section-footer">
+                                    <button type="button" class="btn btn-success btn-sm" onclick="saveStudentCriteria()" hidden="hidden">
+                                        Salvesta kriteeriumid
+                                    </button>
                                 </div>
                             <?php endif; ?>
-                        <?php endforeach; ?>
+                        </form>
                     </div>
                 </div>
-            </div>
 
-            <div id="messageContainer" class="card">
-                <div class="card-body">
-                    <h5>Vestlus</h5>
-                    <div class="content-part">
-                        <?php foreach ($assignment['messages'] as $message): ?>
-                            <?php if (!$message['isNotification']): ?>
-                                <div class="d-flex align-items-start mb-3 border rounded p-3">
-                                    <div class="flex-shrink-0 me-3">
-                                        <span class="avatar bg-primary text-white rounded-circle p-2"><?= strtoupper(substr($message['userName'], 0, 1)) ?></span>
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <div class="d-flex flex-wrap justify-content-between">
-                                            <h6 class="fw-bold mb-1"><?= $message['userName'] ?></h6>
-                                            <small class="text-muted"><?= $message['createdAt'] ?></small>
-                                        </div>
-                                        <p class="mb-1"><?= strip_tags($message['content'], '<br><ul><ol><h2><li><h3><p><strong><img><blockquote><em>') ?></p>
-                                        <?php if ($this->auth->userId !== $message['userId']): ?>
-                                            <div class="d-flex justify-content-end">
-                                                <button type="button" class="btn btn-secondary btn-sm"
-                                                    style="font-size: 0.75rem; padding: 2px 8px;"
-                                                    onclick='replyToMessage(<?= json_encode($message['userName']) ?>, <?= $message['messageId'] ?>, <?= json_encode($message['content']) ?>, "<?= $message['createdAt'] ?>")'>
-                                                    Vasta
-                                                </button>
-                                            </div>
-                                        <?php endif; ?>
-                                    </div>
+                <!-- Comments Section -->
+                <div class="communication-section" id="commentsSection">
+                    <div class="section-header">
+                        <h5>💬 Kommentaarid</h5>
+                        <?php if ($isStudent): ?>
+                            <!-- Show current student's badge in header corner for student view -->
+                            <?php $currentStudent = $assignment['students'][$this->auth->userId]; ?>
+                            <div class="current-student-header-badge">
+                                <div class="student-badge <?= $currentStudent['class'] ?>" 
+                                     data-bs-toggle="tooltip" 
+                                     title="<?= $currentStudent['studentName'] ?>: <?= $currentStudent['tooltipText'] ?>"
+                                     onclick="openStudentModal(true, <?= $currentStudent['studentId'] ?>)">
+                                    <span class="student-initials"><?= $currentStudent['initials'] ?></span>
+                                    <span class="student-grade"><?= $currentStudent['grade'] ?? '—' ?></span>
+                                    <?php if ($currentStudent['assignmentStatusName'] !== 'Esitamata'): ?>
+                                        <span class="student-criteria"><?= $currentStudent['userDoneCriteriaCount'] ?>/<?= count($assignment['criteria']) ?></span>
+                                    <?php endif; ?>
                                 </div>
-                            <?php else: ?>
-                                <div class="d-flex align-items-start mb-3 border rounded p-3 bg-light">
-                                    <div class="flex-shrink-0 me-3">
-                                        <span class="avatar bg-primary text-white rounded-circle p-2"><?= strtoupper(substr($message['userName'], 0, 1)) ?></span>
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <div class="d-flex flex-wrap justify-content-between">
-                                            <h6 class="fw-bold mb-1 text-muted">
-                                                <i class="fas fa-info-circle me-1"></i><?= $message['userName'] ?>
-                                            </h6>
-                                            <small class="text-muted"><?= $message['createdAt'] ?></small>
-                                        </div>
-                                        <p class="mb-1 text-muted"><?= strip_tags($message['content'], '<br><ul><ol><h2><li><h3><p><strong><img><blockquote><em>') ?></p>
-                                        <?php if ($this->auth->userId !== $message['userId']): ?>
-                                            <div class="d-flex justify-content-end">
-                                                <button type="button" class="btn btn-secondary btn-sm"
-                                                    style="font-size: 0.75rem; padding: 2px 8px;"
-                                                    onclick='replyToMessage(<?= json_encode($message['userName']) ?>, <?= $message['messageId'] ?>, <?= json_encode($message['content']) ?>, "<?= $message['createdAt'] ?>")'>
-                                                    Vasta
-                                                </button>
-                                            </div>
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
-                            <?php endif; ?>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
-            </div>
-
-
-            <div class="container mb-5">
-                <form>
-                    <div class="mb-3">
-                        <label for="messageContent" class="form-label">Sisesta sõnum</label>
-                        <div id="replyInfo" class="alert alert-info " style="display:none;">
-                            <div class="d-flex justify-content-end">
-                                <button type="button" style="font-size: 0.75rem; padding: 2px 8px;"
-                                    class="btn btn-sm btn-secondary mb-2" onclick="cancelReply()">x
-                                </button>
                             </div>
-                            <div id="replyMessage" class="border rounded bg-light p-2 mb-2"></div>
+                        <?php else: ?>
+                            <!-- Show all students for teacher/admin view -->
+                            <div class="students-summary">
+                                <?php foreach ($assignment['students'] as $s): ?>
+                                    <div class="student-badge <?= $s['class'] ?>" 
+                                         data-bs-toggle="tooltip" 
+                                         title="<?= $s['studentName'] ?>: <?= $s['tooltipText'] ?>"
+                                         onclick="openStudentModal(false, <?= $s['studentId'] ?>)">
+                                        <span class="student-initials"><?= $s['initials'] ?></span>
+                                        <span class="student-grade"><?= $s['grade'] ?? '—' ?></span>
+                                        <?php if ($s['assignmentStatusName'] !== 'Esitamata'): ?>
+                                            <span class="student-criteria"><?= $s['userDoneCriteriaCount'] ?>/<?= count($assignment['criteria']) ?></span>
+                                        <?php endif; ?>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                    <div class="section-content">
+                        <?php
+                        $allComments = [];
+                        foreach ($assignment['students'] as $student) {
+                            if (!empty($student['comments'])) {
+                                foreach ($student['comments'] as $comment) {
+                                    $comment['studentName'] = $student['studentName'];
+                                    $comment['studentUserId'] = $student['studentId']; // Add student user ID for comparison
+                                    $allComments[] = $comment;
+                                }
+                            }
+                        }
+                        // Sort comments by date (newest first)
+                        usort($allComments, function($a, $b) {
+                            return strtotime($b['createdAt']) - strtotime($a['createdAt']);
+                        });
+                        ?>
+                        <?php foreach ($allComments as $comment): ?>
+                            <?php 
+                            $isCurrentUser = false;
+                            $debugInfo = '';
+                            
+                            // Check if this comment is from the current user
+                            // Comments structure: { name: "Name", comment: "text", createdAt: "date" }
+                            // They don't have userId or userEmail, only name matching
+                            if (isset($comment['name']) && isset($this->auth->userName) && 
+                                !empty($comment['name']) && !empty($this->auth->userName) && 
+                                trim($comment['name']) === trim($this->auth->userName)) {
+                                $isCurrentUser = true;
+                                $debugInfo = 'matched by name: ' . $comment['name'] . ' == ' . $this->auth->userName;
+                            }
+                            
+                            // Additional debug info to see in browser console via data attribute
+                            $debugData = json_encode([
+                                'isCurrentUser' => $isCurrentUser,
+                                'matchedBy' => $debugInfo,
+                                'commentData' => [
+                                    'name' => $comment['name'] ?? 'none',
+                                    'comment' => substr($comment['comment'] ?? '', 0, 50) . '...',
+                                    'createdAt' => $comment['createdAt'] ?? 'none'
+                                ],
+                                'authData' => [
+                                    'userName' => $this->auth->userName ?? 'none',
+                                    'userId' => $this->auth->userId
+                                ]
+                            ]);
+                            ?>
+                            <div class="unified-item<?= $isCurrentUser ? ' current-user-content' : '' ?>" data-debug="<?= htmlspecialchars($debugData, ENT_QUOTES, 'UTF-8') ?>">
+                                <div class="item-header">
+                                    <span class="item-author"><?= isset($comment['name']) ? $comment['name'] : 'Tundmatu' ?></span>
+                                    <small class="item-time"><?= $comment['createdAt'] ?></small>
+                                </div>
+                                <div class="item-content comment-text" data-raw-comment="<?= htmlspecialchars($comment['comment'], ENT_QUOTES, 'UTF-8') ?>">
+                                    <!-- Comment content will be processed by JavaScript -->
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                        <?php if (empty($allComments)): ?>
+                            <div class="no-content">Kommentaare pole</div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <!-- Activities/Notifications Section -->
+                <div class="communication-section" id="activitiesSection">
+                    <div class="section-header">
+                        <h5>📋 Sündmused</h5>
+                    </div>
+                    <div class="section-content">
+                        <?php 
+                        // Filter notifications (already sorted newest first from database)
+                        $notifications = array_filter($assignment['messages'], function($message) {
+                            return $message['isNotification'];
+                        });
+                        // No need to sort again - database query already returns newest first
+                        ?>
+                        <?php foreach ($notifications as $message): ?>
+                            <?php 
+                            $isCurrentUser = $message['userId'] == $this->auth->userId;
+                            ?>
+                            <div class="unified-item<?= $isCurrentUser ? ' current-user-content' : '' ?>">
+                                <div class="item-header">
+                                    <span class="item-author"><?= $message['userName'] ?></span>
+                                    <small class="item-time"><?= $message['createdAt'] ?></small>
+                                </div>
+                                <div class="item-content">
+                                    <?= strip_tags($message['content'], '<br><ul><ol><h2><li><h3><p><strong><img><blockquote><em><code><pre>') ?>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                        <?php if (empty($notifications)): ?>
+                            <div class="no-content">Sündmusi pole</div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <!-- Chat/Vestlus Section -->
+                <div class="communication-section" id="chatSection">
+                    <div class="section-header">
+                        <h5>💭 Vestlus</h5>
+                    </div>
+                    <div class="section-content">
+                        <?php 
+                        // Filter chat messages (already sorted newest first from database)
+                        $chatMessages = array_filter($assignment['messages'], function($message) {
+                            return !$message['isNotification'];
+                        });
+                        // No need to sort again - database query already returns newest first
+                        ?>
+                        <?php foreach ($chatMessages as $message): ?>
+                            <?php 
+                            $isCurrentUser = $message['userId'] == $this->auth->userId;
+                            ?>
+                            <div class="unified-item<?= $isCurrentUser ? ' current-user-content' : '' ?>">
+                                <div class="item-header">
+                                    <span class="item-author"><?= $message['userName'] ?></span>
+                                    <small class="item-time"><?= $message['createdAt'] ?></small>
+                                    <?php if (!$isCurrentUser): ?>
+                                        <span class="reply-button" 
+                                              onclick='replyToMessage(<?= json_encode($message['userName']) ?>, <?= $message['messageId'] ?>, <?= json_encode($message['userEmail'] ?? 'No email') ?>, "<?= $message['createdAt'] ?>")'>
+                                            Vasta
+                                        </span>
+                                    <?php endif; ?>
+                                </div>
+                                <div class="item-content">
+                                    <?= nl2br(htmlspecialchars(strip_tags($message['content']), ENT_QUOTES, 'UTF-8')) ?>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                        <?php if (empty($chatMessages)): ?>
+                            <div class="no-content">Sõnumeid pole</div>
+                        <?php endif; ?>
+                    </div>
+                    
+                    <!-- Message Input Form -->
+                    <div class="section-footer">
+                        <div id="replyInfo" class="reply-info" style="display:none;">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div id="replyMessage" class="reply-preview"></div>
+                                <button type="button" class="btn-close-reply" onclick="cancelReply()">×</button>
+                            </div>
                         </div>
-                        <textarea class="form-control" id="messageContent" name="content" rows="3"
-                            placeholder="Kirjuta oma sõnum siia..."></textarea>
+                        <form class="message-form">
+                            <div class="input-group">
+                                <textarea class="form-control message-input" id="messageContent" name="content" rows="2"
+                                    placeholder="Kirjuta oma sõnum siia..."></textarea>
+                                <button type="button" class="btn btn-primary message-submit" onclick="submitMessage()">Postita</button>
+                            </div>
+                        </form>
                     </div>
-                    <div class="d-flex justify-content-end">
-                        <button type="button" class="btn btn-primary" onclick="submitMessage()">Postita</button>
-                    </div>
-                </form>
+                </div>
             </div>
+
+
+
 
         </div>
 
@@ -829,8 +1795,16 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             initializeTooltips();
-            scrollToBottom();
-            processComments(); // Add comment processing
+            processComments(); // Process comments first
+            
+            // Debug: Log current user highlighting info and message counts
+            debugCurrentUserHighlighting();
+            debugMessageCounts();
+            
+            // Delay scrolling to allow content to render properly
+            setTimeout(function() {
+                scrollToBottom();
+            }, 100);
 
             // Initialize OpenAPI button visibility
             const openApiButton = document.getElementById('openApiButton');
@@ -838,6 +1812,64 @@
                 openApiButton.style.display = assignment.assignmentInvolvesOpenApi ? 'inline-block' : 'none';
             }
         });
+
+        function debugCurrentUserHighlighting() {
+            const commentsWithDebug = document.querySelectorAll('[data-debug]');
+            console.log('Debug info for user highlighting:');
+            commentsWithDebug.forEach((item, index) => {
+                try {
+                    const debugData = JSON.parse(item.getAttribute('data-debug'));
+                    console.log(`Comment ${index + 1}:`, debugData);
+                    if (debugData.isCurrentUser) {
+                        console.log(`✓ Comment ${index + 1} should be highlighted (${debugData.matchedBy})`);
+                    }
+                } catch (e) {
+                    console.log(`Error parsing debug data for comment ${index + 1}:`, e);
+                }
+            });
+        }
+
+        function debugMessageCounts() {
+            const commentsCount = document.querySelectorAll('#commentsSection .unified-item').length;
+            const activitiesCount = document.querySelectorAll('#activitiesSection .unified-item').length;
+            const chatCount = document.querySelectorAll('#chatSection .unified-item').length;
+            
+            console.log('Message counts:');
+            console.log(`Comments: ${commentsCount}`);
+            console.log(`Activities: ${activitiesCount}`);
+            console.log(`Chat: ${chatCount}`);
+            console.log(`Total assignment messages from server: ${assignment.messages ? assignment.messages.length : 0}`);
+            
+            if (assignment.messages) {
+                const notifications = assignment.messages.filter(m => m.isNotification);
+                const chats = assignment.messages.filter(m => !m.isNotification);
+                console.log(`Server - Notifications: ${notifications.length}, Chat messages: ${chats.length}`);
+                
+                // Show the actual chat messages and their timestamps
+                console.log('Chat messages details:');
+                chats.forEach((msg, index) => {
+                    console.log(`${index + 1}. ${msg.userName} (${msg.createdAt}${msg.createdAtRaw ? ` / raw: ${msg.createdAtRaw}` : ''}): ${msg.content.substring(0, 50)}...`);
+                });
+            }
+        }
+
+        function debugCheckboxes() {
+            console.log('🔍 Debugging checkbox elements:');
+            
+            // Main page checkboxes
+            const mainCheckboxes = document.querySelectorAll('#requiredCriteria input[type="checkbox"]');
+            console.log(`Main page checkboxes found: ${mainCheckboxes.length}`);
+            mainCheckboxes.forEach((cb, index) => {
+                console.log(`  ${index + 1}. ID: ${cb.id}, checked: ${cb.checked}`);
+            });
+            
+            // Modal checkboxes
+            const modalCheckboxes = document.querySelectorAll('#checkboxesContainer input[type="checkbox"]');
+            console.log(`Modal checkboxes found: ${modalCheckboxes.length}`);
+            modalCheckboxes.forEach((cb, index) => {
+                console.log(`  ${index + 1}. ID: ${cb.id}, checked: ${cb.checked}, data-criteria-id: ${cb.dataset.criteriaId}`);
+            });
+        }
 
         function initializeTooltips() {
             const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
@@ -855,7 +1887,19 @@
 
         document.getElementById('requiredCriteria').addEventListener('change', function(event) {
             if (event.target && event.target.type === 'checkbox') {
-                document.querySelector('#studentCriteriaForm .btn-primary').hidden = false;
+                const saveButton = document.querySelector('#studentCriteriaForm .btn-primary');
+                if (saveButton) {
+                    saveButton.hidden = false;
+                }
+                
+                // Sync with modal checkboxes if modal is open
+                if (event.target.id && event.target.id.startsWith('criterion_')) {
+                    const criteriaId = event.target.id.replace('criterion_', '');
+                    if (criteriaId) {
+                        console.log(`Main page checkbox changed: criterion_${criteriaId} = ${event.target.checked}`);
+                        syncCriteriaCheckboxes(criteriaId, event.target.checked);
+                    }
+                }
             }
         });
 
@@ -1007,32 +2051,70 @@
             // Reset comments container to ensure it's cleared before populating with new comments
             commentsContainer.innerHTML = '';
 
-            // Populate comments section with Bootstrap cards
+            // Populate comments section with unified styling
             if (student && student.comments && student.comments.length > 0) {
-                student.comments.forEach(comment => {
-                    const card = document.createElement('div');
-                    card.classList.add('card', 'mb-3'); // Add Bootstrap card classes
-
-                    // Card body
-                    const cardBody = document.createElement('div');
-                    cardBody.classList.add('card-body');
-
-                    // Add comment content inside the card body
-                    const commentContent = document.createElement('p');
-                    commentContent.innerHTML = `
-                    ${comment.createdAt} <strong>${comment.name || 'Tundmatu'}</strong><br>
-                    <em>${comment.comment}</em>
-                `;
-                    cardBody.appendChild(commentContent);
-
-                    // Append the card body to the card
-                    card.appendChild(cardBody);
-
-                    // Append the card to the comments container
-                    commentsContainer.appendChild(card);
+                // Sort comments by date (newest first)
+                const sortedComments = student.comments.slice().sort((a, b) => {
+                    return new Date(b.createdAt) - new Date(a.createdAt);
                 });
+
+                sortedComments.forEach(comment => {
+                    const commentItem = document.createElement('div');
+                    commentItem.classList.add('unified-item');
+
+                    // Check if this is the current user's comment
+                    const currentUserId = <?= $this->auth->userId ?>;
+                    const currentUserName = "<?= $this->auth->userName ?? '' ?>";
+                    
+                    let isCurrentUser = false;
+                    // Only match by name since comments only have name field
+                    if (comment.name && currentUserName && 
+                        comment.name.trim() === currentUserName.trim()) {
+                        isCurrentUser = true;
+                    }
+                    
+                    if (isCurrentUser) {
+                        commentItem.classList.add('current-user-content');
+                    }
+
+                    // Create item header
+                    const itemHeader = document.createElement('div');
+                    itemHeader.classList.add('item-header');
+                    
+                    const authorSpan = document.createElement('span');
+                    authorSpan.classList.add('item-author');
+                    authorSpan.textContent = comment.name || 'Tundmatu';
+                    
+                    const timeSpan = document.createElement('small');
+                    timeSpan.classList.add('item-time');
+                    timeSpan.textContent = comment.createdAt;
+                    
+                    itemHeader.appendChild(authorSpan);
+                    itemHeader.appendChild(timeSpan);
+
+                    // Create item content
+                    const itemContent = document.createElement('div');
+                    itemContent.classList.add('item-content', 'comment-text');
+                    itemContent.setAttribute('data-raw-comment', comment.comment);
+                    
+                    // Append elements
+                    commentItem.appendChild(itemHeader);
+                    commentItem.appendChild(itemContent);
+                    commentsContainer.appendChild(commentItem);
+                });
+                
+                // Process the comments with markdown parsing
+                processModalComments();
+                
+                // Scroll to top to show the newest comment first
+                setTimeout(() => {
+                    commentsContainer.scrollTop = 0;
+                }, 50);
             } else {
-                commentsContainer.innerHTML = '<p>Kommentaare pole.</p>';
+                const noComments = document.createElement('div');
+                noComments.classList.add('no-content');
+                noComments.textContent = 'Kommentaare pole.';
+                commentsContainer.appendChild(noComments);
             }
 
             if (isStudent) {
@@ -1041,7 +2123,26 @@
                 submitButton.textContent = student.studentActionButtonName;
                 submitButton.disabled = true; // Initially disable the "Esita" button
 
-                solutionInput.addEventListener('input', updateSubmitButtonState);
+                // Add trimming functionality to solution input
+                solutionInput.addEventListener('input', function() {
+                    // Trim the value and update the input
+                    const trimmedValue = this.value.trim();
+                    if (this.value !== trimmedValue) {
+                        this.value = trimmedValue;
+                    }
+                    updateSubmitButtonState();
+                });
+
+                // Also handle paste events to trim pasted content
+                solutionInput.addEventListener('paste', function(e) {
+                    setTimeout(() => {
+                        const trimmedValue = this.value.trim();
+                        if (this.value !== trimmedValue) {
+                            this.value = trimmedValue;
+                        }
+                        updateSubmitButtonState();
+                    }, 0);
+                });
 
                 document.getElementById('checkboxesContainer').addEventListener('change', function(event) {
                     if (event.target && event.target.type === 'checkbox') {
@@ -1141,11 +2242,24 @@
 
             Object.keys(assignment.criteria).forEach((criteriaId, index) => {
                 const criterion = assignment.criteria[criteriaId];
-                const isCompleted = assignment.students[studentId]?.userDoneCriteria[criteriaId]?.completed;
+                
+                // Check current state of main page checkbox first, fallback to server data
+                const mainPageCheckbox = document.querySelector(`#requiredCriteria #criterion_${criteriaId}`);
+                let isCompleted;
+                
+                if (mainPageCheckbox) {
+                    // Use current state from main page
+                    isCompleted = mainPageCheckbox.checked;
+                    console.log(`Using main page state for criterion ${criteriaId}: ${isCompleted}`);
+                } else {
+                    // Fallback to server data
+                    isCompleted = assignment.students[studentId]?.userDoneCriteria[criteriaId]?.completed;
+                    console.log(`Using server state for criterion ${criteriaId}: ${isCompleted}`);
+                }
 
                 criteriaContainer.innerHTML += `
     <div class="form-check">
-        <input class="form-check-input" type="checkbox" id="criterion_${criteriaId}" ${isCompleted ? 'checked' : ''}>
+        <input class="form-check-input modal-criterion-checkbox" type="checkbox" id="criterion_${criteriaId}" data-criteria-id="${criteriaId}" ${isCompleted ? 'checked' : ''}>
         <label class="form-check-label" for="criterion_${criteriaId}">
             ${index + 1}. ${criterion.criteriaName}
         </label>
@@ -1153,9 +2267,23 @@
     `;
             });
 
+            // Add event listeners to sync checkboxes
+            const modalCheckboxes = criteriaContainer.querySelectorAll('.modal-criterion-checkbox');
+            modalCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    console.log(`Modal checkbox changed: criterion_${this.dataset.criteriaId} = ${this.checked}`);
+                    syncCriteriaCheckboxes(this.dataset.criteriaId, this.checked);
+                });
+            });
+
 
             const modal = new bootstrap.Modal(document.getElementById('studentModal'));
             modal.show();
+            
+            // Debug checkboxes after modal is shown
+            setTimeout(() => {
+                debugCheckboxes();
+            }, 100);
         }
 
         function saveStudentCriteria() {
@@ -1192,16 +2320,22 @@
         }
 
         function scrollToBottom() {
-            const messageContainer = document.querySelector('#messageContainer .content-part');
-            const notificationContainer = document.querySelector('#notificationContainer .content-part');
+            const chatSection = document.querySelector('#chatSection .section-content');
+            const activitiesSection = document.querySelector('#activitiesSection .section-content');
+            const commentsSection = document.querySelector('#commentsSection .section-content');
 
-
-            if (messageContainer) {
-                messageContainer.scrollTop = messageContainer.scrollHeight;
+            // Comments and activities scroll to top (newest items first)
+            if (commentsSection) {
+                commentsSection.scrollTop = 0;
+            }
+            
+            if (activitiesSection) {
+                activitiesSection.scrollTop = 0;
             }
 
-            if (notificationContainer) {
-                notificationContainer.scrollTop = notificationContainer.scrollHeight;
+            // Chat section scrolls to bottom (traditional chat behavior - but since we sort newest first, actually scroll to top)
+            if (chatSection) {
+                chatSection.scrollTop = 0;
             }
         }
 
@@ -1316,24 +2450,27 @@
             }
         }
 
-        function replyToMessage(userName, messageId, messageContent, createdAt) {
+        function replyToMessage(userName, messageId, userEmail, createdAt) {
             document.getElementById('replyInfo').style.display = 'block';
             document.getElementById('replyMessage').innerHTML = `
-        <div class="d-flex text-break align-items-start border rounded p-2" style="background-color: #f0f0f0;">
+        <div class="d-flex text-break align-items-center border rounded p-3" style="background-color: #e3f2fd; border-left: 4px solid #2196f3;">
             <div class="me-3">
-                <span class="avatar bg-primary text-white rounded-circle p-2">${userName[0]}</span>
+                <span class="avatar bg-primary text-white rounded-circle p-2" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 1rem;">${userName[0]}</span>
             </div>
-            <div>
-                <strong>${userName}</strong> kirjutas: ${createdAt}<br>
-                <em>${messageContent}</em>
+            <div class="flex-grow-1">
+                <div class="fw-bold text-primary mb-1">${userName}</div>
+                <div class="text-muted small">${userEmail} • ${createdAt}</div>
+            </div>
+            <div class="text-muted small">
+                <i class="fas fa-reply me-1"></i>Vastamiseks
             </div>
         </div>
     `;
             const content = document.getElementById('messageContent')
             content.setAttribute('data-reply-id', messageId)
             content.setAttribute('data-reply-user', userName)
+            content.setAttribute('data-reply-email', userEmail)
             content.setAttribute('data-reply-time', createdAt)
-            content.setAttribute('data-reply-content', messageContent)
             content.focus();
         }
 
@@ -1349,10 +2486,10 @@
             let replyContent = '';
             if (answerToId) {
                 const replyUser = messageContent.getAttribute('data-reply-user');
+                const replyEmail = messageContent.getAttribute('data-reply-email');
                 const replyTime = messageContent.getAttribute('data-reply-time');
-                const replyText = messageContent.getAttribute('data-reply-content');
 
-                replyContent = `> **${replyUser}** kirjutas *${replyTime}*:\n> ${replyText}\n\n`;
+                replyContent = `> **${replyUser}** (${replyEmail}) kirjutas *${replyTime}*:\n> Vastus sellele sõnumile\n\n`;
             }
 
             const finalContent = replyContent + messageContent.value;
@@ -1910,5 +3047,80 @@
                 }
             });
 
+        }
+
+        // Process comments in modal
+        function processModalComments() {
+            const modalCommentElements = document.querySelectorAll('#commentsContainer .comment-text[data-raw-comment]');
+
+            modalCommentElements.forEach(function(element) {
+                const rawComment = element.getAttribute('data-raw-comment');
+
+                if (rawComment) {
+                    const processedHtml = parseMarkdown(rawComment);
+                    element.innerHTML = processedHtml;
+                }
+            });
+        }
+
+        // Flag to prevent infinite sync loops
+        let isSyncing = false;
+
+        // Sync criteria checkboxes between modal and main page
+        function syncCriteriaCheckboxes(criteriaId, isChecked) {
+            if (!criteriaId || isSyncing) {
+                console.log(`Sync skipped - criteriaId: ${criteriaId}, isSyncing: ${isSyncing}`);
+                return;
+            }
+
+            console.log(`🔄 Syncing criterion ${criteriaId} to ${isChecked ? 'checked' : 'unchecked'}`);
+            isSyncing = true;
+
+            try {
+                // Update main page checkbox
+                const mainPageCheckbox = document.querySelector(`#requiredCriteria #criterion_${criteriaId}`);
+                console.log(`Main page checkbox found:`, mainPageCheckbox);
+                if (mainPageCheckbox) {
+                    console.log(`Main page checkbox current state: ${mainPageCheckbox.checked}, target: ${isChecked}`);
+                    if (mainPageCheckbox.checked !== isChecked) {
+                        console.log(`✅ Updating main page checkbox ${criteriaId} to ${isChecked}`);
+                        mainPageCheckbox.checked = isChecked;
+                        
+                        // Show save button for main page
+                        const saveButton = document.querySelector('#studentCriteriaForm .btn-primary');
+                        if (saveButton) {
+                            saveButton.hidden = false;
+                        }
+                    }
+                } else {
+                    console.log(`❌ Main page checkbox not found: #requiredCriteria #criterion_${criteriaId}`);
+                }
+
+                // Update modal checkbox (only if modal is open)
+                const modalCheckbox = document.querySelector(`#checkboxesContainer #criterion_${criteriaId}`);
+                console.log(`Modal checkbox found:`, modalCheckbox);
+                if (modalCheckbox) {
+                    console.log(`Modal checkbox current state: ${modalCheckbox.checked}, target: ${isChecked}`);
+                    if (modalCheckbox.checked !== isChecked) {
+                        console.log(`✅ Updating modal checkbox ${criteriaId} to ${isChecked}`);
+                        modalCheckbox.checked = isChecked;
+                        
+                        // Update submit button state in modal if needed
+                        if (typeof updateButtonState === 'function') {
+                            updateButtonState();
+                        }
+                    }
+                } else {
+                    console.log(`❌ Modal checkbox not found: #checkboxesContainer #criterion_${criteriaId}`);
+                }
+            } catch (error) {
+                console.error('Error in syncCriteriaCheckboxes:', error);
+            } finally {
+                // Reset sync flag after a short delay
+                setTimeout(() => {
+                    isSyncing = false;
+                    console.log(`🔓 Sync flag reset for criterion ${criteriaId}`);
+                }, 50);
+            }
         }
     </script>
