@@ -130,37 +130,358 @@ async function showStatus() {
     await $`bun run compose ps`;
 }
 
+function detectShell() {
+    // Get shell from SHELL environment variable or process parent
+    const shell = process.env.SHELL || '';
+    if (shell.includes('zsh')) return 'zsh';
+    if (shell.includes('fish')) return 'fish';
+    if (shell.includes('bash')) return 'bash';
+    if (shell.includes('ash')) return 'ash';
+    if (process.platform === 'win32') return 'powershell';
+    return 'bash'; // fallback
+}
+
+function getDistroInfo() {
+    try {
+        // Try to detect Linux distribution
+        if (process.platform !== 'linux') return null;
+
+        const fs = require('fs');
+        if (fs.existsSync('/etc/os-release')) {
+            const osRelease = fs.readFileSync('/etc/os-release', 'utf8');
+            if (osRelease.includes('ubuntu') || osRelease.includes('Ubuntu')) return 'ubuntu';
+            if (osRelease.includes('debian') || osRelease.includes('Debian')) return 'debian';
+            if (osRelease.includes('fedora') || osRelease.includes('Fedora')) return 'fedora';
+            if (osRelease.includes('centos') || osRelease.includes('CentOS')) return 'centos';
+            if (osRelease.includes('rhel') || osRelease.includes('Red Hat')) return 'rhel';
+            if (osRelease.includes('alpine') || osRelease.includes('Alpine')) return 'alpine';
+            if (osRelease.includes('arch') || osRelease.includes('Arch')) return 'arch';
+        }
+        if (fs.existsSync('/etc/alpine-release')) return 'alpine';
+        if (fs.existsSync('/etc/arch-release')) return 'arch';
+    } catch (error) {
+        // Ignore errors, fallback to generic linux
+    }
+    return 'linux';
+}
+
+function cmdHighlight(cmd) {
+    // ANSI colors for highlighting commands
+    const colors = {
+        reset: '\x1b[0m',
+        bright: '\x1b[1m',
+        cyan: '\x1b[36m',
+        yellow: '\x1b[33m',
+        green: '\x1b[32m',
+        blue: '\x1b[34m',
+        red: '\x1b[31m'
+    };
+
+    return `${colors.bright}${colors.cyan}${cmd}${colors.reset}`;
+}
+
+function statusIcon(isInstalled) {
+    return isInstalled ? '✅' : '❌';
+}
+
+function statusColor(text, isInstalled) {
+    const colors = {
+        reset: '\x1b[0m',
+        green: '\x1b[32m',
+        red: '\x1b[31m'
+    };
+
+    return isInstalled ? `${colors.green}${text}${colors.reset}` : `${colors.red}${text}${colors.reset}`;
+}
+
+async function checkSystemStatus() {
+    const status = {
+        platform: process.platform,
+        shell: detectShell(),
+        distro: getDistroInfo(),
+        podman: false,
+        docker: false,
+        podmanCompose: false,
+        podmanMachine: false,
+        pip: false,
+        pipx: false,
+        python3: false
+    };
+
+    // Check container runtimes using which command
+    try {
+        await $`which podman`.quiet();
+        status.podman = true;
+    } catch { status.podman = false; }
+
+    try {
+        await $`which docker`.quiet();
+        status.docker = true;
+    } catch { status.docker = false; }
+
+    // Check podman-compose
+    try {
+        await $`which podman-compose`.quiet();
+        status.podmanCompose = true;
+    } catch { status.podmanCompose = false; }
+
+    // Check Python tools using which command
+    try {
+        await $`which python3`.quiet();
+        status.python3 = true;
+    } catch { status.python3 = false; }
+
+    try {
+        await $`which pip3`.quiet();
+        status.pip = true;
+    } catch { status.pip = false; }
+
+    try {
+        await $`which pipx`.quiet();
+        status.pipx = true;
+    } catch { status.pipx = false; }
+
+    // Check podman machine status (macOS/Windows)
+    if (status.podman && (status.platform === 'darwin' || status.platform === 'win32')) {
+        try {
+            const machineList = await $`podman machine list --format json`.quiet();
+            const machines = JSON.parse(machineList.stdout);
+            status.podmanMachine = machines.some(machine => machine.Running);
+        } catch (error) {
+            status.podmanMachine = false;
+        }
+    }
+
+    return status;
+}
+
+function displaySystemStatus(status) {
+    console.log("\n🔍 SYSTEM STATUS");
+    console.log("=".repeat(30));
+
+    console.log(`🖥️  Platform: ${status.platform} ${status.distro ? `(${status.distro})` : ''}`);
+    console.log(`🐚 Shell: ${status.shell}`);
+    console.log("");
+
+    console.log("📦 Container Runtimes:");
+    console.log(`   ${statusIcon(status.podman)} Podman: ${statusColor(status.podman ? 'Installed' : 'Not installed', status.podman)}`);
+    console.log(`   ${statusIcon(status.docker)} Docker: ${statusColor(status.docker ? 'Installed' : 'Not installed', status.docker)}`);
+
+    if (status.podman) {
+        console.log(`   ${statusIcon(status.podmanCompose)} podman-compose: ${statusColor(status.podmanCompose ? 'Installed' : 'Not installed', status.podmanCompose)}`);
+
+        if (status.platform === 'darwin' || status.platform === 'win32') {
+            console.log(`   ${statusIcon(status.podmanMachine)} Podman machine: ${statusColor(status.podmanMachine ? 'Running' : 'Not running', status.podmanMachine)}`);
+        }
+    }
+
+    console.log("\n🐍 Python Tools:");
+    console.log(`   ${statusIcon(status.python3)} Python 3: ${statusColor(status.python3 ? 'Installed' : 'Not installed', status.python3)}`);
+    console.log(`   ${statusIcon(status.pip)} pip3: ${statusColor(status.pip ? 'Installed' : 'Not installed', status.pip)}`);
+    console.log(`   ${statusIcon(status.pipx)} pipx: ${statusColor(status.pipx ? 'Installed' : 'Not installed', status.pipx)}`);
+
+    console.log("=".repeat(30));
+
+    return status;
+}
+
+function showConditionalSetupInstructions(status) {
+    const platform = status.platform;
+    const shell = status.shell;
+    const distro = status.distro;
+
+    // Determine what needs to be installed
+    const needsPodman = !status.podman && !status.docker;
+    const needsPodmanCompose = status.podman && !status.podmanCompose;
+    const needsPodmanMachine = status.podman && (platform === 'darwin' || platform === 'win32') && !status.podmanMachine;
+
+    if (!needsPodman && !needsPodmanCompose && !needsPodmanMachine) {
+        console.log("\n✅ All required components are installed!");
+        return;
+    }
+
+    console.log("\n🔧 MISSING COMPONENTS - SETUP REQUIRED");
+    console.log("=".repeat(50));
+
+    let stepNumber = 1;
+
+    if (platform === 'darwin') {
+        console.log("📱 macOS Setup:");
+
+        if (needsPodman) {
+            console.log(`   ${stepNumber}. Install Podman:`);
+            console.log(`      ${cmdHighlight('brew install podman')}`);
+            stepNumber++;
+        }
+
+        if (needsPodmanMachine) {
+            console.log(`   ${stepNumber}. Initialize and start Podman machine:`);
+            console.log(`      ${cmdHighlight('podman machine init')}`);
+            console.log(`      ${cmdHighlight('podman machine start')}`);
+            stepNumber++;
+        }
+
+        if (needsPodmanCompose) {
+            console.log(`   ${stepNumber}. Install podman-compose:`);
+            console.log(`      ${cmdHighlight('brew install podman-compose')}`);
+            stepNumber++;
+        }
+
+        if (needsPodman) {
+            if (shell === 'zsh') {
+                console.log(`   ${stepNumber}. Add to ~/.zshrc (optional, for convenience):`);
+                console.log(`      ${cmdHighlight("echo 'alias docker=podman' >> ~/.zshrc")}`);
+            } else if (shell === 'bash') {
+                console.log(`   ${stepNumber}. Add to ~/.bash_profile (optional, for convenience):`);
+                console.log(`      ${cmdHighlight("echo 'alias docker=podman' >> ~/.bash_profile")}`);
+            }
+        }
+
+    } else if (platform === 'win32') {
+        console.log("🪟 Windows Setup:");
+
+        if (needsPodman) {
+            console.log(`   ${stepNumber}. Install Podman:`);
+            console.log("      📦 Option A - Podman Desktop: https://podman.io/desktop");
+            console.log(`      📦 Option B - Chocolatey: ${cmdHighlight('choco install podman')}`);
+            console.log(`      📦 Option C - Scoop: ${cmdHighlight('scoop install podman')}`);
+            stepNumber++;
+        }
+
+        if (needsPodmanMachine) {
+            console.log(`   ${stepNumber}. Initialize Podman machine:`);
+            console.log(`      ${cmdHighlight('podman machine init')}`);
+            console.log(`      ${cmdHighlight('podman machine start')}`);
+            stepNumber++;
+        }
+
+        if (needsPodmanCompose) {
+            console.log(`   ${stepNumber}. Install podman-compose:`);
+            console.log(`      ${cmdHighlight('pip install --user podman-compose')}`);
+            console.log("      📦 Alternative (if pip fails):");
+            console.log(`         ${cmdHighlight('python3 -m venv ~/.local/podman-env')}`);
+            console.log(`         ${cmdHighlight('~/.local/podman-env/bin/pip install podman-compose')}`);
+        }
+
+    } else if (platform === 'linux') {
+        console.log("🐧 Linux Setup:");
+
+        if (needsPodman) {
+            if (distro === 'ubuntu' || distro === 'debian') {
+                console.log("   📦 Ubuntu/Debian:");
+                console.log(`   ${stepNumber}. Update and install Podman:`);
+                console.log(`      ${cmdHighlight('sudo apt update')}`);
+                console.log(`      ${cmdHighlight('sudo apt install -y podman')}`);
+                stepNumber++;
+            } else if (distro === 'fedora') {
+                console.log("   📦 Fedora:");
+                console.log(`   ${stepNumber}. Install Podman:`);
+                console.log(`      ${cmdHighlight('sudo dnf install -y podman')}`);
+                stepNumber++;
+            } else if (distro === 'centos' || distro === 'rhel') {
+                console.log("   📦 CentOS/RHEL:");
+                console.log(`   ${stepNumber}. Install Podman:`);
+                console.log(`      ${cmdHighlight('sudo yum install -y podman')}`);
+                stepNumber++;
+            } else if (distro === 'alpine') {
+                console.log("   📦 Alpine Linux:");
+                console.log(`   ${stepNumber}. Install Podman:`);
+                console.log(`      ${cmdHighlight('sudo apk add podman')}`);
+                stepNumber++;
+            } else if (distro === 'arch') {
+                console.log("   📦 Arch Linux:");
+                console.log(`   ${stepNumber}. Install Podman:`);
+                console.log(`      ${cmdHighlight('sudo pacman -S podman')}`);
+                stepNumber++;
+            } else {
+                console.log("   📦 Generic Linux:");
+                console.log(`   ${stepNumber}. Install Podman (check your package manager):`);
+                console.log(`      • apt (Ubuntu/Debian): ${cmdHighlight('sudo apt install podman')}`);
+                console.log(`      • dnf (Fedora): ${cmdHighlight('sudo dnf install podman')}`);
+                console.log(`      • yum (CentOS/RHEL): ${cmdHighlight('sudo yum install podman')}`);
+                console.log(`      • pacman (Arch): ${cmdHighlight('sudo pacman -S podman')}`);
+                console.log(`      • apk (Alpine): ${cmdHighlight('sudo apk add podman')}`);
+                stepNumber++;
+            }
+        }
+
+        if (needsPodmanCompose) {
+            console.log(`   ${stepNumber}. Install podman-compose (choose best option):`);
+
+            if (distro === 'ubuntu' || distro === 'debian') {
+                console.log("      📦 Option A - System package (recommended):");
+                console.log(`         ${cmdHighlight('sudo apt install -y podman-compose')}`);
+                console.log("      📦 Option B - Using pipx:");
+                console.log(`         ${cmdHighlight('sudo apt install -y pipx')}`);
+                console.log(`         ${cmdHighlight('pipx install podman-compose')}`);
+                console.log("      📦 Option C - Virtual environment:");
+                console.log(`         ${cmdHighlight('python3 -m venv ~/.local/podman-env')}`);
+                console.log(`         ${cmdHighlight('~/.local/podman-env/bin/pip install podman-compose')}`);
+                console.log(`         ${cmdHighlight('sudo ln -sf ~/.local/podman-env/bin/podman-compose /usr/local/bin/')}`);
+            } else if (distro === 'fedora') {
+                console.log(`      ${cmdHighlight('sudo dnf install -y podman-compose')}`);
+                console.log("      📦 Alternative:");
+                console.log(`         ${cmdHighlight('sudo dnf install -y pipx && pipx install podman-compose')}`);
+            } else if (distro === 'arch') {
+                console.log(`      ${cmdHighlight('sudo pacman -S podman-compose')}`);
+            } else {
+                console.log("      📦 Virtual environment (universal method):");
+                console.log(`         ${cmdHighlight('python3 -m venv ~/.local/podman-env')}`);
+                console.log(`         ${cmdHighlight('~/.local/podman-env/bin/pip install podman-compose')}`);
+                console.log(`         ${cmdHighlight('sudo ln -sf ~/.local/podman-env/bin/podman-compose /usr/local/bin/')}`);
+            }
+            stepNumber++;
+        }
+
+        if (needsPodman) {
+            console.log(`   ${stepNumber}. Configure rootless containers:`);
+            console.log(`      ${cmdHighlight('podman system migrate')}`);
+            stepNumber++;
+
+            if (shell === 'zsh') {
+                console.log(`   ${stepNumber}. Add alias (optional):`);
+                console.log(`      ${cmdHighlight("echo 'alias docker=podman' >> ~/.zshrc && source ~/.zshrc")}`);
+            } else if (shell === 'bash') {
+                console.log(`   ${stepNumber}. Add alias (optional):`);
+                console.log(`      ${cmdHighlight("echo 'alias docker=podman' >> ~/.bashrc && source ~/.bashrc")}`);
+            } else if (shell === 'fish') {
+                console.log(`   ${stepNumber}. Add alias (optional):`);
+                console.log(`      ${cmdHighlight("echo 'alias docker=podman' >> ~/.config/fish/config.fish")}`);
+            } else if (shell === 'ash') {
+                console.log(`   ${stepNumber}. Add alias (optional):`);
+                console.log(`      ${cmdHighlight("echo 'alias docker=podman' >> ~/.profile && source ~/.profile")}`);
+            }
+        }
+    }
+
+    console.log("\n🔄 After installation, run:");
+    console.log(`   ${cmdHighlight('bun start')}`);
+    console.log("\n💡 Alternative: Install Docker instead:");
+    console.log("   • Docker Desktop: https://docker.com/");
+    console.log("   • Docker Engine: https://docs.docker.com/engine/install/");
+    console.log("=".repeat(50));
+}
+
 async function checkAndInstallPodmanRequirements() {
     try {
-        // Check if podman is available first, then docker
-        const hasPodman = await $`command -v podman`.quiet().then(() => true).catch(() => false);
-        const hasDocker = await $`command -v docker`.quiet().then(() => true).catch(() => false);
-        
-        if (!hasPodman && !hasDocker) {
+        // Get system status first
+        const status = await checkSystemStatus();
+        displaySystemStatus(status);
+
+        if (!status.podman && !status.docker) {
             console.error("❌ Neither Podman nor Docker is available.");
-            console.error("   Please install either Podman or Docker.");
-            
-            // Detect OS and suggest installation
-            const platform = process.platform;
-            if (platform === 'darwin') {
-                console.error("   For macOS: brew install podman");
-                console.error("   Or install Docker Desktop from https://docker.com/");
-            } else if (platform === 'linux') {
-                console.error("   For Linux: Check your package manager (apt, yum, dnf, etc.)");
-                console.error("   Ubuntu/Debian: sudo apt install podman");
-                console.error("   RHEL/Fedora: sudo dnf install podman");
-            }
+            showConditionalSetupInstructions(status);
             process.exit(1);
         }
-        
-        const engine = hasPodman ? "podman" : "docker";
+
+        const engine = status.podman ? "podman" : "docker";
         console.log(`✅ Using ${engine} as container engine`);
-        
+
         // If using Podman, check for additional requirements
-        if (hasPodman) {
-            await checkPodmanRequirements();
+        if (status.podman) {
+            await checkPodmanRequirements(status);
         }
-        
+
         // Test the compose functionality
         await $`bun run compose --version`.quiet();
     } catch (error) {
@@ -170,16 +491,13 @@ async function checkAndInstallPodmanRequirements() {
     }
 }
 
-async function checkPodmanRequirements() {
+async function checkPodmanRequirements(status) {
     console.log("🔍 Checking Podman requirements...");
-    
-    // Check for podman-compose
-    const hasPodmanCompose = await $`command -v podman-compose`.quiet().then(() => true).catch(() => false);
-    
-    if (!hasPodmanCompose) {
+
+    if (!status.podmanCompose) {
         console.log("⚠️  podman-compose not found, attempting to install...");
         try {
-            const platform = process.platform;
+            const platform = status.platform;
             if (platform === 'darwin') {
                 // macOS with Homebrew
                 await $`brew install podman-compose`;
@@ -204,14 +522,14 @@ async function checkPodmanRequirements() {
             process.exit(1);
         }
     }
-    
+
     // Check if podman machine is initialized (macOS/Windows)
     const platform = process.platform;
     if (platform === 'darwin' || platform === 'win32') {
         try {
             const machineList = await $`podman machine list --format json`.quiet();
             const machines = JSON.parse(machineList.stdout);
-            
+
             let hasRunningMachine = false;
             for (const machine of machines) {
                 if (machine.Running) {
@@ -219,16 +537,16 @@ async function checkPodmanRequirements() {
                     break;
                 }
             }
-            
+
             if (!hasRunningMachine) {
                 console.log("🔄 Starting Podman machine...");
-                
+
                 // Check if there's a machine to start
                 if (machines.length === 0) {
                     console.log("📝 Initializing Podman machine...");
                     await $`podman machine init`;
                 }
-                
+
                 await $`podman machine start`;
                 console.log("✅ Podman machine started");
             }
@@ -236,7 +554,7 @@ async function checkPodmanRequirements() {
             console.log("⚠️  Could not check/start Podman machine, continuing anyway...");
         }
     }
-    
+
     // Check for rootless containers configuration on Linux
     if (platform === 'linux') {
         try {
@@ -247,7 +565,7 @@ async function checkPodmanRequirements() {
             console.log("   Or check: https://github.com/containers/podman/blob/main/docs/tutorials/rootless_tutorial.md");
         }
     }
-    
+
     // Ensure the override file exists
     const overrideFile = 'docker/podman.override.yml';
     if (!existsSync(overrideFile)) {
