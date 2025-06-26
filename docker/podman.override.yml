@@ -1,0 +1,56 @@
+# Podman-specific configuration overrides
+# This file extends docker-compose.yml with Podman-only settings
+# Docker ignores this file - only Podman reads it
+# Purpose: Fix permission issues that occur with rootless Podman
+
+# YAML ANCHORS - Reusable configuration blocks (like variables)
+# The & creates an anchor, the * references it to avoid repetition
+
+# User namespace settings - solves "permission denied" errors
+# Note: userns_mode conflicts with podman-compose pods, so using security_opt instead
+x-pod-security: &pod_security
+  security_opt:
+    - "label=disable"  # Disable SELinux confinement to avoid permission issues
+
+# Volume mount settings - how to share project files with containers
+x-vol-ro: &code_ro
+  - ../:/var/www/html:Z,U  # Mount parent dir (project root) into container
+                           # ../ = go up from docker/ to project root
+                           # /var/www/html = where files appear in container
+                           # Z = SELinux security labeling (RedHat/Fedora/CentOS)
+                           #     SELinux blocks container file access by default
+                           #     Z flag tells Podman to relabel files so container can read them
+                           #     Without Z, you get "permission denied" even with correct ownership
+                           # U = fix file ownership for rootless Podman
+                           #     Rootless = Podman runs as regular user, not root
+                           #     Problem: container sees files as owned by wrong user
+                           #     U flag makes Podman chown files to match container's user
+                           #     Without U, container can't write to mounted directories
+
+# SERVICE OVERRIDES - Add Podman settings to each service
+services:
+  # PHP application server - runs the website code
+  app:
+    <<: *pod_security  # Apply security settings
+    volumes: *code_ro  # Mount code so PHP can read website files
+
+  # Web server - serves static files and forwards requests to PHP
+  nginx:
+    <<: *pod_security  # Apply security settings
+    volumes: *code_ro  # Needs code access to serve CSS, JS, images
+
+  # Database server - stores website data
+  db:
+    <<: *pod_security  # Apply security settings
+                       # Uses Docker named volume (not host directory)
+                       # Named volumes work automatically with Podman
+
+  # Email testing tool - catches emails sent by the website
+  mailhog:
+    <<: *pod_security  # Apply security settings
+                       # No file access needed - just runs email service
+
+  # Database admin interface - web UI to manage database
+  phpmyadmin:
+    <<: *pod_security  # Apply security settings
+                       # Connects to database over network, no files needed

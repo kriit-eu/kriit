@@ -1,4 +1,6 @@
-# CLAUDE.md: Guidelines for Code Agents
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Description
 
@@ -13,27 +15,53 @@ Teachers can also grade assignments in Kriit.
 
 ## Build & Development Commands
 - Install dependencies: `composer install && npm install`
-- Database linting: `php database_linter.php`
+- Start development environment: `bun start` (starts Docker/Podman containers)  
+- Stop environment: `bun stop`
+- View logs: `bun logs` or `bun logs:app`/`bun logs:db`/`bun logs:nginx`
+- Access shell: `bun shell` (PHP container), `bun shell:db` (MariaDB container)
+- Database operations: `bun db:import` (restore from doc/database.sql), `bun db:export` (dump to doc/database.sql)
+- Database linting: `php database_linter.php` (validates schema integrity and naming conventions)
+- Run tests: `bun test` (JavaScript tests using Bun test runner)
 
 ## Environment Setup
-- Local development requires PHP 8.3+, MariaDB
-- No formal build process, files are served directly
+- **Container Runtime**: Docker or Podman (automatic detection via `docker/podman.override.yml`)
+- **Package Manager**: Bun (Node.js alternative)
+- **PHP Version**: 8.3+
+- **Database**: MariaDB (via containers)
+- **Services**: Nginx (8080), phpMyAdmin (8081), MailHog (8025), MariaDB (8006)
+- No formal build process - files served directly through Docker/Podman setup
 
 ## Architecture
-- Custom MVC framework:
-    - Controllers handle requests (`controllers/{controllerName}.php`)
-    - Templates set the general layout (`templates/{layoutName}_template.php`)
-      - Main templates: `templates/{templateName}_template.php`
-      - Common templates include `auth_template.php`, `master_template.php`, and `admin_template.php`
-      - Partial templates in `templates/partials/`
-  - Views render template content (`views/{controllerName}/{controllerName}_{actionName}.php`)
-  - Service classes have static methods in `classes/App/{serviceName}.php` to group related functions
-  - Automatic routing for controllers (e.g., `/users` maps to `controllers/users.php` to function `index()` and `/users/1` maps to function `view()`
-  - Default controller set in constants.php
+
+### Custom MVC Framework
+- **Entry Point**: `/index.php` handles CORS, bootstraps application through `Application` class
+- **Routing**: Automatic URL-based routing (`/controller/action/params`) with custom routing rules
+- **Controllers**: Located in `/controllers/` directory, extend base `Controller` class
+  - API controllers in `/controllers/api/` for external system integration
+  - Automatic routing: `/users` → `controllers/users.php::index()`, `/users/1` → `controllers/users.php::view()`
+- **Views**: In `/views/{controller}/{controller}_{action}.php` format
+- **Templates**: Layout templates in `/templates/` with partials in `/templates/partials/`
+  - Common templates: `auth_template.php`, `master_template.php`, `admin_template.php`
+- **Service Classes**: Static methods in `classes/App/{serviceName}.php` for business logic grouping
+  - Key services: `Activity`, `Assignment`, `User`, `Sync`, `Mail`, `Translation`
+
+### Database Layer
+- **Main Database Class**: `/classes/App/Db.php` - Singleton pattern with prepared statements
+- **Key Methods**: `getAll()`, `getFirst()`, `getOne()`, `insert()`, `update()`, `delete()`, `upsert()`
+- **Features**: SQL debugging, transaction support, query logging, performance monitoring
+- **Schema**: MariaDB with UTF8MB4, camelCase field names prefixed with table names
+
+### External Integration
+- **Tahvel API**: `/api/subjects/getDifferences` endpoint for bi-directional sync
+- **Data Validation**: Comprehensive validation of external data before processing
+- **Activity Logging**: All sync operations logged for audit trail
 
 ## Configuration Files
-- `/config.php` for global configuration (e.g., database and email connection details)
-- `/constants.php` for global constants and enumerations for more semantic code
+- `/config.php` - Global configuration (database, email, environment settings)
+- `/constants.php` - Application constants, activity types, validation rules
+- `composer.json` - PHP dependencies and PSR-4 autoloading
+- `package.json` - JavaScript dependencies and Bun scripts  
+- `docker/podman.override.yml` - Automatic Podman configuration for rootless containers
 
 ## Code Style Guidelines
 
@@ -62,9 +90,11 @@ Teachers can also grade assignments in Kriit.
 - Follow PSR-4 autoloading standard
 
 ## Frontend
-- **CSS**: Bootstrap framework
-- **JavaScript**:
-    - Prefer Vue.js for interactive components
+- **CSS Framework**: Bootstrap 5 with custom overrides
+- **JavaScript**: Vanilla JS with selective Vue.js components
+- **Assets**: FontAwesome icons, CodeMirror editor, jQuery
+- **Build**: No build process - assets served directly
+- **Responsive**: Mobile-first design approach
 
 ## Error Handling
 - Development errors show detailed information
@@ -77,8 +107,16 @@ Teachers can also grade assignments in Kriit.
 - Complex operations should include inline comments
 - All methods with parameters should document parameter types
 
-## Best Practices
-- Use the static methods in classes/App/Db.php to interact with the database
-- Use prepared statements for all database queries
-- Implement type hints and return types
-- Use the database linter to verify schema integrity
+## Key Development Patterns
+- **Database Operations**: Use static methods in `classes/App/Db.php` for all database interactions
+- **SQL Queries**: Use prepared statements exclusively, prefer `USING()` over `ON` when field names match
+- **Activity Logging**: Log all significant actions using `Activity` service class (27+ activity types)
+- **Authentication**: Session-based auth via `Auth` class with role-based access control
+- **Error Handling**: Exception-based pattern with environment-specific error display
+- **Multi-language**: Dynamic language switching with translation extraction system
+
+## Testing & Quality Assurance
+- **Database Linting**: `php database_linter.php` validates schema integrity and naming conventions
+- **JavaScript Testing**: Bun test runner with comprehensive AVIF support test suite
+- **Pre-commit Hooks**: Husky integration for branch naming validation
+- **SQL Debugging**: Built-in query logging and performance monitoring for admins
