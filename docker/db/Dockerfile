@@ -9,7 +9,9 @@ RUN apk add --no-cache \
 
 COPY my.cnf /etc/my.cnf
 COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+RUN chmod +x /entrypoint.sh && \
+    # Fix line endings for Windows compatibility
+    sed -i 's/\r$//' /entrypoint.sh
 
 EXPOSE 8006
 VOLUME /var/lib/mysql

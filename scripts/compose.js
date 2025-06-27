@@ -1,17 +1,43 @@
 #!/usr/bin/env bun
+
 /**
- * Smart wrapper around “compose”:
+ * Smart wrapper around "compose":
  *   • uses Podman + docker/podman.override.yml when `podman` exists
  *   • falls back to Docker otherwise (OrbStack / Docker Desktop on macOS)
  */
 
 import { $ } from "bun";
 
-const args   = Bun.argv.slice(2);          // what the user typed after “bun run compose …”
-const podman = await $`command -v podman`.quiet().then(() => true).catch(() => false);
+const args = Bun.argv.slice(2);          // what the user typed after "bun run compose …"
+
+// Cross-platform Podman detection
+let podman = false;
+try {
+    if (process.platform === 'win32') {
+        // On Windows, use PowerShell Get-Command with explicit output check
+        const result = await $`powershell -Command "Get-Command podman -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name"`.quiet();
+        if (result.stdout.toString().trim().includes('podman')) {
+            podman = true;
+        }
+    } else {
+        // On Unix-like systems, use which
+        await $`which podman`.quiet();
+        podman = true;
+    }
+    
+    if (podman) {
+        console.log("✅ Podman detected");
+    } else {
+        console.log("❌ Podman not detected");
+    }
+} catch {
+    podman = false;
+    console.log("❌ Podman not detected");
+}
+
 const engine = podman ? "podman" : "docker";
 
-// Compose files: always the main one, plus the override if we’re on Podman
+// Compose files: always the main one, plus the override if we're on Podman
 const files = ["-f", "docker/docker-compose.yml"];
 if (podman) files.push("-f", "docker/podman.override.yml");
 
