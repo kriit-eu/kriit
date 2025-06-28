@@ -11,7 +11,7 @@ COPY my.cnf /etc/my.cnf
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-EXPOSE 8006
+EXPOSE 8002
 VOLUME /var/lib/mysql
 
 ENV MARIADB_AUTO_UPGRADE=1 \

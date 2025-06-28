@@ -340,7 +340,7 @@ Pärast nende seadistamist saad kasutada `docker` käske, mis tegelikult käivit
    **Märkus:** `bun start` käsk paigaldab automaatselt kõik sõltuvused (nii Node.js kui ka PHP) ja käivitab konteinerid.
 
    **Märkus:** Projekt töötab nii Dockeri kui ka Podmaniga. Podman kasutajad saavad automaatse seadistuse läbi `docker/podman.override.yml` faili.
-3. Ava **[http://localhost:8080](http://localhost:8080)** ja logi sisse:
+3. Ava **[http://localhost:8000](http://localhost:8000)** ja logi sisse:
     - *admin* — `41111111115` `demo`
     - *õppija* — `31111111114` `demo`
 
@@ -348,10 +348,10 @@ Pärast nende seadistamist saad kasutada `docker` käske, mis tegelikult käivit
 
 | Teenus     | Kirjeldus   | Aadress                                            |
 |------------|-------------|----------------------------------------------------|
-| nginx      | veebiserver | [http://localhost:8080](http://localhost:8080)     |
-| phpMyAdmin | DB-haldus   | [http://localhost:8081](http://localhost:8081)     |
-| MailHog    | testmeilid  | [http://localhost:8025](http://localhost:8025)     |
-| MariaDB    | andmebaas   | Konteineritest `db:8006`, väljast `localhost:8006` |
+| nginx      | veebiserver | [http://localhost:8000](http://localhost:8000)     |
+| phpMyAdmin | DB-haldus   | [http://localhost:8001](http://localhost:8001)     |
+| MailHog    | testmeilid  | [http://localhost:8003](http://localhost:8003)     |
+| MariaDB    | andmebaas   | Konteineritest `db:8002`, väljast `localhost:8002` |
 
 ### Kasulikud käsud (Docker ja Podman)
 
@@ -424,7 +424,7 @@ Näide: `42_lisa_kasutaja_profiil`
 
 ```text
 host: (konteineris: db, väljastpoolt 127.0.0.1)
-port: 8006
+port: 8002
 user: root
 pass: kriitkriit
 db:   kriit
@@ -433,5 +433,5 @@ db:   kriit
 Näide:
 
 ```bash
-mysql -h 127.0.0.1 -P8006 -uroot -pkriitkriit kriit
+mysql -h 127.0.0.1 -P8002 -uroot -pkriitkriit kriit
 ```

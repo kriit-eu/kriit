@@ -14,3 +14,7 @@ logs/output.txt
 
 # Docker build cache
 .docker-checksums.json
+
+# Setup script logs
+.kriit-revert.log
+.kriit-setup.log

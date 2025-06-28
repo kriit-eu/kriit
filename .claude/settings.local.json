@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(bun run:*)",
+      "Bash(chmod:*)",
+      "Bash(bun start:*)",
+      "Bash(podman-compose:*)",
+      "Bash(podman exec:*)",
+      "Bash(podman inspect:*)",
+      "Bash(grep:*)",
+      "Bash(ls:*)",
+      "Bash(podman pod:*)",
+      "Bash(podman network:*)",
+      "Bash(podman ps:*)",
+      "Bash(podman logs:*)",
+      "Bash(curl:*)",
+      "Bash(podman pull:*)",
+      "Bash(find:*)",
+      "Bash(rg:*)",
+      "Bash(echo $PATH)",
+      "Bash(/home/kriit/.bun/bin/bun run setup:revert --help)",
+      "Bash(bash:*)",
+      "Bash(rm:*)"
+    ],
+    "deny": []
+  }
+}

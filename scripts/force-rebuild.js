@@ -24,9 +24,9 @@ async function forceRebuild() {
     await $`docker compose -f ${COMPOSE_FILE} ps`;
 
     console.log("\n✅ Kriit is running!");
-    console.log("   - App: http://localhost:8080");
-    console.log("   - phpMyAdmin: http://localhost:8081");
-    console.log("   - MailHog: http://localhost:8025");
+    console.log("   - App: http://localhost:8000");
+    console.log("   - phpMyAdmin: http://localhost:8001");
+    console.log("   - MailHog: http://localhost:8003");
 }
 
 (async () => {

@@ -4,12 +4,12 @@ const ENV = 0; // ENV_DEVELOPMENT;
 
 // Local configuration
 const DATABASE_HOSTNAME = 'db';
-const DATABASE_PORT = '8006';
+const DATABASE_PORT = '8002';
 const DATABASE_USERNAME = 'root';
 const DATABASE_PASSWORD = 'kriitkriit';
 const DATABASE_DATABASE = 'kriit';
 
-// Use http://localhost:8080/dbcomp.php to put your IP in staging firewall in order for these credentials to work
+// Use http://localhost:8000/dbcomp.php to put your IP in staging firewall in order for these credentials to work
 const STAGING_DATABASE_HOSTNAME = 'kriit.vikk.ee';
 const STAGING_DATABASE_PORT = '3306';
 const STAGING_DATABASE_USERNAME = 'kriit';

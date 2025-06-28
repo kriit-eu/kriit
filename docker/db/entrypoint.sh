@@ -8,7 +8,7 @@ if [ ! -d "/var/lib/mysql/mysql" ]; then
 
     # Start temporary server
     mysqld --skip-name-resolve --skip-host-cache \
-           --user=mysql --port=8006 --bind-address=0.0.0.0 \
+           --user=mysql --port=8002 --bind-address=0.0.0.0 \
            --socket=/run/mysqld/mysqld.sock &
     pid="$!"
 
@@ -47,5 +47,5 @@ fi
 # Start production server
 exec mysqld \
      --user=mysql --console \
-     --port=8006 --bind-address=0.0.0.0 \
+     --port=8002 --bind-address=0.0.0.0 \
      --skip-name-resolve --skip-host-cache

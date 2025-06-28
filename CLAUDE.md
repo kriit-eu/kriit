@@ -28,7 +28,7 @@ Teachers can also grade assignments in Kriit.
 - **Package Manager**: Bun (Node.js alternative)
 - **PHP Version**: 8.3+
 - **Database**: MariaDB (via containers)
-- **Services**: Nginx (8080), phpMyAdmin (8081), MailHog (8025), MariaDB (8006)
+- **Services**: Nginx (8000), phpMyAdmin (8001), MariaDB (8002), MailHog (8003)
 - No formal build process - files served directly through Docker/Podman setup
 
 ## Architecture

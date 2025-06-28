@@ -1,4 +1,4 @@
-name: Kriit
+name: kriit
 
 services:
   app:
@@ -20,7 +20,7 @@ services:
     image: kriit/nginx
     container_name: kriit_nginx
     ports:
-      - "127.0.0.1:8080:80"
+      - "8000:80"
     volumes:
       - ../:/var/www/html
     depends_on: [app]
@@ -34,7 +34,7 @@ services:
     container_name: kriit_db
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8006:8006"
+      - "127.0.0.1:8002:8002"
     environment:
       MYSQL_DATABASE: kriit
       MYSQL_ROOT_PASSWORD: kriitkriit
@@ -44,7 +44,7 @@ services:
       - ../doc/database.sql:/docker-entrypoint-initdb.d/init.sql:ro
     networks: [kriit_net]
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-P", "8006", "-uroot", "-pkriitkriit"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-P", "8002", "-uroot", "-pkriitkriit"]
       start_period: 30s
       interval: 5s
       timeout: 3s
@@ -57,7 +57,7 @@ services:
     image: kriit/mailhog
     container_name: kriit_mailhog
     ports:
-      - "127.0.0.1:8025:8025"   # UI only - IPv4 only
+      - "8003:8025"   # UI accessible from host
     networks: [kriit_net]
 
   phpmyadmin:
@@ -68,15 +68,13 @@ services:
     container_name: kriit_phpmyadmin
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8081:80"
+      - "8001:80"
     environment:
       PMA_HOST: db
-      PMA_PORT: 8006
+      PMA_PORT: 8002
       PMA_USER: root
       PMA_PASSWORD: kriitkriit
-    depends_on:
-      db:
-        condition: service_healthy
+    depends_on: [db]
     networks: [kriit_net]
     stop_grace_period: 1s
 

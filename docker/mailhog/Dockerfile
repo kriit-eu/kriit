@@ -1,7 +1,11 @@
+FROM golang:1.23-alpine AS builder
+RUN apk add --no-cache git
+RUN git clone https://github.com/mailhog/MailHog.git /go/src/github.com/mailhog/MailHog
+WORKDIR /go/src/github.com/mailhog/MailHog
+RUN rm -rf vendor && go mod init github.com/mailhog/MailHog && go mod tidy && CGO_ENABLED=0 go build -mod=mod -o /mailhog .
+
 FROM alpine:3.22
-RUN apk add --no-cache ca-certificates curl \
- && curl -L -o /usr/local/bin/mailhog \
-      https://github.com/mailhog/MailHog/releases/download/v1.0.1/MailHog_linux_amd64 \
- && chmod +x /usr/local/bin/mailhog
+RUN apk add --no-cache ca-certificates
+COPY --from=builder /mailhog /usr/local/bin/mailhog
 EXPOSE 1025 8025
 ENTRYPOINT ["mailhog"]

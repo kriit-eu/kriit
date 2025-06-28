@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "description": "Viljandi Kutseõppekeskuse kodutööde ja hinnete haldamise rakendus",
   "scripts": {
+    "setup": "bun scripts/setup.js",
+    "setup:revert": "bash scripts/setup/revert-alpine.sh",
     "start": "bun install && bun scripts/start.js",
     "compose": "bun scripts/compose.js",
     "stop": "bun run compose down",
@@ -26,6 +28,7 @@
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^6.7.2",
+    "@inquirer/prompts": "^7.0.1",
     "@popperjs/core": "^2.11.8",
     "bootstrap": "^5.3.3",
     "bootstrap-icons": "^1.11.3",

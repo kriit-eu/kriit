@@ -15,7 +15,7 @@ docker-compose build app --no-cache
 docker-compose up -d
 
 # Verify AVIF support
-curl http://localhost:8080/api/images/diagnostics
+curl http://localhost:8000/api/images/diagnostics
 ```
 
 ### 2. Alternative: Force rebuild everything
@@ -236,7 +236,7 @@ sudo make install
 curl http://your-domain.com/api/images/diagnostics
 
 # Or locally
-curl http://localhost:8080/api/images/diagnostics
+curl http://localhost:8000/api/images/diagnostics
 ```
 
 ### Expected successful output should include:
