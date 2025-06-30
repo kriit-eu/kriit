@@ -1,4 +1,14 @@
 #!/usr/bin/env bun
+// Utility: Check if running as administrator (Windows only)
+const isElevated = async () => {
+    if (process.platform !== 'win32') return false;
+    try {
+        const { stdout } = await require('child_process').execSync('net session', { stdio: 'pipe' });
+        return true;
+    } catch (e) {
+        return false;
+    }
+};
 import { $ } from "bun";
 import { createHash } from "crypto";
 import { readFileSync, writeFileSync, existsSync, statSync } from "fs";
@@ -1404,7 +1414,6 @@ async function installWSL2() {
 
 async function installOpenSSH() {
     console.log("🔧 Installing OpenSSH Client...");
-    
     try {
         // First check if OpenSSH is already installed but not detected
         try {
@@ -1414,14 +1423,21 @@ async function installOpenSSH() {
         } catch {
             // OpenSSH not installed, proceed with installation
         }
-        
+        // Check for admin rights
+        if (!(await isElevated())) {
+            console.log("   ❌ OpenSSH Client installation requires administrator privileges.");
+            console.log("   � Please run this script as Administrator, or manually install OpenSSH Client:");
+            console.log("      1. Open PowerShell as Administrator");
+            console.log("      2. Run: Add-WindowsCapability -Online -Name OpenSSH.Client~~~~0.0.1.0");
+            console.log("      3. Or install via Settings > Apps > Optional Features");
+            console.log("      4. Restart your terminal");
+            return false;
+        }
         console.log("   📦 Installing OpenSSH Client via Windows capability...");
-        
         try {
             // Use Add-WindowsCapability to install OpenSSH Client
             const result = await $`powershell -Command "Add-WindowsCapability -Online -Name OpenSSH.Client~~~~0.0.1.0"`;
             console.log("   ✅ OpenSSH Client installation completed!");
-            
             // Check if OpenSSH is now available
             try {
                 await $`ssh-keygen -V`.quiet();
@@ -1435,11 +1451,9 @@ async function installOpenSSH() {
         } catch (capabilityError) {
             // Try alternative method with winget
             console.log("   ⚠️  Windows capability installation failed, trying winget...");
-            
             try {
-                const result = await $`powershell -Command "winget install Microsoft.OpenSSH.Beta --accept-package-agreements --accept-source-agreements"}`;
+                const result = await $`powershell -Command "winget install Microsoft.OpenSSH.Beta --accept-package-agreements --accept-source-agreements"`;
                 console.log("   ✅ OpenSSH installed via winget!");
-                
                 // Check if OpenSSH is now available
                 try {
                     await $`ssh-keygen -V`.quiet();
@@ -1477,9 +1491,18 @@ async function installAllWindowsToolsUnconditionally() {
         console.log("\n📦 Installing Python...");
         await $`powershell -Command "winget install -e --id Python.Python.3.12 --accept-package-agreements --accept-source-agreements"`;
 
-        // Install OpenSSH Client
-        console.log("\n📦 Installing OpenSSH Client...");
-        await $`powershell -Command "Add-WindowsCapability -Online -Name OpenSSH.Client~~~~0.0.1.0"`;
+        // Install OpenSSH Client (only if admin)
+        if (await isElevated()) {
+            console.log("\n📦 Installing OpenSSH Client...");
+            await $`powershell -Command "Add-WindowsCapability -Online -Name OpenSSH.Client~~~~0.0.1.0"`;
+        } else {
+            console.log("\n❌ Skipping OpenSSH Client installation (requires administrator privileges).");
+            console.log("   📖 Please run this script as Administrator, or manually install OpenSSH Client:");
+            console.log("      1. Open PowerShell as Administrator");
+            console.log("      2. Run: Add-WindowsCapability -Online -Name OpenSSH.Client~~~~0.0.1.0");
+            console.log("      3. Or install via Settings > Apps > Optional Features");
+            console.log("      4. Restart your terminal");
+        }
 
         // Install WSL2
         console.log("\n📦 Installing WSL2...");
