@@ -895,99 +895,23 @@ function showConditionalSetupInstructions(status) {
 }
 
 async function checkAndInstallPodmanRequirements() {
+    // On Windows, all-in-one installer is now used, so skip the rest
+    if (process.platform === 'win32') {
+        return;
+    }
     try {
         // Get system status first
         const status = await checkSystemStatus();
         displaySystemStatus(status);
 
-        console.log("🔍 Analyzing system requirements...");
-        
-        // On Windows, check WSL2 first (required for Podman) before checking container runtimes
-        if (status.platform === 'win32' && !status.wsl2) {
-            console.log("🔧 WSL2 is required for Podman on Windows but is not available.");
-            console.log("🖥️  Installing WSL2 automatically...");
-            
-            try {
-                const wslInstallResult = await installWSL2();
-                
-                if (wslInstallResult === 'restart_required') {
-                    console.log("\n🔄 SYSTEM RESTART REQUIRED");
-                    console.log("=".repeat(35));
-                    console.log("✅ WSL2 installation initiated!");
-                    console.log("📝 To complete the installation:");
-                    console.log("   1. Restart your computer now");
-                    console.log("   2. After restart, run: bun start");
-                    console.log("\n💡 WSL2 requires a system restart to complete installation.");
-                    console.log("   After restart, Podman will be able to use WSL2 as its backend.");
-                    process.exit(0);
-                } else if (wslInstallResult === false) {
-                    console.error("❌ Failed to install WSL2 automatically.");
-                    console.log("📝 To install WSL2 manually:");
-                    console.log("   1. Open PowerShell as Administrator");
-                    console.log("   💡 Run: wsl --install");
-                    console.log("   2. Restart your computer");
-                    console.log("   3. Run this script again: bun start");
-                    process.exit(1);
-                } else {
-                    console.log("✅ WSL2 installation completed!");
-                    // Re-check WSL2 status after installation
-                    const newStatus = await checkSystemStatus();
-                    if (!newStatus.wsl2) {
-                        console.log("⚠️  WSL2 may need a restart to become fully functional.");
-                        console.log("📝 Please restart your computer and run: bun start");
-                        process.exit(0);
-                    }
-                    // Update status for further processing
-                    status.wsl2 = newStatus.wsl2;
-                }
-            } catch (error) {
-                console.error("❌ WSL2 installation failed:", error.message);
-                console.log("📝 Please install WSL2 manually:");
-                console.log("   1. Open PowerShell as Administrator");
-                console.log("   💡 Run: wsl --install");
-                console.log("   2. Restart your computer");
-                console.log("   3. Run this script again: bun start");
-                process.exit(1);
-            }
-        }
+        console.log("� Analyzing system requirements...");
 
         if (!status.podman && !status.docker) {
             console.error("❌ Neither Podman nor Docker is available.");
-            
-            // On Windows, additional checks after WSL2 is confirmed
-            if (status.platform === 'win32') {
-                console.log("🖥️  Running Windows-specific checks...");
-
-                // Check and install OpenSSH if needed
-                if (!status.openssh) {
-                    console.log("🔑 OpenSSH Client is required for Podman machine but is not installed.");
-                    console.log("🖥️  Installing OpenSSH Client automatically...");
-                    
-                    const opensshInstallResult = await installOpenSSH();
-                    
-                    if (!opensshInstallResult) {
-                        console.error("❌ Failed to install OpenSSH Client automatically.");
-                        console.log("📝 To install OpenSSH manually:");
-                        console.log("   1. Open PowerShell as Administrator");
-                        console.log("   💡 Run: Add-WindowsCapability -Online -Name OpenSSH.Client~~~~0.0.1.0");
-                        console.log("   2. Or install via Settings > Apps > Optional Features > OpenSSH Client");
-                        console.log("   3. Run this script again: bun start");
-                        process.exit(1);
-                    } else {
-                        console.log("✅ OpenSSH Client installed successfully!");
-                    }
-                }
-                
-                // Skip Podman Desktop detection - install CLI directly
-                console.log("📦 Installing Podman CLI automatically...");
-                const installSuccess = await installPodmanAutomatically(status);
-                await handlePodmanInstallationResult(installSuccess, status);
-            } else {
-                // Non-Windows platform, proceed with automatic installation
-                console.log("📦 Installing Podman automatically...");
-                const installSuccess = await installPodmanAutomatically(status);
-                await handlePodmanInstallationResult(installSuccess, status);
-            }
+            // Non-Windows platform, proceed with automatic installation
+            console.log("📦 Installing Podman automatically...");
+            const installSuccess = await installPodmanAutomatically(status);
+            await handlePodmanInstallationResult(installSuccess, status);
         }
 
         const engine = status.podman ? "podman" : "docker";
@@ -1006,24 +930,6 @@ async function checkAndInstallPodmanRequirements() {
         }
     } catch (error) {
         console.error("❌ Container runtime is not available.");
-        
-        // Check if this is a WSL2-related error on Windows
-        if (process.platform === 'win32' && (
-            error.message.includes('wsl.exe') || 
-            error.message.includes('Windows Subsystem for Linux') ||
-            error.message.includes('wsl --install')
-        )) {
-            console.error("💡 This appears to be a WSL2-related issue.");
-            console.error("   WSL2 is required for Podman to work on Windows.");
-            console.error("📝 To fix this:");
-            console.error("   1. Open PowerShell as Administrator");
-            console.error("   2. Run: wsl --install");
-            console.error("   3. Restart your computer");
-            console.error("   4. Run this script again: bun start");
-            console.error("\n🔄 Or run this script again and choose 'yes' when prompted to install WSL2 automatically.");
-        } else {
-            console.error("   Please make sure your container runtime is installed and running.");
-        }
         process.exit(1);
     }
 }
@@ -1562,7 +1468,42 @@ async function installOpenSSH() {
     }
 }
 
+
+// Installs Python, OpenSSH, WSL2, and Podman in one go on Windows, without checks
+async function installAllWindowsToolsUnconditionally() {
+    console.log("\n🔧 Installing Python, OpenSSH, WSL2, and Podman (no checks, all in one go)...");
+    try {
+        // Install Python
+        console.log("\n📦 Installing Python...");
+        await $`powershell -Command "winget install -e --id Python.Python.3.12 --accept-package-agreements --accept-source-agreements"`;
+
+        // Install OpenSSH Client
+        console.log("\n📦 Installing OpenSSH Client...");
+        await $`powershell -Command "Add-WindowsCapability -Online -Name OpenSSH.Client~~~~0.0.1.0"`;
+
+        // Install WSL2
+        console.log("\n📦 Installing WSL2...");
+        await $`powershell -Command "wsl --install"`;
+
+        // Install Podman CLI
+        console.log("\n📦 Installing Podman CLI...");
+        await $`powershell -Command "winget install -e --id RedHat.Podman --accept-package-agreements --accept-source-agreements"`;
+
+        console.log("\n✅ All installation commands have been run. Please restart your computer and re-run this script.");
+        process.exit(0);
+    } catch (error) {
+        console.error("❌ One or more installation commands failed:", error.message);
+        console.log("\n⚠️  Please check the output above, restart your computer, and re-run this script if needed.");
+        process.exit(1);
+    }
+}
+
 (async () => {
+    // Step 2: If on Windows, run all installers in one go and exit
+    if (process.platform === 'win32') {
+        await installAllWindowsToolsUnconditionally();
+        // The function will exit the process after running
+    }
     try {
         console.log("🔍 Checking container runtime availability...");
         await checkAndInstallPodmanRequirements();
