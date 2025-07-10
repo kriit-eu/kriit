@@ -728,7 +728,9 @@
                                 <div class="notification-item">
                                     <i class="fa fa-bell notification-icon"></i>
                                     <div class="notification-text">
-                                        <p class="fw-bold mb-1"><?= strip_tags($message['content'], '<br><ul><ol><h2><li><h3><p><strong><img><blockquote><em><code><pre>') ?></p>
+                                        <p class="fw-bold mb-1 message-text" data-raw-message="<?= htmlspecialchars($message['content'], ENT_QUOTES, 'UTF-8') ?>">
+                                            <!-- Message content will be processed by JavaScript -->
+                                        </p>
                                     </div>
                                     <small class="notification-time text-muted"><?= $message['createdAt'] ?></small>
                                 </div>
@@ -753,7 +755,9 @@
                                             <h6 class="fw-bold mb-1"><?= $message['userName'] ?></h6>
                                             <small class="text-muted"><?= $message['createdAt'] ?></small>
                                         </div>
-                                        <p class="mb-1"><?= strip_tags($message['content'], '<br><ul><ol><h2><li><h3><p><strong><img><blockquote><em>') ?></p>
+                                        <p class="mb-1 message-text" data-raw-message="<?= htmlspecialchars($message['content'], ENT_QUOTES, 'UTF-8') ?>">
+                                            <!-- Message content will be processed by JavaScript -->
+                                        </p>
                                         <?php if ($this->auth->userId !== $message['userId']): ?>
                                             <div class="d-flex justify-content-end">
                                                 <button type="button" class="btn btn-secondary btn-sm"
@@ -777,7 +781,9 @@
                                             </h6>
                                             <small class="text-muted"><?= $message['createdAt'] ?></small>
                                         </div>
-                                        <p class="mb-1 text-muted"><?= strip_tags($message['content'], '<br><ul><ol><h2><li><h3><p><strong><img><blockquote><em>') ?></p>
+                                        <p class="mb-1 text-muted message-text" data-raw-message="<?= htmlspecialchars($message['content'], ENT_QUOTES, 'UTF-8') ?>">
+                                            <!-- Message content will be processed by JavaScript -->
+                                        </p>
                                         <?php if ($this->auth->userId !== $message['userId']): ?>
                                             <div class="d-flex justify-content-end">
                                                 <button type="button" class="btn btn-secondary btn-sm"
@@ -1890,25 +1896,34 @@
             return html;
         }
 
-        // Process all comments on page load
+        // Process all comments and messages on page load
         function processComments() {
+            // Process comments
             const commentElements = document.querySelectorAll('.comment-text[data-raw-comment]');
-
+            
             commentElements.forEach(function(element, index) {
-
                 const rawComment = element.getAttribute('data-raw-comment');
 
                 if (rawComment) {
                     const processedHtml = parseMarkdown(rawComment);
-
-                    // Clear existing content and set new HTML
-                    element.innerHTML = '';
                     element.innerHTML = processedHtml;
-
                 } else {
                     console.log('No raw comment data found for element', index + 1);
                 }
             });
+            
+            // Process messages
+            const messageElements = document.querySelectorAll('.message-text[data-raw-message]');
+            
+            messageElements.forEach(function(element, index) {
+                const rawMessage = element.getAttribute('data-raw-message');
 
+                if (rawMessage) {
+                    const processedHtml = parseMarkdown(rawMessage);
+                    element.innerHTML = processedHtml;
+                } else {
+                    console.log('No raw message data found for element', index + 1);
+                }
+            });
         }
     </script>

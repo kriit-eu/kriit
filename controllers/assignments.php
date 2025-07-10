@@ -111,12 +111,8 @@ class assignments extends Controller
             if (!isset($assignment['students'][$studentId])) {
                 $comments = json_decode($row['comments'] ?? '[]', true) ?? [];
 
-                // Parse Markdown comments to HTML
-                foreach ($comments as &$comment) {
-                    if (isset($comment['comment'])) {
-                        $comment['comment'] = $parsedown->setBreaksEnabled(true)->text($comment['comment']);
-                    }
-                }
+                // Note: Comments are processed client-side with parseMarkdown function
+                // No server-side Parsedown processing to avoid double-processing issues
 
                 $assignment['students'][$studentId] = [
                     'studentId' => $studentId,
@@ -193,11 +189,9 @@ class assignments extends Controller
 
         // Add the messages to the assignment
         foreach ($messages as $message) {
-            // Parse Markdown content to HTML for messages
-            $content = $parsedown->setBreaksEnabled(true)->text($message['messageContent']);
-
-            // Ensure images have proper line breaks by adding <br> before img tags
-            $content = preg_replace('/(?<!<br>)(<img[^>]*>)/', '<br>$1', $content);
+            // Note: Message content is processed client-side to avoid double-processing issues
+            // Store raw content for client-side processing
+            $content = $message['messageContent'];
 
             $assignment['messages'][] = [
                 'messageId' => $message['messageId'],
