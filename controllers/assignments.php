@@ -52,7 +52,7 @@ class assignments extends Controller
                 LEFT JOIN groups g ON u.groupId = g.groupId /* Use student's actual group */
                 LEFT JOIN assignmentStatuses ast ON ua.assignmentStatusId = ast.assignmentStatusId
                 LEFT JOIN userDoneCriteria udc ON udc.criterionId = c.criterionId AND udc.userId = u.userId
-                WHERE a.assignmentId = ? {$studentFilterClause}
+                WHERE a.assignmentId = ? {$studentFilterClause} AND u.userDeleted = 0 AND u.userIsActive = 1
                 ORDER BY g.groupName, u.userName, c.criterionId
             ", [$assignmentId]);
 
