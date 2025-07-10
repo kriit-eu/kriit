@@ -176,18 +176,23 @@
     }
 
     .assignments-body {
-        display: flex;
+        display: inline-flex;
         flex-wrap: nowrap;
         overflow-x: auto;
         border: 1px solid #ccc;
         border-radius: 8px;
+        width: auto;
+        /* min-width removed for auto-scaling */
     }
 
-    .assignment-item {
-        display: flex;
-        flex-direction: column;
-        margin: 0;
-        flex: 1 0 0;
+    #assignments-container {
+        flex: 1;
+        max-width: 100%;
+        overflow-x: auto;
+        border-radius: 8px;
+        /* Remove any width or flex-grow that could force stretching */
+        width: auto;
+        flex-grow: 0;
     }
 
     .header-item,
@@ -677,45 +682,29 @@
     <?php endif; ?>
 
     <div id="main-container">
-        <div id="assignments-container">
+        <div id="assignments-container" style="overflow-x: auto;">
             <div class="assignments-body">
-                <?php foreach ($assignment['students'] as $s): ?>
-                    <div>
-                        <div class="header-item" data-bs-toggle="tooltip" title="<?= $s['studentName'] ?>" style="<?= $s['studentId'] !== array_key_first($assignment['students']) ? 'border-left: 1px solid #ccc;' : '' ?>">
-                            <?= $s['initials'] ?>
-                        </div>
-                        <div class="body-item <?= $s['class'] ?> text-center clickable-cells-row"
-                            data-bs-toggle="tooltip"
-                            style="<?= $s['studentId'] !== array_key_first($assignment['students']) ? 'border-left: 1px solid #ccc;' : '' ?>"
-                            title="<?= $s['tooltipText'] ?>"
-                            <?php if (!$isStudent): ?>
-                            oncontextmenu="showContextMenu(event, <?= $s['studentId'] ?>)"
-                            <?php endif; ?>
-                            onclick="openStudentModal(<?= $isStudent ? 'true' : 'false' ?>, <?= $s['studentId'] ?>)">
-                            <?= $s['grade'] ?? '' ?>
-                            <?php if ($s['assignmentStatusName'] !== 'Esitamata'): ?>
-                                <span style="font-size: 8px"><?= $s['userDoneCriteriaCount'] ?>/<?= count($assignment['criteria']) ?></span>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                    <?php if ($isStudent): ?>
-                        <div class="assignment-item">
-                            <div class="header-item">Kommentaarid</div>
-                            <div>
-                                <?php foreach ($s['comments'] as $comment): ?>
-                                    <div class="comment-row p-2 border rounded bg-light mb-2">
-                                        <div class="comment-name fw-bold text-dark mb-1"><?= isset($comment['name']) ? $comment['name'] : 'Tundmatu' ?></div>
-                                        <div class="comment-text text-muted" data-raw-comment="<?= htmlspecialchars($comment['comment'], ENT_QUOTES, 'UTF-8') ?>">
-                                            <!-- Comment content will be processed by JavaScript -->
-                                        </div>
-                                        <div class="comment-date text-secondary small"><?= $comment['createdAt'] ?></div>
-                                    </div>
-                                <?php endforeach; ?>
-                            </div>
-                        </div>
-
-                    <?php endif; ?>
-                <?php endforeach; ?>
+                <?php 
+$studentCount = count($assignment['students']);
+foreach ($assignment['students'] as $s): ?>
+    <div>
+        <div class="header-item" data-bs-toggle="tooltip" title="<?= $s['studentName'] ?>" style="<?= $s['studentId'] !== array_key_first($assignment['students']) ? 'border-left: 1px solid #ccc;' : '' ?>">
+            <?= $s['initials'] ?>
+        </div>
+        <div class="body-item <?= $s['class'] ?> text-center clickable-cells-row"
+            data-bs-toggle="tooltip"
+            style="<?= $s['studentId'] !== array_key_first($assignment['students']) ? 'border-left: 1px solid #ccc;' : '' ?>"
+            <?php if (!$isStudent): ?>
+            oncontextmenu="showContextMenu(event, <?= $s['studentId'] ?>)"
+            <?php endif; ?>
+            onclick="openStudentModal(<?= $isStudent ? 'true' : 'false' ?>, <?= $s['studentId'] ?>)">
+            <?= $s['grade'] ?? '' ?>
+            <?php if ($s['assignmentStatusName'] !== 'Esitamata'): ?>
+                <span style="font-size: 8px"><?= $s['userDoneCriteriaCount'] ?>/<?= count($assignment['criteria']) ?></span>
+            <?php endif; ?>
+        </div>
+    </div>
+<?php endforeach; ?>
             </div>
         </div>
         <div id="messages-container">
@@ -1919,11 +1908,12 @@
                 const rawMessage = element.getAttribute('data-raw-message');
 
                 if (rawMessage) {
+                   
                     const processedHtml = parseMarkdown(rawMessage);
                     element.innerHTML = processedHtml;
                 } else {
                     console.log('No raw message data found for element', index + 1);
-                }
+ }
             });
         }
     </script>
