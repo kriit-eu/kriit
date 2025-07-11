@@ -1165,25 +1165,34 @@ class Sync
                 } else {
                     // Student has no grade - create userAssignment without grade
                     // This ensures the student is associated with the assignment even without a grade
-                    $currentTime = date('Y-m-d H:i:s');
-                    Db::insert('userAssignments', [
-                        'assignmentId' => $assignmentId,
-                        'userId'       => $userId,
-                        'userGrade'    => null,
-                        'assignmentStatusId' => ASSIGNMENT_STATUS_NOT_SUBMITTED, // 1 = Not submitted
-                        'userAssignmentGradedAt' => null,
-                        'comments' => '[]'
-                    ]);
                     
-                    // Log activity for creating user assignment without grade
-                    if ($teacherId !== null) {
-                        Activity::create(ACTIVITY_CREATE_ASSIGNMENT_SYNC, $teacherId, $assignmentId, [
-                            'systemId' => $systemId,
-                            'assignmentName' => $assignmentInfo['assignmentName'],
-                            'studentName' => $newStudentNames[$personalCode],
-                            'action' => 'created_user_assignment_without_grade',
-                            'subjectName' => $subjectName ?? 'Unknown'
+                    // Double-check that the userAssignment doesn't exist (race condition protection)
+                    $existingCheck = Db::getFirst("
+                        SELECT * FROM userAssignments
+                        WHERE assignmentId = ? AND userId = ?
+                    ", [$assignmentId, $userId]);
+                    
+                    if (!$existingCheck) {
+                        $currentTime = date('Y-m-d H:i:s');
+                        Db::insert('userAssignments', [
+                            'assignmentId' => $assignmentId,
+                            'userId'       => $userId,
+                            'userGrade'    => null,
+                            'assignmentStatusId' => ASSIGNMENT_STATUS_NOT_SUBMITTED, // 1 = Not submitted
+                            'userAssignmentGradedAt' => null,
+                            'comments' => '[]'
                         ]);
+                        
+                        // Log activity for creating user assignment without grade
+                        if ($teacherId !== null) {
+                            Activity::create(ACTIVITY_CREATE_ASSIGNMENT_SYNC, $teacherId, $assignmentId, [
+                                'systemId' => $systemId,
+                                'assignmentName' => $assignmentInfo['assignmentName'],
+                                'studentName' => $newStudentNames[$personalCode],
+                                'action' => 'created_user_assignment_without_grade',
+                                'subjectName' => $subjectName ?? 'Unknown'
+                            ]);
+                        }
                     }
                 }
             }
