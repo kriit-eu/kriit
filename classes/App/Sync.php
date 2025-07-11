@@ -40,11 +40,15 @@ class Sync
                     $grade = $result['grade'] ?? null;
                     // Never use or expect 'id' from payload
                     if ($subjectId && $assignmentId && $studentCode && $assignmentName) {
+                        // Look up userId by studentPersonalCode
+                        $userRow = \App\Db::getFirst('SELECT userId FROM users WHERE userPersonalCode = ?', [$studentCode]);
+                        $matchedUserId = $userRow ? $userRow['userId'] : null;
                         \App\Db::upsert('finalGrades', [
                             'subjectExternalId' => $subjectId,
                             'assignmentExternalId' => $assignmentId,
                             'assignmentName' => $assignmentName,
                             'studentPersonalCode' => $studentCode,
+                            'userId' => $matchedUserId,
                             'grade' => $grade,
                             'syncedAt' => date('Y-m-d H:i:s')
                         ]);
@@ -59,6 +63,7 @@ class Sync
                                 'assignmentExternalId' => $assignmentId,
                                 'assignmentName' => $assignmentName,
                                 'studentPersonalCode' => $studentCode,
+                                'userId' => $matchedUserId,
                                 'grade' => $grade,
                                 'action' => 'finalgrades_sync'
                             ]
