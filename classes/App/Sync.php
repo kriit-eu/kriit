@@ -18,6 +18,58 @@ namespace App;
 class Sync
 {
     /**
+     * Sync final grades from external system into finalgrades_outcomes table
+     * @param array $payload Array of subjects with assignments and results
+     * @return int Number of inserted/updated rows
+     */
+    /**
+     * Sync final grades from external system into finalgrades_outcomes table
+     * @param array $payload Array of subjects with assignments and results
+     * @return int Number of inserted/updated rows
+     */
+    public static function syncFinalGrades($payload, $userId = null)
+    {
+        $inserted = 0;
+        foreach ($payload as $subject) {
+            $subjectId = $subject['subjectExternalId'] ?? null;
+            foreach ($subject['assignments'] ?? [] as $assignment) {
+                $assignmentId = $assignment['assignmentExternalId'] ?? null;
+                $assignmentName = $assignment['assignmentName'] ?? null;
+                foreach ($assignment['results'] ?? [] as $result) {
+                    $studentCode = $result['studentPersonalCode'] ?? null;
+                    $grade = $result['grade'] ?? null;
+                    // Never use or expect 'id' from payload
+                    if ($subjectId && $assignmentId && $studentCode && $assignmentName) {
+                        \App\Db::upsert('finalGrades', [
+                            'subjectExternalId' => $subjectId,
+                            'assignmentExternalId' => $assignmentId,
+                            'assignmentName' => $assignmentName,
+                            'studentPersonalCode' => $studentCode,
+                            'grade' => $grade,
+                            'syncedAt' => date('Y-m-d H:i:s')
+                        ]);
+                        $inserted++;
+                        // Log activity for each sync
+                        \App\Activity::create(
+                            defined('ACTIVITY_SYNC_START') ? ACTIVITY_SYNC_START : 18,
+                            $userId,
+                            null,
+                            [
+                                'subjectExternalId' => $subjectId,
+                                'assignmentExternalId' => $assignmentId,
+                                'assignmentName' => $assignmentName,
+                                'studentPersonalCode' => $studentCode,
+                                'grade' => $grade,
+                                'action' => 'finalgrades_sync'
+                            ]
+                        );
+                    }
+                }
+            }
+        }
+        return $inserted;
+    }
+    /**
      * Inserts missing entities (teacher, group, subject, assignment, student) into Kriit
      * using the data from External System.
      *
@@ -25,7 +77,7 @@ class Sync
      * @param int $systemId The ID of the external system
      * @return void
      */
-    public static function addMissingEntities(array $remoteSubjects, int $systemId = 1): void
+    public static function addMissingEntities($remoteSubjects, $systemId)
     {
         if (empty($remoteSubjects)) {
             return;
@@ -120,7 +172,7 @@ class Sync
      * @param int $systemId The ID of the external system
      * @return array
      */
-    public static function getSystemDifferences(array $remoteSubjects, int $systemId = 1): array
+    public static function getSystemDifferences($remoteSubjects, $systemId)
     {
         $diffSubjects = [];
 
@@ -149,8 +201,8 @@ class Sync
                 // Only process if this Kriit subject instance matches the remote subject's group
                 // or if the remote subject should appear under this group
                 $shouldProcessThisGroup = ($kriitSubject['groupName'] == $remoteSubject['groupName']) ||
-                                         self::shouldSubjectAppearInGroup($remoteSubject, $kriitSubject['groupName'], $systemId);
-                
+                    self::shouldSubjectAppearInGroup($remoteSubject, $kriitSubject['groupName'], $systemId);
+
                 if (!$shouldProcessThisGroup) {
                     continue;
                 }
@@ -213,7 +265,7 @@ class Sync
 
                     // If either fields differ or existing students differ => record difference
                     if ($fieldDiff || $resultsDiff) {
-                        $assignDiff = [ 'assignmentExternalId' => $extId ];
+                        $assignDiff = ['assignmentExternalId' => $extId];
                         foreach ($fieldDiff as $field => $diffVal) {
                             // We'll show Kriit's final data in the result
                             // If the field was NULL in Kriit and has been updated, show the remote value
@@ -283,14 +335,14 @@ class Sync
      * @param int $systemId The ID of the external system
      * @return array
      */
-    private static function loadKriitSubjectsData(array $remoteSubjects, int $systemId = 1): array
+    private static function loadKriitSubjectsData($remoteSubjects, $systemId)
     {
         $extIds = array_column($remoteSubjects, 'subjectExternalId');
         $extIdsString = implode(',', array_filter($extIds));
         if (!$extIdsString) {
             return [];
         }
-        
+
         // Include student groups in addition to the subject's assigned group
         // This ensures we capture all groups that have students participating in the subject
         // We now include deleted students in the query to support reactivation
@@ -318,7 +370,7 @@ class Sync
             $sxId = $r['subjectExternalId'];
             $groupName = $r['groupName'];
             $subjectKey = $sxId . '_' . $groupName;
-            
+
             if (!isset($subjects[$subjectKey])) {
                 $subjects[$subjectKey] = [
                     'subjectId'          => $r['subjectId'],
@@ -326,7 +378,7 @@ class Sync
                     'subjectExternalId'  => $r['subjectExternalId'],
                     'systemId'           => $r['systemId'],
                     'groupName'          => $groupName,
-                    'teacherPersonalCode'=> $r['teacherPersonalCode'],
+                    'teacherPersonalCode' => $r['teacherPersonalCode'],
                     'teacherName'        => $r['teacherName'],
                     'assignments'        => []
                 ];
@@ -353,7 +405,7 @@ class Sync
                 ];
             }
         }
-        
+
         // Convert back to indexed by external ID for compatibility, but now we have separate entries per group
         $result = [];
         foreach ($subjects as $subject) {
@@ -363,7 +415,7 @@ class Sync
             }
             $result[$extId][] = $subject;
         }
-        
+
         return $result;
     }
 
@@ -376,17 +428,17 @@ class Sync
      * @param array $remoteSubject Subject data from External System
      * @param int $systemId The ID of the external system
      */
-    private static function createKriitSubject(array $remoteSubject, int $systemId = 1): void
+    private static function createKriitSubject($remoteSubject, $systemId)
     {
         $teacher = User::findByPersonalCode($remoteSubject['teacherPersonalCode']);
         $group   = Db::getFirst("SELECT * FROM `groups` WHERE groupName='{$remoteSubject['groupName']}'");
 
         // First, analyze all students to detect multiple groups
         $studentGroups = self::detectStudentGroups($remoteSubject);
-        
+
         // Determine the subject's group display name
-        $subjectGroupName = count($studentGroups) > 1 ? 
-            implode('/', array_keys($studentGroups)) : 
+        $subjectGroupName = count($studentGroups) > 1 ?
+            implode('/', array_keys($studentGroups)) :
             $remoteSubject['groupName'];
 
         // Check if subject already exists for this specific group (to avoid duplicate key constraint)
@@ -398,7 +450,7 @@ class Sync
         if ($existingSubject) {
             // Subject already exists, use its ID
             $subjId = $existingSubject['subjectId'];
-            
+
             // Log that we're reusing an existing subject
             Activity::create(ACTIVITY_CREATE_SUBJECT_SYNC, $teacher['userId'], $subjId, [
                 'systemId' => $systemId,
@@ -445,7 +497,7 @@ class Sync
             foreach ($asm['results'] as $res) {
                 // Determine the correct group for this student
                 $studentGroup = self::determineStudentGroup($res, $studentGroups, $remoteSubject['groupName']);
-                
+
                 // If the student doesn't exist, create them
                 $student = User::findByPersonalCode($res['studentPersonalCode']);
                 if (!$student) {
@@ -462,7 +514,7 @@ class Sync
                     // Student exists - check if they need to be reassigned to correct group
                     if ($student['groupId'] != $studentGroup['groupId']) {
                         Db::update('users', ['groupId' => $studentGroup['groupId']], 'userId = ?', [$student['userId']]);
-                        
+
                         // Log group reassignment
                         Activity::create(ACTIVITY_UPDATE_USER_SYNC, $teacher['userId'], $student['userId'], [
                             'systemId' => $systemId,
@@ -474,7 +526,7 @@ class Sync
                             'reason' => 'Multi-group subject sync',
                             'subjectName' => $remoteSubject['subjectName']
                         ]);
-                        
+
                         // Update student data for further processing
                         $student['groupId'] = $studentGroup['groupId'];
                     }
@@ -511,7 +563,6 @@ class Sync
                 }
             }
         }
-
     }
 
     /**
@@ -523,7 +574,7 @@ class Sync
      * @param array $kriitAssignments Existing assignments in Kriit
      * @param int $systemId The ID of the external system
      */
-    private static function ensureAssignmentsExist(array $remoteAssignments, int $kriitSubjectId, array $kriitAssignments, int $systemId = 1): void
+    private static function ensureAssignmentsExist($remoteAssignments, $kriitSubjectId, $kriitAssignments, $systemId)
     {
         if (empty($remoteAssignments)) {
             return;
@@ -636,7 +687,7 @@ class Sync
     /**
      * Helper method to get assignment info for multiple assignments at once
      */
-    private static function getAssignmentsInfo(array $assignmentIds): array
+    private static function getAssignmentsInfo($assignmentIds)
     {
         if (empty($assignmentIds)) {
             return [];
@@ -673,7 +724,7 @@ class Sync
     /**
      * Helper method to preload students by personal codes
      */
-    private static function preloadStudents(array $personalCodes, int $systemId = 1): void
+    private static function preloadStudents($personalCodes, $systemId)
     {
         if (empty($personalCodes)) {
             return;
@@ -699,7 +750,7 @@ class Sync
     /**
      * Helper method to get subject info for multiple subjects at once
      */
-    private static function getSubjectsInfo(array $subjectIds): array
+    private static function getSubjectsInfo($subjectIds)
     {
         if (empty($subjectIds)) {
             return [];
@@ -736,7 +787,7 @@ class Sync
     /**
      * Reset all data caches to prepare for a new sync operation
      */
-    private static function resetCaches(): void
+    private static function resetCaches()
     {
         self::$studentCache = [];
         self::$assignmentInfoCache = [];
@@ -747,7 +798,7 @@ class Sync
     /**
      * Preload all data needed for the sync process to minimize database queries
      */
-    private static function preloadAllData(array $remoteSubjects, int $systemId): void
+    private static function preloadAllData($remoteSubjects, $systemId)
     {
         // 1. Collect all personal codes from all assignments across all subjects
         $allStudentCodes = [];
@@ -909,7 +960,7 @@ class Sync
      *
      * @since 1.0.0
      */
-    private static function ensureStudentsAndGrades(int $assignmentId, array $results, int $systemId = 1): void
+    private static function ensureStudentsAndGrades($assignmentId, $results, $systemId)
     {
         if (empty($results)) {
             return;
@@ -918,10 +969,10 @@ class Sync
         // Process all results (students with and without grades)
         // Students without grades should still be added to the system
         $allResults = $results;
-        
+
         // Extract valid results (with grades) - these will get grade assignments
         $validResults = array_filter($results, fn($r) => !empty($r['grade']));
-        
+
         // Collect all student personal codes from remote results
         $remoteStudentCodes = array_column($results, 'studentPersonalCode');
 
@@ -961,7 +1012,7 @@ class Sync
             'groupName' => self::getGroupNameById($groupId),
             'assignments' => [['results' => $allResults]]
         ];
-        
+
         // Detect student groups for this assignment
         $studentGroups = self::detectStudentGroups($mockSubject);
 
@@ -1011,7 +1062,7 @@ class Sync
                 $correctGroup = self::determineStudentGroup($r, $studentGroups, $mockSubject['groupName']);
                 if ($student['groupId'] != $correctGroup['groupId']) {
                     User::edit($student['userId'], ['groupId' => $correctGroup['groupId']]);
-                    
+
                     // Log group reassignment
                     Activity::create(ACTIVITY_UPDATE_USER_SYNC, $teacherId, $student['userId'], [
                         'systemId' => $systemId,
@@ -1024,7 +1075,7 @@ class Sync
                         'subjectName' => $subjectName,
                         'assignmentId' => $assignmentId
                     ]);
-                    
+
                     // Update cache
                     self::$studentCache[$personalCode]['groupId'] = $correctGroup['groupId'];
                 }
@@ -1115,7 +1166,7 @@ class Sync
         foreach ($allResults as $r) {
             $personalCode = $r['studentPersonalCode'];
             $userId = $allStudentIds[$personalCode];
-            
+
             // Handle student deletion status based on external system data
             $student = User::findById($userId);
             if ($student && $student['userDeleted']) {
@@ -1165,13 +1216,13 @@ class Sync
                 } else {
                     // Student has no grade - create userAssignment without grade
                     // This ensures the student is associated with the assignment even without a grade
-                    
+
                     // Double-check that the userAssignment doesn't exist (race condition protection)
                     $existingCheck = Db::getFirst("
                         SELECT * FROM userAssignments
                         WHERE assignmentId = ? AND userId = ?
                     ", [$assignmentId, $userId]);
-                    
+
                     if (!$existingCheck) {
                         $currentTime = date('Y-m-d H:i:s');
                         Db::insert('userAssignments', [
@@ -1182,7 +1233,7 @@ class Sync
                             'userAssignmentGradedAt' => null,
                             'comments' => '[]'
                         ]);
-                        
+
                         // Log activity for creating user assignment without grade
                         if ($teacherId !== null) {
                             Activity::create(ACTIVITY_CREATE_ASSIGNMENT_SYNC, $teacherId, $assignmentId, [
@@ -1204,9 +1255,9 @@ class Sync
      * Compares subjectName, groupName, teacherPersonalCode, teacherName between Kriit & Remote,
      * returning an array of only fields that differ. The array is [fieldName => ['kriit' => ..., 'remote' => ...]].
      */
-    private static function diffSubjectFields(array $kriitSubject, array $remoteSubject): array
+    private static function diffSubjectFields($kriitSubject, $remoteSubject)
     {
-        $check = ['subjectName','groupName','teacherPersonalCode','teacherName'];
+        $check = ['subjectName', 'groupName', 'teacherPersonalCode', 'teacherName'];
         $diffs = [];
         foreach ($check as $fld) {
             if ($kriitSubject[$fld] !== $remoteSubject[$fld]) {
@@ -1224,7 +1275,7 @@ class Sync
      * returning [fieldName => ['kriit'=>..., 'remote'=>...]] for only the ones that differ.
      * Special handling for NULL values in Kriit - if remote has a value and Kriit has NULL, it's considered a difference.
      */
-    private static function diffAssignmentFields(array $kriitAssignment, array $remoteAssignment): array
+    private static function diffAssignmentFields($kriitAssignment, $remoteAssignment)
     {
         $check = ['assignmentDueAt', 'assignmentEntryDate'];
         $diffs = [];
@@ -1232,9 +1283,11 @@ class Sync
             // Consider it a difference if:
             // 1. Remote has the field AND
             // 2. Either Kriit's value is NULL while remote has a value, OR the values are different
-            if (isset($remoteAssignment[$fld]) &&
+            if (
+                isset($remoteAssignment[$fld]) &&
                 (($kriitAssignment[$fld] === null && $remoteAssignment[$fld] !== null) ||
-                 $kriitAssignment[$fld] !== $remoteAssignment[$fld])) {
+                    $kriitAssignment[$fld] !== $remoteAssignment[$fld])
+            ) {
                 $diffs[$fld] = [
                     'kriit'  => $kriitAssignment[$fld],
                     'remote' => $remoteAssignment[$fld]
@@ -1249,7 +1302,7 @@ class Sync
      * Only returns differences for students who already exist in Kriit (ensured by the array keys in $kriitResults).
      * Returns: [studentCode => ['kriitGrade'=>..., 'remoteGrade'=>..., 'studentName'=>...], ...]
      */
-    private static function diffAssignmentResults(array $kriitResults, array $remoteResults): array
+    private static function diffAssignmentResults($kriitResults, $remoteResults)
     {
         $indexedRemote = [];
         foreach ($remoteResults as $res) {
@@ -1316,7 +1369,7 @@ class Sync
      * Finds or creates a record in one table by a single unique column.
      * Returns the found (or newly inserted) row from the DB.
      */
-    private static function findOrCreate(string $table, string $field, $value, array $insertData): array
+    private static function findOrCreate($table, $field, $value, $insertData)
     {
         // Special case for users table
         if ($table === 'users') {
@@ -1372,11 +1425,11 @@ class Sync
      * @param array $remoteSubject Subject data from External System
      * @return array Array of groupName => groupData mappings
      */
-    private static function detectStudentGroups(array $remoteSubject): array
+    private static function detectStudentGroups($remoteSubject)
     {
         $detectedGroups = [];
         $studentsToAnalyze = [];
-        
+
         // Collect all students from all assignments in this subject
         foreach ($remoteSubject['assignments'] as $assignment) {
             foreach ($assignment['results'] as $result) {
@@ -1386,12 +1439,12 @@ class Sync
                 }
             }
         }
-        
+
         // Check which groups these students belong to in other subjects
         if (!empty($studentsToAnalyze)) {
             $personalCodes = array_keys($studentsToAnalyze);
             $placeholders = implode(',', array_fill(0, count($personalCodes), '?'));
-            
+
             // Find existing students and their current groups
             $existingStudents = Db::getAll("
                 SELECT u.userPersonalCode, u.groupId, g.groupName 
@@ -1399,7 +1452,7 @@ class Sync
                 LEFT JOIN groups g ON u.groupId = g.groupId 
                 WHERE u.userPersonalCode IN ({$placeholders})
             ", $personalCodes);
-            
+
             // Group students by their current groups
             foreach ($existingStudents as $student) {
                 if ($student['groupName']) {
@@ -1413,12 +1466,12 @@ class Sync
                     $detectedGroups[$student['groupName']]['studentCodes'][] = $student['userPersonalCode'];
                 }
             }
-            
+
             // For students not yet in database, try to infer group from personal code patterns
-            $newStudents = array_filter($studentsToAnalyze, function($personalCode) use ($existingStudents) {
+            $newStudents = array_filter($studentsToAnalyze, function ($personalCode) use ($existingStudents) {
                 return !array_filter($existingStudents, fn($s) => $s['userPersonalCode'] === $personalCode);
             }, ARRAY_FILTER_USE_KEY);
-            
+
             foreach ($newStudents as $personalCode => $studentData) {
                 // No longer inferring groups - just use the subject's default group
                 if (!isset($detectedGroups[$remoteSubject['groupName']])) {
@@ -1436,7 +1489,7 @@ class Sync
                 }
             }
         }
-        
+
         // Always include the subject's primary group
         $primaryGroup = Db::getFirst("SELECT * FROM `groups` WHERE groupName = ?", [$remoteSubject['groupName']]);
         if ($primaryGroup) {
@@ -1448,10 +1501,10 @@ class Sync
                 ];
             }
         }
-        
+
         return $detectedGroups;
     }
-    
+
     /**
      * Determines the correct group for a specific student
      * 
@@ -1460,17 +1513,17 @@ class Sync
      * @param string $defaultGroupName Default group name from subject
      * @return array Group data (groupId, groupName)
      */
-    private static function determineStudentGroup(array $studentResult, array $detectedGroups, string $defaultGroupName): array
+    private static function determineStudentGroup($studentResult, $detectedGroups, $defaultGroupName)
     {
         $personalCode = $studentResult['studentPersonalCode'];
-        
+
         // Check if student belongs to any of the detected groups
         foreach ($detectedGroups as $groupData) {
             if (in_array($personalCode, $groupData['studentCodes'])) {
                 return $groupData;
             }
         }
-        
+
         // Check if student already exists and has a group
         $existingStudent = User::findByPersonalCode($personalCode);
         if ($existingStudent && $existingStudent['groupId']) {
@@ -1482,7 +1535,7 @@ class Sync
                 ];
             }
         }
-        
+
         // Always fall back to subject's default group from external system
         $defaultGroup = Db::getFirst("SELECT * FROM `groups` WHERE groupName = ?", [$defaultGroupName]);
         return [
@@ -1490,7 +1543,7 @@ class Sync
             'groupName' => $defaultGroupName
         ];
     }
-    
+
     /**
      * Infers a student's group from their personal code and other data patterns
      * 
@@ -1499,16 +1552,16 @@ class Sync
      * @param string $defaultGroupName Default group name
      * @return string|null Inferred group name or null if can't determine
      */
-    private static function inferGroupFromStudent(string $personalCode, array $studentData, string $defaultGroupName): ?string
+    private static function inferGroupFromStudent($personalCode, $studentData, $defaultGroupName)
     {
         // For this implementation, we'll use a simple heuristic based on birth year patterns
         // This can be improved with more sophisticated logic based on your school's data patterns
-        
+
         // Extract birth year from personal code (first 3 digits represent year in Estonian format)
         if (strlen($personalCode) >= 3) {
             $birthYear = substr($personalCode, 1, 2);
             $century = substr($personalCode, 0, 1);
-            
+
             // Convert to full year based on century digit
             if (in_array($century, ['3', '4'])) {
                 $fullYear = '19' . $birthYear;
@@ -1517,10 +1570,10 @@ class Sync
             } else {
                 $fullYear = null;
             }
-            
+
             if ($fullYear) {
                 $age = date('Y') - intval($fullYear);
-                
+
                 // If student is significantly younger/older than expected for default group,
                 // try to find a more appropriate group
                 if ($age < 16) {
@@ -1533,7 +1586,7 @@ class Sync
                     // Normal age range
                     $possibleGroups = ['AM23', 'KE23', 'SAT23'];
                 }
-                
+
                 // Return the first existing group that matches the pattern and isn't the default
                 foreach ($possibleGroups as $groupName) {
                     if ($groupName !== $defaultGroupName) {
@@ -1545,17 +1598,17 @@ class Sync
                 }
             }
         }
-        
+
         return null; // Can't determine, use default
     }
-    
+
     /**
      * Helper method to get group name by ID
      * 
      * @param int $groupId Group ID
      * @return string Group name or 'Unknown'
      */
-    private static function getGroupNameById(int $groupId): string
+    private static function getGroupNameById($groupId)
     {
         $group = Db::getFirst("SELECT groupName FROM `groups` WHERE groupId = ?", [$groupId]);
         return $group ? $group['groupName'] : 'Unknown';
@@ -1571,7 +1624,7 @@ class Sync
      * @param int $systemId External system ID
      * @return bool True if subject should appear under this group
      */
-    private static function shouldSubjectAppearInGroup(array $remoteSubject, string $groupName, int $systemId): bool
+    private static function shouldSubjectAppearInGroup($remoteSubject, $groupName, $systemId)
     {
         // Check if there are any students from this group participating in the subject
         $studentCount = Db::getFirst("
@@ -1585,8 +1638,7 @@ class Sync
             AND s.systemId = ?
             AND g.groupName = ?
         ", [$remoteSubject['subjectExternalId'], $systemId, $groupName]);
-        
+
         return (int)$studentCount['count'] > 0;
     }
-
 }
