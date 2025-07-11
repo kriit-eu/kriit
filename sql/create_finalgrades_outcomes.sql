@@ -5,6 +5,7 @@ CREATE TABLE finalGrades (
   assignmentName VARCHAR(255) NOT NULL,
   studentPersonalCode VARCHAR(20) NOT NULL,
   grade VARCHAR(10),
+  userId INT NULL,
   syncedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
   UNIQUE KEY unique_outcome (subjectExternalId, assignmentExternalId, studentPersonalCode)
 );
