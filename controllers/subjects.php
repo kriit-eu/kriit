@@ -212,7 +212,12 @@ class subjects extends Controller
                     'subjectName' => $row['subjectName'],
                     'subjectExternalId' => $row['subjectExternalId'],
                     'teacherName' => $row['teacherName'],
-                    'assignments' => []
+                    'assignments' => [],
+                    // Fetch Learning Outcomes for this subject using subjectExternalId
+                    'learningOutcomes' => \App\Db::getAll(
+                        "SELECT id, nameEt FROM LearningOutcomes WHERE subjectId = ? ORDER BY learningOutcomeOrderNr, id",
+                        [$row['subjectExternalId']]
+                    )
                 ];
             }
 

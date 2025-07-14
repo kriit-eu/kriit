@@ -125,7 +125,7 @@
                                             <?= $assignment['assignmentName'] ?>
                                         </a>
                                     </div>
-                                    <button class="btn btn-link p-0 ms-2 edit-assignment-btn" title="Muuda ülesanne" data-assignment='<?= htmlspecialchars(json_encode($assignment), ENT_QUOTES, 'UTF-8') ?>'>
+                                    <button class="btn btn-link p-0 ms-2 edit-assignment-btn" title="Muuda ülesanne" data-assignment='<?= htmlspecialchars(json_encode(array_merge($assignment, ["subjectExternalId" => $subject['subjectExternalId']])), ENT_QUOTES, 'UTF-8') ?>'>
                                         <i class="fa fa-pencil-alt"></i>
                                     </button>
                                     <?php if($assignment['showDueDate']): ?>
@@ -181,6 +181,12 @@
                             <input type="text" class="form-control" id="assignmentName" name="assignmentName" value="">
                         </div>
                         <div class="mb-3">
+                            <label for="assignmentLearningOutcomeId" class="form-label">Õppe-eesmärk (ÕV)</label>
+                            <select class="form-select" id="assignmentLearningOutcomeId" name="assignmentLearningOutcomeId">
+                                <option value="">Vali õppe-eesmärk...</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
                             <label for="assignmentInstructions" class="form-label">Instruktsioon</label>
                             <textarea class="form-control" id="assignmentInstructions" name="assignmentInstructions" rows="3"></textarea>
                         </div>
@@ -212,6 +218,14 @@
     // Confirm JS is running
     console.log('subjects_index.php JS loaded');
 
+    // Build a JS object mapping subjectExternalId to learning outcomes
+    var subjectLearningOutcomes = {};
+    <?php foreach ($this->groups as $group): ?>
+        <?php foreach ($group['subjects'] as $subject): ?>
+            subjectLearningOutcomes[<?= json_encode($subject['subjectExternalId']) ?>] = <?= json_encode($subject['learningOutcomes']) ?>;
+        <?php endforeach; ?>
+    <?php endforeach; ?>
+
     // Make edit modal globally available
     function openEditAssignmentModal(assignment) {
         if (typeof assignment === 'string') {
@@ -221,6 +235,20 @@
         document.getElementById('assignmentInstructions').value = assignment.assignmentInstructions || '';
         document.getElementById('assignmentDueAt').value = assignment.assignmentDueAt ? (assignment.assignmentDueAt.length > 0 ? assignment.assignmentDueAt.split('T')[0] : '') : '';
         document.getElementById('assignmentInvolvesOpenApi').checked = assignment.assignmentInvolvesOpenApi ? true : false;
+        // Populate ÕV selector dynamically using subjectExternalId
+        var select = document.getElementById('assignmentLearningOutcomeId');
+        if (select) {
+            var subjectExternalId = assignment.subjectExternalId;
+            var outcomes = subjectLearningOutcomes[subjectExternalId] || [];
+            select.innerHTML = '<option value="">Vali õppe-eesmärk...</option>';
+            outcomes.forEach(function(outcome) {
+                var opt = document.createElement('option');
+                opt.value = outcome.id;
+                opt.textContent = outcome.nameEt;
+                select.appendChild(opt);
+            });
+            select.value = assignment.assignmentLearningOutcomeId || '';
+        }
         const criteriaContainer = document.getElementById('editCriteriaContainer');
         criteriaContainer.innerHTML = '';
         if (assignment.criteria && Array.isArray(assignment.criteria)) {
