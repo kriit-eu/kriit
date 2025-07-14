@@ -231,10 +231,11 @@
         const btnsContainer = document.getElementById('assignmentLearningOutcomeBtns');
         const selectedBtns = Array.from(btnsContainer.children).filter(btn => btn.classList.contains('active'));
         const selectedOvLabels = selectedBtns.map(btn => 'ÕV' + (btn.dataset.nr || '?'));
-        // Always replace any existing ÕV label group in parentheses
-        assignmentName = assignmentName.replace(/\s*\(ÕV[0-9]+(,\s*ÕV[0-9]+)*\)/, '');
+        // Always remove any existing ÕV label group in parentheses
+        assignmentName = assignmentName.replace(/\s*\(ÕV[0-9]+(,\s*ÕV[0-9]+)*\)/, '').trim();
+        // Only append ÕV labels for saving, not for display
         if (selectedOvLabels.length > 0) {
-            assignmentName = assignmentName.trim() + ' (' + selectedOvLabels.join(', ') + ')';
+            assignmentName = assignmentName + ' (' + selectedOvLabels.join(', ') + ')';
         } else {
             assignmentName = assignmentName.trim();
         }
@@ -354,8 +355,16 @@
         // Store the last selected ÕV label string for counting
         let lastOvLabels = '';
         function updateCounter() {
+            // Build ÕV label string from selected buttons
+            const btnsContainer = document.getElementById('assignmentLearningOutcomeBtns');
+            const selectedBtns = Array.from(btnsContainer.children).filter(btn => btn.classList.contains('active'));
+            const selectedOvLabels = selectedBtns.map(btn => 'ÕV' + (btn.dataset.nr || '?'));
+            let ovLabelString = '';
+            if (selectedOvLabels.length > 0) {
+                ovLabelString = ' (' + selectedOvLabels.join(', ') + ')';
+            }
             // Count the value plus ÕV labels (even if not shown)
-            const len = nameInput.value.length;
+            const len = nameInput.value.length + ovLabelString.length;
             counter.textContent = len + ' / 100';
             if (len > 100) {
                 nameInput.classList.add('is-invalid');
@@ -375,7 +384,12 @@
         // Set global assignmentId for save logic
         window.currentEditingAssignmentId = assignment.assignmentId;
         const assignmentNameInput = document.getElementById('assignmentName');
-        assignmentNameInput.value = assignment.assignmentName || '';
+        // Always show only the base name (without ÕV labels)
+        if (assignment.assignmentName) {
+            assignmentNameInput.value = assignment.assignmentName.replace(/\s*\(ÕV[0-9]+(,\s*ÕV[0-9]+)*\)/, '').trim();
+        } else {
+            assignmentNameInput.value = '';
+        }
         document.getElementById('assignmentInstructions').value = assignment.assignmentInstructions || '';
         document.getElementById('assignmentDueAt').value = assignment.assignmentDueAt ? (assignment.assignmentDueAt.length > 0 ? assignment.assignmentDueAt.split('T')[0] : '') : '';
         document.getElementById('assignmentInvolvesOpenApi').checked = assignment.assignmentInvolvesOpenApi ? true : false;
@@ -433,18 +447,9 @@
             }
         });
         function updateOvSelection() {
-            // Get selected outcome numbers for label
-            const selectedBtns = Array.from(btnsContainer.children).filter(btn => btn.classList.contains('active'));
-            const selectedLabels = selectedBtns.map(btn => 'ÕV' + (btn.dataset.nr || '?'));
-            // Always replace any existing ÕV label group in parentheses
+            // Do not show ÕV labels in the input field, just keep the base name
             let currentName = assignmentNameInput.value || '';
-            // Remove any previous ÕV labels from currentName
-            currentName = currentName.replace(/\s*\(ÕV[0-9]+(,\s*ÕV[0-9]+)*\)/, '');
-            if (selectedLabels.length > 0) {
-                assignmentNameInput.value = currentName.trim() + ' (' + selectedLabels.join(', ') + ')';
-            } else {
-                assignmentNameInput.value = currentName.trim();
-            }
+            assignmentNameInput.value = currentName.trim();
             updateCounter();
         }
         const criteriaContainer = document.getElementById('editCriteriaContainer');
