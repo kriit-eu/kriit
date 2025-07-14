@@ -413,9 +413,17 @@
             }
             btnsContainer.appendChild(btn);
         });
-        // Enable Bootstrap tooltips
+        // Enable Bootstrap tooltips and store instances
         Array.from(btnsContainer.children).forEach(function(btn) {
-            new bootstrap.Tooltip(btn);
+            const tooltip = new bootstrap.Tooltip(btn);
+            // Hide tooltip on click
+            btn.addEventListener('click', function() {
+                tooltip.hide();
+            });
+            // Hide tooltip on mouseleave
+            btn.addEventListener('mouseleave', function() {
+                tooltip.hide();
+            });
         });
         // Add event listener for toggling selection
         btnsContainer.addEventListener('click', function(e) {
