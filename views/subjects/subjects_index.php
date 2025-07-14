@@ -1,5 +1,3 @@
-
-
 <style>
     body {background: linear-gradient(135deg,#f5f7fa 0%,#e4e9f2 100%);min-height: 100vh;}
     #container,.table-responsive{background-color:transparent;}
@@ -83,7 +81,8 @@
                             </td>
                         </tr>
                     <?php endforeach; ?>
-                    </tbody>
+
+</script>
                 </table>
             </div>
         <?php endif; ?>
@@ -126,8 +125,11 @@
                                             <?= $assignment['assignmentName'] ?>
                                         </a>
                                     </div>
+                                    <button class="btn btn-link p-0 ms-2 edit-assignment-btn" title="Muuda ülesanne" data-assignment='<?= htmlspecialchars(json_encode($assignment), ENT_QUOTES, 'UTF-8') ?>'>
+                                        <i class="fa fa-pencil-alt"></i>
+                                    </button>
                                     <?php if($assignment['showDueDate']): ?>
-                                        <span class="badge <?= $assignment['finalBadgeClass'] ?> due-date-badge" data-days-remaining="<?= $assignment['daysRemaining'] ?>" data-is-student="<?= json_encode($this->isStudent) ?>">
+                                        <span class="badge <?= $assignment['finalBadgeClass'] ?> due-date-badge" data-days-remaining="<?= $assignment['daysRemaining'] ?>" data-is-student=<?= json_encode($this->isStudent) ?>>
                                             <?= $assignment['assignmentDueAt'] ? (new DateTime($assignment['assignmentDueAt']))->format('d.m.y') : 'Pole tähtaega' ?>
                                         </span>
                                     <?php endif; ?>
@@ -164,7 +166,86 @@
     <?php endforeach; ?>
 </div>
 
+<?php if (!$this->isStudent): ?>
+    <div class="modal fade" id="editAssignmentModal" tabindex="-1" aria-labelledby="editAssignmentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editAssignmentModalLabel">Muuta ülesanne</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editAssignmentForm">
+                        <div class="mb-3">
+                            <label for="assignmentName" class="form-label">Pealkiri</label>
+                            <input type="text" class="form-control" id="assignmentName" name="assignmentName" value="">
+                        </div>
+                        <div class="mb-3">
+                            <label for="assignmentInstructions" class="form-label">Instruktsioon</label>
+                            <textarea class="form-control" id="assignmentInstructions" name="assignmentInstructions" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="assignmentDueAt" class="form-label">Tähtaeg</label>
+                            <input type="date" class="form-control" id="assignmentDueAt" name="assignmentDueAt" value="">
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="assignmentInvolvesOpenApi" name="assignmentInvolvesOpenApi">
+                            <label class="form-check-label" for="assignmentInvolvesOpenApi">Ülesandel on OpenAPI</label>
+                        </div>
+                        <div class="mb-3">
+                            <h5>Kriteeriumid</h5>
+                            <div id="editCriteriaContainer"></div>
+                            <button type="button" class="btn btn-primary mt-2" id="addCriterionButton">Lisa kriteerium</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="saveEditedAssignment()">Salvesta</button>
+                    <button type="button" class="btn btn-secondary" onclick="location.reload()" data-bs-dismiss="modal">Tühista</button>
+                </div>
+            </div>
+        </div>
+    </div>
+<?php endif; ?>
+
 <script>
+    // Confirm JS is running
+    console.log('subjects_index.php JS loaded');
+
+    // Make edit modal globally available
+    function openEditAssignmentModal(assignment) {
+        if (typeof assignment === 'string') {
+            assignment = JSON.parse(assignment);
+        }
+        document.getElementById('assignmentName').value = assignment.assignmentName || '';
+        document.getElementById('assignmentInstructions').value = assignment.assignmentInstructions || '';
+        document.getElementById('assignmentDueAt').value = assignment.assignmentDueAt ? (assignment.assignmentDueAt.length > 0 ? assignment.assignmentDueAt.split('T')[0] : '') : '';
+        document.getElementById('assignmentInvolvesOpenApi').checked = assignment.assignmentInvolvesOpenApi ? true : false;
+        const criteriaContainer = document.getElementById('editCriteriaContainer');
+        criteriaContainer.innerHTML = '';
+        if (assignment.criteria && Array.isArray(assignment.criteria)) {
+            assignment.criteria.forEach(criterion => {
+                const row = document.createElement('div');
+                row.className = 'criteria-row';
+                row.innerHTML = `<div class=\"form-check\"><input class=\"form-check-input\" type=\"checkbox\" id=\"edit_criterion_${criterion.criteriaId}\" checked disabled><label class=\"form-check-label\" for=\"edit_criterion_${criterion.criteriaId}\">${criterion.criteriaName}</label></div>`;
+                criteriaContainer.appendChild(row);
+            });
+        }
+        const modal = new bootstrap.Modal(document.getElementById('editAssignmentModal'));
+        modal.show();
+    }
+    window.openEditAssignmentModal = openEditAssignmentModal;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.edit-assignment-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                console.log('Pencil clicked', btn);
+                var assignment = btn.getAttribute('data-assignment');
+                openEditAssignmentModal(assignment);
+            });
+        });
+    });
+
     (()=>{
         const sortStates = new Map();
         let selectedStudent = null;
