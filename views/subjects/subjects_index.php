@@ -178,7 +178,9 @@
                     <form id="editAssignmentForm">
                         <div class="mb-3">
                             <label for="assignmentName" class="form-label">Pealkiri</label>
-                            <input type="text" class="form-control" id="assignmentName" name="assignmentName" value="">
+                            <input type="text" class="form-control" id="assignmentName" name="assignmentName" value="" maxlength="100">
+                            <div class="form-text" id="assignmentNameCounter">0 / 100</div>
+                            <div class="invalid-feedback" id="assignmentNameError" style="display:none;">Pealkiri on liiga pikk maksimum tähemärkide pikkus 100</div>
                         </div>
                         <div class="mb-3">
                             <label for="assignmentLearningOutcomeId" class="form-label">Õppe-eesmärk (ÕV)</label>
@@ -234,6 +236,26 @@
 
     // Make edit modal globally available
     function openEditAssignmentModal(assignment) {
+        // Character counter and validation for assignment name
+        const nameInput = document.getElementById('assignmentName');
+        const counter = document.getElementById('assignmentNameCounter');
+        const errorDiv = document.getElementById('assignmentNameError');
+        function updateCounter() {
+            // Count the full value including ÕV labels
+            const len = nameInput.value.length;
+            counter.textContent = len + ' / 100';
+            if (len > 100) {
+                nameInput.classList.add('is-invalid');
+                errorDiv.style.display = '';
+            } else {
+                nameInput.classList.remove('is-invalid');
+                errorDiv.style.display = 'none';
+            }
+        }
+        nameInput.removeEventListener('input', updateCounter);
+        nameInput.addEventListener('input', updateCounter);
+        // Update counter immediately after setting value
+        setTimeout(updateCounter, 0);
         if (typeof assignment === 'string') {
             assignment = JSON.parse(assignment);
         }
@@ -285,6 +307,7 @@
                 } else {
                     assignmentNameInput.value = baseTitle;
                 }
+                updateCounter();
             });
         }
         const criteriaContainer = document.getElementById('editCriteriaContainer');
