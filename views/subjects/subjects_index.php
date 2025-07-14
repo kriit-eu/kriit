@@ -1,4 +1,8 @@
 <style>
+    /* Make assignment edit modal even wider than Bootstrap modal-xl */
+    .modal-xl {
+        max-width: 1200px;
+    }
     body {background: linear-gradient(135deg,#f5f7fa 0%,#e4e9f2 100%);min-height: 100vh;}
     #container,.table-responsive{background-color:transparent;}
     #subject-table{background-color:transparent;box-shadow:0 2px 4px rgba(0,0,0,.07);table-layout:fixed!important;border:1px solid #d8d8d8!important;border-collapse:collapse!important;width:100%!important;}
@@ -168,7 +172,7 @@
 
 <?php if (!$this->isStudent): ?>
     <div class="modal fade" id="editAssignmentModal" tabindex="-1" aria-labelledby="editAssignmentModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="editAssignmentModalLabel">Muuta ülesanne</h5>
@@ -188,8 +192,14 @@
                             <div id="assignmentLearningOutcomeBtns" class="btn-group w-100 flex-wrap" role="group" aria-label="Õppe-eesmärgid"></div>
                         </div>
                         <div class="mb-3">
-                            <label for="assignmentInstructions" class="form-label">Instruktsioon</label>
-                            <textarea class="form-control" id="assignmentInstructions" name="assignmentInstructions" rows="3"></textarea>
+<?php
+    $editorId = 'assignmentInstructionsEditor';
+    $previewId = 'assignmentInstructionsPreview';
+    $fieldName = 'assignmentInstructions';
+    $labelText = 'Instruktsioon';
+    $initialValue = '';
+    include __DIR__ . '/../../templates/partials/markdown_editor.php';
+?>
                         </div>
                         <div class="mb-3">
                             <label for="assignmentDueAt" class="form-label">Tähtaeg</label>
@@ -215,12 +225,50 @@
     </div>
 <?php endif; ?>
 
+<script src="/assets/js/markdown_editor.js"></script>
 <script>
     // Inject current user info for assignment save
     window.teacherId = <?= json_encode($this->auth->userId) ?>;
     window.teacherName = <?= json_encode($this->auth->userName) ?>;
     // Confirm JS is running
     console.log('subjects_index.php JS loaded');
+
+    // Initialize reusable Markdown editor after modal opens
+// initializeInstructionsPreview is now handled by the markdown_editor.php partial
+
+    // Markdown live preview for assignment instructions
+    function parseMarkdown(text) {
+        if (!text) return '';
+        let html = text;
+        html = html.replace(/^#### (.*$)/gim, '<h4>$1</h4>');
+        html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+        html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+        html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+        html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        html = html.replace(/__(.*?)__/g, '<strong>$1</strong>');
+        html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+        html = html.replace(/_(.*?)_/g, '<em>$1</em>');
+        html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+        html = html.replace(/`(.*?)`/g, '<code>$1</code>');
+        html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, function(match, alt, src) {
+            return '<img src="' + src + '" alt="' + alt + '" class="message-image img-fluid rounded" style="max-height: 300px; cursor: pointer;" onclick="window.open(this.src, \'_blank\')">';
+        });
+        html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+        html = html.replace(/^\* (.+)$/gm, '<li>$1</li>');
+        html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+        html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+        html = html.replace(/(<li>.*<\/li>)/s, function (match) {
+            if (match.includes('<ul>')) return match;
+            return '<ol>' + match + '</ol>';
+        });
+        html = html.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
+        html = html.replace(/^---+$/gm, '<hr>');
+        // Clean up excessive whitespace and line breaks
+        html = html.replace(/\n{3,}/g, '\n\n');
+        // Simple paragraph handling
+        html = html.replace(/([^>])\n([^<])/g, '$1<br>$2');
+        return html;
+    }
 
     // Actual save logic for assignment edit modal
     function saveEditedAssignment() {
@@ -390,7 +438,9 @@
         } else {
             assignmentNameInput.value = '';
         }
-        document.getElementById('assignmentInstructions').value = assignment.assignmentInstructions || '';
+        // Set Markdown editor value
+        document.getElementById('assignmentInstructionsEditor').value = assignment.assignmentInstructions || '';
+        // Preview will update automatically via markdown_editor.php partial
         document.getElementById('assignmentDueAt').value = assignment.assignmentDueAt ? (assignment.assignmentDueAt.length > 0 ? assignment.assignmentDueAt.split('T')[0] : '') : '';
         document.getElementById('assignmentInvolvesOpenApi').checked = assignment.assignmentInvolvesOpenApi ? true : false;
         // Populate ÕV button group dynamically using subjectExternalId

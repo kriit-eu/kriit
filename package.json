@@ -34,7 +34,13 @@
     "bootstrap-icons": "^1.11.3",
     "codemirror": "^5.65.19",
     "jquery": "^3.7.1",
-    "jsdom": "^24.1.1"
+    "jsdom": "^24.1.1",
+    "markdown-it": "^14.1.0",
+    "markdown-it-deflist": "^3.0.0",
+    "markdown-it-emoji": "^3.0.0",
+    "markdown-it-footnote": "^4.0.0",
+    "markdown-it-sub": "^2.0.0",
+    "markdown-it-sup": "^2.0.0"
   },
   "devDependencies": {
     "glob": "^10.3.0",
