@@ -188,8 +188,8 @@
                             <div id="assignmentOvBadges" class="mt-2"></div>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Õppe-eesmärk (ÕV)</label>
-                            <div id="assignmentLearningOutcomeBtns" class="btn-group w-100 flex-wrap" role="group" aria-label="Õppe-eesmärgid"></div>
+                            <label class="form-label">Õpiväljund (ÕV)</label>
+                            <div id="assignmentLearningOutcomeBtns" class="btn-group w-100 flex-wrap" role="group" aria-label="Õpiväljundid"></div>
                         </div>
                         <div class="mb-3">
 <?php
