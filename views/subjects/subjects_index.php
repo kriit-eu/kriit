@@ -182,7 +182,7 @@
                         </div>
                         <div class="mb-3">
                             <label for="assignmentLearningOutcomeId" class="form-label">Õppe-eesmärk (ÕV)</label>
-                            <select class="form-select" id="assignmentLearningOutcomeId" name="assignmentLearningOutcomeId">
+                            <select class="form-select" id="assignmentLearningOutcomeId" name="assignmentLearningOutcomeId[]" multiple>
                                 <option value="">Vali õppe-eesmärk...</option>
                             </select>
                         </div>
@@ -222,7 +222,13 @@
     var subjectLearningOutcomes = {};
     <?php foreach ($this->groups as $group): ?>
         <?php foreach ($group['subjects'] as $subject): ?>
-            subjectLearningOutcomes[<?= json_encode($subject['subjectExternalId']) ?>] = <?= json_encode($subject['learningOutcomes']) ?>;
+            subjectLearningOutcomes[<?= json_encode($subject['subjectExternalId']) ?>] = <?= json_encode(array_map(function($o) {
+                return [
+                    'id' => $o['id'],
+                    'nameEt' => $o['nameEt'],
+                    'learningOutcomeOrderNr' => isset($o['learningOutcomeOrderNr']) ? $o['learningOutcomeOrderNr'] : (isset($o["learningOutcomeOrderNr"]) ? $o["learningOutcomeOrderNr"] : null)
+                ];
+            }, $subject['learningOutcomes'])) ?>;
         <?php endforeach; ?>
     <?php endforeach; ?>
 
@@ -231,7 +237,8 @@
         if (typeof assignment === 'string') {
             assignment = JSON.parse(assignment);
         }
-        document.getElementById('assignmentName').value = assignment.assignmentName || '';
+        const assignmentNameInput = document.getElementById('assignmentName');
+        assignmentNameInput.value = assignment.assignmentName || '';
         document.getElementById('assignmentInstructions').value = assignment.assignmentInstructions || '';
         document.getElementById('assignmentDueAt').value = assignment.assignmentDueAt ? (assignment.assignmentDueAt.length > 0 ? assignment.assignmentDueAt.split('T')[0] : '') : '';
         document.getElementById('assignmentInvolvesOpenApi').checked = assignment.assignmentInvolvesOpenApi ? true : false;
@@ -244,10 +251,41 @@
             outcomes.forEach(function(outcome) {
                 var opt = document.createElement('option');
                 opt.value = outcome.id;
-                opt.textContent = outcome.nameEt;
+                var nr = (parseInt(outcome.learningOutcomeOrderNr, 10) || 0) + 1;
+                opt.textContent = 'ÕV' + nr + ': ' + outcome.nameEt;
+                opt.dataset.nr = nr;
                 select.appendChild(opt);
             });
-            select.value = assignment.assignmentLearningOutcomeId || '';
+            // Support multiple selected outcomes
+            let selectedOutcomes = assignment.assignmentLearningOutcomeId;
+            if (Array.isArray(selectedOutcomes)) {
+                Array.from(select.options).forEach(opt => {
+                    opt.selected = selectedOutcomes.includes(opt.value);
+                });
+            } else if (selectedOutcomes) {
+                Array.from(select.options).forEach(opt => {
+                    opt.selected = opt.value == selectedOutcomes;
+                });
+            }
+            // Add event listener to update Pealkiri when outcomes are selected
+            select.addEventListener('change', function() {
+                // Get selected outcome numbers for label by matching option value to outcomes array
+                var subjectExternalId = assignment.subjectExternalId;
+                var outcomes = subjectLearningOutcomes[subjectExternalId] || [];
+                const selectedLabels = Array.from(select.selectedOptions)
+                    .filter(opt => opt.value)
+                    .map(opt => {
+                        // Use dataset.nr directly for numbering
+                        return 'ÕV' + (opt.dataset.nr || '?');
+                    });
+                // Remove any previous outcome tags in Pealkiri
+                let baseTitle = assignmentNameInput.value.replace(/\s*\([^)]*\)\s*$/, '');
+                if (selectedLabels.length > 0) {
+                    assignmentNameInput.value = baseTitle + ' (' + selectedLabels.join(', ') + ')';
+                } else {
+                    assignmentNameInput.value = baseTitle;
+                }
+            });
         }
         const criteriaContainer = document.getElementById('editCriteriaContainer');
         criteriaContainer.innerHTML = '';
