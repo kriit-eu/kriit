@@ -294,7 +294,15 @@
         const assignmentLearningOutcomeId = selectedBtns.map(btn => btn.dataset.id);
         // Criteria (if present)
         // Collect new criteria added in modal
-        const oldCriteria = [];
+        // Collect all existing criteria IDs still present in the modal (not deleted)
+        let oldCriteria = [];
+        document.querySelectorAll('#editCriteriaContainer .criteria-row').forEach(row => {
+            const id = row.dataset.criterionId;
+            // Only push if it's an existing criterion (not new)
+            if (id && !id.startsWith('new_')) {
+                oldCriteria.push(id);
+            }
+        });
         const newCriteria = Array.isArray(window.newCriteria) ? window.newCriteria : [];
 
         // Basic validation
@@ -333,7 +341,10 @@
         assignmentLearningOutcomeId.forEach((id, idx) => {
             formData.append(`assignmentLearningOutcomeId[${idx}]`, id);
         });
-        // Add oldCriteria if needed (currently empty)
+        // Add oldCriteria to keep
+        oldCriteria.forEach((id, idx) => {
+            formData.append(`oldCriteria[${id}]`, true);
+        });
         // Add newCriteria as individual fields
         newCriteria.forEach((crit, idx) => {
             if (crit.criteriaName) {
@@ -500,7 +511,16 @@
                     data.data.criteria.forEach(criterion => {
                         const row = document.createElement('div');
                         row.className = 'criteria-row';
-                        row.innerHTML = `<div class="form-check"><input class="form-check-input" type="checkbox" id="edit_criterion_${criterion.criterionId}" checked disabled><label class="form-check-label" for="edit_criterion_${criterion.criterionId}">${criterion.criterionName}</label></div>`;
+                        row.dataset.criterionId = criterion.criterionId;
+                        row.innerHTML = `<div class="form-check d-inline-block"><input class="form-check-input" type="checkbox" id="edit_criterion_${criterion.criterionId}" checked disabled><label class="form-check-label" for="edit_criterion_${criterion.criterionId}">${criterion.criterionName}</label></div> <button type="button" class="btn btn-danger btn-sm ms-2 remove-criterion-btn" title="Eemalda kriteerium">X</button>`;
+                        // Add remove handler
+                        row.querySelector('.remove-criterion-btn').onclick = function() {
+                            // Remove from DOM
+                            row.remove();
+                            // Track for deletion
+                            if (!window.oldCriteria) window.oldCriteria = {};
+                            window.oldCriteria[criterion.criterionId] = false;
+                        };
                         criteriaContainer.appendChild(row);
                     });
                 }
@@ -536,7 +556,16 @@
                 // Add to container
                 var row = document.createElement('div');
                 row.className = 'criteria-row';
-                row.innerHTML = `<div class="form-check"><input class="form-check-input" type="checkbox" id="edit_criterion_${tempId}" checked><label class="form-check-label" for="edit_criterion_${tempId}">${name}</label></div>`;
+                row.dataset.criterionId = tempId;
+                row.innerHTML = `<div class="form-check d-inline-block"><input class="form-check-input" type="checkbox" id="edit_criterion_${tempId}" checked><label class="form-check-label" for="edit_criterion_${tempId}">${name}</label></div> <button type="button" class="btn btn-danger btn-sm ms-2 remove-criterion-btn" title="Eemalda kriteerium">X</button>`;
+                // Add remove handler
+                row.querySelector('.remove-criterion-btn').onclick = function() {
+                    row.remove();
+                    // Remove from newCriteria array
+                    if (window.newCriteria) {
+                        window.newCriteria = window.newCriteria.filter(c => c.criteriaId !== tempId);
+                    }
+                };
                 criteriaContainer.appendChild(row);
                 // Track new criteria for saving
                 if (!window.newCriteria) window.newCriteria = [];

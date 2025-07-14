@@ -853,10 +853,18 @@ class assignments extends Controller
         }
 
         if (count($newCriteria) > 0) {
-            foreach ($newCriteria as $criterionName) {
+            foreach ($newCriteria as $crit) {
+                // Accept both string and array/object
+                if (is_array($crit) && isset($crit['criteriaName'])) {
+                    $criterionName = $crit['criteriaName'];
+                } else {
+                    $criterionName = $crit;
+                }
+                if (!empty($criterionName)) {
                     Db::insert('criteria', ['assignmentId' => $assignmentId, 'criterionName' => $criterionName]);
                     $message = "$_POST[teacherName] lisas uue kriteeriumi '$criterionName'.";
                     $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
+                }
             }
         }
     }
