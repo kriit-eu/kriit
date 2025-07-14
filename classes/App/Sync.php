@@ -15,65 +15,46 @@ namespace App;
  *  - only the differing results (existing students in Kriit whose grade differs)
  *    (newly inserted students will not appear in the output, because Kriit's data matches External System once inserted).
  */
-class Sync
-{
+class Sync {
     /**
-     * Sync final grades from external system into finalgrades_outcomes table
-     * @param array $payload Array of subjects with assignments and results
-     * @return int Number of inserted/updated rows
+     * Sync a flat array of learning outcomes into LearningOutcomes table
+     * @param array $payload Array of {subjectId, curriculumModuleOutcomes, outcomeName, learningOutcomeOrderNr}
+     * @return int Number of inserted rows
      */
-    /**
-     * Sync final grades from external system into finalgrades_outcomes table
-     * @param array $payload Array of subjects with assignments and results
-     * @return int Number of inserted/updated rows
-     */
-    public static function syncFinalGrades($payload, $userId = null)
+    public static function syncOutcomes($payload, $userId = null)
     {
         $inserted = 0;
-        foreach ($payload as $subject) {
-            $subjectId = $subject['subjectExternalId'] ?? null;
-            foreach ($subject['assignments'] ?? [] as $assignment) {
-                $assignmentId = $assignment['assignmentExternalId'] ?? null;
-                $assignmentName = $assignment['assignmentName'] ?? null;
-                foreach ($assignment['results'] ?? [] as $result) {
-                    $studentCode = $result['studentPersonalCode'] ?? null;
-                    $grade = $result['grade'] ?? null;
-                    // Never use or expect 'id' from payload
-                    if ($subjectId && $assignmentId && $studentCode && $assignmentName) {
-                        // Look up userId by studentPersonalCode
-                        $userRow = \App\Db::getFirst('SELECT userId FROM users WHERE userPersonalCode = ?', [$studentCode]);
-                        $matchedUserId = $userRow ? $userRow['userId'] : null;
-                        \App\Db::upsert('finalGrades', [
-                            'subjectExternalId' => $subjectId,
-                            'assignmentExternalId' => $assignmentId,
-                            'assignmentName' => $assignmentName,
-                            'studentPersonalCode' => $studentCode,
-                            'userId' => $matchedUserId,
-                            'grade' => $grade,
-                            'syncedAt' => date('Y-m-d H:i:s')
-                        ]);
-                        $inserted++;
-                        // Log activity for each sync
-                        \App\Activity::create(
-                            defined('ACTIVITY_SYNC_START') ? ACTIVITY_SYNC_START : 18,
-                            $userId,
-                            null,
-                            [
-                                'subjectExternalId' => $subjectId,
-                                'assignmentExternalId' => $assignmentId,
-                                'assignmentName' => $assignmentName,
-                                'studentPersonalCode' => $studentCode,
-                                'userId' => $matchedUserId,
-                                'grade' => $grade,
-                                'action' => 'finalgrades_sync'
-                            ]
-                        );
-                    }
-                }
+        foreach ($payload as $outcome) {
+            $subjectId = $outcome['subjectId'] ?? null;
+            $curriculumModuleOutcomes = $outcome['curriculumModuleOutcomes'] ?? null;
+            $outcomeName = $outcome['outcomeName'] ?? null;
+            $learningOutcomeOrderNr = $outcome['learningOutcomeOrderNr'] ?? null;
+            if ($subjectId && $curriculumModuleOutcomes && $outcomeName) {
+                \App\Db::insert('LearningOutcomes', [
+                    'subjectId' => $subjectId,
+                    'curriculumModuleOutcomes' => $curriculumModuleOutcomes,
+                    'nameEt' => $outcomeName,
+                    'learningOutcomeOrderNr' => $learningOutcomeOrderNr
+                ]);
+                $inserted++;
+                // Log activity for each sync
+                \App\Activity::create(
+                    defined('ACTIVITY_SYNC_START') ? ACTIVITY_SYNC_START : 18,
+                    $userId,
+                    null,
+                    [
+                        'subjectId' => $subjectId,
+                        'curriculumModuleOutcomes' => $curriculumModuleOutcomes,
+                        'nameEt' => $outcomeName,
+                        'learningOutcomeOrderNr' => $learningOutcomeOrderNr,
+                        'action' => 'LearningOutcomes_sync'
+                    ]
+                );
             }
         }
         return $inserted;
     }
+
     /**
      * Inserts missing entities (teacher, group, subject, assignment, student) into Kriit
      * using the data from External System.
