@@ -6,6 +6,17 @@ use Parsedown;
 
 class assignments extends Controller
 {
+    public function ajax_getAssignmentCriteria()
+    {
+        $assignmentId = $_GET['assignmentId'] ?? null;
+        if (!$assignmentId) {
+            stop(400, 'Missing assignmentId');
+        }
+        // Permission check (reuse existing logic)
+        $this->checkIfUserHasPermissionForAction($assignmentId) || stop(403, 'Teil pole õigusi sellele tegevusele.');
+        $criteria = Db::getAll('SELECT criterionId, criterionName FROM criteria WHERE assignmentId = ?', [$assignmentId]);
+        stop(200, ['criteria' => $criteria]);
+    }
     public $template = 'master';
 
     public function view(): void
@@ -843,9 +854,9 @@ class assignments extends Controller
 
         if (count($newCriteria) > 0) {
             foreach ($newCriteria as $criterionName) {
-                Db::insert('criteria', ['assignmentId' => $assignmentId, 'criterionName' => $criterionName]);
-                $message = "$_POST[teacherName] lisas uue kriteeriumi '$criterionName'.";
-                $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
+                    Db::insert('criteria', ['assignmentId' => $assignmentId, 'criterionName' => $criterionName]);
+                    $message = "$_POST[teacherName] lisas uue kriteeriumi '$criterionName'.";
+                    $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
             }
         }
     }

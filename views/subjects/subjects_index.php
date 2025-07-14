@@ -293,9 +293,9 @@
         // ÕV selection (array of selected IDs)
         const assignmentLearningOutcomeId = selectedBtns.map(btn => btn.dataset.id);
         // Criteria (if present)
-        // For now, just send empty arrays (extend as needed)
+        // Collect new criteria added in modal
         const oldCriteria = [];
-        const newCriteria = [];
+        const newCriteria = Array.isArray(window.newCriteria) ? window.newCriteria : [];
 
         // Basic validation
         if (!assignmentName) {
@@ -319,35 +319,41 @@
             return;
         }
 
-        // Prepare payload
-        // Get teacher info from global context if available
+        // Prepare form data as URLSearchParams (like grading modal)
         let teacherName = window.teacherName || '';
         let teacherId = window.teacherId || '';
-        // Try to get from DOM if not set
         if (!teacherName && window.currentUserName) teacherName = window.currentUserName;
         if (!teacherId && window.currentUserId) teacherId = window.currentUserId;
-        // If still not set, fallback to empty string
-        const payload = {
-            assignmentId: modalAssignmentId,
-            assignmentName,
-            assignmentInstructions,
-            assignmentDueAt,
-            assignmentInvolvesOpenApi,
-            assignmentLearningOutcomeId,
-            oldCriteria,
-            newCriteria,
-            teacherName,
-            teacherId
-        };
+        const formData = new URLSearchParams();
+        formData.append('assignmentId', modalAssignmentId);
+        formData.append('assignmentName', assignmentName);
+        formData.append('assignmentInstructions', assignmentInstructions);
+        formData.append('assignmentDueAt', assignmentDueAt);
+        formData.append('assignmentInvolvesOpenApi', assignmentInvolvesOpenApi);
+        assignmentLearningOutcomeId.forEach((id, idx) => {
+            formData.append(`assignmentLearningOutcomeId[${idx}]`, id);
+        });
+        // Add oldCriteria if needed (currently empty)
+        // Add newCriteria as individual fields
+        newCriteria.forEach((crit, idx) => {
+            if (crit.criteriaName) {
+                formData.append(`newCriteria[${idx}][criteriaName]`, crit.criteriaName);
+            }
+            if (crit.criteriaId) {
+                formData.append(`newCriteria[${idx}][criteriaId]`, crit.criteriaId);
+            }
+        });
+        formData.append('teacherName', teacherName);
+        formData.append('teacherId', teacherId);
 
         // AJAX POST to backend
         fetch('/assignments/ajax_editAssignment', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded',
                 'X-Requested-With': 'XMLHttpRequest'
             },
-            body: JSON.stringify(payload)
+            body: formData.toString()
         })
         .then(async res => {
             let data;
@@ -355,7 +361,6 @@
             try {
                 data = await res.clone().json();
             } catch (e) {
-                // Not valid JSON, get raw text from original response
                 const raw = await res.text();
                 console.error('Non-JSON response:', raw);
                 alert('Võrgu viga: server tagastas vigase vastuse. Vaata konsooli!');
@@ -366,12 +371,10 @@
         .then(({status, data}) => {
             console.log('Assignment save response:', status, data);
             if (status === 200 || status === 201) {
-                // Success: close modal and reload page (no message)
                 const modal = bootstrap.Modal.getInstance(document.getElementById('editAssignmentModal'));
                 if (modal) modal.hide();
                 location.reload();
             } else {
-                // Error: show feedback
                 alert('Salvestamine ebaõnnestus: ' + (data && data.message ? data.message : 'Tundmatu viga'));
             }
         })
@@ -431,94 +434,85 @@
         }
         // Set global assignmentId for save logic
         window.currentEditingAssignmentId = assignment.assignmentId;
-        const assignmentNameInput = document.getElementById('assignmentName');
-        // Always show only the base name (without ÕV labels)
-        if (assignment.assignmentName) {
-            assignmentNameInput.value = assignment.assignmentName.replace(/\s*\(ÕV[0-9]+(,\s*ÕV[0-9]+)*\)/, '').trim();
-        } else {
-            assignmentNameInput.value = '';
-        }
-        // Set Markdown editor value
-        document.getElementById('assignmentInstructionsEditor').value = assignment.assignmentInstructions || '';
-        // Preview will update automatically via markdown_editor.php partial
-        document.getElementById('assignmentDueAt').value = assignment.assignmentDueAt ? (assignment.assignmentDueAt.length > 0 ? assignment.assignmentDueAt.split('T')[0] : '') : '';
-        document.getElementById('assignmentInvolvesOpenApi').checked = assignment.assignmentInvolvesOpenApi ? true : false;
-        // Populate ÕV button group dynamically using subjectExternalId
-        var btnsContainer = document.getElementById('assignmentLearningOutcomeBtns');
-        btnsContainer.innerHTML = '';
-        var subjectExternalId = assignment.subjectExternalId;
-        var outcomes = subjectLearningOutcomes[subjectExternalId] || [];
-        let selectedOutcomes = assignment.assignmentLearningOutcomeId;
-        if (!Array.isArray(selectedOutcomes)) {
-            selectedOutcomes = selectedOutcomes ? [selectedOutcomes] : [];
-        }
-        // If no selectedOutcomes, try to parse from assignmentName
-        if (!selectedOutcomes.length && assignment.assignmentName) {
-            // Match ÕV labels in parentheses, e.g., (ÕV1, ÕV2)
-            const match = assignment.assignmentName.match(/\(ÕV[0-9]+(,\s*ÕV[0-9]+)*\)/);
-            if (match) {
-                const labels = match[0].replace(/[()]/g, '').split(',').map(s => s.trim());
-                // Map labels to outcome IDs by matching nr
-                selectedOutcomes = outcomes.filter(outcome => labels.includes('ÕV' + ((parseInt(outcome.learningOutcomeOrderNr, 10) || 0) + 1))).map(outcome => outcome.id);
-            }
-        }
-        outcomes.forEach(function(outcome) {
-            var nr = (parseInt(outcome.learningOutcomeOrderNr, 10) || 0) + 1;
-            var btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'btn btn-outline-primary m-1 ov-toggle-btn';
-            btn.textContent = 'ÕV' + nr;
-            btn.dataset.id = outcome.id;
-            btn.dataset.nr = nr;
-            btn.setAttribute('data-bs-toggle', 'tooltip');
-            btn.setAttribute('title', outcome.nameEt);
-            if (selectedOutcomes.includes(outcome.id)) {
-                btn.classList.add('active');
-            }
-            btnsContainer.appendChild(btn);
-        });
-        // Enable Bootstrap tooltips and store instances
-        Array.from(btnsContainer.children).forEach(function(btn) {
-            const tooltip = new bootstrap.Tooltip(btn);
-            // Hide tooltip on click
-            btn.addEventListener('click', function() {
-                tooltip.hide();
+        // Fetch latest criteria from backend before showing modal
+        fetch(`/assignments/ajax_getAssignmentCriteria?assignmentId=${assignment.assignmentId}`)
+            .then(res => res.json())
+            .then(data => {
+                // Now update modal fields as before
+                const assignmentNameInput = document.getElementById('assignmentName');
+                if (assignment.assignmentName) {
+                    assignmentNameInput.value = assignment.assignmentName.replace(/\s*\(ÕV[0-9]+(,\s*ÕV[0-9]+)*\)/, '').trim();
+                } else {
+                    assignmentNameInput.value = '';
+                }
+                document.getElementById('assignmentInstructionsEditor').value = assignment.assignmentInstructions || '';
+                document.getElementById('assignmentDueAt').value = assignment.assignmentDueAt ? (assignment.assignmentDueAt.length > 0 ? assignment.assignmentDueAt.split('T')[0] : '') : '';
+                document.getElementById('assignmentInvolvesOpenApi').checked = assignment.assignmentInvolvesOpenApi ? true : false;
+                var btnsContainer = document.getElementById('assignmentLearningOutcomeBtns');
+                btnsContainer.innerHTML = '';
+                var subjectExternalId = assignment.subjectExternalId;
+                var outcomes = subjectLearningOutcomes[subjectExternalId] || [];
+                let selectedOutcomes = assignment.assignmentLearningOutcomeId;
+                if (!Array.isArray(selectedOutcomes)) {
+                    selectedOutcomes = selectedOutcomes ? [selectedOutcomes] : [];
+                }
+                if (!selectedOutcomes.length && assignment.assignmentName) {
+                    const match = assignment.assignmentName.match(/\(ÕV[0-9]+(,\s*ÕV[0-9]+)*\)/);
+                    if (match) {
+                        const labels = match[0].replace(/[()]/g, '').split(',').map(s => s.trim());
+                        selectedOutcomes = outcomes.filter(outcome => labels.includes('ÕV' + ((parseInt(outcome.learningOutcomeOrderNr, 10) || 0) + 1))).map(outcome => outcome.id);
+                    }
+                }
+                outcomes.forEach(function(outcome) {
+                    var nr = (parseInt(outcome.learningOutcomeOrderNr, 10) || 0) + 1;
+                    var btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'btn btn-outline-primary m-1 ov-toggle-btn';
+                    btn.textContent = 'ÕV' + nr;
+                    btn.dataset.id = outcome.id;
+                    btn.dataset.nr = nr;
+                    btn.setAttribute('data-bs-toggle', 'tooltip');
+                    btn.setAttribute('title', outcome.nameEt);
+                    if (selectedOutcomes.includes(outcome.id)) {
+                        btn.classList.add('active');
+                    }
+                    btnsContainer.appendChild(btn);
+                });
+                Array.from(btnsContainer.children).forEach(function(btn) {
+                    const tooltip = new bootstrap.Tooltip(btn);
+                    btn.addEventListener('click', function() { tooltip.hide(); });
+                    btn.addEventListener('mouseleave', function() { tooltip.hide(); });
+                });
+                btnsContainer.addEventListener('click', function(e) {
+                    if (e.target && e.target.classList.contains('ov-toggle-btn')) {
+                        e.target.classList.toggle('active');
+                        updateOvSelection();
+                    }
+                });
+                function updateOvSelection() {
+                    let currentName = assignmentNameInput.value || '';
+                    assignmentNameInput.value = currentName.trim();
+                    updateCounter();
+                }
+                const criteriaContainer = document.getElementById('editCriteriaContainer');
+                criteriaContainer.innerHTML = '';
+                if (data && data.data && Array.isArray(data.data.criteria)) {
+                    data.data.criteria.forEach(criterion => {
+                        const row = document.createElement('div');
+                        row.className = 'criteria-row';
+                        row.innerHTML = `<div class="form-check"><input class="form-check-input" type="checkbox" id="edit_criterion_${criterion.criterionId}" checked disabled><label class="form-check-label" for="edit_criterion_${criterion.criterionId}">${criterion.criterionName}</label></div>`;
+                        criteriaContainer.appendChild(row);
+                    });
+                }
+                const modal = new bootstrap.Modal(document.getElementById('editAssignmentModal'));
+                modal.show();
+                setTimeout(() => {
+                    updateCounter();
+                }, 0);
             });
-            // Hide tooltip on mouseleave
-            btn.addEventListener('mouseleave', function() {
-                tooltip.hide();
-            });
-        });
-        // Add event listener for toggling selection
-        btnsContainer.addEventListener('click', function(e) {
-            if (e.target && e.target.classList.contains('ov-toggle-btn')) {
-                e.target.classList.toggle('active');
-                updateOvSelection();
-            }
-        });
-        function updateOvSelection() {
-            // Do not show ÕV labels in the input field, just keep the base name
-            let currentName = assignmentNameInput.value || '';
-            assignmentNameInput.value = currentName.trim();
-            updateCounter();
-        }
-        const criteriaContainer = document.getElementById('editCriteriaContainer');
-        criteriaContainer.innerHTML = '';
-        if (assignment.criteria && Array.isArray(assignment.criteria)) {
-            assignment.criteria.forEach(criterion => {
-                const row = document.createElement('div');
-                row.className = 'criteria-row';
-                row.innerHTML = `<div class=\"form-check\"><input class=\"form-check-input\" type=\"checkbox\" id=\"edit_criterion_${criterion.criteriaId}\" checked disabled><label class=\"form-check-label\" for=\"edit_criterion_${criterion.criteriaId}\">${criterion.criteriaName}</label></div>`;
-                criteriaContainer.appendChild(row);
-            });
-        }
-        const modal = new bootstrap.Modal(document.getElementById('editAssignmentModal'));
-        modal.show();
-        setTimeout(() => {
-            updateCounter();
-        }, 0);
     }
     window.openEditAssignmentModal = openEditAssignmentModal;
+
 
     document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.edit-assignment-btn').forEach(function(btn) {
@@ -527,6 +521,28 @@
                 openEditAssignmentModal(assignment);
             });
         });
+
+        // Add event handler for Lisa kriteerium button
+        var addCriterionButton = document.getElementById('addCriterionButton');
+        var criteriaContainer = document.getElementById('editCriteriaContainer');
+        if (addCriterionButton && criteriaContainer) {
+            addCriterionButton.addEventListener('click', function() {
+                // Prompt for criterion name
+                var name = prompt('Sisesta kriteeriumi nimi:');
+                if (!name || !name.trim()) return;
+                name = name.trim();
+                // Generate a temporary ID for new criteria
+                var tempId = 'new_' + Math.random().toString(36).substr(2, 9);
+                // Add to container
+                var row = document.createElement('div');
+                row.className = 'criteria-row';
+                row.innerHTML = `<div class="form-check"><input class="form-check-input" type="checkbox" id="edit_criterion_${tempId}" checked><label class="form-check-label" for="edit_criterion_${tempId}">${name}</label></div>`;
+                criteriaContainer.appendChild(row);
+                // Track new criteria for saving
+                if (!window.newCriteria) window.newCriteria = [];
+                window.newCriteria.push({criteriaId: tempId, criteriaName: name});
+            });
+        }
     });
 
     (()=>{
