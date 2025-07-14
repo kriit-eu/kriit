@@ -181,12 +181,11 @@
                             <input type="text" class="form-control" id="assignmentName" name="assignmentName" value="" maxlength="100">
                             <div class="form-text" id="assignmentNameCounter">0 / 100</div>
                             <div class="invalid-feedback" id="assignmentNameError" style="display:none;">Pealkiri on liiga pikk maksimum tähemärkide pikkus 100</div>
+                            <div id="assignmentOvBadges" class="mt-2"></div>
                         </div>
                         <div class="mb-3">
-                            <label for="assignmentLearningOutcomeId" class="form-label">Õppe-eesmärk (ÕV)</label>
-                            <select class="form-select" id="assignmentLearningOutcomeId" name="assignmentLearningOutcomeId[]" multiple>
-                                <option value="">Vali õppe-eesmärk...</option>
-                            </select>
+                            <label class="form-label">Õppe-eesmärk (ÕV)</label>
+                            <div id="assignmentLearningOutcomeBtns" class="btn-group w-100 flex-wrap" role="group" aria-label="Õppe-eesmärgid"></div>
                         </div>
                         <div class="mb-3">
                             <label for="assignmentInstructions" class="form-label">Instruktsioon</label>
@@ -217,8 +216,120 @@
 <?php endif; ?>
 
 <script>
+    // Inject current user info for assignment save
+    window.teacherId = <?= json_encode($this->auth->userId) ?>;
+    window.teacherName = <?= json_encode($this->auth->userName) ?>;
     // Confirm JS is running
     console.log('subjects_index.php JS loaded');
+
+    // Actual save logic for assignment edit modal
+    function saveEditedAssignment() {
+        const form = document.getElementById('editAssignmentForm');
+        const assignmentId = window.currentEditingAssignmentId || null;
+        let assignmentName = form.assignmentName.value.trim();
+        // Build ÕV label string from selected buttons
+        const btnsContainer = document.getElementById('assignmentLearningOutcomeBtns');
+        const selectedBtns = Array.from(btnsContainer.children).filter(btn => btn.classList.contains('active'));
+        const selectedOvLabels = selectedBtns.map(btn => 'ÕV' + (btn.dataset.nr || '?'));
+        // Always replace any existing ÕV label group in parentheses
+        assignmentName = assignmentName.replace(/\s*\(ÕV[0-9]+(,\s*ÕV[0-9]+)*\)/, '');
+        if (selectedOvLabels.length > 0) {
+            assignmentName = assignmentName.trim() + ' (' + selectedOvLabels.join(', ') + ')';
+        } else {
+            assignmentName = assignmentName.trim();
+        }
+        const assignmentInstructions = form.assignmentInstructions.value.trim();
+        const assignmentDueAt = form.assignmentDueAt.value;
+        const assignmentInvolvesOpenApi = form.assignmentInvolvesOpenApi.checked ? 1 : 0;
+        // ÕV selection (array of selected IDs)
+        const assignmentLearningOutcomeId = selectedBtns.map(btn => btn.dataset.id);
+        // Criteria (if present)
+        // For now, just send empty arrays (extend as needed)
+        const oldCriteria = [];
+        const newCriteria = [];
+
+        // Basic validation
+        if (!assignmentName) {
+            alert('Pealkiri on kohustuslik!');
+            return;
+        }
+        if (assignmentName.length + (window.lastOvLabels ? window.lastOvLabels.length : 0) > 100) {
+            alert('Pealkiri koos ÕV siltidega on liiga pikk!');
+            return;
+        }
+
+        // Find assignmentId from modal context (fallback to hidden field or global)
+        let modalAssignmentId = assignmentId;
+        if (!modalAssignmentId) {
+            // Try to get from a hidden field or data attribute if present
+            const idField = form.querySelector('[name="assignmentId"]');
+            if (idField) modalAssignmentId = idField.value;
+        }
+        if (!modalAssignmentId) {
+            alert('Tuvastamatu ülesande ID!');
+            return;
+        }
+
+        // Prepare payload
+        // Get teacher info from global context if available
+        let teacherName = window.teacherName || '';
+        let teacherId = window.teacherId || '';
+        // Try to get from DOM if not set
+        if (!teacherName && window.currentUserName) teacherName = window.currentUserName;
+        if (!teacherId && window.currentUserId) teacherId = window.currentUserId;
+        // If still not set, fallback to empty string
+        const payload = {
+            assignmentId: modalAssignmentId,
+            assignmentName,
+            assignmentInstructions,
+            assignmentDueAt,
+            assignmentInvolvesOpenApi,
+            assignmentLearningOutcomeId,
+            oldCriteria,
+            newCriteria,
+            teacherName,
+            teacherId
+        };
+
+        // AJAX POST to backend
+        fetch('/assignments/ajax_editAssignment', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(async res => {
+            let data;
+            let status = res.status;
+            try {
+                data = await res.clone().json();
+            } catch (e) {
+                // Not valid JSON, get raw text from original response
+                const raw = await res.text();
+                console.error('Non-JSON response:', raw);
+                alert('Võrgu viga: server tagastas vigase vastuse. Vaata konsooli!');
+                throw new Error('Non-JSON response');
+            }
+            return {status, data};
+        })
+        .then(({status, data}) => {
+            console.log('Assignment save response:', status, data);
+            if (status === 200 || status === 201) {
+                // Success: close modal and reload page (no message)
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editAssignmentModal'));
+                if (modal) modal.hide();
+                location.reload();
+            } else {
+                // Error: show feedback
+                alert('Salvestamine ebaõnnestus: ' + (data && data.message ? data.message : 'Tundmatu viga'));
+            }
+        })
+        .catch(err => {
+            alert('Võrgu viga: ' + err);
+        });
+    }
 
     // Build a JS object mapping subjectExternalId to learning outcomes
     var subjectLearningOutcomes = {};
@@ -240,8 +351,10 @@
         const nameInput = document.getElementById('assignmentName');
         const counter = document.getElementById('assignmentNameCounter');
         const errorDiv = document.getElementById('assignmentNameError');
+        // Store the last selected ÕV label string for counting
+        let lastOvLabels = '';
         function updateCounter() {
-            // Count the full value including ÕV labels
+            // Count the value plus ÕV labels (even if not shown)
             const len = nameInput.value.length;
             counter.textContent = len + ' / 100';
             if (len > 100) {
@@ -259,56 +372,72 @@
         if (typeof assignment === 'string') {
             assignment = JSON.parse(assignment);
         }
+        // Set global assignmentId for save logic
+        window.currentEditingAssignmentId = assignment.assignmentId;
         const assignmentNameInput = document.getElementById('assignmentName');
         assignmentNameInput.value = assignment.assignmentName || '';
         document.getElementById('assignmentInstructions').value = assignment.assignmentInstructions || '';
         document.getElementById('assignmentDueAt').value = assignment.assignmentDueAt ? (assignment.assignmentDueAt.length > 0 ? assignment.assignmentDueAt.split('T')[0] : '') : '';
         document.getElementById('assignmentInvolvesOpenApi').checked = assignment.assignmentInvolvesOpenApi ? true : false;
-        // Populate ÕV selector dynamically using subjectExternalId
-        var select = document.getElementById('assignmentLearningOutcomeId');
-        if (select) {
-            var subjectExternalId = assignment.subjectExternalId;
-            var outcomes = subjectLearningOutcomes[subjectExternalId] || [];
-            select.innerHTML = '<option value="">Vali õppe-eesmärk...</option>';
-            outcomes.forEach(function(outcome) {
-                var opt = document.createElement('option');
-                opt.value = outcome.id;
-                var nr = (parseInt(outcome.learningOutcomeOrderNr, 10) || 0) + 1;
-                opt.textContent = 'ÕV' + nr + ': ' + outcome.nameEt;
-                opt.dataset.nr = nr;
-                select.appendChild(opt);
-            });
-            // Support multiple selected outcomes
-            let selectedOutcomes = assignment.assignmentLearningOutcomeId;
-            if (Array.isArray(selectedOutcomes)) {
-                Array.from(select.options).forEach(opt => {
-                    opt.selected = selectedOutcomes.includes(opt.value);
-                });
-            } else if (selectedOutcomes) {
-                Array.from(select.options).forEach(opt => {
-                    opt.selected = opt.value == selectedOutcomes;
-                });
+        // Populate ÕV button group dynamically using subjectExternalId
+        var btnsContainer = document.getElementById('assignmentLearningOutcomeBtns');
+        btnsContainer.innerHTML = '';
+        var subjectExternalId = assignment.subjectExternalId;
+        var outcomes = subjectLearningOutcomes[subjectExternalId] || [];
+        let selectedOutcomes = assignment.assignmentLearningOutcomeId;
+        if (!Array.isArray(selectedOutcomes)) {
+            selectedOutcomes = selectedOutcomes ? [selectedOutcomes] : [];
+        }
+        // If no selectedOutcomes, try to parse from assignmentName
+        if (!selectedOutcomes.length && assignment.assignmentName) {
+            // Match ÕV labels in parentheses, e.g., (ÕV1, ÕV2)
+            const match = assignment.assignmentName.match(/\(ÕV[0-9]+(,\s*ÕV[0-9]+)*\)/);
+            if (match) {
+                const labels = match[0].replace(/[()]/g, '').split(',').map(s => s.trim());
+                // Map labels to outcome IDs by matching nr
+                selectedOutcomes = outcomes.filter(outcome => labels.includes('ÕV' + ((parseInt(outcome.learningOutcomeOrderNr, 10) || 0) + 1))).map(outcome => outcome.id);
             }
-            // Add event listener to update Pealkiri when outcomes are selected
-            select.addEventListener('change', function() {
-                // Get selected outcome numbers for label by matching option value to outcomes array
-                var subjectExternalId = assignment.subjectExternalId;
-                var outcomes = subjectLearningOutcomes[subjectExternalId] || [];
-                const selectedLabels = Array.from(select.selectedOptions)
-                    .filter(opt => opt.value)
-                    .map(opt => {
-                        // Use dataset.nr directly for numbering
-                        return 'ÕV' + (opt.dataset.nr || '?');
-                    });
-                // Remove any previous outcome tags in Pealkiri
-                let baseTitle = assignmentNameInput.value.replace(/\s*\([^)]*\)\s*$/, '');
-                if (selectedLabels.length > 0) {
-                    assignmentNameInput.value = baseTitle + ' (' + selectedLabels.join(', ') + ')';
-                } else {
-                    assignmentNameInput.value = baseTitle;
-                }
-                updateCounter();
-            });
+        }
+        outcomes.forEach(function(outcome) {
+            var nr = (parseInt(outcome.learningOutcomeOrderNr, 10) || 0) + 1;
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'btn btn-outline-primary m-1 ov-toggle-btn';
+            btn.textContent = 'ÕV' + nr;
+            btn.dataset.id = outcome.id;
+            btn.dataset.nr = nr;
+            btn.setAttribute('data-bs-toggle', 'tooltip');
+            btn.setAttribute('title', outcome.nameEt);
+            if (selectedOutcomes.includes(outcome.id)) {
+                btn.classList.add('active');
+            }
+            btnsContainer.appendChild(btn);
+        });
+        // Enable Bootstrap tooltips
+        Array.from(btnsContainer.children).forEach(function(btn) {
+            new bootstrap.Tooltip(btn);
+        });
+        // Add event listener for toggling selection
+        btnsContainer.addEventListener('click', function(e) {
+            if (e.target && e.target.classList.contains('ov-toggle-btn')) {
+                e.target.classList.toggle('active');
+                updateOvSelection();
+            }
+        });
+        function updateOvSelection() {
+            // Get selected outcome numbers for label
+            const selectedBtns = Array.from(btnsContainer.children).filter(btn => btn.classList.contains('active'));
+            const selectedLabels = selectedBtns.map(btn => 'ÕV' + (btn.dataset.nr || '?'));
+            // Always replace any existing ÕV label group in parentheses
+            let currentName = assignmentNameInput.value || '';
+            // Remove any previous ÕV labels from currentName
+            currentName = currentName.replace(/\s*\(ÕV[0-9]+(,\s*ÕV[0-9]+)*\)/, '');
+            if (selectedLabels.length > 0) {
+                assignmentNameInput.value = currentName.trim() + ' (' + selectedLabels.join(', ') + ')';
+            } else {
+                assignmentNameInput.value = currentName.trim();
+            }
+            updateCounter();
         }
         const criteriaContainer = document.getElementById('editCriteriaContainer');
         criteriaContainer.innerHTML = '';
@@ -322,13 +451,15 @@
         }
         const modal = new bootstrap.Modal(document.getElementById('editAssignmentModal'));
         modal.show();
+        setTimeout(() => {
+            updateCounter();
+        }, 0);
     }
     window.openEditAssignmentModal = openEditAssignmentModal;
 
     document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.edit-assignment-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
-                console.log('Pencil clicked', btn);
                 var assignment = btn.getAttribute('data-assignment');
                 openEditAssignmentModal(assignment);
             });
@@ -411,7 +542,7 @@
             $$('#subject-table').forEach(table=>{
                 const rows = $$('tr',table);
                 const visibleSubjects = new Set();
-                rows.forEach(r=>{
+                rows.forEach((r)=>{
                     if(r.querySelector('th')) return;
                     const cell = r.querySelector(`td[data-student-id="${id}"]`);
                     const show = hasProblems(cell);
