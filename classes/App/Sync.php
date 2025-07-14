@@ -23,36 +23,73 @@ class Sync {
      */
     public static function syncOutcomes($payload, $userId = null)
     {
-        $inserted = 0;
+        $changed = 0;
         foreach ($payload as $outcome) {
             $subjectId = $outcome['subjectId'] ?? null;
             $curriculumModuleOutcomes = $outcome['curriculumModuleOutcomes'] ?? null;
             $outcomeName = $outcome['outcomeName'] ?? null;
             $learningOutcomeOrderNr = $outcome['learningOutcomeOrderNr'] ?? null;
             if ($subjectId && $curriculumModuleOutcomes && $outcomeName) {
-                \App\Db::insert('LearningOutcomes', [
-                    'subjectId' => $subjectId,
-                    'curriculumModuleOutcomes' => $curriculumModuleOutcomes,
-                    'nameEt' => $outcomeName,
-                    'learningOutcomeOrderNr' => $learningOutcomeOrderNr
-                ]);
-                $inserted++;
-                // Log activity for each sync
-                \App\Activity::create(
-                    defined('ACTIVITY_SYNC_START') ? ACTIVITY_SYNC_START : 18,
-                    $userId,
-                    null,
-                    [
+                $existing = \App\Db::getFirst(
+                    "SELECT * FROM LearningOutcomes WHERE subjectId = ? AND curriculumModuleOutcomes = ?",
+                    [$subjectId, $curriculumModuleOutcomes]
+                );
+                if ($existing) {
+                    // Only update if nameEt or learningOutcomeOrderNr has changed
+                    $needsUpdate = false;
+                    if ($existing['nameEt'] !== $outcomeName) {
+                        $needsUpdate = true;
+                    }
+                    // Compare learningOutcomeOrderNr, allow nulls
+                    $existingOrder = isset($existing['learningOutcomeOrderNr']) ? $existing['learningOutcomeOrderNr'] : null;
+                    $incomingOrder = isset($learningOutcomeOrderNr) ? $learningOutcomeOrderNr : null;
+                    if ($existingOrder != $incomingOrder) {
+                        $needsUpdate = true;
+                    }
+                    if ($needsUpdate) {
+                        \App\Db::update('LearningOutcomes', [
+                            'nameEt' => $outcomeName,
+                            'learningOutcomeOrderNr' => $learningOutcomeOrderNr
+                        ], 'subjectId = ? AND curriculumModuleOutcomes = ?', [$subjectId, $curriculumModuleOutcomes]);
+                        $changed++;
+                        \App\Activity::create(
+                            defined('ACTIVITY_SYNC_START') ? ACTIVITY_SYNC_START : 18,
+                            $userId,
+                            null,
+                            [
+                                'subjectId' => $subjectId,
+                                'curriculumModuleOutcomes' => $curriculumModuleOutcomes,
+                                'nameEt' => $outcomeName,
+                                'learningOutcomeOrderNr' => $learningOutcomeOrderNr,
+                                'action' => 'LearningOutcomes_update'
+                            ]
+                        );
+                    }
+                } else {
+                    // Insert new outcome
+                    \App\Db::insert('LearningOutcomes', [
                         'subjectId' => $subjectId,
                         'curriculumModuleOutcomes' => $curriculumModuleOutcomes,
                         'nameEt' => $outcomeName,
-                        'learningOutcomeOrderNr' => $learningOutcomeOrderNr,
-                        'action' => 'LearningOutcomes_sync'
-                    ]
-                );
+                        'learningOutcomeOrderNr' => $learningOutcomeOrderNr
+                    ]);
+                    $changed++;
+                    \App\Activity::create(
+                        defined('ACTIVITY_SYNC_START') ? ACTIVITY_SYNC_START : 18,
+                        $userId,
+                        null,
+                        [
+                            'subjectId' => $subjectId,
+                            'curriculumModuleOutcomes' => $curriculumModuleOutcomes,
+                            'nameEt' => $outcomeName,
+                            'learningOutcomeOrderNr' => $learningOutcomeOrderNr,
+                            'action' => 'LearningOutcomes_insert'
+                        ]
+                    );
+                }
             }
         }
-        return $inserted;
+        return $changed;
     }
 
     /**
