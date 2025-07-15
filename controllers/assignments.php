@@ -841,6 +841,26 @@ class assignments extends Controller
         //Get all criteria for this assignment
         $criteria = Db::getAll('SELECT criterionId, criterionName FROM criteria WHERE assignmentId = ?', [$assignmentId]);
 
+        // Handle edited criteria
+        $editedCriteria = $_POST['editedCriteria'] ?? [];
+        if (!empty($editedCriteria) && is_array($editedCriteria)) {
+            foreach ($editedCriteria as $criterionId => $newName) {
+                $newName = trim($newName);
+                if (!empty($newName)) {
+                    // Only update if criterion exists and name is different
+                    $existing = array_filter($criteria, fn($c) => $c['criterionId'] == $criterionId);
+                    if ($existing) {
+                        $oldName = reset($existing)['criterionName'];
+                        if ($oldName !== $newName) {
+                            Db::update('criteria', ['criterionName' => $newName], 'criterionId = ?', [$criterionId]);
+                            $message = $_POST['teacherName'] . " muutis kriteeriumi '$oldName' nimeks '$newName'.";
+                            $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
+                        }
+                    }
+                }
+            }
+        }
+
         if (count($oldCriteria) > 0) {
             foreach ($criteria as $criterion) {
                 if (!array_key_exists($criterion['criterionId'], $oldCriteria)) {

@@ -308,6 +308,12 @@
         oldCriteria.forEach((id, idx) => {
             formData.append(`oldCriteria[${id}]`, true);
         });
+        // Add edited criteria names
+        if (window.editedCriteria) {
+            Object.entries(window.editedCriteria).forEach(([id, name]) => {
+                formData.append(`editedCriteria[${id}]`, name);
+            });
+        }
         // Add newCriteria from window.newAddedCriteria (inline add)
         if (window.newAddedCriteria && window.newAddedCriteria.length > 0) {
             window.newAddedCriteria.forEach((name, idx) => {
@@ -482,15 +488,51 @@
                         const row = document.createElement('div');
                         row.className = 'criteria-row';
                         row.dataset.criterionId = criterion.criterionId;
-                        row.innerHTML = `<div class="form-check d-inline-block"><input class="form-check-input" type="checkbox" id="edit_criterion_${criterion.criterionId}" checked disabled><label class="form-check-label" for="edit_criterion_${criterion.criterionId}">${criterion.criterionName}</label></div> <button type="button" class="btn btn-danger btn-sm ms-2 remove-criterion-btn" title="Eemalda kriteerium">X</button>`;
+                        row.innerHTML = `<div class="form-check d-inline-block"><input class="form-check-input" type="checkbox" id="edit_criterion_${criterion.criterionId}" checked disabled><label class="form-check-label editable-criterion-label" for="edit_criterion_${criterion.criterionId}" style="cursor:pointer;">${criterion.criterionName}</label></div> <button type="button" class="btn btn-danger btn-sm ms-2 remove-criterion-btn" title="Eemalda kriteerium">X</button>`;
                         // Add remove handler
                         row.querySelector('.remove-criterion-btn').onclick = function() {
-                            // Remove from DOM
                             row.remove();
-                            // Track for deletion
                             if (!window.oldCriteria) window.oldCriteria = {};
                             window.oldCriteria[criterion.criterionId] = false;
                         };
+                        // Add click-to-edit handler for label
+                        const label = row.querySelector('.editable-criterion-label');
+                        label.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            // Prevent multiple inputs
+                            if (row.querySelector('input.edit-criterion-input')) return;
+                            const oldName = label.textContent;
+                            // Create input
+                            const input = document.createElement('input');
+                            input.type = 'text';
+                            input.value = oldName;
+                            input.className = 'form-control form-control-sm edit-criterion-input';
+                            input.style.maxWidth = '300px';
+                            label.style.display = 'none';
+                            label.parentNode.appendChild(input);
+                            input.focus();
+                            // Save logic
+                            function saveEdit() {
+                                const newName = input.value.trim();
+                                if (newName && newName !== oldName) {
+                                    label.textContent = newName;
+                                    // Track edited criteria for backend
+                                    if (!window.editedCriteria) window.editedCriteria = {};
+                                    window.editedCriteria[criterion.criterionId] = newName;
+                                }
+                                input.remove();
+                                label.style.display = '';
+                            }
+                            input.addEventListener('blur', saveEdit);
+                            input.addEventListener('keydown', function(ev) {
+                                if (ev.key === 'Enter') {
+                                    saveEdit();
+                                } else if (ev.key === 'Escape') {
+                                    input.remove();
+                                    label.style.display = '';
+                                }
+                            });
+                        });
                         criteriaContainer.appendChild(row);
                     });
                 }
