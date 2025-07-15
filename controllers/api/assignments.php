@@ -180,8 +180,19 @@ class assignments extends Controller
                 return ['code' => 400, 'message' => 'Invalid assignmentDueAt'];
             }
         }
-
         return null;
+    }
+
+    /**
+     * GET endpoint to export Kriit assignments in Tahvel sync format for extensions.
+     */
+    function exportAssignmentsToTahvel(): void
+    {
+        $systemId = intval($_GET['systemId'] ?? 1);
+        $data = \App\AssignmentExport::exportForTahvel($systemId);
+        header('Content-Type: application/json');
+        echo json_encode($data);
+        exit;
     }
 
 
