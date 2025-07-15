@@ -230,45 +230,6 @@
     // Inject current user info for assignment save
     window.teacherId = <?= json_encode($this->auth->userId) ?>;
     window.teacherName = <?= json_encode($this->auth->userName) ?>;
-    // Confirm JS is running
-    console.log('subjects_index.php JS loaded');
-
-    // Initialize reusable Markdown editor after modal opens
-// initializeInstructionsPreview is now handled by the markdown_editor.php partial
-
-    // Markdown live preview for assignment instructions
-    function parseMarkdown(text) {
-        if (!text) return '';
-        let html = text;
-        html = html.replace(/^#### (.*$)/gim, '<h4>$1</h4>');
-        html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
-        html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
-        html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
-        html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        html = html.replace(/__(.*?)__/g, '<strong>$1</strong>');
-        html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
-        html = html.replace(/_(.*?)_/g, '<em>$1</em>');
-        html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
-        html = html.replace(/`(.*?)`/g, '<code>$1</code>');
-        html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, function(match, alt, src) {
-            return '<img src="' + src + '" alt="' + alt + '" class="message-image img-fluid rounded" style="max-height: 300px; cursor: pointer;" onclick="window.open(this.src, \'_blank\')">';
-        });
-        html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
-        html = html.replace(/^\* (.+)$/gm, '<li>$1</li>');
-        html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
-        html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
-        html = html.replace(/(<li>.*<\/li>)/s, function (match) {
-            if (match.includes('<ul>')) return match;
-            return '<ol>' + match + '</ol>';
-        });
-        html = html.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
-        html = html.replace(/^---+$/gm, '<hr>');
-        // Clean up excessive whitespace and line breaks
-        html = html.replace(/\n{3,}/g, '\n\n');
-        // Simple paragraph handling
-        html = html.replace(/([^>])\n([^<])/g, '$1<br>$2');
-        return html;
-    }
 
     // Actual save logic for assignment edit modal
     function saveEditedAssignment() {
