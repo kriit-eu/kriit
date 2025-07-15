@@ -290,14 +290,22 @@ class Sync {
                     if ($fieldDiff || $resultsDiff) {
                         $assignDiff = ['assignmentExternalId' => $extId];
                         foreach ($fieldDiff as $field => $diffVal) {
-                            // We'll show Kriit's final data in the result
-                            // If the field was NULL in Kriit and has been updated, show the remote value
-                            // Otherwise show the original Kriit value
-                            if ($diffVal['kriit'] === null && $diffVal['remote'] !== null) {
-                                $assignDiff[$field] = $diffVal['remote'];
-                            } else {
-                                $assignDiff[$field] = $diffVal['kriit'];
-                            }
+                    // For assignmentName, always return as difference object if a difference exists
+                    if ($field === 'assignmentName' && is_array($diffVal) && array_key_exists('kriit', $diffVal) && array_key_exists('remote', $diffVal)) {
+                        $assignDiff[$field] = [
+                            'kriit' => $diffVal['kriit'],
+                            'remote' => $diffVal['remote']
+                        ];
+                    } else {
+                        // We'll show Kriit's final data in the result
+                        // If the field was NULL in Kriit and has been updated, show the remote value
+                        // Otherwise show the original Kriit value
+                        if ($diffVal['kriit'] === null && $diffVal['remote'] !== null) {
+                            $assignDiff[$field] = $diffVal['remote'];
+                        } else {
+                            $assignDiff[$field] = $diffVal['kriit'];
+                        }
+                    }
                         }
 
                         if ($resultsDiff) {
@@ -1283,10 +1291,12 @@ class Sync {
         $check = ['subjectName', 'groupName', 'teacherPersonalCode', 'teacherName'];
         $diffs = [];
         foreach ($check as $fld) {
-            if ($kriitSubject[$fld] !== $remoteSubject[$fld]) {
+            $kriitVal = isset($kriitSubject[$fld]) ? $kriitSubject[$fld] : '';
+            $remoteVal = isset($remoteSubject[$fld]) ? $remoteSubject[$fld] : '';
+            if ($kriitVal !== $remoteVal) {
                 $diffs[$fld] = [
-                    'kriit'  => $kriitSubject[$fld],
-                    'remote' => $remoteSubject[$fld]
+                    'kriit'  => $kriitVal,
+                    'remote' => $remoteVal
                 ];
             }
         }
@@ -1300,21 +1310,36 @@ class Sync {
      */
     private static function diffAssignmentFields($kriitAssignment, $remoteAssignment)
     {
-        $check = ['assignmentDueAt', 'assignmentEntryDate'];
+        $check = ['assignmentName', 'assignmentInstructions', 'assignmentDueAt', 'assignmentEntryDate'];
         $diffs = [];
-        foreach ($check as $fld) {
-            // Consider it a difference if:
-            // 1. Remote has the field AND
-            // 2. Either Kriit's value is NULL while remote has a value, OR the values are different
-            if (
-                isset($remoteAssignment[$fld]) &&
-                (($kriitAssignment[$fld] === null && $remoteAssignment[$fld] !== null) ||
-                    $kriitAssignment[$fld] !== $remoteAssignment[$fld])
-            ) {
-                $diffs[$fld] = [
-                    'kriit'  => $kriitAssignment[$fld],
-                    'remote' => $remoteAssignment[$fld]
-                ];
+        // Only compare if assignmentExternalId exists in both
+        $kriitId = isset($kriitAssignment['assignmentExternalId']) ? $kriitAssignment['assignmentExternalId'] : null;
+        $remoteId = isset($remoteAssignment['assignmentExternalId']) ? $remoteAssignment['assignmentExternalId'] : null;
+        if ($kriitId && $remoteId && $kriitId == $remoteId) {
+            foreach ($check as $fld) {
+                $kriitVal = isset($kriitAssignment[$fld]) ? $kriitAssignment[$fld] : null;
+                $remoteVal = isset($remoteAssignment[$fld]) ? $remoteAssignment[$fld] : null;
+
+                // For assignmentName, always return as difference object if IDs match
+                if ($fld === 'assignmentName') {
+                    if ($kriitVal !== $remoteVal) {
+                        $diffs[$fld] = [
+                            'kriit' => $kriitVal,
+                            'remote' => $remoteVal
+                        ];
+                    }
+                } else {
+                    // For other fields, use previous logic
+                    if (
+                        isset($remoteAssignment[$fld]) &&
+                        (($kriitVal === null && $remoteVal !== null) || $kriitVal !== $remoteVal)
+                    ) {
+                        $diffs[$fld] = [
+                            'kriit' => $kriitVal,
+                            'remote' => $remoteVal
+                        ];
+                    }
+                }
             }
         }
         return $diffs;
