@@ -5,7 +5,7 @@ namespace App;
 class AssignmentLearningOutcomesController
 {
     /**
-     * Sync learning outcomes into LearningOutcomes table
+     * Sync learning outcomes into learningOutcomes table
      * Endpoint: POST /outcomes/sync
      * Payload: Array of {subjectId, curriculumModuleOutcomes, outcomeName, learningOutcomeOrderNr}
      * DB columns: subjectId, curriculumModuleOutcomes, nameEt, learningOutcomeOrderNr
