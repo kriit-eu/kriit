@@ -1,4 +1,4 @@
--- Dump created on 2025-06-18 10:06:52 by 2b888800cd29
+-- Dump created on 2025-07-15 17:22:36 by 48b519480f54
 SET FOREIGN_KEY_CHECKS=0;
 SET @@SESSION.sql_mode='NO_AUTO_VALUE_ON_ZERO';
 
@@ -218,6 +218,30 @@ INSERT INTO `exercises` VALUES
 /*!40000 ALTER TABLE `exercises` ENABLE KEYS */;
 UNLOCK TABLES;
 
+-- Table structure for table `finalGrades`
+CREATE TABLE `finalGrades` (
+`finalGradeId` int unsigned NOT NULL AUTO_INCREMENT,
+`subjectExternalId` int unsigned NOT NULL COMMENT 'External subject ID from sync system',
+`assignmentExternalId` int unsigned NOT NULL COMMENT 'External assignment ID from sync system',
+`assignmentName` varchar(191) NOT NULL COMMENT 'Name of the assignment',
+`studentPersonalCode` varchar(191) NOT NULL COMMENT 'Student personal code (isikukood)',
+`userId` int unsigned DEFAULT NULL COMMENT 'Internal user ID (nullable if user not found)',
+`grade` varchar(10) DEFAULT NULL COMMENT 'Final grade value',
+`syncedAt` datetime NOT NULL DEFAULT current_timestamp() COMMENT 'When this grade was synced',
+PRIMARY KEY (`finalGradeId`),
+UNIQUE KEY `idx_final_grades_unique` (`subjectExternalId`,`assignmentExternalId`,`studentPersonalCode`) COMMENT 'One grade per student per assignment per subject',
+KEY `idx_final_grades_user` (`userId`),
+KEY `idx_final_grades_subject_ext` (`subjectExternalId`),
+KEY `idx_final_grades_assignment_ext` (`assignmentExternalId`),
+KEY `idx_final_grades_student_code` (`studentPersonalCode`),
+KEY `idx_final_grades_synced_at` (`syncedAt`),
+CONSTRAINT `fk_final_grades_user` FOREIGN KEY (`userId`) REFERENCES `users` (`userId`) ON DELETE SET NULL
+) COMMENT='Stores final grades synced from external systems';
+LOCK TABLES `finalGrades` WRITE;
+/*!40000 ALTER TABLE `finalGrades` DISABLE KEYS */;
+/*!40000 ALTER TABLE `finalGrades` ENABLE KEYS */;
+UNLOCK TABLES;
+
 -- Table structure for table `groups`
 CREATE TABLE `groups` (
 `groupId` int unsigned NOT NULL AUTO_INCREMENT COMMENT 'Autocreated',
@@ -254,6 +278,20 @@ CONSTRAINT `fk_images_user` FOREIGN KEY (`uploadedBy`) REFERENCES `users` (`user
 LOCK TABLES `images` WRITE;
 /*!40000 ALTER TABLE `images` DISABLE KEYS */;
 /*!40000 ALTER TABLE `images` ENABLE KEYS */;
+UNLOCK TABLES;
+
+-- Table structure for table `learningOutcomes`
+CREATE TABLE `learningOutcomes` (
+`id` int NOT NULL AUTO_INCREMENT,
+`subjectId` int NOT NULL,
+`curriculumModuleOutcomes` int NOT NULL,
+`nameEt` varchar(255) NOT NULL,
+`learningOutcomeOrderNr` int DEFAULT NULL,
+PRIMARY KEY (`id`)
+);
+LOCK TABLES `learningOutcomes` WRITE;
+/*!40000 ALTER TABLE `learningOutcomes` DISABLE KEYS */;
+/*!40000 ALTER TABLE `learningOutcomes` ENABLE KEYS */;
 UNLOCK TABLES;
 
 -- Table structure for table `messages`

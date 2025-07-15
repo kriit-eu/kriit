@@ -7,7 +7,6 @@ node_modules
 .certs/dkim_private_key.pem
 /.vscode/settings.json
 
-
 # dev files
 opetaja-assistent2
 logs/output.txt

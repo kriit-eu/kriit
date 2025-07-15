@@ -31,7 +31,7 @@ class Sync {
             $learningOutcomeOrderNr = $outcome['learningOutcomeOrderNr'] ?? null;
             if ($subjectId && $curriculumModuleOutcomes && $outcomeName) {
                 $existing = \App\Db::getFirst(
-                    "SELECT * FROM LearningOutcomes WHERE subjectId = ? AND curriculumModuleOutcomes = ?",
+                    "SELECT * FROM learningOutcomes WHERE subjectId = ? AND curriculumModuleOutcomes = ?",
                     [$subjectId, $curriculumModuleOutcomes]
                 );
                 if ($existing) {
