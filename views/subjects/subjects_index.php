@@ -212,7 +212,9 @@
                         <div class="mb-3">
                             <h5>Kriteeriumid</h5>
                             <div id="editCriteriaContainer"></div>
-                            <button type="button" class="btn btn-primary mt-2" id="addCriterionButton">Lisa kriteerium</button>
+                            <div id="addCriterionInlineContainer">
+                                <input type="text" class="form-control mt-2" id="newCriterionInput" placeholder="Lisa uus kriteerium..." autocomplete="off">
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -306,13 +308,19 @@
         oldCriteria.forEach((id, idx) => {
             formData.append(`oldCriteria[${id}]`, true);
         });
-        // Add newCriteria as individual fields
+        // Add newCriteria from window.newAddedCriteria (inline add)
+        if (window.newAddedCriteria && window.newAddedCriteria.length > 0) {
+            window.newAddedCriteria.forEach((name, idx) => {
+                formData.append(`newCriteria[${idx}][criteriaName]`, name);
+            });
+        }
+        // Add newCriteria from modal (legacy)
         newCriteria.forEach((crit, idx) => {
             if (crit.criteriaName) {
-                formData.append(`newCriteria[${idx}][criteriaName]`, crit.criteriaName);
+                formData.append(`newCriteria[${window.newAddedCriteria ? window.newAddedCriteria.length + idx : idx}][criteriaName]`, crit.criteriaName);
             }
             if (crit.criteriaId) {
-                formData.append(`newCriteria[${idx}][criteriaId]`, crit.criteriaId);
+                formData.append(`newCriteria[${window.newAddedCriteria ? window.newAddedCriteria.length + idx : idx}][criteriaId]`, crit.criteriaId);
             }
         });
         formData.append('teacherName', teacherName);
@@ -345,6 +353,7 @@
             if (status === 200 || status === 201) {
                 const modal = bootstrap.Modal.getInstance(document.getElementById('editAssignmentModal'));
                 if (modal) modal.hide();
+                window.newAddedCriteria = [];
                 location.reload();
             } else {
                 alert('Salvestamine ebaõnnestus: ' + (data && data.message ? data.message : 'Tundmatu viga'));
@@ -489,11 +498,57 @@
                 modal.show();
                 setTimeout(() => {
                     updateCounter();
+                    // Attach event handler for inline criterion add
+                    var input = document.getElementById('newCriterionInput');
+                    if (input) {
+                        // Remove previous listeners
+                        input.onkeydown = null;
+                        input.onblur = null;
+                        input.addEventListener('keydown', function(e) {
+                            if (e.key === 'Enter') {
+                                var assignmentId = window.currentEditingAssignmentId;
+                                addCriterionInline(input.value, assignmentId);
+                            }
+                        });
+                        input.addEventListener('blur', function() {
+                            if (input.value.trim()) {
+                                var assignmentId = window.currentEditingAssignmentId;
+                                addCriterionInline(input.value, assignmentId);
+                            }
+                        });
+                    }
                 }, 0);
             });
     }
     window.openEditAssignmentModal = openEditAssignmentModal;
 
+
+    // Inline add criterion logic (global scope)
+    // Collect new criteria in array and update UI only
+    window.newAddedCriteria = window.newAddedCriteria || [];
+    function addCriterionInline(name) {
+        var criteriaContainer = document.getElementById('editCriteriaContainer');
+        if (!name || !name.trim()) return;
+        name = name.trim();
+        // Prevent duplicates
+        var existing = Array.from(criteriaContainer.querySelectorAll('.form-check-label')).map(l => l.textContent.trim());
+        if (existing.includes(name) || window.newAddedCriteria.includes(name)) {
+            alert('Selline kriteerium on juba olemas!');
+            return;
+        }
+        window.newAddedCriteria.push(name);
+        var row = document.createElement('div');
+        row.className = 'criteria-row';
+        row.innerHTML = `<div class="form-check d-inline-block"><input class="form-check-input" type="checkbox" checked disabled><label class="form-check-label">${name}</label></div> <button type="button" class="btn btn-danger btn-sm ms-2 remove-criterion-btn" title="Eemalda kriteerium">X</button>`;
+        row.querySelector('.remove-criterion-btn').onclick = function() {
+            row.remove();
+            window.newAddedCriteria = window.newAddedCriteria.filter(n => n !== name);
+        };
+        criteriaContainer.appendChild(row);
+        var input = document.getElementById('newCriterionInput');
+        input.value = '';
+        input.focus();
+    }
 
     document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.edit-assignment-btn').forEach(function(btn) {
@@ -502,37 +557,6 @@
                 openEditAssignmentModal(assignment);
             });
         });
-
-        // Add event handler for Lisa kriteerium button
-        var addCriterionButton = document.getElementById('addCriterionButton');
-        var criteriaContainer = document.getElementById('editCriteriaContainer');
-        if (addCriterionButton && criteriaContainer) {
-            addCriterionButton.addEventListener('click', function() {
-                // Prompt for criterion name
-                var name = prompt('Sisesta kriteeriumi nimi:');
-                if (!name || !name.trim()) return;
-                name = name.trim();
-                // Generate a temporary ID for new criteria
-                var tempId = 'new_' + Math.random().toString(36).substr(2, 9);
-                // Add to container
-                var row = document.createElement('div');
-                row.className = 'criteria-row';
-                row.dataset.criterionId = tempId;
-                row.innerHTML = `<div class="form-check d-inline-block"><input class="form-check-input" type="checkbox" id="edit_criterion_${tempId}" checked><label class="form-check-label" for="edit_criterion_${tempId}">${name}</label></div> <button type="button" class="btn btn-danger btn-sm ms-2 remove-criterion-btn" title="Eemalda kriteerium">X</button>`;
-                // Add remove handler
-                row.querySelector('.remove-criterion-btn').onclick = function() {
-                    row.remove();
-                    // Remove from newCriteria array
-                    if (window.newCriteria) {
-                        window.newCriteria = window.newCriteria.filter(c => c.criteriaId !== tempId);
-                    }
-                };
-                criteriaContainer.appendChild(row);
-                // Track new criteria for saving
-                if (!window.newCriteria) window.newCriteria = [];
-                window.newCriteria.push({criteriaId: tempId, criteriaName: name});
-            });
-        }
     });
 
     (()=>{
