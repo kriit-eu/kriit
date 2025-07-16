@@ -845,14 +845,53 @@ $labelText = 'Instruktsioon';
         }
         window.newAddedCriteria.push(name);
         var row = document.createElement('div');
-        row.className = 'criteria-row';
+        row.className = 'criteria-row d-flex align-items-center justify-content-between w-100';
         row.innerHTML = `<div class="d-inline-block"><label class="editable-criterion-label" style="color:#212529 !important;">${name}</label></div> <button type="button" class="remove-criterion-btn p-0 ms-2" title="Eemalda kriteerium" style="background:none;border:none;"><i class="fa fa-trash"></i></button>`;
         // Remove Bootstrap color classes and force color for new inline criteria
-        const label = row.querySelector('.form-check-label');
+        const label = row.querySelector('.editable-criterion-label');
         if (label) {
             label.classList.remove('text-secondary', 'text-muted', 'text-light', 'text-dark');
             label.style.color = '#212529';
             label.style.setProperty('color', '#212529', 'important');
+            // Attach click-to-edit handler (same as backend)
+            label.addEventListener('click', function(e) {
+                e.stopPropagation();
+                // Prevent multiple inputs
+                if (row.querySelector('input.edit-criterion-input')) return;
+                const oldName = label.textContent;
+                // Create input
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = oldName;
+                input.className = 'form-control form-control-sm edit-criterion-input';
+                input.style.maxWidth = '300px';
+                label.style.display = 'none';
+                label.parentNode.appendChild(input);
+                input.focus();
+                // Save logic
+                function saveEdit() {
+                    const newName = input.value.trim();
+                    if (newName && newName !== oldName) {
+                        label.textContent = newName;
+                        // Track edited criteria for backend (for new, just update name in newAddedCriteria)
+                        if (window.newAddedCriteria) {
+                            const idx = window.newAddedCriteria.indexOf(oldName);
+                            if (idx !== -1) window.newAddedCriteria[idx] = newName;
+                        }
+                    }
+                    input.remove();
+                    label.style.display = '';
+                }
+                input.addEventListener('blur', saveEdit);
+                input.addEventListener('keydown', function(ev) {
+                    if (ev.key === 'Enter') {
+                        saveEdit();
+                    } else if (ev.key === 'Escape') {
+                        input.remove();
+                        label.style.display = '';
+                    }
+                });
+            });
         }
         row.querySelector('.remove-criterion-btn').onclick = function() {
             console.log('Trashcan clicked for inline criterion:', name);
@@ -864,7 +903,6 @@ $labelText = 'Instruktsioon';
                 }
             });
         };
-
 
         criteriaContainer.appendChild(row);
         var input = document.getElementById('newCriterionInput');
