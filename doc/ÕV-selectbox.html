@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="et">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Language" content="et">
+    <title>Bootstrap Multi-Select Checkbox List (Prefixed)</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Scoped CSS with 'combobox-' prefix to prevent style leaking to other components */
+        .combobox-wrapper .combobox-item {
+            cursor: pointer;
+            user-select: none;
+            margin-bottom: 1px;
+        }
+
+        .combobox-wrapper .combobox-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .combobox-wrapper .combobox-item:hover {
+            background-color: rgba(25, 135, 84, 0.1);
+        }
+
+        /* Custom checkbox with SVG checkmark */
+        .combobox-wrapper .combobox-checkbox {
+            position: absolute;
+            opacity: 0;
+        }
+
+        .combobox-wrapper .combobox-checkbox-visual {
+            width: 1.25rem;
+            height: 1.25rem;
+            transition: all 0.2s;
+        }
+
+        .combobox-wrapper .combobox-checkbox:checked ~ .combobox-checkbox-visual {
+            background: var(--bs-success) !important;
+            border-color: var(--bs-success) !important;
+        }
+
+        .combobox-wrapper .combobox-item:hover .combobox-checkbox-visual {
+            border-color: var(--bs-success);
+            box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.15);
+        }
+
+        .combobox-wrapper .combobox-checkbox:focus ~ .combobox-checkbox-visual {
+            box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25);
+        }
+
+        .combobox-wrapper .combobox-checkmark {
+            opacity: 0;
+            transform: scale(0.8);
+            transition: all 0.2s;
+        }
+
+        .combobox-wrapper .combobox-checkmark path {
+            stroke-dasharray: 15;
+            stroke-dashoffset: 15;
+            transition: stroke-dashoffset 0.3s;
+        }
+
+        .combobox-wrapper .combobox-checkbox:checked ~ .combobox-checkbox-visual .combobox-checkmark {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .combobox-wrapper .combobox-checkbox:checked ~ .combobox-checkbox-visual .combobox-checkmark path {
+            stroke-dashoffset: 0;
+        }
+
+        /* Estonian hyphenation */
+        .combobox-wrapper .combobox-label {
+            hyphens: auto;
+            -webkit-hyphens: auto;
+            overflow-wrap: break-word;
+            hyphenate-limit-chars: 6 3 3;
+        }
+    </style>
+</head>
+<body class="bg-light">
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <h2 class="card-title mb-4">Container with Checkbox List</h2>
+                    <div class="list-group list-group-flush border rounded combobox-wrapper" id="comboboxList" lang="et">
+                        <!-- Checkboxes will be rendered here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Component with 'combobox-' prefix for all custom classes and IDs
+    class ComboboxCheckboxList {
+        constructor(el, data, preselected = []) {
+            this.container = el;
+            this.data = data;
+            this.selected = [...preselected];
+            this.render();
+
+            // Single event delegation for all interactions
+            this.container.addEventListener('click', e => {
+                const item = e.target.closest('.combobox-item');
+                if (!item) return;
+
+                const checkbox = item.querySelector('.combobox-checkbox');
+                const isCheckbox = e.target === checkbox;
+                const isLabel = e.target.matches('.combobox-label');
+
+                if (checkbox && !isCheckbox && !isLabel) {
+                    checkbox.click();
+                } else if (isCheckbox) {
+                    this.toggle(checkbox.value);
+                }
+            });
+        }
+
+        toggle(value) {
+            const idx = this.selected.indexOf(value);
+            idx > -1 ? this.selected.splice(idx, 1) : this.selected.push(value);
+
+            // Update label styling
+            const label = this.container.querySelector(`input[value="${CSS.escape(value)}"]`)
+                ?.parentElement.querySelector('.combobox-label');
+            if (label) {
+                label.classList.toggle('text-secondary', idx > -1);
+                label.classList.toggle('text-dark', idx === -1);
+                label.classList.toggle('fw-medium', idx === -1);
+            }
+        }
+
+        render() {
+            this.container.innerHTML = this.data.map((item, i) => {
+                const checked = this.selected.includes(item);
+                return `
+            <div class="list-group-item list-group-item-action combobox-item border-0 py-2 px-3 d-flex align-items-start">
+              <input class="combobox-checkbox" type="checkbox" id="combobox-cb${i}" value="${item}"
+                     name="nameEt" ${checked ? 'checked' : ''}>
+              <div class="combobox-checkbox-visual d-flex align-items-center justify-content-center bg-white border border-2 rounded me-2 mt-1 flex-shrink-0">
+                <svg class="combobox-checkmark" viewBox="0 0 12 12" width="12" height="12">
+                  <path fill="none" stroke="white" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" d="M2.5 6l3 3 4.5-6"/>
+                </svg>
+              </div>
+              <label class="combobox-label flex-grow-1 ${checked ? 'text-dark fw-medium' : 'text-secondary'} lh-sm pt-1"
+                     for="combobox-cb${i}" lang="et">${item}</label>
+            </div>
+          `;
+            }).join('');
+        }
+    }
+
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const opts = [
+            'ÕV1 tunneb eri­nevate andme­baasi­moo­torite ja –tehno­loogiate eri­nevusi',
+            'ÕV2 valib andmete kirjel­damiseks sobi­vaima andme­tüübi',
+            'ÕV3 järgib andme­baasi turva­lisuse taga­mise põhi­mõtteid ja pari­maid prak­tikaid',
+            'ÕV4 rakendab andme­baase sta­tis­tiliste ja reaalseid prot­sesse ise­loomus­tavate andmete kogu­miseks, talle­tamiseks ja töötle­miseks'
+        ];
+        new ComboboxCheckboxList(document.getElementById('comboboxList'), opts, [opts[1], opts[3]]);
+    });
+</script>
+</body>
+</html>
