@@ -33,23 +33,19 @@ function updateCriteriaNumbers() {
 <style>
         /* Criteria section: add border to each row except when editing */
     #editCriteriaContainer .criteria-row {
-        border: 1px solid #dee2e6;
+        border: 0.5px solid #dee2e6;
         border-radius: 0.375rem;
         background: #f8f9fa;
         color: #212529;
-        padding: 0.5rem 0.75rem;
-        transition: box-shadow 0.2s;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.03);
         width: 100%;
         box-sizing: border-box;
+        padding: 0 0.25rem;
     }
-    #editCriteriaContainer .criteria-row:has(.edit-criterion-input) {
-        border-color: #0d6efd;
-        box-shadow: 0 0 0 2px #0d6efd33;
-        background: #f8f9fa;
-        color: #212529;
+    #editCriteriaContainer .criteria-row .edit-criterion-input {
         width: 100%;
-        box-sizing: border-box;
+        max-width: 100%;
+        min-width: 0;
+        display: block;
     }
     /* Make assignment edit modal even wider than Bootstrap modal-xl */
     .modal-xl {
@@ -780,45 +776,46 @@ $labelText = 'Instruktsioon';
                             label.style.setProperty('color', '#212529', 'important');
                         }
                         label.addEventListener('click', function(e) {
-                            e.stopPropagation();
-                            // Prevent multiple inputs
-                            if (row.querySelector('input.edit-criterion-input')) return;
-                            // Remove number prefix for editing
-                            const oldName = label.textContent.replace(/^\d+\.\s*/, '');
-                            // Create input
-                            const input = document.createElement('input');
-                            input.type = 'text';
-                            input.value = oldName;
-                            input.className = 'form-control form-control-sm edit-criterion-input';
-                            input.style.maxWidth = '300px';
-                            label.style.display = 'none';
-                            label.parentNode.appendChild(input);
-                            input.focus();
-                            // Save logic
-                            function saveEdit() {
-                                const newName = input.value.trim();
-                                if (newName && newName !== oldName) {
-                                    label.textContent = newName;
-                                    // Track edited criteria for backend
-                                    if (!window.editedCriteria) window.editedCriteria = {};
-                                    window.editedCriteria[criterion.criterionId] = newName;
-                                } else {
-                                    label.textContent = oldName;
-                                }
-                                input.remove();
-                                label.style.display = '';
-                                updateCriteriaNumbers();
-                            }
-                            input.addEventListener('blur', saveEdit);
-                            input.addEventListener('keydown', function(ev) {
-                                if (ev.key === 'Enter') {
-                                    saveEdit();
-                                } else if (ev.key === 'Escape') {
-                                    input.remove();
-                                    label.style.display = '';
-                                    updateCriteriaNumbers();
-                                }
-                            });
+            e.stopPropagation();
+            // Prevent multiple inputs
+            if (row.querySelector('input.edit-criterion-input')) return;
+            // Remove number prefix for editing
+            const oldName = label.textContent.replace(/^\d+\.\s*/, '');
+            // Create input
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = oldName;
+            input.className = 'form-control form-control-sm edit-criterion-input flex-grow-1';
+            input.style.width = '100%';
+            // Replace the label's parent (.d-inline-block) with the input
+            const labelParent = label.parentNode;
+            labelParent.replaceWith(input);
+            input.focus();
+            // Save logic
+            function saveEdit() {
+                const newName = input.value.trim();
+                if (newName && newName !== oldName) {
+                    label.textContent = newName;
+                    if (!window.editedCriteria) window.editedCriteria = {};
+                    window.editedCriteria[criterion.criterionId] = newName;
+                } else {
+                    label.textContent = oldName;
+                }
+                // Restore label's parent
+                input.replaceWith(labelParent);
+                label.style.display = '';
+                updateCriteriaNumbers();
+            }
+            input.addEventListener('blur', saveEdit);
+            input.addEventListener('keydown', function(ev) {
+                if (ev.key === 'Enter') {
+                    saveEdit();
+                } else if (ev.key === 'Escape') {
+                    input.replaceWith(labelParent);
+                    label.style.display = '';
+                    updateCriteriaNumbers();
+                }
+            });
                         });
                         criteriaContainer.appendChild(row);
                     });
@@ -878,47 +875,48 @@ $labelText = 'Instruktsioon';
             label.style.setProperty('color', '#212529', 'important');
             // Attach click-to-edit handler (same as backend)
             label.addEventListener('click', function(e) {
-                e.stopPropagation();
-                // Prevent multiple inputs
-                if (row.querySelector('input.edit-criterion-input')) return;
-                // Remove number prefix for editing
-                const oldName = label.textContent.replace(/^\d+\.\s*/, '');
-                // Create input
-                const input = document.createElement('input');
-                input.type = 'text';
-                input.value = oldName;
-                input.className = 'form-control form-control-sm edit-criterion-input';
-                input.style.maxWidth = '300px';
-                label.style.display = 'none';
-                label.parentNode.appendChild(input);
-                input.focus();
-                // Save logic
-                function saveEdit() {
-                    const newName = input.value.trim();
-                    if (newName && newName !== oldName) {
-                        label.textContent = newName;
-                        // Track edited criteria for backend (for new, just update name in newAddedCriteria)
-                        if (window.newAddedCriteria) {
-                            const idx = window.newAddedCriteria.indexOf(oldName);
-                            if (idx !== -1) window.newAddedCriteria[idx] = newName;
-                        }
-                    } else {
-                        label.textContent = oldName;
-                    }
-                    input.remove();
-                    label.style.display = '';
-                    updateCriteriaNumbers();
+        e.stopPropagation();
+        // Prevent multiple inputs
+        if (row.querySelector('input.edit-criterion-input')) return;
+        // Remove number prefix for editing
+        const oldName = label.textContent.replace(/^\d+\.\s*/, '');
+        // Create input
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = oldName;
+        input.className = 'form-control form-control-sm edit-criterion-input flex-grow-1';
+        input.style.width = '100%';
+        // Replace the label's parent (.d-inline-block) with the input
+        const labelParent = label.parentNode;
+        labelParent.replaceWith(input);
+        input.focus();
+        // Save logic
+        function saveEdit() {
+            const newName = input.value.trim();
+            if (newName && newName !== oldName) {
+                label.textContent = newName;
+                if (window.newAddedCriteria) {
+                    const idx = window.newAddedCriteria.indexOf(oldName);
+                    if (idx !== -1) window.newAddedCriteria[idx] = newName;
                 }
-                input.addEventListener('blur', saveEdit);
-                input.addEventListener('keydown', function(ev) {
-                    if (ev.key === 'Enter') {
-                        saveEdit();
-                    } else if (ev.key === 'Escape') {
-                        input.remove();
-                        label.style.display = '';
-                        updateCriteriaNumbers();
-                    }
-                });
+            } else {
+                label.textContent = oldName;
+            }
+            // Restore label's parent
+            input.replaceWith(labelParent);
+            label.style.display = '';
+            updateCriteriaNumbers();
+        }
+        input.addEventListener('blur', saveEdit);
+        input.addEventListener('keydown', function(ev) {
+            if (ev.key === 'Enter') {
+                saveEdit();
+            } else if (ev.key === 'Escape') {
+                input.replaceWith(labelParent);
+                label.style.display = '';
+                updateCriteriaNumbers();
+            }
+        });
             });
         }
         row.querySelector('.remove-criterion-btn').onclick = function() {
