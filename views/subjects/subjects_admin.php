@@ -259,6 +259,10 @@
 ?>
                         </div>
                         <div class="mb-3">
+                            <label for="assignmentEntryDate" class="form-label">Sisestamise kuupäev</label>
+                            <input type="date" class="form-control" id="assignmentEntryDate" name="assignmentEntryDate" value="">
+                        </div>
+                        <div class="mb-3">
                             <label for="assignmentDueAt" class="form-label">Tähtaeg</label>
                             <input type="date" class="form-control" id="assignmentDueAt" name="assignmentDueAt" value="">
                         </div>
@@ -310,6 +314,7 @@
         const assignmentInstructions = form.assignmentInstructions.value.trim();
         const assignmentDueAt = form.assignmentDueAt.value;
         const assignmentInvolvesOpenApi = form.assignmentInvolvesOpenApi.checked ? 1 : 0;
+        const assignmentEntryDate = form.assignmentEntryDate.value;
         // ÕV selection (array of selected IDs)
         const assignmentLearningOutcomeId = checkedBoxes.map(cb => cb.value);
         // Criteria (if present)
@@ -358,6 +363,7 @@
         formData.append('assignmentInstructions', assignmentInstructions);
         formData.append('assignmentDueAt', assignmentDueAt);
         formData.append('assignmentInvolvesOpenApi', assignmentInvolvesOpenApi);
+        formData.append('assignmentEntryDate', assignmentEntryDate);
         assignmentLearningOutcomeId.forEach((id, idx) => {
             formData.append(`assignmentLearningOutcomeId[${idx}]`, id);
         });
@@ -495,6 +501,7 @@
                 }
                 document.getElementById('assignmentInstructionsEditor').value = assignment.assignmentInstructions || '';
                 document.getElementById('assignmentDueAt').value = assignment.assignmentDueAt ? (assignment.assignmentDueAt.length > 0 ? assignment.assignmentDueAt.split('T')[0] : '') : '';
+                document.getElementById('assignmentEntryDate').value = assignment.assignmentEntryDate ? (assignment.assignmentEntryDate.length > 0 ? assignment.assignmentEntryDate.split('T')[0] : '') : '';
                 document.getElementById('assignmentInvolvesOpenApi').checked = assignment.assignmentInvolvesOpenApi ? true : false;
         var combobox = document.getElementById('assignmentLearningOutcomeCombobox');
         var subjectExternalId = assignment.subjectExternalId;
