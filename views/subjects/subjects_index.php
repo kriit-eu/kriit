@@ -188,7 +188,7 @@
                             <div id="assignmentOvBadges" class="mt-2"></div>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Õpiväljund (ÕV)</label>
+                            <label class="form-label">Ülesandega seotud õpiväljundid (vajalik automaatseks hindamiseks)</label>
                             <div class="combobox-wrapper" id="assignmentLearningOutcomeCombobox"></div>
 <style>
     /* ÕV custom combobox styles from ÕV-selectbox.html */
@@ -514,15 +514,17 @@
         combobox.innerHTML = outcomes.map(function(outcome, i) {
             var nr = (parseInt(outcome.learningOutcomeOrderNr, 10) || 0) + 1;
             var checked = selectedOutcomes.includes(outcome.id) ? 'checked' : '';
+            // Remove leading number and punctuation from outcome.nameEt
+            var cleanName = outcome.nameEt ? outcome.nameEt.replace(/^\s*\d+[).\-:]?\s*/, '') : '';
             return `
             <div class="list-group-item list-group-item-action combobox-item border-0 py-2 px-3 d-flex align-items-start">
-              <input class="combobox-checkbox" type="checkbox" id="combobox-cb${i}" value="${outcome.id}" data-nr="${nr}" name="nameEt" ${checked}>
+              <input class="combobox-checkbox" type="checkbox" id="combobox-cb${i}" value="${outcome.id}" name="nameEt" ${checked}>
               <div class="combobox-checkbox-visual d-flex align-items-center justify-content-center bg-white border border-2 rounded me-2 mt-1 flex-shrink-0">
                 <svg class="combobox-checkmark" viewBox="0 0 12 12" width="12" height="12">
                   <path fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M2.5 6l3 3 4.5-6"/>
                 </svg>
               </div>
-              <label class="combobox-label flex-grow-1 text-dark fw-medium lh-sm pt-1" for="combobox-cb${i}" lang="et">ÕV${nr} – ${outcome.nameEt}</label>
+              <label class="combobox-label flex-grow-1 text-dark fw-medium lh-sm pt-1" for="combobox-cb${i}" lang="et">ÕV${nr} – ${cleanName}</label>
             </div>
             `;
         }).join('');
