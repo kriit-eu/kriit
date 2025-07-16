@@ -288,30 +288,33 @@ class Sync {
 
                     // If either fields differ or existing students differ => record difference
                     if ($fieldDiff || $resultsDiff) {
-                        $assignDiff = ['assignmentExternalId' => $extId];
-                        foreach ($fieldDiff as $field => $diffVal) {
-                    // For assignmentName, always return as difference object if a difference exists
-                    if ($field === 'assignmentName' && is_array($diffVal) && array_key_exists('kriit', $diffVal) && array_key_exists('remote', $diffVal)) {
-                        $assignDiff[$field] = [
-                            'kriit' => $diffVal['kriit'],
-                            'remote' => $diffVal['remote']
+                        $assignDiff = [
+                            'assignmentExternalId' => $extId,
+                            'assignmentId' => $kriitAssignment['assignmentId'],
+                            'assignmentDueAt' => $kriitAssignment['assignmentDueAt']
                         ];
-                    } else {
-                        // We'll show Kriit's final data in the result
-                        // If the field was NULL in Kriit and has been updated, show the remote value
-                        // Otherwise show the original Kriit value
-                        if ($diffVal['kriit'] === null && $diffVal['remote'] !== null) {
-                            $assignDiff[$field] = $diffVal['remote'];
-                        } else {
-                            $assignDiff[$field] = $diffVal['kriit'];
-                        }
-                    }
+                        foreach ($fieldDiff as $field => $diffVal) {
+                            // For assignmentName, always return as difference object if a difference exists
+                            if ($field === 'assignmentName' && is_array($diffVal) && array_key_exists('kriit', $diffVal) && array_key_exists('remote', $diffVal)) {
+                                $assignDiff[$field] = [
+                                    'kriit' => $diffVal['kriit'],
+                                    'remote' => $diffVal['remote']
+                                ];
+                            } else {
+                                // We'll show Kriit's final data in the result
+                                // If the field was NULL in Kriit and has been updated, show the remote value
+                                // Otherwise show the original Kriit value
+                                if ($diffVal['kriit'] === null && $diffVal['remote'] !== null) {
+                                    $assignDiff[$field] = $diffVal['remote'];
+                                } else {
+                                    $assignDiff[$field] = $diffVal['kriit'];
+                                }
+                            }
                         }
 
                         if ($resultsDiff) {
                             $assignDiff['results'] = [];
                             foreach ($resultsDiff as $studCode => $d) {
-
                                 // The user wants final data, but we show that there's a difference
                                 // We could choose Kriit's or Remote's grade; the user specifically wants to see
                                 // that the grade is different. We'll show Kriit's final data for now.
