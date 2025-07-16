@@ -1,3 +1,17 @@
+<script>
+// Visual numbering for criteria rows
+function updateCriteriaNumbers() {
+    const rows = document.querySelectorAll('#editCriteriaContainer .criteria-row');
+    rows.forEach((row, idx) => {
+        const label = row.querySelector('.editable-criterion-label');
+        if (label) {
+            // Remove any existing number prefix
+            label.textContent = label.textContent.replace(/^\d+\.\s*/, '');
+            label.textContent = (idx + 1) + '. ' + label.textContent;
+        }
+    });
+}
+</script>
 <!-- Delete criterion confirmation modal -->
 <div class="modal fade" id="deleteCriterionModal" tabindex="-1" aria-labelledby="deleteCriterionModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
@@ -753,6 +767,7 @@ $labelText = 'Instruktsioon';
                                     row.remove();
                                     if (!window.oldCriteria) window.oldCriteria = {};
                                     window.oldCriteria[criterion.criterionId] = false;
+                                    updateCriteriaNumbers();
                                 }
                             });
                         };
@@ -768,7 +783,8 @@ $labelText = 'Instruktsioon';
                             e.stopPropagation();
                             // Prevent multiple inputs
                             if (row.querySelector('input.edit-criterion-input')) return;
-                            const oldName = label.textContent;
+                            // Remove number prefix for editing
+                            const oldName = label.textContent.replace(/^\d+\.\s*/, '');
                             // Create input
                             const input = document.createElement('input');
                             input.type = 'text';
@@ -786,9 +802,12 @@ $labelText = 'Instruktsioon';
                                     // Track edited criteria for backend
                                     if (!window.editedCriteria) window.editedCriteria = {};
                                     window.editedCriteria[criterion.criterionId] = newName;
+                                } else {
+                                    label.textContent = oldName;
                                 }
                                 input.remove();
                                 label.style.display = '';
+                                updateCriteriaNumbers();
                             }
                             input.addEventListener('blur', saveEdit);
                             input.addEventListener('keydown', function(ev) {
@@ -797,11 +816,13 @@ $labelText = 'Instruktsioon';
                                 } else if (ev.key === 'Escape') {
                                     input.remove();
                                     label.style.display = '';
+                                    updateCriteriaNumbers();
                                 }
                             });
                         });
                         criteriaContainer.appendChild(row);
                     });
+                    updateCriteriaNumbers();
                 }
                 const modal = new bootstrap.Modal(document.getElementById('editAssignmentModal'));
                 modal.show();
@@ -860,7 +881,8 @@ $labelText = 'Instruktsioon';
                 e.stopPropagation();
                 // Prevent multiple inputs
                 if (row.querySelector('input.edit-criterion-input')) return;
-                const oldName = label.textContent;
+                // Remove number prefix for editing
+                const oldName = label.textContent.replace(/^\d+\.\s*/, '');
                 // Create input
                 const input = document.createElement('input');
                 input.type = 'text';
@@ -880,9 +902,12 @@ $labelText = 'Instruktsioon';
                             const idx = window.newAddedCriteria.indexOf(oldName);
                             if (idx !== -1) window.newAddedCriteria[idx] = newName;
                         }
+                    } else {
+                        label.textContent = oldName;
                     }
                     input.remove();
                     label.style.display = '';
+                    updateCriteriaNumbers();
                 }
                 input.addEventListener('blur', saveEdit);
                 input.addEventListener('keydown', function(ev) {
@@ -891,22 +916,24 @@ $labelText = 'Instruktsioon';
                     } else if (ev.key === 'Escape') {
                         input.remove();
                         label.style.display = '';
+                        updateCriteriaNumbers();
                     }
                 });
             });
         }
         row.querySelector('.remove-criterion-btn').onclick = function() {
-            console.log('Trashcan clicked for inline criterion:', name);
             showDeleteCriterionModal({
                 row,
                 onDelete: function() {
                     row.remove();
                     window.newAddedCriteria = window.newAddedCriteria.filter(n => n !== name);
+                    updateCriteriaNumbers();
                 }
             });
         };
 
         criteriaContainer.appendChild(row);
+        updateCriteriaNumbers();
         var input = document.getElementById('newCriterionInput');
         input.value = '';
         input.focus();
