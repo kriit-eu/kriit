@@ -524,10 +524,11 @@
             // Remove leading number and punctuation from outcome.nameEt
             var cleanName = outcome.nameEt ? outcome.nameEt.replace(/^\s*\d+[).\-:]?\s*/, '') : '';
             var labelClass = checked ? 'text-dark fw-medium' : 'text-secondary';
+            // Add data-checkbox-id to visual for event binding
             return `
             <div class="list-group-item list-group-item-action combobox-item border-0 py-2 px-3 d-flex align-items-start">
               <input class="combobox-checkbox" type="checkbox" id="combobox-cb${i}" value="${outcome.id}" data-nr="${nr}" name="nameEt" ${checked ? 'checked' : ''}>
-              <div class="combobox-checkbox-visual d-flex align-items-center justify-content-center bg-white border border-2 rounded me-2 mt-1 flex-shrink-0">
+              <div class="combobox-checkbox-visual d-flex align-items-center justify-content-center bg-white border border-2 rounded me-2 mt-1 flex-shrink-0" data-checkbox-id="combobox-cb${i}">
                 <svg class="combobox-checkmark" viewBox="0 0 12 12" width="12" height="12">
                   <path fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M2.5 6l3 3 4.5-6"/>
                 </svg>
@@ -552,6 +553,19 @@
                 }
             });
             cb.addEventListener('click', updateCounter);
+        });
+        // Make the custom checkbox visual itself toggle the checkbox
+        combobox.querySelectorAll('.combobox-checkbox-visual').forEach(visual => {
+            visual.addEventListener('click', function(e) {
+                const checkboxId = visual.getAttribute('data-checkbox-id');
+                const cb = combobox.querySelector('#' + CSS.escape(checkboxId));
+                if (cb) {
+                    cb.checked = !cb.checked;
+                    cb.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+                e.preventDefault();
+                e.stopPropagation();
+            });
         });
                 const criteriaContainer = document.getElementById('editCriteriaContainer');
                 criteriaContainer.innerHTML = '';
