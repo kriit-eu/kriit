@@ -378,7 +378,7 @@ $labelText = 'Instruktsioon';
                             <label class="form-check-label" for="assignmentInvolvesOpenApi">Ülesandel on OpenAPI</label>
                         </div>
                         <div class="mb-3">
-                            <h5 class="fw-bold">Kriteeriumid</h5>
+                            <label class="form-label fw-bold">Kriteeriumid</label>
                             <div id="editCriteriaContainer" style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%;"></div>
                             <div id="addCriterionInlineContainer" style="width: 100%;">
                                 <input type="text" class="form-control mt-2" id="newCriterionInput" placeholder="Lisa uus kriteerium..." autocomplete="off">
