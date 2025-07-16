@@ -15,7 +15,7 @@
 <script src="/assets/js/markdown-it-deflist.min.js"></script>
 <script src="/assets/js/markdown-it-sup.min.js"></script>
 <div class="mb-3">
-    <label for="<?= htmlspecialchars($editorId) ?>" class="form-label"><?= htmlspecialchars($labelText) ?></label>
+    <label for="<?= htmlspecialchars($editorId) ?>" class="form-label fw-bold"><?= htmlspecialchars($labelText) ?></label>
     <div class="row">
         <!-- Editor -->
         <div class="col-md-6">

@@ -181,14 +181,14 @@
                 <div class="modal-body">
                     <form id="editAssignmentForm">
                         <div class="mb-3">
-                            <label for="assignmentName" class="form-label">Pealkiri</label>
+                            <label for="assignmentName" class="form-label fw-bold">Pealkiri</label>
                             <input type="text" class="form-control" id="assignmentName" name="assignmentName" value="" maxlength="100">
                             <div class="form-text" id="assignmentNameCounter">0 / 100</div>
                             <div class="invalid-feedback" id="assignmentNameError" style="display:none;">Pealkiri on liiga pikk maksimum tähemärkide pikkus 100</div>
                             <div id="assignmentOvBadges" class="mt-2"></div>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Ülesandega seotud õpiväljundid (vajalik automaatseks hindamiseks)</label>
+                            <label class="form-label fw-bold">Ülesandega seotud õpiväljundid (vajalik automaatseks hindamiseks)</label>
                             <div class="combobox-wrapper" id="assignmentLearningOutcomeCombobox"></div>
 <style>
     /* ÕV custom combobox styles from ÕV-selectbox.html */
@@ -254,17 +254,17 @@
     $editorId = 'assignmentInstructionsEditor';
     $previewId = 'assignmentInstructionsPreview';
     $fieldName = 'assignmentInstructions';
-    $labelText = 'Instruktsioon';
+$labelText = 'Instruktsioon';
     $initialValue = '';
     include __DIR__ . '/../../templates/partials/markdown_editor.php';
 ?>
                         </div>
                         <div class="mb-3">
-                            <label for="assignmentEntryDate" class="form-label">Sisestamise kuupäev</label>
+                            <label for="assignmentEntryDate" class="form-label fw-bold">Sisestamise kuupäev</label>
                             <input type="date" class="form-control" id="assignmentEntryDate" name="assignmentEntryDate" value="">
                         </div>
                         <div class="mb-3">
-                            <label for="assignmentDueAt" class="form-label">Tähtaeg</label>
+                            <label for="assignmentDueAt" class="form-label fw-bold">Tähtaeg</label>
                             <input type="date" class="form-control" id="assignmentDueAt" name="assignmentDueAt" value="">
                         </div>
                         <div class="mb-3 form-check">
@@ -272,7 +272,7 @@
                             <label class="form-check-label" for="assignmentInvolvesOpenApi">Ülesandel on OpenAPI</label>
                         </div>
                         <div class="mb-3">
-                            <h5>Kriteeriumid</h5>
+                            <label class="form-label fw-bold">Kriteeriumid</label>
                             <div id="editCriteriaContainer"></div>
                             <div id="addCriterionInlineContainer">
                                 <input type="text" class="form-control mt-2" id="newCriterionInput" placeholder="Lisa uus kriteerium..." autocomplete="off">
