@@ -21,13 +21,26 @@ class assignments extends Controller
 
     public function view(): void
     {
+
+        $assignmentId = $this->getId();
+        // Try to load assignment by ID
+        $assignment = \App\Assignment::getById((int)$assignmentId);
+        if (!$assignment) {
+            // Not a valid assignmentId, try as assignmentExternalId (systemId=1 by default)
+            $assignmentByExternal = \App\Assignment::getByExternalId($assignmentId, 1);
+            if ($assignmentByExternal) {
+                $query = $_SERVER['QUERY_STRING'] ? '?' . $_SERVER['QUERY_STRING'] : '';
+                header('Location: /assignments/' . $assignmentByExternal['assignmentId'] . $query, true, 302);
+                exit;
+            }
+        }
+
         $this->template = $this->auth->userIsAdmin ? 'admin' : 'master';
 
-        $this->checkIfUserHasPermissionForAction($this->getId()) || $this->redirect('subjects');
+        $this->checkIfUserHasPermissionForAction($assignmentId) || $this->redirect('subjects');
 
         $this->isStudent = $this->auth->groupId && !$this->auth->userIsAdmin && !$this->auth->userIsTeacher;
         $this->isTeacher = $this->auth->userIsTeacher;
-        $assignmentId = $this->getId();
 
         // Build WHERE clause for student filtering based on user permissions
         $studentFilterClause = '';
