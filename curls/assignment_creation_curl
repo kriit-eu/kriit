@@ -1,0 +1,22 @@
+curl 'https://test.tahvel.eenet.ee/journal/templates/journal.addEntry.dialog.html' \
+  -H 'Accept: application/json, text/plain, */*' \
+  -H 'Accept-Language: en-US,en;q=0.9' \
+  -H 'Cache-Control: no-cache' \
+  -H 'Connection: keep-alive' \
+  -b '__edux_uid=1-e3pjxdxv-md480x9k; cc_cookie=%7B%22categories%22%3A%5B%22necessary%22%5D%2C%22revision%22%3A0%2C%22data%22%3Anull%2C%22consentTimestamp%22%3A%222025-07-15T11%3A00%3A19.583Z%22%2C%22consentId%22%3A%22fbc73668-e89d-4d9d-9d7c-a65ceb8a925c%22%2C%22services%22%3A%7B%22necessary%22%3A%5B%5D%2C%22analytics%22%3A%5B%5D%7D%2C%22lastConsentTimestamp%22%3A%222025-07-15T11%3A00%3A19.583Z%22%2C%22expirationTime%22%3A1768291219584%7D; taraStateToken=7a4f4bd8-9054-4856-a331-83ab58b727a8; XSRF-TOKEN=1e19107f-400b-4556-88c9-2de62eba650b' \
+  -H 'Pragma: no-cache' \
+  -H 'Referer: https://test.tahvel.eenet.ee/' \
+  -H 'Sec-Fetch-Dest: empty' \
+  -H 'Sec-Fetch-Mode: cors' \
+  -H 'Sec-Fetch-Site: same-origin' \
+  -H 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36' \
+  -H 'X-Forwarded-For: 80.235.27.21' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -H 'X-XSRF-TOKEN: 1e19107f-400b-4556-88c9-2de62eba650b' \
+  -H 'sec-ch-ua: "Not)A;Brand";v="8", "Chromium";v="138", "Google Chrome";v="138"' \
+  -H 'sec-ch-ua-mobile: ?0' \
+  -H 'sec-ch-ua-platform: "Windows"' ;
+
+
+  payload: 
+  {"startLessonNr":null,"lessons":null,"entryType":"SISSEKANNE_I","nameEt":"Iseseisev töö","studyPeriodEvent":null,"homeworkDuedate":"2025-07-17T00:00:00.000Z","entryDate":"2025-06-15T09:30:00Z","content":"test1","journalOmoduleTheme":null,"journalEntryStudents":[],"journalEntryCapacityTypes":["MAHT_i"],"journalEntryTeachers":["1125"]}
