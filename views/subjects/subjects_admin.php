@@ -1,4 +1,26 @@
 <style>
+    /* Criteria section: add border to each row except when editing */
+    #editCriteriaContainer .criteria-row {
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        background: #f8f9fa;
+        color: #212529;
+        padding: 0.5rem 0.75rem;
+        transition: box-shadow 0.2s;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+        width: 100%;
+        box-sizing: border-box;
+    }
+    #editCriteriaContainer .criteria-row:has(.edit-criterion-input) {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 2px #0d6efd33;
+        background: #f8f9fa;
+        color: #212529;
+        width: 100%;
+        box-sizing: border-box;
+    }
+</style>
+<style>
     /* Make assignment edit modal even wider than Bootstrap modal-xl */
     .modal-xl {
         max-width: 1200px;
@@ -86,6 +108,27 @@
                         </tr>
                     <?php endforeach; ?>
 
+// End of main script logic
+</script>
+
+<!-- Clean up Bootstrap color classes in criteria rows after modal render -->
+<script>
+function cleanCriteriaRowColors() {
+    document.querySelectorAll('#editCriteriaContainer .criteria-row').forEach(row => {
+        row.querySelectorAll('.form-check-label, .editable-criterion-label, *').forEach(el => {
+            el.classList.remove('text-secondary', 'text-muted', 'text-light', 'text-dark');
+            el.style.color = '#212529';
+            el.style.fontWeight = 'bold';
+        });
+    });
+}
+if (window.openEditAssignmentModal) {
+    const origOpenEditAssignmentModal = window.openEditAssignmentModal;
+    window.openEditAssignmentModal = function() {
+        origOpenEditAssignmentModal.apply(this, arguments);
+        setTimeout(cleanCriteriaRowColors, 100);
+    };
+}
 </script>
                 </table>
             </div>
@@ -273,8 +316,8 @@ $labelText = 'Instruktsioon';
                         </div>
                         <div class="mb-3">
                             <h5 class="fw-bold">Kriteeriumid</h5>
-                            <div id="editCriteriaContainer"></div>
-                            <div id="addCriterionInlineContainer">
+                            <div id="editCriteriaContainer" style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%;"></div>
+                            <div id="addCriterionInlineContainer" style="width: 100%;">
                                 <input type="text" class="form-control mt-2" id="newCriterionInput" placeholder="Lisa uus kriteerium..." autocomplete="off">
                             </div>
                         </div>
@@ -592,17 +635,25 @@ $labelText = 'Instruktsioon';
                 if (data && data.data && Array.isArray(data.data.criteria)) {
                     data.data.criteria.forEach(criterion => {
                         const row = document.createElement('div');
-                        row.className = 'criteria-row';
+                        row.className = 'criteria-row d-flex align-items-center justify-content-between w-100';
                         row.dataset.criterionId = criterion.criterionId;
-                        row.innerHTML = `<div class=\"form-check d-inline-block\"><input class=\"form-check-input\" type=\"checkbox\" id=\"edit_criterion_${criterion.criterionId}\" checked disabled><label class=\"form-check-label editable-criterion-label\" for=\"edit_criterion_${criterion.criterionId}\" style=\"cursor:pointer;\">${criterion.criterionName}</label></div> <button type=\"button\" class=\"btn btn-danger btn-sm ms-2 remove-criterion-btn\" title=\"Eemalda kriteerium\">X</button>`;
+                        row.innerHTML = `<div class=\"d-inline-block\"><label class=\"editable-criterion-label\" style=\"cursor:pointer;color:#212529 !important;\">${criterion.criterionName}</label></div> <button type=\"button\" class=\"btn btn-danger btn-sm ms-2 remove-criterion-btn\" title=\"Eemalda kriteerium\"><i class=\"fa fa-trash\"></i></button>`;
                         // Add remove handler
                         row.querySelector('.remove-criterion-btn').onclick = function() {
-                            row.remove();
-                            if (!window.oldCriteria) window.oldCriteria = {};
-                            window.oldCriteria[criterion.criterionId] = false;
+                            if (confirm('Are you sure?')) {
+                                row.remove();
+                                if (!window.oldCriteria) window.oldCriteria = {};
+                                window.oldCriteria[criterion.criterionId] = false;
+                            }
                         };
                         // Add click-to-edit handler for label
                         const label = row.querySelector('.editable-criterion-label');
+                        // Remove Bootstrap color classes and force color
+                        if (label) {
+                            label.classList.remove('text-secondary', 'text-muted', 'text-light', 'text-dark');
+                            label.style.color = '#212529';
+                            label.style.setProperty('color', '#212529', 'important');
+                        }
                         label.addEventListener('click', function(e) {
                             e.stopPropagation();
                             // Prevent multiple inputs
@@ -687,10 +738,19 @@ $labelText = 'Instruktsioon';
         window.newAddedCriteria.push(name);
         var row = document.createElement('div');
         row.className = 'criteria-row';
-        row.innerHTML = `<div class="form-check d-inline-block"><input class="form-check-input" type="checkbox" checked disabled><label class="form-check-label">${name}</label></div> <button type="button" class="btn btn-danger btn-sm ms-2 remove-criterion-btn" title="Eemalda kriteerium">X</button>`;
+        row.innerHTML = `<div class="d-inline-block"><label class="editable-criterion-label" style="color:#212529 !important;">${name}</label></div> <button type="button" class="btn btn-danger btn-sm ms-2 remove-criterion-btn" title="Eemalda kriteerium"><i class="fa fa-trash"></i></button>`;
+        // Remove Bootstrap color classes and force color for new inline criteria
+        const label = row.querySelector('.form-check-label');
+        if (label) {
+            label.classList.remove('text-secondary', 'text-muted', 'text-light', 'text-dark');
+            label.style.color = '#212529';
+            label.style.setProperty('color', '#212529', 'important');
+        }
         row.querySelector('.remove-criterion-btn').onclick = function() {
-            row.remove();
-            window.newAddedCriteria = window.newAddedCriteria.filter(n => n !== name);
+            if (confirm('Are you sure?')) {
+                row.remove();
+                window.newAddedCriteria = window.newAddedCriteria.filter(n => n !== name);
+            }
         };
         criteriaContainer.appendChild(row);
         var input = document.getElementById('newCriterionInput');
