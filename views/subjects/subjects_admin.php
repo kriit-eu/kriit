@@ -193,7 +193,6 @@
 <style>
     /* ÕV custom combobox styles from ÕV-selectbox.html */
     .combobox-wrapper .combobox-item {
-        cursor: pointer;
         user-select: none;
         margin-bottom: 1px;
     }
@@ -245,6 +244,7 @@
         -webkit-hyphens: auto;
         overflow-wrap: break-word;
         hyphenate-limit-chars: 6 3 3;
+        cursor: pointer;
     }
 </style>
                         </div>
@@ -528,12 +528,12 @@
             return `
             <div class="list-group-item list-group-item-action combobox-item border-0 py-2 px-3 d-flex align-items-start">
               <input class="combobox-checkbox" type="checkbox" id="combobox-cb${i}" value="${outcome.id}" data-nr="${nr}" name="nameEt" ${checked ? 'checked' : ''}>
-              <div class="combobox-checkbox-visual d-flex align-items-center justify-content-center bg-white border border-2 rounded me-2 mt-1 flex-shrink-0" data-checkbox-id="combobox-cb${i}">
+              <div class="combobox-checkbox-visual d-flex align-items-center justify-content-center bg-white border border-2 rounded me-2 mt-1 flex-shrink-0" data-checkbox-id="combobox-cb${i}" style="cursor:pointer;">
                 <svg class="combobox-checkmark" viewBox="0 0 12 12" width="12" height="12">
                   <path fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M2.5 6l3 3 4.5-6"/>
                 </svg>
               </div>
-              <label class="combobox-label flex-grow-1 ${labelClass} lh-sm pt-1" for="combobox-cb${i}" lang="et">ÕV${nr} – ${cleanName}</label>
+              <label class="combobox-label flex-grow-1 ${labelClass} lh-sm pt-1" for="combobox-cb${i}" lang="et" style="cursor:pointer;">ÕV${nr} – ${cleanName}</label>
             </div>
             `;
         }).join('');
