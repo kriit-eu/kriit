@@ -1,4 +1,4 @@
-CREATE TABLE LearningOutcomes (
+CREATE TABLE learningOutcomes (
   id INT AUTO_INCREMENT PRIMARY KEY,
   subjectId INT NOT NULL,
   curriculumModuleOutcomes INT NOT NULL,

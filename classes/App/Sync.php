@@ -47,7 +47,7 @@ class Sync {
                         $needsUpdate = true;
                     }
                     if ($needsUpdate) {
-                        \App\Db::update('LearningOutcomes', [
+                        \App\Db::update('learningOutcomes', [
                             'nameEt' => $outcomeName,
                             'learningOutcomeOrderNr' => $learningOutcomeOrderNr
                         ], 'subjectId = ? AND curriculumModuleOutcomes = ?', [$subjectId, $curriculumModuleOutcomes]);
@@ -61,13 +61,13 @@ class Sync {
                                 'curriculumModuleOutcomes' => $curriculumModuleOutcomes,
                                 'nameEt' => $outcomeName,
                                 'learningOutcomeOrderNr' => $learningOutcomeOrderNr,
-                                'action' => 'LearningOutcomes_update'
+                                'action' => 'learningOutcomes_update'
                             ]
                         );
                     }
                 } else {
                     // Insert new outcome
-                    \App\Db::insert('LearningOutcomes', [
+                    \App\Db::insert('learningOutcomes', [
                         'subjectId' => $subjectId,
                         'curriculumModuleOutcomes' => $curriculumModuleOutcomes,
                         'nameEt' => $outcomeName,
@@ -83,7 +83,7 @@ class Sync {
                             'curriculumModuleOutcomes' => $curriculumModuleOutcomes,
                             'nameEt' => $outcomeName,
                             'learningOutcomeOrderNr' => $learningOutcomeOrderNr,
-                            'action' => 'LearningOutcomes_insert'
+                            'action' => 'learningOutcomes_insert'
                         ]
                     );
                 }
