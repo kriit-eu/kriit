@@ -195,6 +195,7 @@
     .combobox-wrapper .combobox-item {
         user-select: none;
         margin-bottom: 1px;
+        cursor: pointer;
     }
     .combobox-wrapper .combobox-item:last-child {
         margin-bottom: 0;
@@ -565,6 +566,24 @@
                 }
                 e.preventDefault();
                 e.stopPropagation();
+            });
+        });
+        // Make the entire combobox-item row clickable to toggle the checkbox
+        combobox.querySelectorAll('.combobox-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                // Prevent double toggle if click is on label or checkbox visual
+                if (
+                    e.target.classList.contains('combobox-checkbox-visual') ||
+                    e.target.classList.contains('combobox-checkmark') ||
+                    e.target.tagName === 'LABEL'
+                ) {
+                    return;
+                }
+                const cb = item.querySelector('.combobox-checkbox');
+                if (cb) {
+                    cb.checked = !cb.checked;
+                    cb.dispatchEvent(new Event('change', { bubbles: true }));
+                }
             });
         });
                 const criteriaContainer = document.getElementById('editCriteriaContainer');
