@@ -1,5 +1,23 @@
+<!-- Delete criterion confirmation modal -->
+<div class="modal fade" id="deleteCriterionModal" tabindex="-1" aria-labelledby="deleteCriterionModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteCriterionModalLabel">Kriteeriumi kustutamine</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Sulge"></button>
+      </div>
+      <div class="modal-body">
+        <div id="deleteCriterionModalText">Kas oled kindel, et soovid selle kriteeriumi kustutada? Seda ei saa tagasi võtta.</div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tühista</button>
+        <button type="button" class="btn btn-danger" id="confirmDeleteCriterionBtn">Kustuta</button>
+      </div>
+    </div>
+  </div>
+</div>
 <style>
-    /* Criteria section: add border to each row except when editing */
+        /* Criteria section: add border to each row except when editing */
     #editCriteriaContainer .criteria-row {
         border: 1px solid #dee2e6;
         border-radius: 0.375rem;
@@ -19,8 +37,6 @@
         width: 100%;
         box-sizing: border-box;
     }
-</style>
-<style>
     /* Make assignment edit modal even wider than Bootstrap modal-xl */
     .modal-xl {
         max-width: 1200px;
@@ -65,6 +81,53 @@
     #subject-table th a{color:inherit;text-decoration:none;}
     .id-badge{background-color:#e9ecef;padding:2px 6px;border-radius:3px;font-size:.85em;color:#495057;}
     #subject-table td[data-grade]{text-align:center!important;justify-content:center!important;align-items:center!important;display:table-cell!important;}
+</style>
+<style>
+/* Ensure Bootstrap modal and backdrop are always on top */
+.modal-backdrop.show {
+  z-index: 2050 !important;
+}
+.modal.show {
+  z-index: 2100 !important;
+}
+/* Ensure the delete confirmation modal and its backdrop are always above the edit modal */
+#deleteCriterionModal.modal.show {
+  z-index: 2200 !important;
+}
+#deleteCriterionModal + .modal-backdrop.show {
+  z-index: 2150 !important;
+}
+/* Fallback for when Bootstrap inserts the backdrop before the modal */
+body > .modal-backdrop.delete-criterion-backdrop.show {
+  z-index: 2150 !important;
+}
+</style>
+<style>
+/* Criteria trashcan button: gray by default, red bg and white icon on hover */
+.remove-criterion-btn {
+  background: none;
+  border: none;
+  padding: 0.5rem 1.1rem;
+  border-radius: 0.375rem;
+  transition: background 0.15s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.5rem;
+  min-height: 2.2rem;
+  overflow: visible;
+  position: relative;
+}
+.remove-criterion-btn .fa-trash {
+  color: #6c757d; /* Bootstrap secondary */
+  transition: color 0.15s;
+}
+.remove-criterion-btn:hover, .remove-criterion-btn:focus {
+  background: #dc3545 !important;
+}
+.remove-criterion-btn:hover .fa-trash, .remove-criterion-btn:focus .fa-trash {
+  color: #fff;
+}
 </style>
 
 <?php if ($this->isTeacherOrAdmin): ?>
@@ -334,6 +397,48 @@ $labelText = 'Instruktsioon';
 
 <script src="/assets/js/markdown_editor.js"></script>
 <script>
+
+    // Custom Bootstrap modal confirmation for deleting a criterion (define first so all code can use it)
+    window.showDeleteCriterionModal = function({row, onDelete}) {
+        // Ensure the confirmation modal's backdrop is always above the edit modal's backdrop
+        const modalEl = document.getElementById('deleteCriterionModal');
+        if (!modalEl) {
+            alert('Delete modal not found in DOM!');
+            return;
+        }
+        const confirmBtn = document.getElementById('confirmDeleteCriterionBtn');
+        // Remove any previous click handler
+        confirmBtn.onclick = null;
+        // Set up new click handler
+        confirmBtn.onclick = function() {
+            if (typeof onDelete === 'function') onDelete();
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+        };
+        // Show modal
+        if (typeof bootstrap === 'undefined' || !bootstrap.Modal) {
+            alert('Bootstrap JS is not loaded!');
+            return;
+        }
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        if (!modal) {
+            alert('Could not create Bootstrap modal instance!');
+            return;
+        }
+        modal.show();
+        // After modal is shown, bump the backdrop z-index if needed
+        setTimeout(function() {
+            // Find all visible backdrops
+            var backdrops = Array.from(document.querySelectorAll('.modal-backdrop.show'));
+            if (backdrops.length > 1) {
+                // Assume the last one is for the confirmation modal
+                var confBackdrop = backdrops[backdrops.length - 1];
+                confBackdrop.style.zIndex = '2150';
+                confBackdrop.classList.add('delete-criterion-backdrop');
+            }
+        }, 10);
+    };
+
     // Inject current user info for assignment save
     window.teacherId = <?= json_encode($this->auth->userId) ?>;
     window.teacherName = <?= json_encode($this->auth->userName) ?>;
@@ -637,14 +742,17 @@ $labelText = 'Instruktsioon';
                         const row = document.createElement('div');
                         row.className = 'criteria-row d-flex align-items-center justify-content-between w-100';
                         row.dataset.criterionId = criterion.criterionId;
-                        row.innerHTML = `<div class=\"d-inline-block\"><label class=\"editable-criterion-label\" style=\"cursor:pointer;color:#212529 !important;\">${criterion.criterionName}</label></div> <button type=\"button\" class=\"btn btn-danger btn-sm ms-2 remove-criterion-btn\" title=\"Eemalda kriteerium\"><i class=\"fa fa-trash\"></i></button>`;
+                        row.innerHTML = `<div class=\"d-inline-block\"><label class=\"editable-criterion-label\" style=\"cursor:pointer;color:#212529 !important;\">${criterion.criterionName}</label></div> <button type=\"button\" class=\"remove-criterion-btn p-0 ms-2\" title=\"Eemalda kriteerium\" style=\"background:none;border:none;\"><i class=\"fa fa-trash\"></i></button>`;
                         // Add remove handler
                         row.querySelector('.remove-criterion-btn').onclick = function() {
-                            if (confirm('Are you sure?')) {
-                                row.remove();
-                                if (!window.oldCriteria) window.oldCriteria = {};
-                                window.oldCriteria[criterion.criterionId] = false;
-                            }
+                            showDeleteCriterionModal({
+                                row,
+                                onDelete: function() {
+                                    row.remove();
+                                    if (!window.oldCriteria) window.oldCriteria = {};
+                                    window.oldCriteria[criterion.criterionId] = false;
+                                }
+                            });
                         };
                         // Add click-to-edit handler for label
                         const label = row.querySelector('.editable-criterion-label');
@@ -738,7 +846,7 @@ $labelText = 'Instruktsioon';
         window.newAddedCriteria.push(name);
         var row = document.createElement('div');
         row.className = 'criteria-row';
-        row.innerHTML = `<div class="d-inline-block"><label class="editable-criterion-label" style="color:#212529 !important;">${name}</label></div> <button type="button" class="btn btn-danger btn-sm ms-2 remove-criterion-btn" title="Eemalda kriteerium"><i class="fa fa-trash"></i></button>`;
+        row.innerHTML = `<div class="d-inline-block"><label class="editable-criterion-label" style="color:#212529 !important;">${name}</label></div> <button type="button" class="remove-criterion-btn p-0 ms-2" title="Eemalda kriteerium" style="background:none;border:none;"><i class="fa fa-trash"></i></button>`;
         // Remove Bootstrap color classes and force color for new inline criteria
         const label = row.querySelector('.form-check-label');
         if (label) {
@@ -747,11 +855,17 @@ $labelText = 'Instruktsioon';
             label.style.setProperty('color', '#212529', 'important');
         }
         row.querySelector('.remove-criterion-btn').onclick = function() {
-            if (confirm('Are you sure?')) {
-                row.remove();
-                window.newAddedCriteria = window.newAddedCriteria.filter(n => n !== name);
-            }
+            console.log('Trashcan clicked for inline criterion:', name);
+            showDeleteCriterionModal({
+                row,
+                onDelete: function() {
+                    row.remove();
+                    window.newAddedCriteria = window.newAddedCriteria.filter(n => n !== name);
+                }
+            });
         };
+
+
         criteriaContainer.appendChild(row);
         var input = document.getElementById('newCriterionInput');
         input.value = '';
