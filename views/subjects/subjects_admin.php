@@ -365,13 +365,15 @@ $labelText = 'Instruktsioon';
     include __DIR__ . '/../../templates/partials/markdown_editor.php';
 ?>
                         </div>
-                        <div class="mb-3">
-                            <label for="assignmentEntryDate" class="form-label fw-bold">Sisestamise kuupäev</label>
-                            <input type="date" class="form-control" id="assignmentEntryDate" name="assignmentEntryDate" value="">
-                        </div>
-                        <div class="mb-3">
-                            <label for="assignmentDueAt" class="form-label fw-bold">Tähtaeg</label>
-                            <input type="date" class="form-control" id="assignmentDueAt" name="assignmentDueAt" value="">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="assignmentEntryDate" class="form-label fw-bold">Sisestamise kuupäev</label>
+                                <input type="date" class="form-control" id="assignmentEntryDate" name="assignmentEntryDate" value="">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="assignmentDueAt" class="form-label fw-bold">Tähtaeg</label>
+                                <input type="date" class="form-control" id="assignmentDueAt" name="assignmentDueAt" value="">
+                            </div>
                         </div>
                         <div class="mb-3 form-check">
                             <input type="checkbox" class="form-check-input" id="assignmentInvolvesOpenApi" name="assignmentInvolvesOpenApi">
