@@ -189,7 +189,64 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Õpiväljund (ÕV)</label>
-                            <div id="assignmentLearningOutcomeBtns" class="btn-group w-100 flex-wrap" role="group" aria-label="Õpiväljundid"></div>
+                            <div class="combobox-wrapper" id="assignmentLearningOutcomeCombobox"></div>
+<style>
+    /* ÕV custom combobox styles from ÕV-selectbox.html */
+    .combobox-wrapper .combobox-item {
+        cursor: pointer;
+        user-select: none;
+        margin-bottom: 1px;
+    }
+    .combobox-wrapper .combobox-item:last-child {
+        margin-bottom: 0;
+    }
+    .combobox-wrapper .combobox-item:hover {
+        background-color: rgba(25, 135, 84, 0.1);
+    }
+    .combobox-wrapper .combobox-checkbox {
+        position: absolute;
+        opacity: 0;
+    }
+    .combobox-wrapper .combobox-checkbox-visual {
+        width: 1.25rem;
+        height: 1.25rem;
+        transition: all 0.2s;
+    }
+    .combobox-wrapper .combobox-checkbox:checked ~ .combobox-checkbox-visual {
+        background: var(--bs-success) !important;
+        border-color: var(--bs-success) !important;
+    }
+    .combobox-wrapper .combobox-item:hover .combobox-checkbox-visual {
+        border-color: var(--bs-success);
+        box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.15);
+    }
+    .combobox-wrapper .combobox-checkbox:focus ~ .combobox-checkbox-visual {
+        box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25);
+    }
+    .combobox-wrapper .combobox-checkmark {
+        opacity: 0;
+        transform: scale(0.8);
+        transition: all 0.2s;
+    }
+    .combobox-wrapper .combobox-checkmark path {
+        stroke-dasharray: 15;
+        stroke-dashoffset: 15;
+        transition: stroke-dashoffset 0.3s;
+    }
+    .combobox-wrapper .combobox-checkbox:checked ~ .combobox-checkbox-visual .combobox-checkmark {
+        opacity: 1;
+        transform: scale(1);
+    }
+    .combobox-wrapper .combobox-checkbox:checked ~ .combobox-checkbox-visual .combobox-checkmark path {
+        stroke-dashoffset: 0;
+    }
+    .combobox-wrapper .combobox-label {
+        hyphens: auto;
+        -webkit-hyphens: auto;
+        overflow-wrap: break-word;
+        hyphenate-limit-chars: 6 3 3;
+    }
+</style>
                         </div>
                         <div class="mb-3">
 <?php
@@ -239,9 +296,9 @@
         const assignmentId = window.currentEditingAssignmentId || null;
         let assignmentName = form.assignmentName.value.trim();
         // Build ÕV label string from selected buttons
-        const btnsContainer = document.getElementById('assignmentLearningOutcomeBtns');
-        const selectedBtns = Array.from(btnsContainer.children).filter(btn => btn.classList.contains('active'));
-        const selectedOvLabels = selectedBtns.map(btn => 'ÕV' + (btn.dataset.nr || '?'));
+        const combobox = document.getElementById('assignmentLearningOutcomeCombobox');
+        const checkedBoxes = combobox ? Array.from(combobox.querySelectorAll('.combobox-checkbox:checked')) : [];
+        const selectedOvLabels = checkedBoxes.map(cb => 'ÕV' + (cb.dataset.nr || '?'));
         // Always remove any existing ÕV label group in parentheses
         assignmentName = assignmentName.replace(/\s*\(ÕV[0-9]+(,\s*ÕV[0-9]+)*\)/, '').trim();
         // Only append ÕV labels for saving, not for display
@@ -254,7 +311,7 @@
         const assignmentDueAt = form.assignmentDueAt.value;
         const assignmentInvolvesOpenApi = form.assignmentInvolvesOpenApi.checked ? 1 : 0;
         // ÕV selection (array of selected IDs)
-        const assignmentLearningOutcomeId = selectedBtns.map(btn => btn.dataset.id);
+        const assignmentLearningOutcomeId = checkedBoxes.map(cb => cb.value);
         // Criteria (if present)
         // Collect new criteria added in modal
         // Collect all existing criteria IDs still present in the modal (not deleted)
@@ -390,18 +447,15 @@
         const nameInput = document.getElementById('assignmentName');
         const counter = document.getElementById('assignmentNameCounter');
         const errorDiv = document.getElementById('assignmentNameError');
-        // Store the last selected ÕV label string for counting
         let lastOvLabels = '';
         function updateCounter() {
-            // Build ÕV label string from selected buttons
-            const btnsContainer = document.getElementById('assignmentLearningOutcomeBtns');
-            const selectedBtns = Array.from(btnsContainer.children).filter(btn => btn.classList.contains('active'));
-            const selectedOvLabels = selectedBtns.map(btn => 'ÕV' + (btn.dataset.nr || '?'));
+            const combobox = document.getElementById('assignmentLearningOutcomeCombobox');
+            const checkedBoxes = combobox ? Array.from(combobox.querySelectorAll('.combobox-checkbox:checked')) : [];
+            const selectedOvLabels = checkedBoxes.map(cb => 'ÕV' + (cb.dataset.nr || '?'));
             let ovLabelString = '';
             if (selectedOvLabels.length > 0) {
                 ovLabelString = ' (' + selectedOvLabels.join(', ') + ')';
             }
-            // Count the value plus ÕV labels (even if not shown)
             const len = nameInput.value.length + ovLabelString.length;
             counter.textContent = len + ' / 100';
             if (len > 100) {
@@ -414,7 +468,14 @@
         }
         nameInput.removeEventListener('input', updateCounter);
         nameInput.addEventListener('input', updateCounter);
-        // Update counter immediately after setting value
+        // Also update counter when combobox changes
+        const combobox = document.getElementById('assignmentLearningOutcomeCombobox');
+        if (combobox) {
+            combobox.removeEventListener('change', updateCounter);
+            combobox.addEventListener('change', updateCounter);
+            combobox.removeEventListener('click', updateCounter);
+            combobox.addEventListener('click', updateCounter);
+        }
         setTimeout(updateCounter, 0);
         if (typeof assignment === 'string') {
             assignment = JSON.parse(assignment);
@@ -435,52 +496,41 @@
                 document.getElementById('assignmentInstructionsEditor').value = assignment.assignmentInstructions || '';
                 document.getElementById('assignmentDueAt').value = assignment.assignmentDueAt ? (assignment.assignmentDueAt.length > 0 ? assignment.assignmentDueAt.split('T')[0] : '') : '';
                 document.getElementById('assignmentInvolvesOpenApi').checked = assignment.assignmentInvolvesOpenApi ? true : false;
-                var btnsContainer = document.getElementById('assignmentLearningOutcomeBtns');
-                btnsContainer.innerHTML = '';
-                var subjectExternalId = assignment.subjectExternalId;
-                var outcomes = subjectLearningOutcomes[subjectExternalId] || [];
-                let selectedOutcomes = assignment.assignmentLearningOutcomeId;
-                if (!Array.isArray(selectedOutcomes)) {
-                    selectedOutcomes = selectedOutcomes ? [selectedOutcomes] : [];
-                }
-                if (!selectedOutcomes.length && assignment.assignmentName) {
-                    const match = assignment.assignmentName.match(/\(ÕV[0-9]+(,\s*ÕV[0-9]+)*\)/);
-                    if (match) {
-                        const labels = match[0].replace(/[()]/g, '').split(',').map(s => s.trim());
-                        selectedOutcomes = outcomes.filter(outcome => labels.includes('ÕV' + ((parseInt(outcome.learningOutcomeOrderNr, 10) || 0) + 1))).map(outcome => outcome.id);
-                    }
-                }
-                outcomes.forEach(function(outcome) {
-                    var nr = (parseInt(outcome.learningOutcomeOrderNr, 10) || 0) + 1;
-                    var btn = document.createElement('button');
-                    btn.type = 'button';
-                    btn.className = 'btn btn-outline-primary m-1 ov-toggle-btn';
-                    btn.textContent = 'ÕV' + nr;
-                    btn.dataset.id = outcome.id;
-                    btn.dataset.nr = nr;
-                    btn.setAttribute('data-bs-toggle', 'tooltip');
-                    btn.setAttribute('title', outcome.nameEt);
-                    if (selectedOutcomes.includes(outcome.id)) {
-                        btn.classList.add('active');
-                    }
-                    btnsContainer.appendChild(btn);
-                });
-                Array.from(btnsContainer.children).forEach(function(btn) {
-                    const tooltip = new bootstrap.Tooltip(btn);
-                    btn.addEventListener('click', function() { tooltip.hide(); });
-                    btn.addEventListener('mouseleave', function() { tooltip.hide(); });
-                });
-                btnsContainer.addEventListener('click', function(e) {
-                    if (e.target && e.target.classList.contains('ov-toggle-btn')) {
-                        e.target.classList.toggle('active');
-                        updateOvSelection();
-                    }
-                });
-                function updateOvSelection() {
-                    let currentName = assignmentNameInput.value || '';
-                    assignmentNameInput.value = currentName.trim();
-                    updateCounter();
-                }
+        var combobox = document.getElementById('assignmentLearningOutcomeCombobox');
+        var subjectExternalId = assignment.subjectExternalId;
+        var outcomes = subjectLearningOutcomes[subjectExternalId] || [];
+        let selectedOutcomes = assignment.assignmentLearningOutcomeId;
+        if (!Array.isArray(selectedOutcomes)) {
+            selectedOutcomes = selectedOutcomes ? [selectedOutcomes] : [];
+        }
+        if (!selectedOutcomes.length && assignment.assignmentName) {
+            const match = assignment.assignmentName.match(/\(ÕV[0-9]+(,\s*ÕV[0-9]+)*\)/);
+            if (match) {
+                const labels = match[0].replace(/[()]/g, '').split(',').map(s => s.trim());
+                selectedOutcomes = outcomes.filter(outcome => labels.includes('ÕV' + ((parseInt(outcome.learningOutcomeOrderNr, 10) || 0) + 1))).map(outcome => outcome.id);
+            }
+        }
+        // Render custom checkbox list
+        combobox.innerHTML = outcomes.map(function(outcome, i) {
+            var nr = (parseInt(outcome.learningOutcomeOrderNr, 10) || 0) + 1;
+            var checked = selectedOutcomes.includes(outcome.id) ? 'checked' : '';
+            return `
+            <div class="list-group-item list-group-item-action combobox-item border-0 py-2 px-3 d-flex align-items-start">
+              <input class="combobox-checkbox" type="checkbox" id="combobox-cb${i}" value="${outcome.id}" data-nr="${nr}" name="nameEt" ${checked}>
+              <div class="combobox-checkbox-visual d-flex align-items-center justify-content-center bg-white border border-2 rounded me-2 mt-1 flex-shrink-0">
+                <svg class="combobox-checkmark" viewBox="0 0 12 12" width="12" height="12">
+                  <path fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M2.5 6l3 3 4.5-6"/>
+                </svg>
+              </div>
+              <label class="combobox-label flex-grow-1 text-dark fw-medium lh-sm pt-1" for="combobox-cb${i}" lang="et">ÕV${nr} – ${outcome.nameEt}</label>
+            </div>
+            `;
+        }).join('');
+        // Add event listeners for change/click to update counter
+        combobox.querySelectorAll('.combobox-checkbox').forEach(cb => {
+            cb.addEventListener('change', updateCounter);
+            cb.addEventListener('click', updateCounter);
+        });
                 const criteriaContainer = document.getElementById('editCriteriaContainer');
                 criteriaContainer.innerHTML = '';
                 if (data && data.data && Array.isArray(data.data.criteria)) {
@@ -488,7 +538,7 @@
                         const row = document.createElement('div');
                         row.className = 'criteria-row';
                         row.dataset.criterionId = criterion.criterionId;
-                        row.innerHTML = `<div class="form-check d-inline-block"><input class="form-check-input" type="checkbox" id="edit_criterion_${criterion.criterionId}" checked disabled><label class="form-check-label editable-criterion-label" for="edit_criterion_${criterion.criterionId}" style="cursor:pointer;">${criterion.criterionName}</label></div> <button type="button" class="btn btn-danger btn-sm ms-2 remove-criterion-btn" title="Eemalda kriteerium">X</button>`;
+                        row.innerHTML = `<div class=\"form-check d-inline-block\"><input class=\"form-check-input\" type=\"checkbox\" id=\"edit_criterion_${criterion.criterionId}\" checked disabled><label class=\"form-check-label editable-criterion-label\" for=\"edit_criterion_${criterion.criterionId}\" style=\"cursor:pointer;\">${criterion.criterionName}</label></div> <button type=\"button\" class=\"btn btn-danger btn-sm ms-2 remove-criterion-btn\" title=\"Eemalda kriteerium\">X</button>`;
                         // Add remove handler
                         row.querySelector('.remove-criterion-btn').onclick = function() {
                             row.remove();
