@@ -571,11 +571,12 @@
         // Make the entire combobox-item row clickable to toggle the checkbox
         combobox.querySelectorAll('.combobox-item').forEach(item => {
             item.addEventListener('click', function(e) {
-                // Prevent double toggle if click is on label or checkbox visual
+                // Prevent double toggle if click is on label, checkbox, or checkbox visual
                 if (
                     e.target.classList.contains('combobox-checkbox-visual') ||
                     e.target.classList.contains('combobox-checkmark') ||
-                    e.target.tagName === 'LABEL'
+                    e.target.classList.contains('combobox-label') ||
+                    e.target.classList.contains('combobox-checkbox')
                 ) {
                     return;
                 }
