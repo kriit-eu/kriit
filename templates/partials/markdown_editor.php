@@ -14,6 +14,19 @@
 <script src="/assets/js/markdown-it-sub.min.js"></script>
 <script src="/assets/js/markdown-it-deflist.min.js"></script>
 <script src="/assets/js/markdown-it-sup.min.js"></script>
+<style>
+.markdown-content table {
+  width: auto;
+  border-collapse: collapse;
+  margin-bottom: 1em;
+}
+.markdown-content th,
+.markdown-content td {
+  border: 1px solid #dee2e6;
+  padding: 0.5em 0.75em;
+  background: #f3f4f6;
+}
+</style>
 <div class="mb-3">
     <label for="<?= htmlspecialchars($editorId) ?>" class="form-label fw-bold"><?= htmlspecialchars($labelText) ?></label>
     <div class="row">
