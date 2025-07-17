@@ -827,6 +827,23 @@ $labelText = 'Instruktsioon';
                 }
                 const modal = new bootstrap.Modal(document.getElementById('editAssignmentModal'));
                 modal.show();
+                // When modal is fully shown, trigger autoExpand for the markdown editor
+                const modalEl = document.getElementById('editAssignmentModal');
+                modalEl.addEventListener('shown.bs.modal', function handler() {
+                    modalEl.removeEventListener('shown.bs.modal', handler);
+                    var textarea = document.getElementById('assignmentInstructionsEditor');
+                    var preview = document.getElementById('assignmentInstructionsPreview');
+                    if (textarea && preview) {
+                        textarea.style.height = 'auto';
+                        textarea.style.height = (textarea.scrollHeight + 2) + 'px';
+                        preview.style.height = 'auto';
+                        if (preview.innerHTML.trim() !== '') {
+                            preview.style.height = (preview.scrollHeight + 2) + 'px';
+                        } else {
+                            preview.style.height = '200px';
+                        }
+                    }
+                });
                 setTimeout(() => {
                     updateCounter();
                     // Attach event handler for inline criterion add
