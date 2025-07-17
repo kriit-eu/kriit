@@ -180,8 +180,6 @@ body > .modal-backdrop.delete-criterion-backdrop.show {
                             </td>
                         </tr>
                     <?php endforeach; ?>
-
-// End of main script logic
 </script>
 
 <!-- Clean up Bootstrap color classes in criteria rows after modal render -->

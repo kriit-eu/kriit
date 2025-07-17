@@ -15,6 +15,7 @@
 <script src="/assets/js/markdown-it-deflist.min.js"></script>
 <script src="/assets/js/markdown-it-sup.min.js"></script>
 <style>
+/* Markdown table base styles */
 .markdown-content table {
   width: auto;
   border-collapse: collapse;
@@ -24,7 +25,11 @@
 .markdown-content td {
   border: 1px solid #dee2e6;
   padding: 0.5em 0.75em;
-  background: #f3f4f6;
+  background: #fff;
+}
+/* Zebra striping for Markdown tables in preview (GitHub style) */
+.markdown-content table tr:nth-child(even) td {
+  background-color: #f6f8fa;
 }
 </style>
 <div class="mb-3">
