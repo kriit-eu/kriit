@@ -660,7 +660,11 @@ $labelText = 'Instruktsioon';
                 } else {
                     assignmentNameInput.value = '';
                 }
-                document.getElementById('assignmentInstructionsEditor').value = assignment.assignmentInstructions || '';
+                var instructionsEditor = document.getElementById('assignmentInstructionsEditor');
+                console.log('DEBUG: assignment.assignmentInstructions =', assignment.assignmentInstructions);
+                instructionsEditor.value = assignment.assignmentInstructions || '';
+                // Trigger input event to update preview and auto-expand
+                instructionsEditor.dispatchEvent(new Event('input', { bubbles: true }));
                 document.getElementById('assignmentDueAt').value = assignment.assignmentDueAt ? (assignment.assignmentDueAt.length > 0 ? assignment.assignmentDueAt.split('T')[0] : '') : '';
                 document.getElementById('assignmentEntryDate').value = assignment.assignmentEntryDate ? (assignment.assignmentEntryDate.length > 0 ? assignment.assignmentEntryDate.split('T')[0] : '') : '';
                 document.getElementById('assignmentInvolvesOpenApi').checked = assignment.assignmentInvolvesOpenApi ? true : false;

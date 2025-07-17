@@ -130,18 +130,19 @@ class subjects extends Controller
                 s.teacherId,
                 s.subjectExternalId,
                 t.userName                     AS teacherName,
-        
+
                 u.userId                       AS studentId,
                 u.userName                     AS studentName,
                 s.groupId                      AS groupId,
                 g.groupName,
                 u.userIsActive,
-            
+
                 a.assignmentId,
                 a.assignmentName,
+                a.assignmentInstructions,
                 a.assignmentDueAt,
                 a.assignmentEntryDate,
-            
+
                 ua.userGrade,
                 ua.assignmentStatusId,
                 ast.statusName                 AS assignmentStatusName,
@@ -238,6 +239,7 @@ class subjects extends Controller
                     $groups[$groupName]['subjects'][$subjectId]['assignments'][$assignmentId] = [
                         'assignmentId' => $assignmentId,
                         'assignmentName' => $row['assignmentName'],
+                        'assignmentInstructions' => $row['assignmentInstructions'],
                         'assignmentDueAt' => $row['assignmentDueAt'],
                         'assignmentEntryDate' => $row['assignmentEntryDate'],
                         'assignmentEntryDateFormatted' => $entryDateFormatted,
