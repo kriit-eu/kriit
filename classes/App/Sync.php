@@ -339,8 +339,8 @@ class Sync {
                     }
                 }
 
-                // If there's no difference in subject-level fields & no assignment differences, skip
-                if (!$subjectDiffFields && !$assignmentsDifferences) {
+                // If there are no assignment-level differences, we don't need to report this subject
+                if (!$assignmentsDifferences) {
                     continue;
                 }
 
