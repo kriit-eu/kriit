@@ -298,7 +298,7 @@ class Sync {
     if ((($field === 'assignmentName' || $field === 'assignmentDueAt' || $field === 'assignmentEntryDate') && is_array($diffVal) && array_key_exists('kriit', $diffVal) && array_key_exists('remote', $diffVal))) {
         $assignDiff[$field] = [
             'kriit' => $diffVal['kriit'],
-            'remote' => $diffVal['remote']
+            'Tahvel' => $diffVal['remote']
         ];
     } else {
         // We'll show Kriit's final data in the result
