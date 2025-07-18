@@ -1374,9 +1374,12 @@ class Sync {
 
                 // Check for grade differences
                 if ($remoteGrade !== $kriitGrade) {
-                    $diffData['kriitGrade'] = $kriitGrade;
-                    $diffData['remoteGrade'] = $remoteGrade;
-                    $hasDifferences = true;
+                    // But don't count as a difference if Kriit has no grade and remote grade is empty
+                    if (!($kriitGrade === null && $remoteGrade === '')) {
+                        $diffData['kriitGrade'] = $kriitGrade;
+                        $diffData['remoteGrade'] = $remoteGrade;
+                        $hasDifferences = true;
+                    }
                 }
 
                 // Check for active status differences if provided
