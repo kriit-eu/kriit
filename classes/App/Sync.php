@@ -294,21 +294,13 @@ class Sync {
                             'assignmentDueAt' => $kriitAssignment['assignmentDueAt']
                         ];
                         foreach ($fieldDiff as $field => $diffVal) {
-    // For assignmentName, assignmentDueAt, and assignmentEntryDate, always return as difference object if a difference exists
-    if ((($field === 'assignmentName' || $field === 'assignmentDueAt' || $field === 'assignmentEntryDate') && is_array($diffVal) && array_key_exists('kriit', $diffVal) && array_key_exists('remote', $diffVal))) {
-        $assignDiff[$field] = [
-            'kriit' => $diffVal['kriit'],
-            'Tahvel' => $diffVal['remote']
-        ];
+    // Always use the latest value from the database (kriit) for assignment fields, unless it's null and remote has a value
+    if ($diffVal['kriit'] !== null) {
+        $assignDiff[$field] = $diffVal['kriit'];
+    } else if ($diffVal['remote'] !== null) {
+        $assignDiff[$field] = $diffVal['remote'];
     } else {
-        // We'll show Kriit's final data in the result
-        // If the field was NULL in Kriit and has been updated, show the remote value
-        // Otherwise show the original Kriit value
-        if ($diffVal['kriit'] === null && $diffVal['remote'] !== null) {
-            $assignDiff[$field] = $diffVal['remote'];
-        } else {
-            $assignDiff[$field] = $diffVal['kriit'];
-        }
+        $assignDiff[$field] = null;
     }
                         }
 
