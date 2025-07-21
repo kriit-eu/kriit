@@ -122,16 +122,20 @@
     var textarea = document.getElementById('<?= addslashes($editorId) ?>');
     var preview = document.getElementById('<?= addslashes($previewId) ?>');
     if (!textarea || !preview) return;
-    function autoExpand() {
-        textarea.style.height = 'auto';
-        textarea.style.height = (textarea.scrollHeight + 2) + 'px';
-        preview.style.height = 'auto';
-        if (preview.innerHTML.trim() !== '') {
-            preview.style.height = (preview.scrollHeight + 2) + 'px';
-        } else {
-            preview.style.height = '200px';
+        function autoExpand() {
+            textarea.style.height = 'auto';
+            if (textarea.value.trim() === '') {
+                textarea.style.height = '200px';
+            } else {
+                textarea.style.height = (textarea.scrollHeight + 2) + 'px';
+            }
+            preview.style.height = 'auto';
+            if (preview.innerHTML.trim() !== '') {
+                preview.style.height = (preview.scrollHeight + 2) + 'px';
+            } else {
+                preview.style.height = '200px';
+            }
         }
-    }
     function updatePreview() {
         var content = textarea.value;
         if (content.trim() === '') {
@@ -148,7 +152,10 @@
         setTimeout(updatePreview, 800);
     });
     textarea.addEventListener('mouseup', function() {
-        preview.style.height = textarea.style.height;
+        autoExpand();
+    });
+    textarea.addEventListener('focus', function() {
+        autoExpand();
     });
     setTimeout(autoExpand, 0);
     updatePreview();
