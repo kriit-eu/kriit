@@ -440,12 +440,13 @@ class assignments extends Controller
         $assignmentId = $_POST['assignmentId'];
         $this->checkIfUserHasPermissionForAction($assignmentId) || stop(403, 'Teil pole õigusi sellele tegevusele.');
 
-        $assignmentName = $_POST['assignmentName'];
-        $assignmentInstructions = $_POST['assignmentInstructions'];
-        $assignmentDueAt = empty($_POST['assignmentDueAt']) ? null : $_POST['assignmentDueAt'];
-        $assignmentInvolvesOpenApi = isset($_POST['assignmentInvolvesOpenApi']) ? (int)$_POST['assignmentInvolvesOpenApi'] : 0;
-        $oldCriteria = $_POST['oldCriteria'] ?? [];
-        $newCriteria = $_POST['newCriteria'] ?? [];
+    $assignmentName = $_POST['assignmentName'];
+    $assignmentInstructions = $_POST['assignmentInstructions'];
+    $assignmentDueAt = empty($_POST['assignmentDueAt']) ? null : $_POST['assignmentDueAt'];
+    $assignmentEntryDate = empty($_POST['assignmentEntryDate']) ? null : $_POST['assignmentEntryDate'];
+    $assignmentInvolvesOpenApi = isset($_POST['assignmentInvolvesOpenApi']) ? (int)$_POST['assignmentInvolvesOpenApi'] : 0;
+    $oldCriteria = $_POST['oldCriteria'] ?? [];
+    $newCriteria = $_POST['newCriteria'] ?? [];
 
         $existAssignment = Db::getFirst('SELECT * FROM assignments WHERE assignmentId = ?', [$assignmentId]);
         $this->saveEditAssignmentCriteria($oldCriteria, $newCriteria, $assignmentId);
@@ -454,6 +455,7 @@ class assignments extends Controller
             'assignmentName' => $assignmentName,
             'assignmentInstructions' => $assignmentInstructions,
             'assignmentDueAt' => $assignmentDueAt,
+            'assignmentEntryDate' => $assignmentEntryDate,
             'assignmentInvolvesOpenApi' => $assignmentInvolvesOpenApi
         ], 'assignmentId = ?', [$assignmentId]);
 
