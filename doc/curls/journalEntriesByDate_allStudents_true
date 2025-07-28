@@ -1,0 +1,71 @@
+curl 'https://test.tahvel.eenet.ee/hois_back/journals/336158/journalEntriesByDate?allStudents=true' \
+ -H 'Accept: application/json, text/plain, _/_' \
+ -H 'Accept-Language: en-US,en;q=0.9' \
+ -H 'Cache-Control: no-cache' \
+ -H 'Connection: keep-alive' \
+ -H 'Content-Type: application/json;charset=UTF-8' \
+ -b 'SESSION=YTM5ZTIwMzgtNGE3ZS00ODU3LTg0YzMtYmE0NmYxODM1NWRh; taraStateToken=26f0741c-e91a-4cbb-824d-271bb1a20cea; XSRF-TOKEN=6781991b-3f71-4772-8a9e-a274794248b8' \
+ -H 'Pragma: no-cache' \
+ -H 'Referer: https://test.tahvel.eenet.ee/' \
+ -H 'Sec-Fetch-Dest: empty' \
+ -H 'Sec-Fetch-Mode: cors' \
+ -H 'Sec-Fetch-Site: same-origin' \
+ -H 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36' \
+ -H 'sec-ch-ua: "Not)A;Brand";v="8", "Chromium";v="138", "Google Chrome";v="138"' \
+ -H 'sec-ch-ua-mobile: ?0' \
+ -H 'sec-ch-ua-platform: "Windows"'
+
+[
+{
+"entryDate": "2025-07-10T00:00:00Z",
+"nameEt": "Iseseisev töö",
+"nameEn": null,
+"entryType": "SISSEKANNE_I",
+"journalStudent": null,
+"startLessonNr": null,
+"lessons": null,
+"curriculumModuleOutcomes": null,
+"outcomeOrderNr": null,
+"curriculumModule": null,
+"curriculum": null,
+"isCurrentJournal": true,
+"id": 3258862,
+"teacher": "Eero Vallistu",
+"moodleGradeItemId": null,
+"isSubstitute": null,
+"isBasicJournal": false,
+"isSecondaryJournal": false,
+"omoduleThemeNameEt": null,
+"periodEventValue": null,
+"journalStudentResults": {},
+"studentOutcomeResults": null,
+"otherJournals": null,
+"otherJournalResults": null
+},
+{
+"entryDate": null,
+"nameEt": "7) kasutab tööks vajalikke infotehnoloogilisi vahendeid, erinevaid andmebaase, tehnilist dokumentatsiooni ning erialast sõnavara eesti ja võõrkeeles",
+"nameEn": null,
+"entryType": "SISSEKANNE_O",
+"journalStudent": null,
+"startLessonNr": null,
+"lessons": null,
+"curriculumModuleOutcomes": 112093,
+"outcomeOrderNr": 6,
+"curriculumModule": 32054,
+"curriculum": 1803,
+"isCurrentJournal": true,
+"id": null,
+"teacher": null,
+"moodleGradeItemId": null,
+"isSubstitute": null,
+"isBasicJournal": null,
+"isSecondaryJournal": null,
+"omoduleThemeNameEt": null,
+"periodEventValue": null,
+"journalStudentResults": null,
+"studentOutcomeResults": {},
+"otherJournals": null,
+"otherJournalResults": null
+}
+]

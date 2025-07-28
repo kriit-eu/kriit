@@ -1,7 +1,6 @@
 <?php namespace App;
 
 use Doctrine\SqlFormatter\SqlFormatter;
-use JetBrains\PhpStorm\NoReturn;
 
 
 class Db
@@ -67,7 +66,6 @@ class Db
 
             // Re-add the debug info to move it to the end
             $this->debugLog[$query] = $existingDebugInfo;
-
         } else {
             // If it's a new query, append to debug log
             $this->debugLog[$query] = [
@@ -80,7 +78,7 @@ class Db
         return $query;
     }
 
-    #[NoReturn] public static function displayError($e): void
+    public static function displayError($e): void
     {
         // Remove previous output
         ob_clean();
@@ -90,7 +88,7 @@ class Db
 
         // Get debug log
         $highlightedQuery = (new SqlFormatter())->format($lastQuery);
-        echo("Error: {$e->getMessage()}<br><br><strong>Query:</strong><br><code>$highlightedQuery</code>");
+        echo ("Error: {$e->getMessage()}<br><br><strong>Query:</strong><br><code>$highlightedQuery</code>");
 
         // Show full stack trace (HTML formatted)
         $trace = $e->getTrace();
@@ -126,7 +124,6 @@ class Db
 
         // Display total query time
         echo '<br><strong>Aggregate Query Execution Time:</strong> ' . self::getTotalQueryTime() . ' seconds<br>';
-
     }
 
     private static function getTypeString(array $params): string
@@ -296,6 +293,8 @@ class Db
 
         $columns = self::getAll($describeQuery);
         foreach ($columns as $column) {
+            // Only use 'id' if present in $data, otherwise skip it
+            if ($column['Column_name'] === 'id' && !isset($data['id'])) continue;
             $uniqueFields[] = $column['Column_name'];
         }
 
@@ -309,7 +308,12 @@ class Db
             }
         }
 
-        $whereClause = implode(' OR ', $whereClauseParts);
+        // If no unique fields are present in data, fallback to insert
+        if (empty($whereClauseParts)) {
+            return self::insert($table, $data);
+        }
+
+        $whereClause = implode(' AND ', $whereClauseParts);
         $selectQuery = "SELECT COUNT(*) FROM {$table} WHERE {$whereClause}";
 
         $existingRowCount = self::getOne($selectQuery, $whereParams);
@@ -317,9 +321,8 @@ class Db
         if ($existingRowCount === 0) {
             return self::insert($table, $data);
         } else {
-            // We'll use the first unique field for the where clause. For more complex
-            // scenarios, custom logic will be needed to determine which row(s) to update.
-            return self::update($table, $data, "{$uniqueFields[0]} = ?", [$data[$uniqueFields[0]]]);
+            // Use all unique fields for update WHERE clause
+            return self::update($table, $data, $whereClause, $whereParams);
         }
     }
 

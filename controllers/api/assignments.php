@@ -1,6 +1,7 @@
 <?php namespace App\api;
 
 use App\Activity;
+use App\Assignment;
 use App\Controller;
 use App\Db;
 
@@ -191,6 +192,14 @@ class assignments extends Controller
 
     }
 
+    /**
+     * Deletes an assignment by external ID
+     * 
+     * @api
+     * @used-by Õpetaja Assistent 2 Chrome Extension
+     * @endpoint POST /api/assignments/deleteAssignment
+     * @noinspection PhpUnused
+     */
     function deleteAssignment(): void
     {
         if (empty($_POST['assignmentExternalId'])) {

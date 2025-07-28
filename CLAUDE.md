@@ -1,122 +1,150 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+## Quick Start
+```bash
+composer install && npm install   # Install dependencies
+bun start                        # Start containers (ports: 8000-8003)
+bun db:import                    # Load database from doc/database.sql
+```
 
-## Project Description
-
-Kriit is a student's homework and grades management system for the Viljandi Kutseõppekeskus (VIKK) in Estonia. It integrates with external systems (only [Tahvel](https://tahvel.edu.ee) for now): Kriit will receive POST /api/subjects/getDifferences requests from external systems, makes sure it has all the mentioned subjects, groups, teachers, and assignments (inserts them if not), and will report if Kriit had any values different compared to  sent data.
-
-The primary benefit of Kriit vs using the external system directly is that teachers can see all grades for all students in all subjects in one page within Kriit, quickly identifying:
-- Students who haven't submitted assignments
-- Students with missed assignments
-- Submitted assignments awaiting grading
-
-Teachers can also grade assignments in Kriit.
-
-## Build & Development Commands
-- Install dependencies: `composer install && npm install`
-- Start development environment: `bun start` (starts Docker/Podman containers)  
-- Stop environment: `bun stop`
-- View logs: `bun logs` or `bun logs:app`/`bun logs:db`/`bun logs:nginx`
-- Access shell: `bun shell` (PHP container), `bun shell:db` (MariaDB container)
-- Database operations: `bun db:import` (restore from doc/database.sql), `bun db:export` (dump to doc/database.sql)
-- Database linting: `php database_linter.php` (validates schema integrity and naming conventions)
-- Run tests: `bun test` (JavaScript tests using Bun test runner)
-
-## Environment Setup
-- **Container Runtime**: Docker or Podman (automatic detection via `docker/podman.override.yml`)
-- **Package Manager**: Bun (Node.js alternative)
-- **PHP Version**: 8.3+
-- **Database**: MariaDB (via containers)
-- **Services**: Nginx (8000), phpMyAdmin (8001), MariaDB (8002), MailHog (8003)
-- No formal build process - files served directly through Docker/Podman setup
+## What This Is
+Grades management system for Estonian vocational school (VIKK). Syncs with Tahvel via POST `/api/subjects/getDifferences`. PHP 8.3 custom MVC, MariaDB, Bootstrap 5, Bun/Docker.
 
 ## Architecture
+```
+/
+├── index.php                    # Entry point, routes to controllers
+├── controllers/                 # URL → controller/action/params
+│   ├── subjects.php            # Main teacher view
+│   ├── grading.php             # Grade assignments
+│   └── api/                    # External integration endpoints
+│       └── subjects.php        # getDifferences() sync endpoint
+├── classes/App/                 # Static service classes
+│   ├── Db.php                  # Database singleton (getAll, insert, etc)
+│   ├── Sync.php                # External system sync logic
+│   └── Activity.php            # Audit logging (30 activity types)
+├── views/{controller}/          # {controller}_{action}.php format
+├── templates/                   # Layout wrappers
+└── doc/database.sql            # Schema dump
+```
 
-### Custom MVC Framework
-- **Entry Point**: `/index.php` handles CORS, bootstraps application through `Application` class
-- **Routing**: Automatic URL-based routing (`/controller/action/params`) with custom routing rules
-- **Controllers**: Located in `/controllers/` directory, extend base `Controller` class
-  - API controllers in `/controllers/api/` for external system integration
-  - Automatic routing: `/users` → `controllers/users.php::index()`, `/users/1` → `controllers/users.php::view()`
-- **Views**: In `/views/{controller}/{controller}_{action}.php` format
-- **Templates**: Layout templates in `/templates/` with partials in `/templates/partials/`
-  - Common templates: `auth_template.php`, `master_template.php`, `admin_template.php`
-- **Service Classes**: Static methods in `classes/App/{serviceName}.php` for business logic grouping
-  - Key services: `Activity`, `Assignment`, `User`, `Sync`, `Mail`, `Translation`
+## Key Concepts
 
-### Database Layer
-- **Main Database Class**: `/classes/App/Db.php` - Singleton pattern with prepared statements
-- **Key Methods**: `getAll()`, `getFirst()`, `getOne()`, `insert()`, `update()`, `delete()`, `upsert()`
-- **Features**: SQL debugging, transaction support, query logging, performance monitoring
-- **Schema**: MariaDB with UTF8MB4, camelCase field names prefixed with table names
+### Database Access
+```php
+// All queries through Db class
+$users = Db::getAll("SELECT * FROM users WHERE userRole = ?", ['teacher']);
+$userId = Db::insert('users', ['userName' => 'John', 'userEmail' => 'j@e.com']);
+Db::update('assignments', ['assignmentName' => 'New'], "assignmentId = ?", [123]);
+```
 
-### External Integration
-- **Tahvel API**: `/api/subjects/getDifferences` endpoint for bi-directional sync
-- **Data Validation**: Comprehensive validation of external data before processing
-- **Activity Logging**: All sync operations logged for audit trail
+### Routing & Controllers
+```php
+// URL /subjects/view/123 → controllers/subjects.php::view(123)
+class subjects extends Controller {
+    function index() { /* List view */ }
+    function view($id) { /* Single item */ }
+}
+```
 
-## Configuration Files
-- `/config.php` - Global configuration (database, email, environment settings)
-- `/constants.php` - Application constants, activity types, validation rules
-- `composer.json` - PHP dependencies and PSR-4 autoloading
-- `package.json` - JavaScript dependencies and Bun scripts  
-- `docker/podman.override.yml` - Automatic Podman configuration for rootless containers
+### External Sync
+```php
+// Tahvel sends POST /api/subjects/getDifferences with JSON:
+{
+  "subjects": [{
+    "subjectExternalId": "123",
+    "subjectName": "Math",
+    "assignments": [...]
+  }]
+}
+// Kriit responds with differences after syncing
+```
 
-## Code Style Guidelines
+## Common Tasks
 
-### Naming Conventions
-- **Classes**: PascalCase (e.g., service classes in `classes/App/`)
-- **Methods/variables**: camelCase
-- **Constants**: UPPERCASE_WITH_UNDERSCORES
-- **View files**: lowercase with underscores
+### Add New Controller
+```php
+// controllers/mynew.php
+class mynew extends Controller {
+    function index() {
+        $this->data = Db::getAll("SELECT * FROM mytable");
+    }
+}
+// Create views/mynew/mynew_index.php
+```
 
-### Database Conventions
-- Table names: lowercase, plural form
-- Field names: camelCase prefixed with table name (singular)
-- Primary keys: tableSingularId (auto increment)
-- All columns ending with `Id` must have appropriate FK/PK constraints (except those that contain the word `external`)
-- Use UTF8MB4 charset for all tables
-- In SQL queries, prefer USING() over ON when field names match
+### Database Operations
+```php
+// Insert with auto-increment ID
+$id = Db::insert('assignments', [
+    'assignmentSubjectId' => 123,
+    'assignmentName' => 'Homework 1',
+    'assignmentDueDate' => date('Y-m-d')
+]);
 
-### Formatting
-- 4-space indentation (no tabs)
-- Opening brace on same line
-- Single line between methods
+// Upsert (insert or update)
+Db::upsert('grades', [
+    'gradeAssignmentId' => $assignmentId,
+    'gradeUserId' => $userId,
+    'gradeValue' => 5
+]);
 
-### PHP Standards
-- Use static methods for utility functions
-- Include type hints on parameters/returns
-- Follow PSR-4 autoloading standard
+// Transaction
+Db::beginTransaction();
+try {
+    Db::insert('subjects', [...]);
+    Db::insert('assignments', [...]);
+    Db::commit();
+} catch (Exception $e) {
+    Db::rollback();
+}
+```
 
-## Frontend
-- **CSS Framework**: Bootstrap 5 with custom overrides
-- **JavaScript**: Vanilla JS with selective Vue.js components
-- **Assets**: FontAwesome icons, CodeMirror editor, jQuery
-- **Build**: No build process - assets served directly
-- **Responsive**: Mobile-first design approach
+### Activity Logging
+```php
+Activity::create(ACTIVITY_TEACHER_GRADE_ASSIGNMENT, $assignmentId, $userId, [
+    'oldGrade' => 3,
+    'newGrade' => 5
+]);
+```
 
-## Error Handling
-- Development errors show detailed information
-- Production errors log to Sentry
-- Throw exceptions for validation errors
-- Follow exception-based error handling pattern
+### Authentication Check
+```php
+if (!Auth::isTeacher()) stop(403);
+if (Auth::getUserId() != $ownerId) stop(403);
+```
 
-## Documentation
-- All classes should have header comments with a short description
-- Complex operations should include inline comments
-- All methods with parameters should document parameter types
+## Important Details
 
-## Key Development Patterns
-- **Database Operations**: Use static methods in `classes/App/Db.php` for all database interactions
-- **SQL Queries**: Use prepared statements exclusively, prefer `USING()` over `ON` when field names match
-- **Activity Logging**: Log all significant actions using `Activity` service class (27+ activity types)
-- **Authentication**: Session-based auth via `Auth` class with role-based access control
-- **Error Handling**: Exception-based pattern with environment-specific error display
-- **Multi-language**: Dynamic language switching with translation extraction system
+### Database Naming
+- Tables: lowercase plural (`users`, `assignments`)
+- Fields: camelCase prefixed (`userId`, `assignmentName`)
+- PKs: {table}Id (auto_increment)
+- FKs: must have constraints (except *externalId fields)
 
-## Testing & Quality Assurance
-- **Database Linting**: `php database_linter.php` validates schema integrity and naming conventions
-- **JavaScript Testing**: Bun test runner with comprehensive AVIF support test suite
-- **Pre-commit Hooks**: Husky integration for branch naming validation
-- **SQL Debugging**: Built-in query logging and performance monitoring for admins
+### Key Constants
+```php
+// Activity types (constants.php)
+ACTIVITY_SYNC_START = 18
+ACTIVITY_TEACHER_GRADE_ASSIGNMENT = 26
+
+// Validation types
+IS_ID = 1, IS_INT = 2, IS_STRING = 5
+```
+
+### API Endpoints
+- POST `/api/subjects/getDifferences?systemId=1` - Tahvel sync
+- GET `/api/users` - List users
+- POST `/api/assignments` - Create assignment
+
+### Quick Commands
+```bash
+bun logs:app                    # PHP error logs
+bun shell                       # Enter PHP container
+bun db:export                   # Backup database
+php database_linter.php         # Validate schema
+```
+
+## Current Context
+Branch: main
+Recent work: Learning outcomes system (new `outcomes` table), Markdown editor integration, Estonian char support in branches

@@ -1,0 +1,36 @@
+curl 'https://test.tahvel.eenet.ee/hois_back/journals/336158/journalOutcome/112093' \
+  -H 'Accept: application/json, text/plain, */*' \
+  -H 'Accept-Language: en-US,en;q=0.9' \
+  -H 'Cache-Control: no-cache' \
+  -H 'Connection: keep-alive' \
+  -b 'SESSION=YTM5ZTIwMzgtNGE3ZS00ODU3LTg0YzMtYmE0NmYxODM1NWRh; taraStateToken=26f0741c-e91a-4cbb-824d-271bb1a20cea; XSRF-TOKEN=6781991b-3f71-4772-8a9e-a274794248b8' \
+  -H 'Pragma: no-cache' \
+  -H 'Referer: https://test.tahvel.eenet.ee/' \
+  -H 'Sec-Fetch-Dest: empty' \
+  -H 'Sec-Fetch-Mode: cors' \
+  -H 'Sec-Fetch-Site: same-origin' \
+  -H 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36' \
+  -H 'X-Forwarded-For: 80.235.109.253' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -H 'X-XSRF-TOKEN: 6781991b-3f71-4772-8a9e-a274794248b8' \
+  -H 'sec-ch-ua: "Not)A;Brand";v="8", "Chromium";v="138", "Google Chrome";v="138"' \
+  -H 'sec-ch-ua-mobile: ?0' \
+  -H 'sec-ch-ua-platform: "Windows"'
+
+
+
+{
+    "id": 112093,
+    "nameEt": "7) kasutab tööks vajalikke infotehnoloogilisi vahendeid, erinevaid andmebaase, tehnilist dokumentatsiooni ning erialast sõnavara eesti ja võõrkeeles",
+    "nameEn": null,
+    "curriculumId": 1803,
+    "connectedStudentGroups": [
+        {
+            "id": 6221,
+            "nameEt": "AM22",
+            "nameEn": "AM22",
+            "nameRu": "AM22"
+        }
+    ],
+    "outcomeStudents": []
+}

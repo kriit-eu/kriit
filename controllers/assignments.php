@@ -6,17 +6,41 @@ use Parsedown;
 
 class assignments extends Controller
 {
+    public function ajax_getAssignmentCriteria()
+    {
+        $assignmentId = $_GET['assignmentId'] ?? null;
+        if (!$assignmentId) {
+            stop(400, 'Missing assignmentId');
+        }
+        // Permission check (reuse existing logic)
+        $this->checkIfUserHasPermissionForAction($assignmentId) || stop(403, 'Teil pole õigusi sellele tegevusele.');
+        $criteria = Db::getAll('SELECT criterionId, criterionName FROM criteria WHERE assignmentId = ?', [$assignmentId]);
+        stop(200, ['criteria' => $criteria]);
+    }
     public $template = 'master';
 
     public function view(): void
     {
+
+        $assignmentId = $this->getId();
+        // Try to load assignment by ID
+        $assignment = \App\Assignment::getById((int)$assignmentId);
+        if (!$assignment) {
+            // Not a valid assignmentId, try as assignmentExternalId (systemId=1 by default)
+            $assignmentByExternal = \App\Assignment::getByExternalId($assignmentId, 1);
+            if ($assignmentByExternal) {
+                $query = $_SERVER['QUERY_STRING'] ? '?' . $_SERVER['QUERY_STRING'] : '';
+                header('Location: /assignments/' . $assignmentByExternal['assignmentId'] . $query, true, 302);
+                exit;
+            }
+        }
+
         $this->template = $this->auth->userIsAdmin ? 'admin' : 'master';
 
-        $this->checkIfUserHasPermissionForAction($this->getId()) || $this->redirect('subjects');
+        $this->checkIfUserHasPermissionForAction($assignmentId) || $this->redirect('subjects');
 
         $this->isStudent = $this->auth->groupId && !$this->auth->userIsAdmin && !$this->auth->userIsTeacher;
         $this->isTeacher = $this->auth->userIsTeacher;
-        $assignmentId = $this->getId();
 
         // Build WHERE clause for student filtering based on user permissions
         $studentFilterClause = '';
@@ -416,12 +440,13 @@ class assignments extends Controller
         $assignmentId = $_POST['assignmentId'];
         $this->checkIfUserHasPermissionForAction($assignmentId) || stop(403, 'Teil pole õigusi sellele tegevusele.');
 
-        $assignmentName = $_POST['assignmentName'];
-        $assignmentInstructions = $_POST['assignmentInstructions'];
-        $assignmentDueAt = empty($_POST['assignmentDueAt']) ? null : $_POST['assignmentDueAt'];
-        $assignmentInvolvesOpenApi = isset($_POST['assignmentInvolvesOpenApi']) ? (int)$_POST['assignmentInvolvesOpenApi'] : 0;
-        $oldCriteria = $_POST['oldCriteria'] ?? [];
-        $newCriteria = $_POST['newCriteria'] ?? [];
+    $assignmentName = $_POST['assignmentName'];
+    $assignmentInstructions = $_POST['assignmentInstructions'];
+    $assignmentDueAt = empty($_POST['assignmentDueAt']) ? null : $_POST['assignmentDueAt'];
+    $assignmentEntryDate = empty($_POST['assignmentEntryDate']) ? null : $_POST['assignmentEntryDate'];
+    $assignmentInvolvesOpenApi = isset($_POST['assignmentInvolvesOpenApi']) ? (int)$_POST['assignmentInvolvesOpenApi'] : 0;
+    $oldCriteria = $_POST['oldCriteria'] ?? [];
+    $newCriteria = $_POST['newCriteria'] ?? [];
 
         $existAssignment = Db::getFirst('SELECT * FROM assignments WHERE assignmentId = ?', [$assignmentId]);
         $this->saveEditAssignmentCriteria($oldCriteria, $newCriteria, $assignmentId);
@@ -430,6 +455,7 @@ class assignments extends Controller
             'assignmentName' => $assignmentName,
             'assignmentInstructions' => $assignmentInstructions,
             'assignmentDueAt' => $assignmentDueAt,
+            'assignmentEntryDate' => $assignmentEntryDate,
             'assignmentInvolvesOpenApi' => $assignmentInvolvesOpenApi
         ], 'assignmentId = ?', [$assignmentId]);
 
@@ -830,6 +856,26 @@ class assignments extends Controller
         //Get all criteria for this assignment
         $criteria = Db::getAll('SELECT criterionId, criterionName FROM criteria WHERE assignmentId = ?', [$assignmentId]);
 
+        // Handle edited criteria
+        $editedCriteria = $_POST['editedCriteria'] ?? [];
+        if (!empty($editedCriteria) && is_array($editedCriteria)) {
+            foreach ($editedCriteria as $criterionId => $newName) {
+                $newName = trim($newName);
+                if (!empty($newName)) {
+                    // Only update if criterion exists and name is different
+                    $existing = array_filter($criteria, fn($c) => $c['criterionId'] == $criterionId);
+                    if ($existing) {
+                        $oldName = reset($existing)['criterionName'];
+                        if ($oldName !== $newName) {
+                            Db::update('criteria', ['criterionName' => $newName], 'criterionId = ?', [$criterionId]);
+                            $message = $_POST['teacherName'] . " muutis kriteeriumi '$oldName' nimeks '$newName'.";
+                            $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
+                        }
+                    }
+                }
+            }
+        }
+
         if (count($oldCriteria) > 0) {
             foreach ($criteria as $criterion) {
                 if (!array_key_exists($criterion['criterionId'], $oldCriteria)) {
@@ -842,10 +888,18 @@ class assignments extends Controller
         }
 
         if (count($newCriteria) > 0) {
-            foreach ($newCriteria as $criterionName) {
-                Db::insert('criteria', ['assignmentId' => $assignmentId, 'criterionName' => $criterionName]);
-                $message = "$_POST[teacherName] lisas uue kriteeriumi '$criterionName'.";
-                $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
+            foreach ($newCriteria as $crit) {
+                // Accept both string and array/object
+                if (is_array($crit) && isset($crit['criteriaName'])) {
+                    $criterionName = $crit['criteriaName'];
+                } else {
+                    $criterionName = $crit;
+                }
+                if (!empty($criterionName)) {
+                    Db::insert('criteria', ['assignmentId' => $assignmentId, 'criterionName' => $criterionName]);
+                    $message = "$_POST[teacherName] lisas uue kriteeriumi '$criterionName'.";
+                    $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
+                }
             }
         }
     }

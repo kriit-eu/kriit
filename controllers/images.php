@@ -1,10 +1,4 @@
-<?php
-
-namespace App;
-
-use App\Db;
-
-
+<?php namespace App;
 
 /**
  * Class images

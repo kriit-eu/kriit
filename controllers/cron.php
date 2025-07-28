@@ -1,6 +1,5 @@
 <?php namespace App;
 
-use App\Mail;
 use DateTime;
 
 class cron extends Controller

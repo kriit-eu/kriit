@@ -4,44 +4,6 @@ class subjects extends Controller
 {
     public $template = 'master';
 
-
-    /**
-     * Helper method to get relative time in Estonian (e.g., "2 nädalat tagasi")
-     *
-     * @param \DateTime $timestamp The timestamp to format
-     * @return string Formatted relative time in Estonian
-     */
-    private function getRelativeTimeInEstonian(\DateTime $timestamp): string
-    {
-        $now = new \DateTime();
-        $diff = $timestamp->diff($now);
-
-        // Calculate total difference in seconds for comparison
-        $totalSeconds = $now->getTimestamp() - $timestamp->getTimestamp();
-
-        if ($totalSeconds < 60) {
-            return 'just praegu';
-        } elseif ($totalSeconds < 3600) {
-            $minutes = $diff->i;
-            return $minutes . ' ' . ($minutes == 1 ? 'minut' : 'minutit') . ' tagasi';
-        } elseif ($totalSeconds < 86400) {
-            $hours = $diff->h;
-            return $hours . ' ' . ($hours == 1 ? 'tund' : 'tundi') . ' tagasi';
-        } elseif ($totalSeconds < 604800) {
-            $days = $diff->d;
-            return $days . ' ' . ($days == 1 ? 'päev' : 'päeva') . ' tagasi';
-        } elseif ($totalSeconds < 2592000) {
-            $weeks = floor($diff->d / 7);
-            return $weeks . ' ' . ($weeks == 1 ? 'nädal' : 'nädalat') . ' tagasi';
-        } elseif ($totalSeconds < 31536000) {
-            $months = $diff->m;
-            return $months . ' ' . ($months == 1 ? 'kuu' : 'kuud') . ' tagasi';
-        } else {
-            $years = $diff->y;
-            return $years . ' ' . ($years == 1 ? 'aasta' : 'aastat') . ' tagasi';
-        }
-    }
-
     /**
      * Calculate the time difference between two timestamps in Estonian (e.g., "3 päeva")
      *
@@ -130,18 +92,19 @@ class subjects extends Controller
                 s.teacherId,
                 s.subjectExternalId,
                 t.userName                     AS teacherName,
-        
+
                 u.userId                       AS studentId,
                 u.userName                     AS studentName,
                 s.groupId                      AS groupId,
                 g.groupName,
                 u.userIsActive,
-            
+
                 a.assignmentId,
                 a.assignmentName,
+                a.assignmentInstructions,
                 a.assignmentDueAt,
                 a.assignmentEntryDate,
-            
+
                 ua.userGrade,
                 ua.assignmentStatusId,
                 ast.statusName                 AS assignmentStatusName,
@@ -163,7 +126,30 @@ class subjects extends Controller
 
         $groups = [];
 
-
+        // Collect all unique subject external IDs for efficient learning outcomes fetch
+        $subjectExternalIds = array_unique(array_column($this->data, 'subjectExternalId'));
+        
+        // Fetch all learning outcomes for all subjects in one query
+        $learningOutcomes = [];
+        if (!empty($subjectExternalIds)) {
+            $placeholders = implode(',', array_fill(0, count($subjectExternalIds), '?'));
+            $outcomesData = Db::getAll(
+                "SELECT subjectId, id, nameEt, learningOutcomeOrderNr 
+                 FROM learningOutcomes 
+                 WHERE subjectId IN ($placeholders) 
+                 ORDER BY subjectId, learningOutcomeOrderNr, id",
+                $subjectExternalIds
+            );
+            
+            // Group outcomes by subjectId
+            foreach ($outcomesData as $outcome) {
+                $learningOutcomes[$outcome['subjectId']][] = [
+                    'id' => $outcome['id'],
+                    'nameEt' => $outcome['nameEt'],
+                    'learningOutcomeOrderNr' => $outcome['learningOutcomeOrderNr']
+                ];
+            }
+        }
 
         // Process each row of data
         foreach ($this->data as $row) {
@@ -212,7 +198,9 @@ class subjects extends Controller
                     'subjectName' => $row['subjectName'],
                     'subjectExternalId' => $row['subjectExternalId'],
                     'teacherName' => $row['teacherName'],
-                    'assignments' => []
+                    'assignments' => [],
+                    // Use pre-fetched learning outcomes
+                    'learningOutcomes' => $learningOutcomes[$row['subjectExternalId']] ?? []
                 ];
             }
 
@@ -233,6 +221,7 @@ class subjects extends Controller
                     $groups[$groupName]['subjects'][$subjectId]['assignments'][$assignmentId] = [
                         'assignmentId' => $assignmentId,
                         'assignmentName' => $row['assignmentName'],
+                        'assignmentInstructions' => $row['assignmentInstructions'],
                         'assignmentDueAt' => $row['assignmentDueAt'],
                         'assignmentEntryDate' => $row['assignmentEntryDate'],
                         'assignmentEntryDateFormatted' => $entryDateFormatted,

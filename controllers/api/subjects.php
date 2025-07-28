@@ -1,7 +1,6 @@
 <?php namespace App\api;
 
 use App\Controller;
-use App\Db;
 use App\Activity;
 use App\Sync;
 

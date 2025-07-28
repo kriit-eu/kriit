@@ -6,6 +6,8 @@ use App\Db;
 /**
  * API Controller for Teacher Notes functionality
  * Handles CRUD operations for shared teacher notes on student assignments
+ * @noinspection PhpUnused
+ * Auto-loaded by MVC framework for /api/outcomes/* routes
  */
 class teachernotes extends Controller
 {

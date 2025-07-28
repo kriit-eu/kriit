@@ -1,6 +1,5 @@
 <?php namespace App;
 
-use ErrorException;
 use Exception;
 use FilesystemIterator;
 use RecursiveCallbackFilterIterator;

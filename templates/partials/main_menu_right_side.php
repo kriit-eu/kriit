@@ -1,5 +1,3 @@
-<?php use App\Translation;?>
-
 <style>
     .nav-item{
         margin-right: 10px;
