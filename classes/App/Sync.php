@@ -1,21 +1,29 @@
 <?php
-
 namespace App;
 
-/**
- * This class handles receiving data from External system and synchronizing it with Kriit:
- *  1) If a teacher/group/subject/assignment/student is missing in Kriit, it is created (and the External system grade is inserted for new students).
- *  2) If a student already exists but has a different grade in External system, that difference is included in the final output.
- *  3) If a subject/assignment is completely new, it will not appear in the final output (since Kriit now matches External System for those).
- *
- * The final output is an array of subjects that exist in both Kriit and External System but have differing data:
- *  - subjectExternalId always included
- *  - only the differing fields for the subject (subjectName, groupName, teacherPersonalCode, teacherName) if they differ
- *  - only the differing assignments, each with assignmentExternalId and the differing fields
- *  - only the differing results (existing students in Kriit whose grade differs)
- *    (newly inserted students will not appear in the output, because Kriit's data matches External System once inserted).
- */
 class Sync {
+    /**
+     * Returns a DateTime string for the earliest deadline at least 48h from now, at 23:59:59, skipping today and tomorrow if after cutoff hour.
+     * @param int $cutoffHour Hour of day after which the deadline is pushed to the next day (default 17)
+     * @return string MariaDB DATETIME formatted deadline (Y-m-d H:i:s)
+     */
+    private static function earliestDeadline48h($cutoffHour = 17)
+    {
+        $now = new \DateTime('now', new \DateTimeZone('Europe/Tallinn'));
+        $d = clone $now;
+        if ((int)$d->format('G') >= $cutoffHour) {
+            $d->modify('+1 day');
+        }
+        $d->setTime(0, 0, 0);
+        $d->modify('+2 days'); // base +48h
+        $d->setTime(23, 59, 59);
+        while ($d->getTimestamp() - $now->getTimestamp() < 2 * 86400) {
+            $d->modify('+1 day');
+        }
+        // MariaDB DATETIME format: 'Y-m-d H:i:s'
+        return $d->format('Y-m-d H:i:s');
+    }
+
     /**
      * Sync a flat array of learning outcomes into LearningOutcomes table
      * @param array $payload Array of {subjectId, curriculumModuleOutcomes, outcomeName, learningOutcomeOrderNr}
@@ -249,6 +257,26 @@ class Sync {
                     // Compare assignment fields
                     $fieldDiff = self::diffAssignmentFields($kriitAssignment, $remoteAssignment);
 
+                    // If assignmentName or assignmentEntryDate changed and assignmentDueAt is missing/null, set it automatically
+                    $dueField = 'assignmentDueAt';
+                    $dueIsNull = (
+                        (!isset($remoteAssignment[$dueField]) || $remoteAssignment[$dueField] === null)
+                        && (!isset($kriitAssignment[$dueField]) || $kriitAssignment[$dueField] === null)
+                    );
+                    $nameChanged = isset($fieldDiff['assignmentName']) && $fieldDiff['assignmentName']['kriit'] !== $fieldDiff['assignmentName']['remote'];
+                    $entryDateChanged = isset($fieldDiff['assignmentEntryDate']) && $fieldDiff['assignmentEntryDate']['kriit'] !== $fieldDiff['assignmentEntryDate']['remote'];
+                    if (($nameChanged || $entryDateChanged) && $dueIsNull) {
+                        $newDue = self::earliestDeadline48h();
+                        // Update the assignment in the database immediately
+                        \App\Assignment::update($kriitAssignment['assignmentId'], [
+                            $dueField => $newDue
+                        ]);
+                        $fieldDiff[$dueField] = [
+                            'kriit' => $newDue,
+                            'remote' => null
+                        ];
+                    }
+
                     // If there are field differences, update the assignment in Kriit
                     // BUT ONLY for fields that are NULL in Kriit
                     if ($fieldDiff) {
@@ -294,14 +322,14 @@ class Sync {
                             'assignmentDueAt' => $kriitAssignment['assignmentDueAt']
                         ];
                         foreach ($fieldDiff as $field => $diffVal) {
-    // Always use the latest value from the database (kriit) for assignment fields, unless it's null and remote has a value
-    if ($diffVal['kriit'] !== null) {
-        $assignDiff[$field] = $diffVal['kriit'];
-    } else if ($diffVal['remote'] !== null) {
-        $assignDiff[$field] = $diffVal['remote'];
-    } else {
-        $assignDiff[$field] = null;
-    }
+                            // Always use the latest value from the database (kriit) for assignment fields, unless it's null and remote has a value
+                            if ($diffVal['kriit'] !== null) {
+                                $assignDiff[$field] = $diffVal['kriit'];
+                            } else if ($diffVal['remote'] !== null) {
+                                $assignDiff[$field] = $diffVal['remote'];
+                            } else {
+                                $assignDiff[$field] = null;
+                            }
                         }
 
                         if ($resultsDiff) {
