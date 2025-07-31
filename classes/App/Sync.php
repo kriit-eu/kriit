@@ -318,11 +318,17 @@ class Sync {
                     if ($fieldDiff || $resultsDiff) {
                         $assignDiff = [
                             'assignmentExternalId' => $extId,
-                            'assignmentId' => $kriitAssignment['assignmentId'],
-                            'assignmentDueAt' => $kriitAssignment['assignmentDueAt']
+                            'assignmentId' => $kriitAssignment['assignmentId']
                         ];
+                        // Only include assignmentDueAt if it actually changed
+                        if (isset($fieldDiff['assignmentDueAt'])) {
+                            $assignDiff['assignmentDueAt'] = $fieldDiff['assignmentDueAt']['kriit'] !== null
+                                ? $fieldDiff['assignmentDueAt']['kriit']
+                                : $fieldDiff['assignmentDueAt']['remote'];
+                        }
                         foreach ($fieldDiff as $field => $diffVal) {
                             // Always use the latest value from the database (kriit) for assignment fields, unless it's null and remote has a value
+                            if ($field === 'assignmentDueAt') continue; // already handled above
                             if ($diffVal['kriit'] !== null) {
                                 $assignDiff[$field] = $diffVal['kriit'];
                             } else if ($diffVal['remote'] !== null) {
