@@ -121,8 +121,12 @@ class subjects extends Controller
 
         // Fetch data from the database - include subjects even if they don't have assignments
         $showAllValue = $this->showAll ? 1 : 0;
-        
-        // First get subjects with assignments
+
+        // Build user activity filter based on showAll
+        $userActivityFilter = $this->showAll
+            ? 'u.userDeleted = 0'
+            : '(u.userDeleted = 0 AND u.userIsActive = 1)';
+
         $this->data = Db::getAll("
             SELECT
                 s.subjectId,
@@ -157,10 +161,10 @@ class subjects extends Controller
                    ON  ua.assignmentId = a.assignmentId
                    AND ua.userId      = u.userId
             LEFT JOIN assignmentStatuses ast USING (assignmentStatusId)
-            WHERE u.userDeleted = 0
-              AND (u.userIsActive = 1 OR ua.assignmentStatusId = 2)
+            WHERE $userActivityFilter
+              AND ($whereClause)
             ORDER BY g.groupName, u.userName, s.subjectName, a.assignmentDueAt;
-            ");
+        ");
 
         $groups = [];
 
