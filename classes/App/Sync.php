@@ -5,6 +5,26 @@ use Exception;
 
 class Sync {
     /**
+     * Converts ISO 8601 date string to MySQL DATE format
+     * @param string|null $isoDate ISO 8601 date string (e.g., "2025-06-15T00:00:00Z") or null
+     * @return string|null MySQL DATE formatted string (Y-m-d) or null
+     */
+    private static function convertIsoDateToMysqlDate($isoDate)
+    {
+        if (empty($isoDate) || $isoDate === null) {
+            return null;
+        }
+        
+        try {
+            $date = new \DateTime($isoDate);
+            return $date->format('Y-m-d');
+        } catch (\Exception $e) {
+            // If date parsing fails, return null
+            return null;
+        }
+    }
+
+    /**
      * Returns a DateTime string for the earliest deadline at least 48h from now, at 23:59:59, skipping today and tomorrow if after cutoff hour.
      * @param int $cutoffHour Hour of day after which the deadline is pushed to the next day (default 17)
      * @return string MariaDB DATETIME formatted deadline (Y-m-d H:i:s)
@@ -191,6 +211,31 @@ class Sync {
             }
 
             // Subject found, ensure assignments exist for all matching subject instances
+            // Also update lastLessonDate for ALL subjects with the same external ID across all groups
+            $lastLessonDate = self::convertIsoDateToMysqlDate($remoteSubject['lastLessonDate'] ?? null);
+            
+            // Update all subjects with the same external ID in the same system
+            $affectedRows = Db::update(
+                'subjects', 
+                ['lastLessonDate' => $lastLessonDate], 
+                "subjectExternalId = ? AND systemId = ?", 
+                [$remoteSubject['subjectExternalId'], $systemId]
+            );
+            
+            // Log the update if any rows were affected
+            if ($affectedRows > 0) {
+                $teacher = User::findByPersonalCode($remoteSubject['teacherPersonalCode']);
+                Activity::create(ACTIVITY_UPDATE_ASSIGNMENT_SYNC, $teacher['userId'], null, [
+                    'field' => 'lastLessonDate',
+                    'newValue' => $lastLessonDate,
+                    'subjectName' => $remoteSubject['subjectName'],
+                    'subjectExternalId' => $remoteSubject['subjectExternalId'],
+                    'systemId' => $systemId,
+                    'affectedSubjects' => $affectedRows,
+                    'action' => 'bulk_update_last_lesson_date'
+                ]);
+            }
+            
             foreach ($matchingSubjects as $kriitSubject) {
                 // 4) Ensure each assignment in Remote is in Kriit; create if missing
                 self::ensureAssignmentsExist($remoteSubject['assignments'], $kriitSubject['subjectId'], $kriitSubject['assignments'], $systemId);
@@ -410,7 +455,7 @@ class Sync {
         // This ensures we capture all groups that have students participating in the subject
         // We now include deleted students in the query to support reactivation
         $rows = Db::getAll("
-            SELECT s.subjectId, s.subjectName, s.subjectExternalId, s.systemId,
+            SELECT s.subjectId, s.subjectName, s.subjectExternalId, s.systemId, s.lastLessonDate,
                    COALESCE(ug.groupName, g.groupName) as groupName,
                    t.userPersonalCode AS teacherPersonalCode, t.userName AS teacherName,
                    a.assignmentId, a.assignmentExternalId, a.systemId as assignmentSystemId, a.assignmentName,
@@ -443,6 +488,7 @@ class Sync {
                     'groupName'          => $groupName,
                     'teacherPersonalCode' => $r['teacherPersonalCode'],
                     'teacherName'        => $r['teacherName'],
+                    'lastLessonDate'     => $r['lastLessonDate'],
                     'assignments'        => []
                 ];
             }
@@ -513,6 +559,14 @@ class Sync {
         if ($existingSubject) {
             // Subject already exists, use its ID
             $subjId = $existingSubject['subjectId'];
+            
+            // Update the last lesson date if it has changed
+            $lastLessonDate = self::convertIsoDateToMysqlDate($remoteSubject['lastLessonDate'] ?? null);
+            
+            // Debug logging
+            error_log("Updating subject {$subjId} with lastLessonDate: " . ($lastLessonDate ?? 'NULL'));
+            
+            Db::update('subjects', ['lastLessonDate' => $lastLessonDate], "subjectId = ?", [$subjId]);
 
             // Log that we're reusing an existing subject
             Activity::create(ACTIVITY_CREATE_SUBJECT_SYNC, $teacher['userId'], $subjId, [
@@ -522,16 +576,23 @@ class Sync {
                 'action' => 'reusing_existing_subject',
                 'groupName' => $subjectGroupName,
                 'originalGroupName' => $remoteSubject['groupName'],
-                'detectedGroups' => array_keys($studentGroups)
+                'detectedGroups' => array_keys($studentGroups),
+                'lastLessonDate' => $lastLessonDate
             ]);
         } else {
             // Create new subject
+            $lastLessonDate = self::convertIsoDateToMysqlDate($remoteSubject['lastLessonDate'] ?? null);
+            
+            // Debug logging
+            error_log("Creating new subject with lastLessonDate: " . ($lastLessonDate ?? 'NULL'));
+            
             $subjId = Db::insert('subjects', [
                 'subjectName'     => $remoteSubject['subjectName'],
                 'subjectExternalId' => $remoteSubject['subjectExternalId'],
                 'systemId'        => $systemId,
                 'groupId'         => $group['groupId'], // Keep original for compatibility
-                'teacherId'       => $teacher['userId']
+                'teacherId'       => $teacher['userId'],
+                'lastLessonDate' => $lastLessonDate
             ]);
 
             // Log subject creation with detected multi-group info
@@ -541,7 +602,8 @@ class Sync {
                 'subjectExternalId' => $remoteSubject['subjectExternalId'],
                 'groupName' => $subjectGroupName,
                 'originalGroupName' => $remoteSubject['groupName'],
-                'detectedGroups' => array_keys($studentGroups)
+                'detectedGroups' => array_keys($studentGroups),
+                'lastLessonDate' => $lastLessonDate
             ]);
         }
 
