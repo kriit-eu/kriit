@@ -43,24 +43,52 @@
 <style>
 /* Markdown table base styles */
 .markdown-content table {
-  width: auto;
-  border-collapse: collapse;
-  margin-bottom: 1em;
+    width: auto;
+    border-collapse: collapse;
+    margin-bottom: 1em;
 }
 .markdown-content th,
 .markdown-content td {
-  border: 1px solid #dee2e6;
-  padding: 0.5em 0.75em;
-  background: #fff;
+    border: 1px solid #dee2e6;
+    padding: 0.5em 0.75em;
+    background: #fff;
 }
 /* Zebra striping for Markdown tables in preview (GitHub style) */
 .markdown-content table tr:nth-child(even) td {
-  background-color: #f6f8fa;
+    background-color: #f6f8fa;
+}
+/* Make preview boxes expand to fit content */
+.markdown-content,
+.form-control.markdown-content {
+    min-height: 40px;
+    height: auto !important;
+    max-height: none !important;
+    overflow-y: visible !important;
+    resize: none;
+    box-sizing: border-box;
 }
 </style>
-<div class="mb-3">
+<div class="mb-3" id="<?= htmlspecialchars($editorId) ?>_container">
     <label for="<?= htmlspecialchars($editorId) ?>" class="form-label fw-bold"><?= htmlspecialchars($labelText) ?></label>
-    <div class="row">
+    <!-- Preview-only mode (default) -->
+    <div class="row" id="<?= htmlspecialchars($editorId) ?>_previewOnlyRow">
+        <div class="col-12">
+            <div class="preview-wrapper">
+                <div class="preview-header">
+                    <small class="text-muted"><i class="fas fa-eye"></i> Eelvaade</small>
+                </div>
+                <div id="<?= htmlspecialchars($previewId) ?>_full" class="form-control markdown-content"
+                     style="min-height: 200px; background-color: #f8f9fa; overflow-y: hidden; word-wrap: break-word;">
+                    <div class="text-muted text-center p-3">
+                        <i class="fas fa-eye-slash"></i><br>
+                        Eelvaade ilmub siia...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Split view (edit mode) -->
+    <div class="row" id="<?= htmlspecialchars($editorId) ?>_splitRow" style="display:none;">
         <!-- Editor -->
         <div class="col-md-6">
             <div class="editor-wrapper">
@@ -88,8 +116,21 @@
             </div>
         </div>
     </div>
-    <!-- Image paste tip and upload button below editor/preview row -->
-    <div class="row mt-2 align-items-center">
+    <!-- Bottom left action buttons: Muuda/Eelvaade -->
+    <div class="row mt-2">
+        <div class="col-12">
+            <div id="<?= htmlspecialchars($editorId) ?>_actionBtns" class="d-flex flex-row align-items-center" style="gap: 0.5em;">
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="<?= htmlspecialchars($editorId) ?>_editBtn" style="display:none;">
+                    <i class="fas fa-edit"></i> Muuda
+                </button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="<?= htmlspecialchars($editorId) ?>_doneBtn" style="display:none;">
+                    <i class="fas fa-eye"></i> Eelvaade
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- Image paste tip and upload button below editor/preview row (only in edit mode) -->
+    <div class="row mt-2 align-items-center" id="<?= htmlspecialchars($editorId) ?>_editControls" style="display:none;">
         <div class="col-md-8">
             <div class="form-text">
                 <small class="text-muted">
@@ -106,6 +147,8 @@
     </div>
 </div>
 <script>
+
+// --- Markdown editor mode toggle logic ---
 (function() {
     if (!window.markdownit) return;
     var md = window.markdownit({
@@ -119,44 +162,96 @@
         .use(window.markdownitEmoji)
         .use(window.markdownitSub)
         .use(window.markdownitSup);
-    var textarea = document.getElementById('<?= addslashes($editorId) ?>');
-    var preview = document.getElementById('<?= addslashes($previewId) ?>');
-    if (!textarea || !preview) return;
-        function autoExpand() {
+    var editorId = '<?= addslashes($editorId) ?>';
+    var previewId = '<?= addslashes($previewId) ?>';
+    var textarea = document.getElementById(editorId);
+    var preview = document.getElementById(previewId);
+    var previewFull = document.getElementById(previewId + '_full');
+    var container = document.getElementById(editorId + '_container');
+    var previewOnlyRow = document.getElementById(editorId + '_previewOnlyRow');
+    var splitRow = document.getElementById(editorId + '_splitRow');
+    var editControls = document.getElementById(editorId + '_editControls');
+    var editBtn = document.getElementById(editorId + '_editBtn');
+    var doneBtn = document.getElementById(editorId + '_doneBtn');
+
+    // State: edit mode or not
+    var isEditMode = false;
+
+    function showEditMode(editing) {
+        isEditMode = editing;
+        if (editing) {
+            if (previewOnlyRow) previewOnlyRow.style.display = 'none';
+            if (splitRow) splitRow.style.display = '';
+            if (editControls) editControls.style.display = '';
+            if (editBtn) editBtn.style.display = 'none';
+            if (doneBtn) doneBtn.style.display = '';
+            setTimeout(function() { if (textarea) textarea.focus(); }, 100);
+        } else {
+            if (previewOnlyRow) previewOnlyRow.style.display = '';
+            if (splitRow) splitRow.style.display = 'none';
+            if (editControls) editControls.style.display = 'none';
+            if (editBtn) editBtn.style.display = '';
+            if (doneBtn) doneBtn.style.display = 'none';
+        }
+        updatePreview();
+    }
+
+    if (editBtn) editBtn.addEventListener('click', function() { showEditMode(true); });
+    if (doneBtn) doneBtn.addEventListener('click', function() { showEditMode(false); });
+
+    function autoExpand() {
+        if (textarea) {
             textarea.style.height = 'auto';
             if (textarea.value.trim() === '') {
                 textarea.style.height = '200px';
             } else {
                 textarea.style.height = (textarea.scrollHeight + 2) + 'px';
             }
-            preview.style.height = 'auto';
-            if (preview.innerHTML.trim() !== '') {
-                preview.style.height = (preview.scrollHeight + 2) + 'px';
+        }
+        // Always expand preview to fit content
+        [preview, previewFull].forEach(function(box) {
+            if (!box) return;
+            box.style.height = 'auto';
+            // Use scrollHeight for actual content, fallback to min height for empty
+            if (box.innerText.trim() === '' || box.innerHTML.indexOf('Eelvaade ilmub siia') !== -1) {
+                box.style.height = '200px';
             } else {
-                preview.style.height = '200px';
+                box.style.height = (box.scrollHeight + 2) + 'px';
+            }
+        });
+    }
+
+    function updatePreview() {
+        var content = textarea ? textarea.value : '';
+        var emptyHtml = '<div class="text-muted text-center p-3"><i class="fas fa-eye-slash"></i><br>Eelvaade ilmub siia...</div>';
+        if (preview) {
+            if (content.trim() === '') {
+                preview.innerHTML = emptyHtml;
+                preview.style.overflowY = 'hidden';
+            } else {
+                preview.innerHTML = md.render(content);
             }
         }
-    function updatePreview() {
-        var content = textarea.value;
-        if (content.trim() === '') {
-            preview.innerHTML = `<div class=\"text-muted text-center p-3\"><i class=\"fas fa-eye-slash\"></i><br>Eelvaade ilmub siia...</div>`;
-            preview.style.overflowY = 'hidden';
-        } else {
-            preview.innerHTML = md.render(content);
+        if (previewFull) {
+            if (content.trim() === '') {
+                previewFull.innerHTML = emptyHtml;
+                previewFull.style.overflowY = 'hidden';
+            } else {
+                previewFull.innerHTML = md.render(content);
+            }
         }
         autoExpand();
     }
-    textarea.addEventListener('input', updatePreview);
-    textarea.addEventListener('paste', function() {
-        setTimeout(updatePreview, 10);
-        setTimeout(updatePreview, 800);
-    });
-    textarea.addEventListener('mouseup', function() {
-        autoExpand();
-    });
-    textarea.addEventListener('focus', function() {
-        autoExpand();
-    });
+
+    if (textarea) {
+        textarea.addEventListener('input', updatePreview);
+        textarea.addEventListener('paste', function() {
+            setTimeout(updatePreview, 10);
+            setTimeout(updatePreview, 800);
+        });
+        textarea.addEventListener('mouseup', function() { autoExpand(); });
+        textarea.addEventListener('focus', function() { autoExpand(); });
+    }
     setTimeout(autoExpand, 0);
     updatePreview();
 
@@ -184,33 +279,35 @@
             e.target.value = '';
         });
     }
-    textarea.addEventListener('paste', function(e) {
-        var items = (e.clipboardData || e.originalEvent.clipboardData).items;
-        var imageFiles = [];
-        for (var i = 0; i < items.length; i++) {
-            if (items[i].type.indexOf('image') !== -1) {
-                imageFiles.push(items[i].getAsFile());
+    if (textarea) {
+        textarea.addEventListener('paste', function(e) {
+            var items = (e.clipboardData || e.originalEvent.clipboardData).items;
+            var imageFiles = [];
+            for (var i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf('image') !== -1) {
+                    imageFiles.push(items[i].getAsFile());
+                }
             }
-        }
-        if (imageFiles.length > 0) {
-            e.preventDefault();
-            handleMultipleFiles(imageFiles);
-        }
-    });
-    textarea.addEventListener('dragover', function(e) {
-        e.preventDefault(); e.stopPropagation(); textarea.classList.add('image-paste-active');
-    });
-    textarea.addEventListener('dragenter', function(e) {
-        e.preventDefault(); e.stopPropagation(); textarea.classList.add('image-paste-active');
-    });
-    textarea.addEventListener('dragleave', function(e) {
-        e.preventDefault(); e.stopPropagation(); if (!textarea.contains(e.relatedTarget)) textarea.classList.remove('image-paste-active');
-    });
-    textarea.addEventListener('drop', function(e) {
-        e.preventDefault(); e.stopPropagation(); textarea.classList.remove('image-paste-active');
-        var files = Array.from(e.dataTransfer.files).filter(function(file) { return file.type.indexOf('image') !== -1; });
-        if (files.length > 0) handleMultipleFiles(files);
-    });
+            if (imageFiles.length > 0) {
+                e.preventDefault();
+                handleMultipleFiles(imageFiles);
+            }
+        });
+        textarea.addEventListener('dragover', function(e) {
+            e.preventDefault(); e.stopPropagation(); textarea.classList.add('image-paste-active');
+        });
+        textarea.addEventListener('dragenter', function(e) {
+            e.preventDefault(); e.stopPropagation(); textarea.classList.add('image-paste-active');
+        });
+        textarea.addEventListener('dragleave', function(e) {
+            e.preventDefault(); e.stopPropagation(); if (!textarea.contains(e.relatedTarget)) textarea.classList.remove('image-paste-active');
+        });
+        textarea.addEventListener('drop', function(e) {
+            e.preventDefault(); e.stopPropagation(); textarea.classList.remove('image-paste-active');
+            var files = Array.from(e.dataTransfer.files).filter(function(file) { return file.type.indexOf('image') !== -1; });
+            if (files.length > 0) handleMultipleFiles(files);
+        });
+    }
     if (cancelUploadBtn) {
         cancelUploadBtn.addEventListener('click', function() { cancelAllUploads(); });
     }
@@ -241,7 +338,7 @@
             invalidFiles.forEach(function(obj) {
                 var errorDiv = document.createElement('div');
                 errorDiv.className = 'upload-item error';
-                errorDiv.innerHTML = '<div class=\"d-flex justify-content-between\"><span><i class=\"fas fa-times\"></i> ' + obj.file.name + '</span><span class=\"file-info\">' + formatFileSize(obj.file.size) + '</span></div><div class=\"text-danger small mt-1\">' + obj.errors.join(', ') + '</div>';
+                errorDiv.innerHTML = '<div class="d-flex justify-content-between"><span><i class="fas fa-times"></i> ' + obj.file.name + '</span><span class="file-info">' + formatFileSize(obj.file.size) + '</span></div><div class="text-danger small mt-1">' + obj.errors.join(', ') + '</div>';
                 uploadResults.appendChild(errorDiv);
             });
         }
@@ -260,16 +357,16 @@
             var uploadItem = document.createElement('div');
             uploadItem.className = 'upload-item';
             uploadItem.id = 'upload-' + uploadId;
-            uploadItem.innerHTML = '<div class=\"d-flex justify-content-between align-items-center\"><span><i class=\"fas fa-spinner fa-spin\"></i> ' + file.name + '</span><span class=\"file-info\">' + formatFileSize(file.size) + '</span></div><div class=\"progress mt-2\" style=\"height: 4px;\"><div class=\"progress-bar\" id=\"progress-' + uploadId + '\" style=\"width: 0%\"></div></div>';
+            uploadItem.innerHTML = '<div class="d-flex justify-content-between align-items-center"><span><i class="fas fa-spinner fa-spin"></i> ' + file.name + '</span><span class="file-info">' + formatFileSize(file.size) + '</span></div><div class="progress mt-2" style="height: 4px;"><div class="progress-bar" id="progress-' + uploadId + '" style="width: 0%"></div></div>';
             if (uploadResults) uploadResults.appendChild(uploadItem);
             try {
                 var result = await uploadSingleFile(file, uploadId);
                 uploadItem.className = 'upload-item success';
-                uploadItem.innerHTML = '<div class=\"d-flex justify-content-between align-items-center\"><span><i class=\"fas fa-check\"></i> ' + file.name + '</span><span class=\"file-info\">' + formatFileSize(result.processedSize || file.size) + '</span></div>' + (result.compressionSavings ? '<div class=\"text-success small mt-1\"><i class=\"fas fa-compress-arrows-alt\"></i> Kompressioon: ' + result.compressionSavings + '% väiksem</div>' : '');
+                uploadItem.innerHTML = '<div class="d-flex justify-content-between align-items-center"><span><i class="fas fa-check"></i> ' + file.name + '</span><span class="file-info">' + formatFileSize(result.processedSize || file.size) + '</span></div>' + (result.compressionSavings ? '<div class="text-success small mt-1"><i class="fas fa-compress-arrows-alt"></i> Kompressioon: ' + result.compressionSavings + '% väiksem</div>' : '');
                 insertImageMarkdown(result.imageId, file.name);
             } catch (error) {
                 uploadItem.className = 'upload-item error';
-                uploadItem.innerHTML = '<div class=\"d-flex justify-content-between\"><span><i class=\"fas fa-times\"></i> ' + file.name + '</span><span class=\"file-info\">' + formatFileSize(file.size) + '</span></div><div class=\"text-danger small mt-1\">' + error.message + '</div>';
+                uploadItem.innerHTML = '<div class="d-flex justify-content-between"><span><i class="fas fa-times"></i> ' + file.name + '</span><span class="file-info">' + formatFileSize(file.size) + '</span></div><div class="text-danger small mt-1">' + error.message + '</div>';
             }
             completedFiles++;
             var overallProgress = (completedFiles / totalFiles) * 100;
@@ -328,6 +425,7 @@
         });
     }
     function insertImageMarkdown(imageId, fileName) {
+        if (!textarea) return;
         var imageMarkdown = '![' + fileName + '](images/' + imageId + ')';
         var cursorPos = textarea.selectionStart;
         var textBefore = textarea.value.substring(0, cursorPos);
@@ -348,5 +446,9 @@
         if (uploadProgressBar) uploadProgressBar.style.width = '0%';
         setTimeout(function() { if (uploadProgress) uploadProgress.classList.add('d-none'); }, 2000);
     }
+
+    // Start in preview-only mode, show only editBtn
+    showEditMode(false);
+
 })();
 </script>
