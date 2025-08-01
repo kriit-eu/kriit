@@ -487,7 +487,12 @@
                                 $usedCount = count($usedOv);
                                 $totalOv = isset($subject['learningOutcomes']) && is_array($subject['learningOutcomes']) ? count($subject['learningOutcomes']) : 0;
                                 if ($totalOv > 0) {
-                                    $badgeColor = ($usedCount === $totalOv) ? 'bg-success text-white' : 'bg-danger text-white';
+                                    // Badge color: red if lastLessonDate is set, yellow if not
+                                    if (!empty($subject['lastLessonDate'])) {
+                                        $badgeColor = 'bg-danger text-white';
+                                    } else {
+                                        $badgeColor = 'bg-warning text-dark';
+                                    }
                                 ?>
                                 <span class="badge ms-2 <?= $badgeColor ?>" title="Kasutatud õpiväljundid / kõik õpiväljundid">
                                     <?= $usedCount ?>/<?= $totalOv ?>
