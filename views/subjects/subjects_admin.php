@@ -449,7 +449,7 @@
                     <tr data-href="subjects/<?= $subject['subjectId'] ?>">
                         <?php if (!$this->isStudent): ?>
                             <th class="text-center"><b>ID</b></th><?php endif; ?>
-                        <th <?= $this->isStudent ? 'colspan="2"' : '' ?>>
+                        <th <?= $this->isStudent ? 'colspan="2"' : '' ?>
                             <b>
                                 <?php if (!empty($subject['subjectExternalId'])): ?>
                                     <a href="https://tahvel.edu.ee/#/journal/<?= $subject['subjectExternalId'] ?>/edit"
@@ -457,6 +457,43 @@
                                 <?php else: ?>
                                     <?= $subject['subjectName'] ?>
                                 <?php endif; ?>
+                                <?php
+                                // Calculate unique learning outcomes used in assignments
+                                    $usedOv = [];
+                                    // Build a map: ÕV number (1-based) => learningOutcomeId
+                                    $ovNrToId = [];
+                                    if (!empty($subject['learningOutcomes']) && is_array($subject['learningOutcomes'])) {
+                                        foreach ($subject['learningOutcomes'] as $lo) {
+                                            $nr = isset($lo['learningOutcomeOrderNr']) ? intval($lo['learningOutcomeOrderNr']) + 1 : null;
+                                            if ($nr) $ovNrToId[$nr] = $lo['id'];
+                                        }
+                                    }
+                                    if (!empty($subject['assignments'])) {
+                                        foreach ($subject['assignments'] as $a) {
+                                            if (!empty($a['assignmentName'])) {
+                                                if (preg_match('/\(\s*ÕV(\d+(?:,\s*ÕV\d+)*)\s*\)/u', $a['assignmentName'], $m)) {
+                                                    $ovStr = $m[1];
+                                                    $ovNums = preg_split('/,\s*ÕV/', $ovStr);
+                                                    foreach ($ovNums as $num) {
+                                                        $num = intval($num);
+                                                        if ($num && isset($ovNrToId[$num])) {
+                                                            $usedOv[$ovNrToId[$num]] = true;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                $usedCount = count($usedOv);
+                                $totalOv = isset($subject['learningOutcomes']) && is_array($subject['learningOutcomes']) ? count($subject['learningOutcomes']) : 0;
+                                if ($totalOv > 0) {
+                                    $badgeColor = ($usedCount === $totalOv) ? 'bg-success text-white' : 'bg-danger text-white';
+                                ?>
+                                <span class="badge ms-2 <?= $badgeColor ?>" title="Kasutatud õpiväljundid / kõik õpiväljundid">
+                                    <?= $usedCount ?>/<?= $totalOv ?>
+                                </span>
+                                <?php }
+                            ?>
                             </b>
                         </th>
                         <?php if (!$this->isStudent): ?>
