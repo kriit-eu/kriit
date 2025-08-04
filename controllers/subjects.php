@@ -90,43 +90,44 @@ class subjects extends Controller
             : '(u.userDeleted = 0 AND u.userIsActive = 1)';
 
         $this->data = Db::getAll("
-            SELECT
-                s.subjectId,
-                s.subjectName,
-                s.teacherId,
-                s.subjectExternalId,
-                t.userName                     AS teacherName,
+                        SELECT
+                                s.subjectId,
+                                s.subjectName,
+                                s.teacherId,
+                                s.subjectExternalId,
+                                s.subjectLastLessonDate,
+                                t.userName                     AS teacherName,
 
-                u.userId                       AS studentId,
-                u.userName                     AS studentName,
-                s.groupId                      AS groupId,
-                g.groupName,
-                u.userIsActive,
+                                u.userId                       AS studentId,
+                                u.userName                     AS studentName,
+                                s.groupId                      AS groupId,
+                                g.groupName,
+                                u.userIsActive,
 
-                a.assignmentId,
-                a.assignmentName,
-                a.assignmentInstructions,
-                a.assignmentDueAt,
-                a.assignmentEntryDate,
+                                a.assignmentId,
+                                a.assignmentName,
+                                a.assignmentInstructions,
+                                a.assignmentDueAt,
+                                a.assignmentEntryDate,
 
-                ua.userGrade,
-                ua.assignmentStatusId,
-                ast.statusName                 AS assignmentStatusName,
-                ua.userAssignmentSubmittedAt,
-                ua.userAssignmentGradedAt
-            FROM subjects            AS s
-            JOIN groups              AS g  USING (groupId)
-            JOIN users               AS u  USING (groupId)
-            JOIN users               AS t  ON  t.userId = s.teacherId
-            LEFT JOIN assignments    AS a  USING (subjectId)
-            LEFT JOIN userAssignments AS ua
-                   ON  ua.assignmentId = a.assignmentId
-                   AND ua.userId      = u.userId
-            LEFT JOIN assignmentStatuses ast USING (assignmentStatusId)
-            WHERE $userActivityFilter
-              AND ($whereClause)
-            ORDER BY g.groupName, u.userName, s.subjectName, a.assignmentDueAt;
-        ");
+                                ua.userGrade,
+                                ua.assignmentStatusId,
+                                ast.statusName                 AS assignmentStatusName,
+                                ua.userAssignmentSubmittedAt,
+                                ua.userAssignmentGradedAt
+                        FROM subjects            AS s
+                        JOIN groups              AS g  USING (groupId)
+                        JOIN users               AS u  USING (groupId)
+                        JOIN users               AS t  ON  t.userId = s.teacherId
+                        LEFT JOIN assignments    AS a  USING (subjectId)
+                        LEFT JOIN userAssignments AS ua
+                                     ON  ua.assignmentId = a.assignmentId
+                                     AND ua.userId      = u.userId
+                        LEFT JOIN assignmentStatuses ast USING (assignmentStatusId)
+                        WHERE $userActivityFilter
+                            AND ($whereClause)
+                        ORDER BY g.groupName, u.userName, s.subjectName, a.assignmentDueAt;
+                ");
 
         $groups = [];
 
@@ -201,6 +202,7 @@ class subjects extends Controller
                     'subjectId' => $subjectId,
                     'subjectName' => $row['subjectName'],
                     'subjectExternalId' => $row['subjectExternalId'],
+                    'subjectLastLessonDate' => $row['subjectLastLessonDate'],
                     'teacherName' => $row['teacherName'],
                     'assignments' => [],
                     // Use pre-fetched learning outcomes
