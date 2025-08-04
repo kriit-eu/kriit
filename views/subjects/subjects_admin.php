@@ -487,8 +487,8 @@
                                 $usedCount = count($usedOv);
                                 $totalOv = isset($subject['learningOutcomes']) && is_array($subject['learningOutcomes']) ? count($subject['learningOutcomes']) : 0;
                                 if ($totalOv > 0) {
-                                    // Badge color: red if lastLessonDate is set, yellow if not
-                                    if (!empty($subject['lastLessonDate'])) {
+                                    // Badge color: red if subjectLastLessonDate is set, yellow if not
+                                    if (!empty($subject['subjectLastLessonDate'])) {
                                         $badgeColor = 'bg-danger text-white';
                                     } else {
                                         $badgeColor = 'bg-warning text-dark';

@@ -95,7 +95,7 @@ class subjects extends Controller
                                 s.subjectName,
                                 s.teacherId,
                                 s.subjectExternalId,
-                                s.lastLessonDate,
+                                s.subjectLastLessonDate,
                                 t.userName                     AS teacherName,
 
                                 u.userId                       AS studentId,
@@ -202,7 +202,7 @@ class subjects extends Controller
                     'subjectId' => $subjectId,
                     'subjectName' => $row['subjectName'],
                     'subjectExternalId' => $row['subjectExternalId'],
-                    'lastLessonDate' => $row['lastLessonDate'],
+                    'subjectLastLessonDate' => $row['subjectLastLessonDate'],
                     'teacherName' => $row['teacherName'],
                     'assignments' => [],
                     // Use pre-fetched learning outcomes
