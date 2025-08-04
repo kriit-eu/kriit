@@ -214,6 +214,27 @@
             editor.session.setMode("ace/mode/html");
             editor.setValue(<?= json_encode($exercise['exerciseInitialCode']) ?>);
 
+
+            // Robustly disable paste (keyboard, context menu, etc)
+            // 1. Override Ace's paste command
+            editor.commands.addCommand({
+                name: 'disablePaste',
+                bindKey: {win: 'Ctrl-V', mac: 'Command-V'},
+                exec: function() {},
+                readOnly: true // false = enable in readOnly mode
+            });
+
+            // 2. Block native paste event on the editor's textarea
+            setTimeout(function() {
+                var textarea = editor.textInput.getElement();
+                if (textarea) {
+                    textarea.addEventListener('paste', function(e) {
+                        e.preventDefault();
+                        return false;
+                    });
+                }
+            }, 0);
+
             // Update preview on editor change
             editor.session.on('change', function () {
                 updatePreview();
