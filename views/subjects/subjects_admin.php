@@ -458,6 +458,65 @@
                                     <?= $subject['subjectName'] ?>
                                 <?php endif; ?>
                                 <?php
+                                // --- BEGIN: Last lesson date badge (Estonian) ---
+                                if (!empty($subject['subjectLastLessonDate'])) {
+                                    try {
+                                        $now = new DateTimeImmutable('today');
+                                        $lessonDate = new DateTimeImmutable($subject['subjectLastLessonDate']);
+                                        $diffDays = (int)$now->diff($lessonDate)->format('%r%a');
+                                        if ($diffDays === 0) {
+                                            $badgeColor = 'bg-danger';
+                                            $fuzzy = 'täna';
+                                        } elseif ($diffDays === 1) {
+                                            $badgeColor = 'bg-success';
+                                            $fuzzy = 'homme';
+                                        } elseif ($diffDays > 1) {
+                                            $badgeColor = 'bg-success';
+                                            $fuzzy = $diffDays . ' päeva pärast';
+                                        } elseif ($diffDays === -1) {
+                                            $badgeColor = 'bg-secondary';
+                                            $fuzzy = 'eile';
+                                        } else {
+                                            $badgeColor = 'bg-secondary';
+                                            $fuzzy = abs($diffDays) . ' päeva tagasi';
+                                        }
+                                        echo '<span class="badge ms-2 ' . $badgeColor . ' subject-enddate-badge" style="vertical-align:middle;min-width:70px;" title="Viimane tund: ' . htmlspecialchars($lessonDate->format('Y-m-d')) . '">' . htmlspecialchars($fuzzy) . '</span>';
+                                    } catch (Exception $e) {
+                                        // Invalid date, do not show badge
+                                    }
+                                }
+                                // --- END: Last lesson date badge (Estonian) ---
+                                ?>
+</style>
+<style>
+    /* Subject end date badge styling */
+    .subject-enddate-badge {
+        font-size: 0.89em;
+        font-weight: 500;
+        padding: 0.22em 0.62em;
+        border-radius: 0.6em;
+        margin-left: 0.35em;
+        display: inline-block;
+        vertical-align: middle;
+        line-height: 1.15;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+        color: #fff !important;
+        min-width: 32px;
+        text-align: center;
+        letter-spacing: 0.01em;
+    }
+    .bg-success.subject-enddate-badge { background-color: #198754 !important; color: #fff !important; }
+    .bg-danger.subject-enddate-badge { background-color: #dc3545 !important; color: #fff !important; }
+    .bg-secondary.subject-enddate-badge { background-color: #6c757d !important; color: #fff !important; }
+    @media (max-width: 600px) {
+        .subject-enddate-badge {
+            font-size: 0.78em;
+            min-width: 24px;
+            padding: 0.13em 0.38em;
+        }
+    }
+</style>
+                                <?php
                                 // Calculate unique learning outcomes used in assignments
                                     $usedOv = [];
                                     // Build a map: ÕV number (1-based) => learningOutcomeId
@@ -489,12 +548,12 @@
                                 if ($totalOv > 0) {
                                     // Badge color: red if subjectLastLessonDate is set, yellow if not
                                     if (!empty($subject['subjectLastLessonDate'])) {
-                                        $badgeColor = 'bg-danger text-white';
+                                        $badgeColor = 'bg-danger subject-enddate-badge';
                                     } else {
-                                        $badgeColor = 'bg-warning text-dark';
+                                        $badgeColor = 'bg-warning subject-enddate-badge';
                                     }
                                 ?>
-                                <span class="badge ms-2 <?= $badgeColor ?>" title="Kasutatud õpiväljundid / kõik õpiväljundid">
+                                <span class="badge ms-2 <?= $badgeColor ?>" style="vertical-align:middle;" title="Kasutatud õpiväljundid / kõik õpiväljundid">
                                     <?= $usedCount ?>/<?= $totalOv ?>
                                 </span>
                                 <?php }
