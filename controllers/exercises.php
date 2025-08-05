@@ -30,7 +30,6 @@ class exercises extends Controller
             "SELECT
                 e.*,
                 ue.status,
-                ue.deadline,
                 ue.startTime,
                 ue.endTime
             FROM exercises e
@@ -111,6 +110,13 @@ class exercises extends Controller
         if ($this->timeLeft === null || $this->timeLeft > 0) {
             $this->redirect('exercises');
         }
+
+        // Mark only 'started' exercises as timed_out for this user
+        Db::update('userExercises',
+            ['status' => 'timed_out'],
+            'userId = ? AND status = ?',
+            [$this->auth->userId, 'started']
+        );
 
         Activity::create(ACTIVITY_TIME_UP, $this->auth->userId);
         $this->calculateAndUpdateTotalTimeSpent($this->auth->userId);
