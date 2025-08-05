@@ -2,7 +2,7 @@
 
     <h1>Ülesanded</h1>
     <div style="margin-bottom: 1em">
-        <?php require 'templates/partials/timer.php'; ?>
+        <!-- Timer partial removed: not needed -->
     </div>
     <div class="table-responsive">
         <table class="table table-bordered">

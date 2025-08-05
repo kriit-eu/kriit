@@ -144,7 +144,7 @@ class exercises extends Controller
 
     function start()
     {
-        $formattedDateTime = date('Y-m-d H:i:s', strtotime('+20 minutes'));
+    $formattedDateTime = date('Y-m-d H:i:s', strtotime('+1 hour'));
         Db::update('users', ['userTimeUpAt' => $formattedDateTime], 'userId = ?', [$this->auth->userId]);
         Activity::create(ACTIVITY_START_TIMER, $this->auth->userId);
         stop(200);
