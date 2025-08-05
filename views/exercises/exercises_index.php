@@ -126,8 +126,8 @@ if (isset($exercises) && is_array($exercises)) {
                 if (sessionTime <= 0) {
                     sessionTimer.textContent = '00:00';
                     clearInterval(sessionInterval);
-                    // Optionally, reload or redirect when session ends
-                    // location.reload();
+                    // Redirect to timeup page when session ends
+                    window.location.href = 'exercises/timeup';
                     return;
                 }
                 const minutes = Math.floor(sessionTime / 60);

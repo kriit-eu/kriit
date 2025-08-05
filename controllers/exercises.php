@@ -87,6 +87,13 @@ class exercises extends Controller
                 } else {
                     $this->elapsedTime = 0;
                 }
+            } elseif ($exerciseState['status'] === 'not_started') {
+                // Update to started and set startTime
+                Db::update('userExercises', [
+                    'status' => 'started',
+                    'startTime' => date('Y-m-d H:i:s')
+                ], 'userId = ? AND exerciseId = ?', [$userId, $exerciseId]);
+                $this->elapsedTime = 0;
             } else {
                 $this->elapsedTime = 0;
             }
@@ -96,7 +103,6 @@ class exercises extends Controller
                 'exerciseId' => $exerciseId,
                 'status' => 'started',
                 'startTime' => date('Y-m-d H:i:s'),
-                // 'deadline' => null // No deadline
             ]);
             $this->elapsedTime = 0;
         }
@@ -136,9 +142,24 @@ class exercises extends Controller
 
     function start()
     {
-    $formattedDateTime = date('Y-m-d H:i:s', strtotime('+1 hour'));
+        $formattedDateTime = date('Y-m-d H:i:s', strtotime('+1 hour'));
         Db::update('users', ['userTimeUpAt' => $formattedDateTime], 'userId = ?', [$this->auth->userId]);
         Activity::create(ACTIVITY_START_TIMER, $this->auth->userId);
+
+        // Add all exercises for user as not_started if not already present
+        $userId = $this->auth->userId;
+        $exerciseIds = Db::getAll("SELECT exerciseId FROM exercises");
+        foreach ($exerciseIds as $row) {
+            $exerciseId = $row['exerciseId'];
+            $exists = Db::getOne("SELECT 1 FROM userExercises WHERE userId = ? AND exerciseId = ?", [$userId, $exerciseId]);
+            if (!$exists) {
+                Db::insert('userExercises', [
+                    'userId' => $userId,
+                    'exerciseId' => $exerciseId,
+                    'status' => 'not_started',
+                ]);
+            }
+        }
         stop(200);
     }
 
