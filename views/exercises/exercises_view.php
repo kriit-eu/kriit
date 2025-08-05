@@ -219,7 +219,9 @@
             editor.setValue(<?= json_encode($exercise['exerciseInitialCode']) ?>);
 
 
-            // Robustly disable paste (keyboard, context menu, etc)
+
+
+            // Robustly disable ALL paste (keyboard, context menu, etc)
             // 1. Override Ace's paste command
             editor.commands.addCommand({
                 name: 'disablePaste',
@@ -238,6 +240,53 @@
                     });
                 }
             }, 0);
+
+            // 3. Block Ace's onPaste event (catches some right-click/context menu paste)
+            editor.on('paste', function(e) {
+                if (e && typeof e.preventDefault === 'function') {
+                    e.preventDefault();
+                }
+                return false;
+            });
+
+            // 4. Block paste on the editor container div (catches browser context menu paste)
+            var editorDiv = document.getElementById('editor');
+            if (editorDiv) {
+                editorDiv.addEventListener('paste', function(e) {
+                    e.preventDefault();
+                    return false;
+                });
+            }
+
+            // 5. Override Ace's textInput.handlePaste to always prevent paste
+            if (editor.textInput && typeof editor.textInput.handlePaste === 'function') {
+                editor.textInput.handlePaste = function(e) {
+                    if (e && typeof e.preventDefault === 'function') {
+                        e.preventDefault();
+                    }
+                    return false;
+                };
+            }
+
+            // 6. Disable Ace's context menu entirely (prevents right-click paste)
+            editor.setOption("enableBasicAutocompletion", false);
+            editor.setOption("enableLiveAutocompletion", false);
+            editor.renderer.$cursorLayer.element.style.display = "block";
+            
+            // 7. Block all context menu events on the editor
+            var editorContainer = editor.container;
+            editorContainer.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                return false;
+            });
+
+            // 8. Monitor clipboard API and block programmatic paste
+            if (navigator.clipboard && navigator.clipboard.readText) {
+                var originalReadText = navigator.clipboard.readText;
+                navigator.clipboard.readText = function() {
+                    return Promise.reject(new Error('Clipboard access blocked'));
+                };
+            }
 
             // Update preview on editor change
             editor.session.on('change', function () {
