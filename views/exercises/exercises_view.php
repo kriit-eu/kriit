@@ -67,7 +67,7 @@
                 <i class="bi bi-arrow-left"></i>
                 Ülesannete loendisse
             </a>
-            <div class="timer"><?php require 'templates/partials/timer.php' ?></div>
+            <div id="timer" class="timer"><?= gmdate("i:s", $this->remainingTime) ?></div>
             <button class="btn btn-success" onclick="validateSolution()">
                 <i class="bi bi-check"></i>
                 Kontrolli lahendust
@@ -783,6 +783,22 @@
                 validationSection.style.visibility = 'visible';
             }
         });
+
+        // Timer logic
+        const timerElement = document.getElementById('timer');
+        let timeInSeconds = <?= $this->remainingTime ?>;
+
+        const countdown = setInterval(function () {
+            const minutes = Math.floor(timeInSeconds / 60);
+            const seconds = timeInSeconds % 60;
+
+            timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+            if (--timeInSeconds < 0) {
+                clearInterval(countdown);
+                window.location.href = 'exercises/timeup';
+            }
+        }, 1000);
     });
 
     // Reinitialize editor when window is resized

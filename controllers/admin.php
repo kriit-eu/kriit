@@ -22,11 +22,11 @@ class admin extends Controller
         $allUsers = Db::getAll("
         SELECT
             u.*,
-            COUNT(DISTINCT userDoneExercises.exerciseId) AS userExercisesDone,
+            COUNT(DISTINCT ue.exerciseId) AS userExercisesDone,
             MIN(a.activityLogTimestamp) AS userFirstLogin,
             ROW_NUMBER() OVER (
                 ORDER BY
-                    COUNT(DISTINCT userDoneExercises.exerciseId) DESC,
+                    COUNT(DISTINCT ue.exerciseId) DESC,
                     CASE
                         WHEN u.userTimeTotal IS NOT NULL THEN 0
                         ELSE 1
@@ -38,7 +38,7 @@ class admin extends Controller
         LEFT JOIN
             activityLog a ON u.userId = a.userId AND a.activityId = 1
         LEFT JOIN
-            userDoneExercises ON u.userId = userDoneExercises.userId
+            userExercises ue ON u.userId = ue.userId AND ue.status = 'completed'
         WHERE
             u.userIsAdmin = 0
         GROUP BY
@@ -229,7 +229,7 @@ class admin extends Controller
 
         try {
             Db::delete('userAssignments', 'userId = ?', [$_POST['userId']]);
-            Db::delete('userDoneExercises', 'userId = ?', [$_POST['userId']]);
+            Db::delete('userExercises', 'userId = ?', [$_POST['userId']]);
             Db::delete('userDoneCriteria', 'userId = ?', [$_POST['userId']]);
             Db::delete('messages', 'userId = ?', [$_POST['userId']]);
 
@@ -644,7 +644,7 @@ class admin extends Controller
         }
 
         // First delete all done exercises for this exercise
-        Db::delete('userDoneExercises', 'exerciseId = ?', [$_POST['id']]);
+        Db::delete('userExercises', 'exerciseId = ?', [$_POST['id']]);
 
         Db::delete('exercises', 'exerciseId = ?', [$_POST['id']]);
 
