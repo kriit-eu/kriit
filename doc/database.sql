@@ -325,7 +325,7 @@ CONSTRAINT `subjects_users_userId_fk` FOREIGN KEY (`teacherId`) REFERENCES `user
 LOCK TABLES `subjects` WRITE;
 /*!40000 ALTER TABLE `subjects` DISABLE KEYS */;
 INSERT INTO `subjects` VALUES
-(1,'Keemia',1,1,1,1,0);
+(1,'Keemia',1,1,1,1,0,NULL);
 /*!40000 ALTER TABLE `subjects` ENABLE KEYS */;
 UNLOCK TABLES;
 
