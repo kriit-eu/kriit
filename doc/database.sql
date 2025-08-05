@@ -1,4 +1,4 @@
--- Dump created on 2025-08-05 13:17:47 by f96b19cfb7e4
+-- Dump created on 2025-08-05 17:06:24 by 023b91b392e6
 SET FOREIGN_KEY_CHECKS=0;
 SET @@SESSION.sql_mode='NO_AUTO_VALUE_ON_ZERO';
 
@@ -507,18 +507,21 @@ INSERT INTO `userDoneCriteria` VALUES
 /*!40000 ALTER TABLE `userDoneCriteria` ENABLE KEYS */;
 UNLOCK TABLES;
 
--- Table structure for table `userDoneExercises`
-CREATE TABLE `userDoneExercises` (
+-- Table structure for table `userExercises`
+CREATE TABLE `userExercises` (
 `userId` int unsigned NOT NULL,
 `exerciseId` int unsigned NOT NULL,
+`startTime` timestamp NULL DEFAULT NULL,
+`endTime` timestamp NULL DEFAULT NULL,
+`status` enum('not_started','started','completed','timed_out') NOT NULL DEFAULT 'not_started',
 PRIMARY KEY (`exerciseId`,`userId`),
 KEY `userId` (`userId`),
 CONSTRAINT `userdoneexercises_ibfk_1` FOREIGN KEY (`exerciseId`) REFERENCES `exercises` (`exerciseId`),
 CONSTRAINT `userdoneexercises_ibfk_2` FOREIGN KEY (`userId`) REFERENCES `users` (`userId`)
 );
-LOCK TABLES `userDoneExercises` WRITE;
-/*!40000 ALTER TABLE `userDoneExercises` DISABLE KEYS */;
-/*!40000 ALTER TABLE `userDoneExercises` ENABLE KEYS */;
+LOCK TABLES `userExercises` WRITE;
+/*!40000 ALTER TABLE `userExercises` DISABLE KEYS */;
+/*!40000 ALTER TABLE `userExercises` ENABLE KEYS */;
 UNLOCK TABLES;
 
 -- Table structure for table `users`

@@ -230,6 +230,20 @@
         visibility: visible; /* Show when active */
     }
 
+    /* Hide Monaco editor underlines on HTML tags */
+    /* Turn off the underline that the theme puts on tokens */
+    .monaco-editor .mtku {
+        text-decoration: none !important;
+        text-underline-position: initial !important;
+    }
+
+    /* Also kill the underline that appears on Ctrl/Cmd-hover */
+    .monaco-editor .goto-definition-link,
+    .monaco-editor .detected-link {
+        border-bottom: none !important;
+        text-decoration: none !important;
+    }
+
 </style>
 
 
@@ -257,11 +271,32 @@
             });
 
             require(['vs/editor/editor.main'], function() {
+                // Define custom theme without underlines for HTML tags
+                monaco.editor.defineTheme('vs-dark-no-underline', {
+                    base: 'vs-dark',
+                    inherit: true,
+                    rules: [
+                        // Remove underline from HTML tags
+                        { token: 'entity.name.tag', fontStyle: '', foreground: '569CD6' },
+                        { token: 'entity.name.tag.html', fontStyle: '', foreground: '569CD6' },
+                        { token: 'meta.tag.html', fontStyle: '', foreground: '569CD6' },
+                        { token: 'punctuation.definition.tag', fontStyle: '', foreground: '808080' },
+                        { token: 'punctuation.definition.tag.html', fontStyle: '', foreground: '808080' },
+                        { token: 'punctuation.definition.tag.begin.html', fontStyle: '', foreground: '808080' },
+                        { token: 'punctuation.definition.tag.end.html', fontStyle: '', foreground: '808080' },
+                        { token: 'entity.other.attribute-name', fontStyle: '', foreground: '9CDCFE' },
+                        { token: 'entity.other.attribute-name.html', fontStyle: '', foreground: '9CDCFE' },
+                        { token: 'string.quoted.double.html', fontStyle: '', foreground: 'CE9178' },
+                        { token: 'string.quoted.single.html', fontStyle: '', foreground: 'CE9178' }
+                    ],
+                    colors: {}
+                });
+
                 // Create Monaco Editor instance with enhanced VS Code features
                 editor = monaco.editor.create(document.getElementById('editor'), {
                     value: <?= json_encode($exercise['exerciseInitialCode']) ?>,
                     language: 'html',
-                    theme: 'vs-dark',
+                    theme: 'vs-dark-no-underline',
                     fontSize: 14,
                     fontFamily: 'Consolas, "Courier New", monospace',
                     automaticLayout: true,
@@ -309,9 +344,13 @@
                     // Enhanced editing features
                     multiCursorModifier: 'ctrlCmd',
                     wordSeparators: '`~!@#$%^&*()-=+[{]}\\|;:\'",.<>/?',
-                    links: true,
+                    links: false,
                     colorDecorators: true,
                     lightbulb: { enabled: true },
+                    // Disable various decorations that could show underlines
+                    occurrencesHighlight: false,
+                    selectionHighlight: false,
+                    renderLineHighlight: 'none',
                     codeActionsOnSave: {},
                     // Selection and find features
                     find: {
@@ -492,6 +531,130 @@
                     }
                 });
 
+                // Add CSS to remove underlines after Monaco is fully loaded
+                setTimeout(() => {
+                    const style = document.createElement('style');
+                    style.textContent = `
+                        /* CRITICAL: Override Monaco's internal .mtku class that creates underlines */
+                        .monaco-editor .mtku,
+                        .monaco-editor span.mtku,
+                        .monaco-editor .view-line span.mtku,
+                        .monaco-editor .view-lines .view-line span.mtku,
+                        .mtku {
+                            text-decoration: none !important;
+                            text-underline-position: initial !important;
+                        }
+                        
+                        /* Also override the combined classes like mtks.mtku */
+                        .monaco-editor .mtks.mtku,
+                        .monaco-editor span.mtks.mtku,
+                        .mtks.mtku {
+                            text-decoration: line-through !important;
+                            text-underline-position: initial !important;
+                        }
+                        
+                        /* Ultra-aggressive underline removal - target all possible sources */
+                        .monaco-editor .mtk8,
+                        .monaco-editor .mtk4,
+                        .monaco-editor .mtk10,
+                        .monaco-editor .mtk1,
+                        .monaco-editor .mtk5,
+                        .monaco-editor .mtk7,
+                        .monaco-editor .mtk9,
+                        .monaco-editor .mtk6,
+                        .monaco-editor span[class*="mtk"],
+                        .monaco-editor .view-line span,
+                        .monaco-editor .view-lines .view-line span {
+                            text-decoration: none !important;
+                            text-decoration-line: none !important;
+                            text-decoration-color: transparent !important;
+                            text-decoration-style: none !important;
+                            text-decoration-thickness: 0px !important;
+                            text-underline-position: initial !important;
+                            border-bottom: none !important;
+                            box-shadow: none !important;
+                            background-image: none !important;
+                        }
+                        
+                        /* Target Monaco's potential pseudo-elements */
+                        .monaco-editor span[class*="mtk"]:before,
+                        .monaco-editor span[class*="mtk"]:after,
+                        .monaco-editor .view-line span:before,
+                        .monaco-editor .view-line span:after {
+                            content: none !important;
+                            display: none !important;
+                            border-bottom: none !important;
+                            text-decoration: none !important;
+                        }
+                        
+                        /* Remove any possible Monaco decorations */
+                        .monaco-editor span[class*="mtku"],
+                        .monaco-editor .token.mtku,
+                        .monaco-editor .detected-link,
+                        .monaco-editor .goto-definition-link {
+                            text-decoration: none !important;
+                            text-decoration-line: none !important;
+                            text-decoration-color: transparent !important;
+                            border-bottom: none !important;
+                            box-shadow: none !important;
+                            background-image: none !important;
+                        }
+                        
+                        /* Override any inline styles */
+                        .monaco-editor [style*="text-decoration"],
+                        .monaco-editor [style*="underline"] {
+                            text-decoration: none !important;
+                            text-decoration-line: none !important;
+                            text-decoration-color: transparent !important;
+                        }
+                        
+                        /* Force override browser default link styling */
+                        .monaco-editor * {
+                            text-decoration: none !important;
+                        }
+                        
+                        /* Specific override for the blue color elements that might show underlines */
+                        .monaco-editor span[style*="rgb(86, 156, 214)"],
+                        .monaco-editor span[style*="rgb(156, 220, 254)"] {
+                            text-decoration: none !important;
+                            text-decoration-line: none !important;
+                            text-decoration-color: transparent !important;
+                            border-bottom: none !important;
+                        }
+                    `;
+                    document.head.appendChild(style);
+                    
+                    // More aggressive DOM manipulation
+                    setTimeout(() => {
+                        if (editor) {
+                            // Force layout and re-render
+                            editor.layout();
+                            
+                            // Find and directly modify any elements that might have underlines
+                            const allSpans = document.querySelectorAll('.monaco-editor .view-line span');
+                            allSpans.forEach(span => {
+                                span.style.setProperty('text-decoration', 'none', 'important');
+                                span.style.setProperty('text-decoration-line', 'none', 'important');
+                                span.style.setProperty('text-decoration-color', 'transparent', 'important');
+                                span.style.setProperty('text-underline-position', 'initial', 'important');
+                                span.style.setProperty('border-bottom', 'none', 'important');
+                                span.style.setProperty('box-shadow', 'none', 'important');
+                            });
+                            
+                            // Specifically target any .mtku elements and remove the class or override
+                            const mtkuElements = document.querySelectorAll('.monaco-editor .mtku');
+                            mtkuElements.forEach(el => {
+                                el.style.setProperty('text-decoration', 'none', 'important');
+                                el.style.setProperty('text-underline-position', 'initial', 'important');
+                            });
+                            
+                            // Trigger a content refresh to apply changes
+                            const currentValue = editor.getValue();
+                            editor.setValue(currentValue);
+                        }
+                    }, 100);
+                }, 1000);
+
                 // Robustly disable ALL paste (keyboard, context menu, etc)
                 // 1. Override Monaco's paste action
                 editor.addAction({
@@ -597,8 +760,14 @@
                 // 5. Intelligent content monitoring with advanced detection
                 let lastContent = editor.getValue();
                 let lastChangeTime = Date.now();
+                let isReverting = false; // Flag to prevent infinite loop
                 
                 editor.onDidChangeModelContent(function(e) {
+                    // Skip processing if we're currently reverting
+                    if (isReverting) {
+                        return;
+                    }
+                    
                     const currentTime = Date.now();
                     const timeDiff = currentTime - lastChangeTime;
                     const currentContent = editor.getValue();
@@ -643,6 +812,11 @@
                     
                     if (suspiciousActivity) {
                         console.log('Suspicious paste activity detected, reverting');
+                        
+                        // Set flag to prevent infinite loop
+                        isReverting = true;
+                        
+                        // Revert to last content
                         editor.setValue(lastContent);
                         
                         // Show notification
@@ -657,6 +831,8 @@
                         
                         setTimeout(() => {
                             monaco.editor.setModelMarkers(editor.getModel(), 'paste-detected', []);
+                            // Reset flag after revert is complete
+                            isReverting = false;
                         }, 5000);
                         
                         return;
@@ -701,6 +877,113 @@
                         monaco.editor.setModelMarkers(model, 'html-validation', markers);
                     }, 500);
                 });
+
+                // Enhanced Debug: Comprehensive Monaco styling inspection
+                setTimeout(() => {
+                    console.log('=== ENHANCED MONACO DEBUG ===');
+                    
+                    // 1. Check Monaco's internal theme and token definitions
+                    const monacoTheme = monaco.editor.getTheme ? monaco.editor.getTheme('vs-dark-no-underline') : null;
+                    console.log('Monaco theme definition:', monacoTheme);
+                    
+                    // 2. Inspect all Monaco token classes
+                    const allTokens = document.querySelectorAll('.monaco-editor .view-line span[class*="mtk"]');
+                    console.log('Total Monaco tokens found:', allTokens.length);
+                    
+                    // Group tokens by class
+                    const tokensByClass = {};
+                    allTokens.forEach(token => {
+                        const className = token.className;
+                        if (!tokensByClass[className]) {
+                            tokensByClass[className] = [];
+                        }
+                        tokensByClass[className].push(token);
+                    });
+                    
+                    console.log('Token classes found:', Object.keys(tokensByClass));
+                    
+                    // 3. Check for specific HTML tag tokens and their styling
+                    Object.keys(tokensByClass).forEach(className => {
+                        const tokens = tokensByClass[className];
+                        const firstToken = tokens[0];
+                        const style = getComputedStyle(firstToken);
+                        
+                        // Log tokens that might be HTML tags
+                        if (firstToken.textContent && /^[a-z]+$/i.test(firstToken.textContent.trim())) {
+                            console.log(`Class ${className} (${tokens.length} tokens):`, {
+                                text: firstToken.textContent,
+                                color: style.color,
+                                textDecoration: style.textDecoration,
+                                borderBottom: style.borderBottom,
+                                textUnderlinePosition: style.textUnderlinePosition,
+                                element: firstToken
+                            });
+                        }
+                    });
+                    
+                    // 4. Look for CSS pseudo-elements that might create underlines
+                    const editorContainer = document.querySelector('.monaco-editor');
+                    if (editorContainer) {
+                        const afterStyle = getComputedStyle(editorContainer, '::after');
+                        const beforeStyle = getComputedStyle(editorContainer, '::before');
+                        console.log('Editor ::after pseudo:', afterStyle.content, afterStyle.borderBottom);
+                        console.log('Editor ::before pseudo:', beforeStyle.content, beforeStyle.borderBottom);
+                    }
+                    
+                    // 5. Check for Monaco's link decorations
+                    const linkDecorations = document.querySelectorAll('.monaco-editor .detected-link, .monaco-editor .goto-definition-link');
+                    console.log('Link decorations found:', linkDecorations.length);
+                    linkDecorations.forEach((link, i) => {
+                        console.log(`Link decoration ${i}:`, link, getComputedStyle(link));
+                    });
+                    
+                    // 6. Check Monaco editor configuration for link-related settings
+                    const editorOptions = editor.getOptions();
+                    console.log('Editor links option:', editorOptions.links);
+                    console.log('Editor hover options:', editorOptions.hover);
+                    
+                    // 7. Enhanced element inspector
+                    window.inspectElement = function(element) {
+                        const style = getComputedStyle(element);
+                        console.log('=== ELEMENT INSPECTION ===');
+                        console.log('Element:', element);
+                        console.log('Tag name:', element.tagName);
+                        console.log('Classes:', element.className);
+                        console.log('Text content:', element.textContent);
+                        console.log('All CSS properties:');
+                        
+                        // Log all computed styles that might affect appearance
+                        const relevantProps = [
+                            'textDecoration', 'textUnderlinePosition', 'textDecorationColor',
+                            'textDecorationStyle', 'textDecorationThickness', 'borderBottom',
+                            'borderBottomColor', 'borderBottomStyle', 'borderBottomWidth',
+                            'color', 'backgroundColor', 'boxShadow', 'outline'
+                        ];
+                        
+                        relevantProps.forEach(prop => {
+                            const value = style[prop];
+                            if (value && value !== 'none' && value !== 'initial' && value !== '0px') {
+                                console.log(`  ${prop}: ${value}`);
+                            }
+                        });
+                        
+                        // Check for any Monaco-specific attributes
+                        console.log('Data attributes:', [...element.attributes].filter(attr => attr.name.startsWith('data-')));
+                        
+                        console.log('=== END INSPECTION ===');
+                    };
+                    
+                    // 8. Add click handler to automatically inspect clicked elements
+                    document.querySelector('.monaco-editor').addEventListener('click', function(e) {
+                        if (e.target.tagName === 'SPAN' && e.target.className.includes('mtk')) {
+                            console.log('Auto-inspecting clicked token:', e.target.textContent);
+                            window.inspectElement(e.target);
+                        }
+                    });
+                    
+                    console.log('=== ENHANCED DEBUG COMPLETE ===');
+                    console.log('Instructions: Click on any tag in Monaco to auto-inspect, or right-click and use inspectElement($0)');
+                }, 2000);
 
                 // Initial preview update
                 updatePreview();

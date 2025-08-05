@@ -5,4 +5,4 @@ ALTER TABLE `userDoneExercises` RENAME TO `userExercises`;
 ALTER TABLE `userExercises`
   ADD COLUMN `startTime` TIMESTAMP NULL,
   ADD COLUMN `endTime` TIMESTAMP NULL,
-  ADD COLUMN `status` ENUM('not_started', 'started', 'completed', 'timed_out') NOT NULL DEFAULT 'not_started',
+  ADD COLUMN `status` ENUM('not_started', 'started', 'completed', 'timed_out') NOT NULL DEFAULT 'not_started';
