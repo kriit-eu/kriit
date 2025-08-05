@@ -156,9 +156,13 @@
     }
 
     .footer .timer {
-        order: 2;
-        flex-grow: 1;
-        text-align: center;
+    order: 2;
+    flex-grow: 1;
+    width: 100%;
+    text-align: center;
+    font-weight: bold;
+    display: block;
+    font-size: 2rem;
     }
 
     .footer .btn-success {

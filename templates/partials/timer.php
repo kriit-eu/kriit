@@ -16,7 +16,7 @@
                             secondsRemaining = '0' + secondsRemaining;
                         }
 
-                        document.querySelector('.timer').innerHTML = 'Aega jäänud <strong>' + minutes + ':' + secondsRemaining + '</strong>';
+                        document.querySelector('.timer').innerHTML = '<strong>Aega jäänud ' + minutes + ':' + secondsRemaining + '</strong>';
 
                         if (seconds <= 0) {
                             clearInterval(timerInterval);
