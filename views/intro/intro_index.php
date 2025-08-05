@@ -5,7 +5,7 @@
 <p>Meil on hea meel, et olete otsustanud meie kooli kasuks. Enne katsete alustamist lugege läbi järgev:</p>
 <h5>Reeglid</h5>
 <ol>
-    <li>Teil on <strong>20 minutit</strong> ülesannete lahendamiseks. Aeg algab <i>Alusta</i> nupule vajutamise
+    <li>Teil on <strong>60 minutit</strong> ülesannete lahendamiseks. Aeg algab <i>Alusta</i> nupule vajutamise
         järgselt.
     </li>
     <li><strong>Keelatud on igasugune koostöö teiste isikutega,
@@ -26,7 +26,7 @@
 <br>
 <h5>Punktiarvestus</h5>
 <ul>
-    <li>Programm lõppeb, kui kõik ülesanded on lahendatud või 20 minutit on ära kasutatud.</li>
+    <li>Programm lõppeb, kui kõik ülesanded on lahendatud või 60 minutit on ära kasutatud.</li>
     <li>Kui lahendate kõik ülesanded, siis mida vähem aega teil kulus, seda eespool olete pingereas.</li>
     <li>Kui aeg sai enne otsa, siis mida rohkem ülesandeid on lahendatud, seda eespool olete pingereas.</li>
     <li>Kui mitu inimest on lahendanud sama arvu ülesandeid, siis määrab parema koha kiirem lahendusaeg.</li>
