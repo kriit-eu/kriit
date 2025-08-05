@@ -258,7 +258,7 @@
                         strings: true
                     },
                     suggestOnTriggerCharacters: true,
-                    acceptSuggestionOnEnter: 'on',
+                    acceptSuggestionOnEnter: 'off',
                     acceptSuggestionOnCommitCharacter: true,
                     tabCompletion: 'on',
                     wordBasedSuggestions: true,
