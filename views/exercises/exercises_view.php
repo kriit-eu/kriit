@@ -608,23 +608,33 @@
                     let suspiciousActivity = false;
                     
                     for (let change of changes) {
+                        // Skip detection for single character changes (like Enter key)
+                        if (change.text.length <= 1) {
+                            continue;
+                        }
+                        
+                        // Skip detection for auto-formatting changes (Enter + indentation)
+                        if (change.text.includes('\n') && change.text.length < 10) {
+                            continue;
+                        }
+                        
                         // Detect large text insertions (potential paste)
                         if (change.text.length > 50) {
                             suspiciousActivity = true;
                             break;
                         }
                         
-                        // Detect multiple rapid changes (potential paste)
-                        if (timeDiff < 100 && change.text.length > 10) {
+                        // Detect multiple rapid changes (potential paste) - but allow short formatting
+                        if (timeDiff < 100 && change.text.length > 20) {
                             suspiciousActivity = true;
                             break;
                         }
                         
-                        // Detect formatted content (potential paste from rich sources)
-                        if (change.text.includes('\t\t') || change.text.includes('    ')) {
-                            const indentCount = (change.text.match(/\t/g) || []).length + 
-                                              (change.text.match(/    /g) || []).length;
-                            if (indentCount > 3) {
+                        // Detect formatted content (potential paste from rich sources) - be more lenient
+                        if (change.text.includes('\t\t\t') || change.text.includes('        ')) {
+                            const indentCount = (change.text.match(/\t\t\t/g) || []).length + 
+                                              (change.text.match(/        /g) || []).length;
+                            if (indentCount > 2) {
                                 suspiciousActivity = true;
                                 break;
                             }
