@@ -61,18 +61,23 @@
         </div>
     </div>
 
+
     <div class="footer-container">
         <div class="footer">
             <a class="btn btn-secondary" href="exercises">
                 <i class="bi bi-arrow-left"></i>
                 Ülesannete loendisse
             </a>
-            <div id="timer" class="timer"><?= gmdate("i:s", $this->remainingTime) ?></div>
+            <div id="timer" class="timer<?= (isset($this->elapsedTime) && $this->elapsedTime >= 300) ? ' overdue' : '' ?>"><?= gmdate("i:s", $this->elapsedTime ?? 0) ?></div>
             <button class="btn btn-success" onclick="validateSolution()">
                 <i class="bi bi-check"></i>
                 Kontrolli lahendust
             </button>
         </div>
+        <style>
+            .timer { min-width: 48px; display: inline-block; text-align: left; transition: color 0.3s; }
+            .timer.overdue { color: #c00; font-weight: bold; }
+        </style>
 
         <div class="validation-code-section">
             <h5 class="text-center" style="background-color: #f4f2f0; padding: 0; margin: 0">Sinu lahendust
@@ -784,21 +789,28 @@
             }
         });
 
-        // Timer logic
+        // Timer logic (count up)
         const timerElement = document.getElementById('timer');
-        let timeInSeconds = <?= $this->remainingTime ?>;
-
-        const countdown = setInterval(function () {
-            const minutes = Math.floor(timeInSeconds / 60);
-            const seconds = timeInSeconds % 60;
-
+        let elapsed = <?= $this->elapsedTime ?? 0 ?>;
+        function updateTimer() {
+            const minutes = Math.floor(elapsed / 60);
+            const seconds = elapsed % 60;
             timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-
-            if (--timeInSeconds < 0) {
-                clearInterval(countdown);
-                window.location.href = 'exercises/timeup';
+            if (elapsed >= 300) {
+                timerElement.classList.add('overdue');
+            } else {
+                timerElement.classList.remove('overdue');
             }
-        }, 1000);
+            elapsed++;
+        }
+        // Set overdue class immediately if needed
+        if (elapsed >= 300) {
+            timerElement.classList.add('overdue');
+        } else {
+            timerElement.classList.remove('overdue');
+        }
+        updateTimer();
+        setInterval(updateTimer, 1000);
     });
 
     // Reinitialize editor when window is resized
