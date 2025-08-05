@@ -14,6 +14,34 @@
             <div class="p-3 overflow-auto h-100">
                 <h3>Ülesanne:</h3>
                 <p><?= $exercise['exerciseInstructions'] ?></p>
+                <?php
+                $helpMessages = [
+                    "NB! Kui sa ei leia lahendust, vaata internetist abi!",
+                    "NB! Kui midagi välja ei tule, otsi abi veebist!",
+                    "NB! Kui takerdud, internet pakub lahendusi!",
+                    "NB! Kui sa ei saa selgeks, internet aitab!",
+                    "NB! Kui jääd segadusse, otsi nõu veebist!",
+                    "NB! Kui sa ei mõista, vaata vastuseid internetist!",
+                    "NB! Kui vajad tuge, internet on parim abiline!",
+                    "NB! Kui tekib küsimusi, küsi internetist!",
+                    "NB! Kui sa ei leia vastust, pöördu veebiallika poole!",
+                    "NB! Kui oled ummikus, leia lahendusi internetis!",
+                    "NB! Kui sul jääb arusaamine puudu, vaata internetist!",
+                    "NB! Kui ei lähe plaanipäraselt, uurige veebist edasi!",
+                    "NB! Kui sul ei õnnestu üksi, leia veebist abi!",
+                    "NB! Kui sa seisad silmitsi raskustega, internet on toeks!",
+                    "NB! Kui sa ei tea, kust alustada, internet suunab sind!",
+                    "NB! Kui jääd puntrasse, kasuta interneti tuge!",
+                    "NB! Kui ei õnnestu omal jõul, internet pakub abi!",
+                    "NB! Kui sa ei saa edasi, internet annab vastuseid!",
+                    "NB! Kui sul tekib ummik, pööra pilk internetile!",
+                    "NB! Kui sa ei oska ise, otsi suuniseid veebist!"
+                ];
+                $randomMessage = $helpMessages[array_rand($helpMessages)];
+                ?>
+                <div class="help-message mt-3" style="color: #111; font-size: 1.25em; font-weight: bold;">
+                    <?= htmlspecialchars($randomMessage) ?>
+                </div>
             </div>
         </div>
         <!-- Editor panel -->
