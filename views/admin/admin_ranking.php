@@ -56,9 +56,12 @@ function updateTimeLeft() {
         const upAt = new Date(timeUpAt.replace(' ', 'T'));
         let diff = Math.floor((upAt - now) / 1000);
         if (diff > 0) {
-            const minutes = Math.floor(diff / 60);
-            const seconds = diff % 60;
-            span.textContent = (minutes < 10 ? '0' : '') + minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
+            if (diff >= 60) {
+                const minutes = Math.ceil(diff / 60);
+                span.textContent = minutes + ' min';
+            } else {
+                span.textContent = diff + ' s';
+            }
         } else {
             span.textContent = 'Aeg läbi';
         }
