@@ -37,7 +37,7 @@
         <div class="footer">
             <a class="btn btn-secondary" href="exercises">
                 <i class="bi bi-arrow-left"></i>
-                Tagasi ülesannete loendisse
+                Ülesannete loendisse
             </a>
             <div class="timer"><?php require 'templates/partials/timer.php' ?></div>
             <button class="btn btn-success" onclick="validateSolution()">
