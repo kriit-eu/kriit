@@ -8,13 +8,11 @@
     <li>Teil on <strong>60 minutit</strong> ülesannete lahendamiseks. Aeg algab <i>Alusta</i> nupule vajutamise
         järgselt.
     </li>
-    <li><strong>Keelatud on igasugune koostöö teiste isikutega,
-            sealhulgas tehisintellektiga.</strong> Vahele jäämine tähendab automaatset läbikukkumist. Arvuti ekraani
+    <li><strong>Keelatud on igasugune koostöö teiste isikutega</strong>. Vahele jäämine tähendab automaatset läbikukkumist. Arvuti ekraani
         salvestatakse!
     </li>
     <li>
-        Te <strong>võite</strong> selles arvutis kasutada internetti lahenduste leidmiseks (nt Google, StackOverflow,
-        MDN, W3Schools).
+        Te <strong>võite</strong> selles arvutis kasutada internetti lahenduste leidmiseks.
     </li>
 </ol>
 <div>
