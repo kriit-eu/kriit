@@ -72,7 +72,7 @@
                     <i class="bi bi-arrow-left"></i>
                     Ülesannete loendisse
                 </a>
-                <div class="timer-label-group">
+                <div class="timer-label-group" id="timer-label-group" style="display:none;">
                     <span class="timer-label">Ülesandele kulunud aeg:</span>
                     <span id="timer" class="timer<?= (isset($this->elapsedTime) && $this->elapsedTime >= 300) ? ' overdue' : '' ?>"><?= gmdate("i:s", $this->elapsedTime ?? 0) ?></span>
                 </div>
@@ -125,7 +125,6 @@
             }
             .timer {
                 min-width: 48px;
-                display: inline-block;
                 text-align: left;
                 transition: color 0.3s;
                 font-weight: bold;
@@ -655,12 +654,18 @@
         });
 
         // Timer logic (count up)
-        const timerElement = document.getElementById('timer');
+    const timerElement = document.getElementById('timer');
+    const timerLabelGroup = document.getElementById('timer-label-group');
         let elapsed = <?= $this->elapsedTime ?? 0 ?>;
         function updateTimer() {
             const minutes = Math.floor(elapsed / 60);
             const seconds = elapsed % 60;
-            timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            if (elapsed >= 180) {
+                timerLabelGroup.style.display = 'flex';
+                timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            } else {
+                timerLabelGroup.style.display = 'none';
+            }
             if (elapsed >= 300) {
                 timerElement.classList.add('overdue');
             } else {
@@ -668,13 +673,18 @@
             }
             elapsed++;
         }
-        // Set overdue class immediately if needed
+        // Set overdue class and visibility immediately if needed
+        if (elapsed >= 180) {
+            timerLabelGroup.style.display = 'flex';
+            timerElement.textContent = `${Math.floor(elapsed / 60).toString().padStart(2, '0')}:${(elapsed % 60).toString().padStart(2, '0')}`;
+        } else {
+            timerLabelGroup.style.display = 'none';
+        }
         if (elapsed >= 300) {
             timerElement.classList.add('overdue');
         } else {
             timerElement.classList.remove('overdue');
         }
-        updateTimer();
         setInterval(updateTimer, 1000);
     });
 
