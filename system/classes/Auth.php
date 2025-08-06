@@ -122,7 +122,11 @@ class Auth
         // Load $this->auth with users table's field values
         $this->load_user_data($user);
 
-        return true;
+        // Implement Post-Redirect-Get pattern to prevent form resubmission issues
+        $redirect_url = $_SESSION['redirect'] ?? 'intro';
+        unset($_SESSION['redirect']);
+        header("Location: " . BASE_URL . $redirect_url);
+        exit();
     }
 
     /**

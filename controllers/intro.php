@@ -5,6 +5,11 @@ class intro extends Controller
 
     function index()
     {
+        // Set headers to prevent caching and form resubmission issues
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+        
         $this->redirectAdminsToAdminPage();
         $this->redirectTeachersToGradingPage();
         $this->redirectStudentsToSubjectsPage();
@@ -28,12 +33,18 @@ class intro extends Controller
 
     function htmlCourse()
     {
-
+        // Set headers to prevent caching and form resubmission issues
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        header('Pragma: no-cache');
+        header('Expires: 0');
     }
 
     function cssCourse()
     {
-
+        // Set headers to prevent caching and form resubmission issues
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        header('Pragma: no-cache');
+        header('Expires: 0');
     }
 
     private function redirectAdminsToAdminPage()
