@@ -67,19 +67,71 @@
 
 
     <div class="footer-container">
-        <div class="footer">
-            <a class="btn btn-secondary" href="exercises">
-                <i class="bi bi-arrow-left"></i>
-                Ülesannete loendisse
-            </a>
-            <div id="timer" class="timer<?= (isset($this->elapsedTime) && $this->elapsedTime >= 300) ? ' overdue' : '' ?>"><?= gmdate("i:s", $this->elapsedTime ?? 0) ?></div>
-            <button class="btn btn-success" onclick="validateSolution()">
-                <i class="bi bi-check"></i>
-                Kontrolli lahendust
-            </button>
-        </div>
+            <div class="footer clickable-footer">
+                <a class="btn btn-secondary footer-btn-left" href="exercises" tabindex="-1">
+                    <i class="bi bi-arrow-left"></i>
+                    Ülesannete loendisse
+                </a>
+                <div class="timer-label-group">
+                    <span class="timer-label">Ülesandele kulunud aeg:</span>
+                    <span id="timer" class="timer<?= (isset($this->elapsedTime) && $this->elapsedTime >= 300) ? ' overdue' : '' ?>"><?= gmdate("i:s", $this->elapsedTime ?? 0) ?></span>
+                </div>
+                <button class="btn btn-success footer-btn-right" onclick="validateSolution()" tabindex="-1">
+                    <i class="bi bi-check"></i>
+                    Kontrolli lahendust
+                </button>
+            </div>
         <style>
-            .timer { min-width: 48px; display: inline-block; text-align: left; transition: color 0.3s; }
+            .footer {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: relative;
+                padding: 10px;
+                background-color: #f1f1f1;
+                border-top: 1px solid #ccc;
+                height: 60px;
+            }
+            .footer-btn-left {
+                position: absolute;
+                left: 10px;
+                top: 50%;
+                transform: translateY(-50%);
+                z-index: 2;
+            }
+            .footer-btn-right {
+                position: absolute;
+                right: 10px;
+                top: 50%;
+                transform: translateY(-50%);
+                z-index: 2;
+            }
+            .timer-label-group {
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                justify-content: center;
+                margin: 0 auto;
+                position: relative;
+                z-index: 1;
+                white-space: nowrap;
+            }
+            .timer-label {
+                font-size: 2rem;
+                color: #333;
+                font-weight: bold;
+                margin-bottom: 0;
+                margin-right: 10px;
+            }
+            .timer {
+                min-width: 48px;
+                display: inline-block;
+                text-align: left;
+                transition: color 0.3s;
+                font-weight: bold;
+                font-size: 2rem;
+                margin-left: 0;
+            }
             .timer.overdue { color: #c00; font-weight: bold; }
         </style>
 
@@ -584,8 +636,10 @@
         footerContainer.classList.add('active');
         validationSection.style.visibility = 'visible';
 
-        // Toggle the drawer on timer click
-        document.querySelector('.timer').addEventListener('click', function () {
+        // Toggle the drawer on footer click (not just timer)
+        document.querySelector('.footer.clickable-footer').addEventListener('click', function (e) {
+            // Prevent toggling when clicking on a button or link inside the footer
+            if (e.target.closest('button') || e.target.closest('a')) return;
             if (footerContainer.classList.contains('active')) {
                 // Collapse the footer to its original height
                 footerContainer.style.height = `${footerHeight}px`;
