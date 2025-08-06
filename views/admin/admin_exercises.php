@@ -56,6 +56,10 @@
                         Kustuta
                     </a>
                     <button class="btn btn-primary save-button" data-id="<?= $exercise['exerciseId'] ?>">Salvesta</button>
+                    <!--
+                    To use the per-user detail view, you need to provide a userId. Example below assumes you have $user['userId'] available in context:
+                    <a href="/views/admin/admin_exercise_detail.php?userId=<?= $user['userId'] ?>" target="_blank" class="btn btn-info ms-2">Vaata</a>
+                    -->
                 </footer>
             </section>
         <?php endforeach; ?>

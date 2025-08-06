@@ -14,8 +14,9 @@
                 <th>Nimi</th>
                 <th>Isikukood</th>
                 <th>Ajakulu</th>
-                    <th>Aega jäänud</th>
+                <th>Aega jäänud</th>
                 <th>Lahendatud ülesanded</th>
+                <th>Detailvaade</th>
             </tr>
             </thead>
             <tbody>
@@ -25,7 +26,7 @@
                     <td><?= $user['userName'] ?></td>
                     <td><?= $user['userPersonalCode'] ?></td>
                     <td><?= $user['userTimeTotal'] ?></td>
-                        <td>
+                    <td>
                         <?php
                             if (!empty($user['userTimeUpAt'])) {
                                 $now = new DateTime();
@@ -39,13 +40,21 @@
                                 } else {
                                     $display = 'Aeg läbi';
                                 }
-                                // Output a span with data attributes for JS
                                 echo '<span class="time-left" data-timeupat="' . htmlspecialchars($user['userTimeUpAt']) . '">' . $display . '</span>';
                             } else {
                                 echo '';
                             }
                         ?>
-                        </td>
+                    </td>
+                    <td><?= $user['userExercisesDone'] ?></td>
+                    <td>
+                        <a href="/views/admin/admin_exercise_detail.php?userId=<?= $user['userId'] ?>" class="btn btn-info btn-sm">Vaata</a>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
 </div>
 <script>
 function updateTimeLeft() {
@@ -70,11 +79,4 @@ function updateTimeLeft() {
 setInterval(updateTimeLeft, 1000);
 window.addEventListener('DOMContentLoaded', updateTimeLeft);
 </script>
-                    <td><?= $user['userExercisesDone'] ?></td>
-                </tr>
-            <?php endforeach; ?>
-            </tbody>
-        </table>
-    </div>
-</div>
 
