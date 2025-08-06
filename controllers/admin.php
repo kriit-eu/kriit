@@ -41,6 +41,7 @@ class admin extends Controller
             userExercises ue ON u.userId = ue.userId AND ue.status = 'completed'
         WHERE
             u.userIsAdmin = 0
+            AND u.groupId IS NULL
         GROUP BY
             u.userId
         ORDER BY
