@@ -2,10 +2,13 @@
 
 use Exception;
 
+
+
 class exercises extends Controller
 {
     public $auth;
     public $template = 'applicant';
+    private $userTimeUpAt;
 
     function __construct($app)
     {
@@ -14,8 +17,8 @@ class exercises extends Controller
             $this->redirect('/');
         }
 
-        $userTimeUpAt = Db::getOne("SELECT userTimeUpAt FROM users WHERE userId={$app->auth->userId}");
-        $this->timeLeft = ($app->auth->userIsAdmin === 1 || $userTimeUpAt === null) ? null : strtotime($userTimeUpAt) - time();
+        $this->userTimeUpAt = Db::getOne("SELECT userTimeUpAt FROM users WHERE userId={$app->auth->userId}");
+        $this->timeLeft = ($app->auth->userIsAdmin === 1 || $this->userTimeUpAt === null) ? null : strtotime($this->userTimeUpAt) - time();
     }
 
     function index()
@@ -142,8 +145,8 @@ class exercises extends Controller
 
     function start()
     {
-        $formattedDateTime = date('Y-m-d H:i:s', strtotime('+1 hour'));
-        Db::update('users', ['userTimeUpAt' => $formattedDateTime], 'userId = ?', [$this->auth->userId]);
+    $formattedDateTime = date('Y-m-d H:i:s', time() + EXERCISES_SESSION_DURATION);
+    Db::update('users', ['userTimeUpAt' => $formattedDateTime], 'userId = ?', [$this->auth->userId]);
         Activity::create(ACTIVITY_START_TIMER, $this->auth->userId);
 
         // Add all exercises for user as not_started if not already present
@@ -270,18 +273,22 @@ class exercises extends Controller
 
     private function calculateAndUpdateTotalTimeSpent($userId): void
     {
-        // Calculate total time spent
-        $startTimer = Db::getOne("
-        SELECT activityLogTimestamp
-        FROM activityLog
-        WHERE userId = ?
-        AND activityId = ?
-        ORDER BY activityLogTimestamp DESC
-        LIMIT 1", [$userId, ACTIVITY_START_TIMER]);
-
-        $spentTimeFormatted = gmdate('H:i:s', time() - strtotime($startTimer));
-
-        // Update user's total time spent
+        // Use class property for userTimeUpAt
+        if (!$this->userTimeUpAt) {
+            // If not set, do not update
+            return;
+        }
+        $userTimeUpAtTs = strtotime($this->userTimeUpAt);
+        $now = time();
+        // Use class constant for session duration
+        $sessionStart = $userTimeUpAtTs - EXERCISES_SESSION_DURATION;
+        // If time is up, use full session duration, else use time so far
+        if ($now >= $userTimeUpAtTs) {
+            $spent = EXERCISES_SESSION_DURATION;
+        } else {
+            $spent = max(0, $now - $sessionStart);
+        }
+        $spentTimeFormatted = gmdate('H:i:s', $spent);
         Db::update('users', ['userTimeTotal' => $spentTimeFormatted], 'userId = ?', [$userId]);
     }
 }
