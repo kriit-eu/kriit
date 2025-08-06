@@ -1,5 +1,5 @@
 <!-- Paste disabled banner (pushes page down, not fixed, always visible at top) -->
-<div id="paste-banner" style="display:none;background:#c00;color:#fff;text-align:center;font-weight:bold;padding:14px 0 14px 0;font-size:1.2em;box-shadow:0 2px 8px rgba(0,0,0,0.08);margin-bottom:18px;">
+<div id="paste-banner" style="display:none;opacity:0;background:#c00;color:#fff;text-align:center;font-weight:bold;padding:14px 0 14px 0;font-size:1.2em;box-shadow:0 2px 8px rgba(0,0,0,0.08);margin-bottom:18px;transition: opacity 0.5s;">
     Kleepimine (paste) on kõigis ülesannetes keelatud. Lõbusat tippimist!
 </div>
 <!-- Main content wrapper -->
@@ -683,9 +683,16 @@
                         if (banner) {
                             // Show as block and add margin to push content
                             banner.style.display = 'block';
+                            // Force reflow to allow transition
+                            void banner.offsetWidth;
+                            banner.style.opacity = '1';
                             clearTimeout(banner._hideTimeout);
                             banner._hideTimeout = setTimeout(function() {
-                                banner.style.display = 'none';
+                                banner.style.opacity = '0';
+                                // Wait for transition to finish before hiding
+                                setTimeout(function() {
+                                    banner.style.display = 'none';
+                                }, 500);
                             }, 3500);
                         }
                         // Clear the marker after 3 seconds
@@ -702,9 +709,14 @@
             var banner = document.getElementById('paste-banner');
             if (banner) {
                 banner.style.display = 'block';
+                void banner.offsetWidth;
+                banner.style.opacity = '1';
                 clearTimeout(banner._hideTimeout);
                 banner._hideTimeout = setTimeout(function() {
-                    banner.style.display = 'none';
+                    banner.style.opacity = '0';
+                    setTimeout(function() {
+                        banner.style.display = 'none';
+                    }, 500);
                 }, 3500);
             }
         }
@@ -713,9 +725,14 @@
             var banner = document.getElementById('paste-banner');
             if (banner) {
                 banner.style.display = 'block';
+                void banner.offsetWidth;
+                banner.style.opacity = '1';
                 clearTimeout(banner._hideTimeout);
                 banner._hideTimeout = setTimeout(function() {
-                    banner.style.display = 'none';
+                    banner.style.opacity = '0';
+                    setTimeout(function() {
+                        banner.style.display = 'none';
+                    }, 500);
                 }, 3500);
             }
         }
