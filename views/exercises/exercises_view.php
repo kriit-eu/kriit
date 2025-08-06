@@ -239,6 +239,16 @@
     }
 
 </style>
+<style>
+    /* Monaco decoration for CSS selectors to match VS Code style (see screenshot) */
+    .css-selector-highlight-yellow {
+        color: #d7ba7d !important; /* VS Code selector color */
+        background: none !important;
+        border: none !important;
+        border-radius: 0 !important;
+        padding: 0 !important;
+    }
+</style>
 
 
 <!-- Include Prism.js CSS -->
@@ -279,13 +289,15 @@
                 editor = monaco.editor.create(document.getElementById('editor'), {
                     value: <?= json_encode($exercise['exerciseInitialCode']) ?>,
                     language: 'html',
-                    theme: 'vs-dark',
+                    theme: 'vs-dark', // Use dark modern theme
                     fontSize: 14,
                     automaticLayout: true,
                     wordWrap: 'on',
                     lineNumbers: 'on',
                     minimap: { enabled: false }
                 });
+                // Ensure theme is set after creation in case Monaco loads default
+                monaco.editor.setTheme('vs-dark');
 
                 // Configure HTML language defaults for better validation
                 monaco.languages.html.htmlDefaults.setOptions({
@@ -312,6 +324,38 @@
                     }
                 });
 
+                // Highlight all CSS selectors in <style> tags as yellow
+                let selectorDecorations = [];
+                function highlightCssSelectors() {
+                    const model = editor.getModel();
+                    const value = model.getValue();
+                    const decorations = [];
+                    // Find <style>...</style> blocks
+                    const styleRegex = /<style[^>]*>([\s\S]*?)<\/style>/gi;
+                    let styleMatch;
+                    while ((styleMatch = styleRegex.exec(value)) !== null) {
+                        const styleBlock = styleMatch[1];
+                        // Find selectors (naive: match anything before {, skip @rules)
+                        let offset = styleMatch.index + styleMatch[0].indexOf(styleBlock);
+                        const selectorRegex = /(^|\n)\s*([^@\n{}][^{}]*)\s*\{/g;
+                        let selMatch;
+                        while ((selMatch = selectorRegex.exec(styleBlock)) !== null) {
+                            const selectorText = selMatch[2];
+                            // Calculate start/end in model
+                            const before = value.slice(0, offset + selMatch.index + selMatch[0].indexOf(selectorText));
+                            const startLine = before.split('\n').length;
+                            const startCol = before.length - before.lastIndexOf('\n');
+                            decorations.push({
+                                range: new monaco.Range(startLine, startCol, startLine, startCol + selectorText.length),
+                                options: {
+                                    inlineClassName: 'css-selector-highlight-yellow'
+                                }
+                            });
+                        }
+                    }
+                    selectorDecorations = editor.deltaDecorations(selectorDecorations, decorations);
+                }
+
                 // Set up change listeners
                 editor.onDidChangeModelContent(async function() {
                     updatePreview();
@@ -329,7 +373,11 @@
                         }));
                         monaco.editor.setModelMarkers(editor.getModel(), 'html-validate', markers);
                     }
+                    highlightCssSelectors();
                 });
+
+                // Initial highlight after editor creation
+                setTimeout(highlightCssSelectors, 100);
 
                 // Initialize Emmet for HTML
                 if (typeof emmetMonaco !== 'undefined') {
