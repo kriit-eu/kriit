@@ -262,6 +262,9 @@
 <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs/loader.js"></script>
 <!-- Include Emmet for Monaco Editor -->
 <script src="https://unpkg.com/emmet-monaco-es@5.5.0/dist/emmet-monaco.min.js"></script>
+<!-- Include CSSLint (local bundle) and bridge -->
+<script src="/assets/js/csslint.js"></script>
+<script src="/assets/js/csslint-cdn-bridge.js"></script>
 <script>
     let editor;
 
@@ -356,6 +359,7 @@
                     selectorDecorations = editor.deltaDecorations(selectorDecorations, decorations);
                 }
 
+
                 // Set up change listeners
                 editor.onDidChangeModelContent(async function() {
                     updatePreview();
@@ -372,6 +376,52 @@
                             severity: monaco.MarkerSeverity.Error
                         }));
                         monaco.editor.setModelMarkers(editor.getModel(), 'html-validate', markers);
+                    }
+                    // CSS validation for <style> tags using CSSLint
+                    if (window.CSSLint) {
+                        const value = editor.getValue();
+                        const styleRegex = /<style[^>]*>([\s\S]*?)<\/style>/gi;
+                        let styleMatch;
+                        let cssMarkers = [];
+                        while ((styleMatch = styleRegex.exec(value)) !== null) {
+                            const css = styleMatch[1];
+                            const styleBlockStart = styleMatch.index + styleMatch[0].indexOf(css);
+                            
+                            // Run CSSLint
+                            const result = window.CSSLint.verify(css);
+                            for (const msg of result.messages) {
+                                if (msg.line && msg.col) {
+                                    // Find the exact position in the HTML document
+                                    const cssLines = css.split('\n');
+                                    const errorLine = cssLines[msg.line - 1] || '';
+                                    
+                                    // Calculate HTML position
+                                    const beforeErrorLine = css.split('\n').slice(0, msg.line - 1).join('\n');
+                                    const errorPositionInCss = beforeErrorLine.length + (beforeErrorLine ? 1 : 0) + (msg.col - 1);
+                                    const absolutePosition = styleBlockStart + errorPositionInCss;
+                                    
+                                    // Convert to line/column in HTML
+                                    const beforeError = value.slice(0, absolutePosition);
+                                    const htmlLine = beforeError.split('\n').length;
+                                    const htmlCol = absolutePosition - beforeError.lastIndexOf('\n');
+                                    
+                                    // Try to find the actual broken word/token for better highlighting
+                                    const errorText = errorLine.slice(msg.col - 1);
+                                    const wordMatch = errorText.match(/^[a-zA-Z0-9-_]+/);
+                                    const errorLength = wordMatch ? wordMatch[0].length : 1;
+                                    
+                                    cssMarkers.push({
+                                        startLineNumber: htmlLine,
+                                        startColumn: htmlCol,
+                                        endLineNumber: htmlLine,
+                                        endColumn: htmlCol + errorLength,
+                                        message: `CSS: ${msg.message}`,
+                                        severity: msg.type === 'error' ? monaco.MarkerSeverity.Error : monaco.MarkerSeverity.Warning
+                                    });
+                                }
+                            }
+                        }
+                        monaco.editor.setModelMarkers(editor.getModel(), 'csslint', cssMarkers);
                     }
                     highlightCssSelectors();
                 });
