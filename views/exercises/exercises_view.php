@@ -535,6 +535,46 @@
                     }
                 });
 
+                // Set up change listeners immediately after editor creation
+                let hasUserEdited = false; // Flag to prevent style hack from interfering with first edit
+
+                editor.onDidChangeModelContent(function() {
+                    hasUserEdited = true;
+                    updatePreview();
+                });
+
+                // 6. Add live code validation and hints
+                editor.onDidChangeModelContent(function() {
+                    setTimeout(() => {
+                        const model = editor.getModel();
+                        const content = model.getValue();
+                        const markers = [];
+                        // Basic HTML validation
+                        if (content.includes('<script>') && !content.includes('<\/script>')) {
+                            markers.push({
+                                startLineNumber: 1,
+                                startColumn: 1,
+                                endLineNumber: 1,
+                                endColumn: 1,
+                                message: 'Unclosed script tag detected',
+                                severity: monaco.MarkerSeverity.Warning
+                            });
+                        }
+                        // Check for common mistakes
+                        if (content.includes('<img') && !content.includes('alt=')) {
+                            markers.push({
+                                startLineNumber: 1,
+                                startColumn: 1,
+                                endLineNumber: 1,
+                                endColumn: 1,
+                                message: 'Consider adding alt attribute to images for accessibility',
+                                severity: monaco.MarkerSeverity.Info
+                            });
+                        }
+                        monaco.editor.setModelMarkers(model, 'html-validation', markers);
+                    }, 500);
+                });
+
                 // Add CSS to remove underlines after Monaco is fully loaded
                 setTimeout(() => {
                     const style = document.createElement('style');
@@ -652,11 +692,31 @@
                                 el.style.setProperty('text-underline-position', 'initial', 'important');
                             });
                             
-                            // Trigger a content refresh to apply changes
-                            const currentValue = editor.getValue();
-                            editor.setValue(currentValue);
+                            // Force layout refresh without disrupting content
+                            editor.layout();
                         }
                     }, 100);
+                    
+                    // Apply styles immediately after style injection, but only if user hasn't edited yet
+                    setTimeout(() => {
+                        if (!hasUserEdited) {
+                            const currentValue = editor.getValue();
+                            // Save selection and scroll state
+                            const selection = editor.getSelection();
+                            const scrollTop = editor.getScrollTop();
+                            const scrollLeft = editor.getScrollLeft();
+                            isReverting = true; // Prevent this from triggering paste detection
+                            editor.setValue(currentValue);
+                            // Restore selection and scroll state
+                            if (selection) editor.setSelection(selection);
+                            editor.setScrollTop(scrollTop);
+                            editor.setScrollLeft(scrollLeft);
+                            setTimeout(() => {
+                                isReverting = false;
+                                lastContent = editor.getValue(); // Reset baseline
+                            }, 100);
+                        }
+                    }, 50);
                 }, 1000);
 
                 // Robustly disable ALL paste (keyboard, context menu, etc)
@@ -819,127 +879,6 @@
                         return Promise.reject(new Error('Clipboard access blocked'));
                     };
                 }
-
-                // 5. Intelligent content monitoring with advanced detection
-                let lastContent = editor.getValue();
-                let lastChangeTime = Date.now();
-                let isReverting = false; // Flag to prevent infinite loop
-                
-                editor.onDidChangeModelContent(function(e) {
-                    // Skip processing if we're currently reverting
-                    if (isReverting) {
-                        return;
-                    }
-                    
-                    const currentTime = Date.now();
-                    const timeDiff = currentTime - lastChangeTime;
-                    const currentContent = editor.getValue();
-                    
-                    // Advanced paste detection algorithms
-                    const changes = e.changes;
-                    let suspiciousActivity = false;
-                    
-                    for (let change of changes) {
-                        // Skip detection for single character changes (like Enter key)
-                        if (change.text.length <= 1) {
-                            continue;
-                        }
-                        
-                        // Skip detection for auto-formatting changes (Enter + indentation)
-                        if (change.text.includes('\n') && change.text.length < 10) {
-                            continue;
-                        }
-                        
-                        // Detect large text insertions (potential paste)
-                        if (change.text.length > 50) {
-                            suspiciousActivity = true;
-                            break;
-                        }
-                        
-                        // Detect multiple rapid changes (potential paste) - but allow short formatting
-                        if (timeDiff < 100 && change.text.length > 20) {
-                            suspiciousActivity = true;
-                            break;
-                        }
-                        
-                        // Detect formatted content (potential paste from rich sources) - be more lenient
-                        if (change.text.includes('\t\t\t') || change.text.includes('        ')) {
-                            const indentCount = (change.text.match(/\t\t\t/g) || []).length + 
-                                              (change.text.match(/        /g) || []).length;
-                            if (indentCount > 2) {
-                                suspiciousActivity = true;
-                                break;
-                            }
-                        }
-                    }
-                    
-                    if (suspiciousActivity) {
-                        console.log('Suspicious paste activity detected, reverting');
-                        
-                        // Set flag to prevent infinite loop
-                        isReverting = true;
-                        
-                        // Revert to last content
-                        editor.setValue(lastContent);
-                        
-                        // Show notification
-                        monaco.editor.setModelMarkers(editor.getModel(), 'paste-detected', [{
-                            startLineNumber: 1,
-                            startColumn: 1,
-                            endLineNumber: 1,
-                            endColumn: 1,
-                            message: 'Large text insertion detected and reverted. Please type your code manually.',
-                            severity: monaco.MarkerSeverity.Warning
-                        }]);
-                        
-                        setTimeout(() => {
-                            monaco.editor.setModelMarkers(editor.getModel(), 'paste-detected', []);
-                            // Reset flag after revert is complete
-                            isReverting = false;
-                        }, 5000);
-                        
-                        return;
-                    }
-                    
-                    lastContent = currentContent;
-                    lastChangeTime = currentTime;
-                    updatePreview();
-                });
-
-                // 6. Add live code validation and hints
-                editor.onDidChangeModelContent(function() {
-                    setTimeout(() => {
-                        const model = editor.getModel();
-                        const content = model.getValue();
-                        const markers = [];
-                        
-                        // Basic HTML validation
-                        if (content.includes('<script>') && !content.includes('<\/script>')) {
-                            markers.push({
-                                startLineNumber: 1,
-                                startColumn: 1,
-                                endLineNumber: 1,
-                                endColumn: 1,
-                                message: 'Unclosed script tag detected',
-                                severity: monaco.MarkerSeverity.Warning
-                            });
-                        }
-                        
-                        // Check for common mistakes
-                        if (content.includes('<img') && !content.includes('alt=')) {
-                            markers.push({
-                                startLineNumber: 1,
-                                startColumn: 1,
-                                endLineNumber: 1,
-                                endColumn: 1,
-                                message: 'Consider adding alt attribute to images for accessibility',
-                                severity: monaco.MarkerSeverity.Info
-                            });
-                        }
-                        
-                        monaco.editor.setModelMarkers(model, 'html-validation', markers);
-                    }, 500);
-                });
 
                 // Enhanced Debug: Comprehensive Monaco styling inspection
                 setTimeout(() => {
