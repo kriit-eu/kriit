@@ -32,6 +32,15 @@ if (isset($exercises) && is_array($exercises)) {
                 </tr>
             </thead>
             <tbody>
+            <?php
+            if (!function_exists('fuzzy_time_et')) {
+                function fuzzy_time_et($seconds) {
+                    if ($seconds < 60) return $seconds . ' sek';
+                    $minutes = floor($seconds / 60);
+                    return $minutes . ' min';
+                }
+            }
+            ?>
             <?php foreach ($exercises as $exercise): ?>
                 <tr data-href="exercises/<?= $exercise['exerciseId'] ?>">
                     <td><?= $exercise['exerciseName'] ?></td>
@@ -48,7 +57,7 @@ if (isset($exercises) && is_array($exercises)) {
                             // DEBUG: Output startTime and startTimestamp
                             echo "<!-- startTime: {$exercise['startTime']} | startTimestamp: {$startTimestamp} | now: ".time()." -->\n";
                             $elapsed = time() - $startTimestamp;
-                            $timerText = gmdate("i:s", $elapsed);
+                            $timerText = fuzzy_time_et($elapsed);
                             $timerData = $startTimestamp; // pass startTime as timestamp
                         } elseif (
                             $exercise['status'] === 'completed'
@@ -58,17 +67,17 @@ if (isset($exercises) && is_array($exercises)) {
                             && ($endTimestamp = strtotime($exercise['endTime'])) !== false
                         ) {
                             $elapsed = $endTimestamp - $startTimestamp;
-                            $timerText = gmdate("i:s", $elapsed);
+                            $timerText = fuzzy_time_et($elapsed);
                             $timerData = 'static'; // completed: static timer
                         }
                         ?>
                         <?php if ($exercise['status'] === 'completed'): ?>
-                            <span class="timer" data-time="static" style="min-width:48px; display:inline-block; text-align:left;">
+                            <span class="timer" data-time="static" style="min-width:48px; display:inline-block; text-align:left; font-weight:bold;">
                                 <?= htmlspecialchars($timerText) ?>&nbsp;
                             </span>
                         <?php elseif ($exercise['status'] === 'started'): ?>
-                            <span class="timer<?= ($elapsed !== null && $elapsed >= 300 ? ' overdue' : '') ?>" data-start="<?= htmlspecialchars($timerData) ?>" style="min-width:48px; display:inline-block; text-align:left;">
-                                <?= htmlspecialchars($timerText) ?>&nbsp;
+                            <span class="timer<?= ($elapsed !== null && $elapsed >= 300 ? ' overdue' : '') ?>" data-start="<?= htmlspecialchars($timerData) ?>" style="min-width:48px; display:inline-block; text-align:left; font-weight:normal;">
+                                <?= htmlspecialchars($timerText) ?>…&nbsp;
                             </span>
                         <?php else: ?>
                             <!-- No timer for not started -->
@@ -92,21 +101,29 @@ if (isset($exercises) && is_array($exercises)) {
 </div>
 
 <script>
+    function fuzzyTimeEt(seconds) {
+        if (seconds < 60) return seconds + ' sek';
+        const minutes = Math.floor(seconds / 60);
+        return minutes + ' min';
+    }
+
+    function fuzzyTimeEtWithEllipsis(seconds) {
+        return fuzzyTimeEt(seconds) + '…';
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         // Per-exercise timers (count up only for started)
         document.querySelectorAll('.timer[data-start]').forEach(timer => {
             const startTimestamp = parseInt(timer.getAttribute('data-start'), 10);
             if (isNaN(startTimestamp) || startTimestamp <= 0) {
-                timer.textContent = '00:00';
+                timer.textContent = 'alla minuti…';
                 timer.classList.remove('overdue');
                 return;
             }
             function updateTimer() {
                 const now = Math.floor(Date.now() / 1000);
                 const elapsed = now - startTimestamp;
-                const minutes = Math.floor(elapsed / 60);
-                const seconds = elapsed % 60;
-                timer.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                timer.textContent = fuzzyTimeEtWithEllipsis(elapsed);
                 if (elapsed >= 300) {
                     timer.classList.add('overdue');
                 } else {
