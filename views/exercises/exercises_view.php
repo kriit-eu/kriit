@@ -1,3 +1,7 @@
+<!-- Paste disabled banner (pushes page down, not fixed, always visible at top) -->
+<div id="paste-banner" style="display:none;background:#c00;color:#fff;text-align:center;font-weight:bold;padding:14px 0 14px 0;font-size:1.2em;box-shadow:0 2px 8px rgba(0,0,0,0.08);margin-bottom:18px;">
+    Kleepimine (paste) on kõigis ülesannetes keelatud. Lõbusat tippimist!
+</div>
 <!-- Main content wrapper -->
 <div class="codecademy-ui d-flex flex-column h-100">
     <!-- Top panel for small screens -->
@@ -674,15 +678,48 @@
                             message: 'Paste operation is disabled for this exercise',
                             severity: monaco.MarkerSeverity.Info
                         }]);
-                        
+                        // Show paste disabled banner
+                        var banner = document.getElementById('paste-banner');
+                        if (banner) {
+                            // Show as block and add margin to push content
+                            banner.style.display = 'block';
+                            clearTimeout(banner._hideTimeout);
+                            banner._hideTimeout = setTimeout(function() {
+                                banner.style.display = 'none';
+                            }, 3500);
+                        }
                         // Clear the marker after 3 seconds
                         setTimeout(() => {
                             monaco.editor.setModelMarkers(editor.getModel(), 'paste-blocked', []);
                         }, 3000);
-                        
                         return null;
                     }
                 });
+    // Show paste banner on global Ctrl+V or Shift+Insert
+    document.addEventListener('keydown', function(e) {
+        // Ctrl+V or Cmd+V
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
+            var banner = document.getElementById('paste-banner');
+            if (banner) {
+                banner.style.display = 'block';
+                clearTimeout(banner._hideTimeout);
+                banner._hideTimeout = setTimeout(function() {
+                    banner.style.display = 'none';
+                }, 3500);
+            }
+        }
+        // Shift+Insert
+        if (e.shiftKey && e.key === 'Insert') {
+            var banner = document.getElementById('paste-banner');
+            if (banner) {
+                banner.style.display = 'block';
+                clearTimeout(banner._hideTimeout);
+                banner._hideTimeout = setTimeout(function() {
+                    banner.style.display = 'none';
+                }, 3500);
+            }
+        }
+    }, true);
 
                 // 2. Add helpful shortcuts and commands
                 editor.addAction({
@@ -719,6 +756,15 @@
                         e.preventDefault();
                         e.stopPropagation();
                         e.stopImmediatePropagation();
+                        // Show paste disabled banner
+                        var banner = document.getElementById('paste-banner');
+                        if (banner) {
+                            banner.style.display = 'block';
+                            clearTimeout(banner._hideTimeout);
+                            banner._hideTimeout = setTimeout(function() {
+                                banner.style.display = 'none';
+                            }, 3500);
+                        }
                         return false;
                     }, true);
 
