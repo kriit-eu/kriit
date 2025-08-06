@@ -93,7 +93,7 @@ $progress = App\Db::getAll('
                             <?php
                             if ($row['startedAt']) {
                                 $dt = new DateTime($row['startedAt']);
-                                echo $dt->format('d.m.Y H:i:s');
+                                echo '<strong>' . $dt->format('d.m.Y H:i:s') . '</strong>';
                             } else {
                                 echo '<span class="text-muted">-</span>';
                             }
@@ -103,7 +103,7 @@ $progress = App\Db::getAll('
                             <?php
                             if ($row['status'] === 'completed' && $row['completedAt']) {
                                 $dt = new DateTime($row['completedAt']);
-                                echo $dt->format('d.m.Y H:i:s');
+                                echo '<strong>' . $dt->format('d.m.Y H:i:s') . '</strong>';
                             } else {
                                 echo '<span class="text-muted">-</span>';
                             }

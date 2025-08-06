@@ -92,6 +92,10 @@
 </div>
 
 <style>
+    /* Lower Monaco scrollbar z-index so footer overlays it */
+    .monaco-scrollable-element {
+        z-index: 1 !important;
+    }
     html, body, #container {
         height: 100%;
         margin: 0;
@@ -164,7 +168,7 @@
         bottom: 0;
         left: 0;
         width: 100%;
-        z-index: 10;
+        z-index: 100;
         background-color: #f1f1f1;
         border-top: 1px solid #ccc;
         height: 60px; /* Only footer visible by default */
@@ -261,6 +265,16 @@
             });
 
             require(['vs/editor/editor.main'], function() {
+                // Load html-validate bundle for browser
+                const htmlValidateScript = document.createElement('script');
+                htmlValidateScript.src = '/assets/js/html-validate-cdn-bridge.bundle.js';
+                htmlValidateScript.onload = () => {
+                    window.htmlValidateInstance = new window.htmlValidate({
+                        extends: ["html-validate:recommended"],
+                        elements: ["html5"]
+                    });
+                };
+                document.head.appendChild(htmlValidateScript);
                 // Create Monaco Editor instance with basic configuration
                 editor = monaco.editor.create(document.getElementById('editor'), {
                     value: <?= json_encode($exercise['exerciseInitialCode']) ?>,
@@ -273,9 +287,48 @@
                     minimap: { enabled: false }
                 });
 
+                // Configure HTML language defaults for better validation
+                monaco.languages.html.htmlDefaults.setOptions({
+                    validate: true,
+                    lint: {
+                        compatibleVendorPrefixes: 'ignore',
+                        vendorPrefix: 'warning',
+                        duplicateProperties: 'warning',
+                        emptyRules: 'warning',
+                        importStatement: 'ignore',
+                        boxModel: 'ignore',
+                        universalSelector: 'ignore',
+                        zeroUnits: 'ignore',
+                        fontFaceProperties: 'warning',
+                        hexColorLength: 'error',
+                        argumentsInColorFunction: 'error',
+                        unknownProperties: 'warning',
+                        ieHack: 'ignore',
+                        unknownVendorSpecificProperties: 'ignore',
+                        propertyIgnoredDueToDisplay: 'warning',
+                        important: 'ignore',
+                        float: 'ignore',
+                        idSelector: 'ignore'
+                    }
+                });
+
                 // Set up change listeners
-                editor.onDidChangeModelContent(function() {
+                editor.onDidChangeModelContent(async function() {
                     updatePreview();
+                    // Use html-validate for robust HTML validation
+                    if (window.htmlValidateInstance) {
+                        const value = editor.getValue();
+                        const report = await window.htmlValidateInstance.validateString(value);
+                        const markers = (report.results[0]?.messages || []).map(msg => ({
+                            startLineNumber: msg.line,
+                            startColumn: msg.column,
+                            endLineNumber: msg.line,
+                            endColumn: msg.column + 1,
+                            message: msg.message,
+                            severity: monaco.MarkerSeverity.Error
+                        }));
+                        monaco.editor.setModelMarkers(editor.getModel(), 'html-validate', markers);
+                    }
                 });
 
                 // Initialize Emmet for HTML
@@ -285,6 +338,11 @@
                 } else {
                     console.warn('Emmet library not loaded');
                 }
+
+                // Set up change listeners
+                editor.onDidChangeModelContent(function() {
+                    updatePreview();
+                });
 
                 // Disable paste functionality
                 editor.addAction({
