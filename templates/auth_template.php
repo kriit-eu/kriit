@@ -43,7 +43,7 @@
 </style>
 
 <div class="container">
-    <h2 class="ui header">Tere tulemast Viljandi Kutseõppekeskuse</h2>
+    <h2 class="ui header">Tere tulemast Viljandi Kutseõppekeskusesse</h2>
 
     <?php if (isset($errors)) {
         foreach ($errors as $error): ?>
