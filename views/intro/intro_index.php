@@ -93,13 +93,10 @@
         window.location.href = 'intro/cssCourse'
     })
 
-    // Navigate to exercises/ on submit
+    // Navigate to confirmation page on submit
     $('#submitButton').click(function (e) {
         e.preventDefault();
-        ajax("exercises/start", {}, () => {
-
-            window.location.href = 'exercises/1'
-        })
+        window.location.href = 'intro/confirm';
     })
 
 </script>
