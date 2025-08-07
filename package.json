@@ -24,7 +24,8 @@
     "build:force": "bun scripts/force-rebuild.js",
     "build:clean": "bun scripts/clean-build.js",
     "checksums:reset": "rm -f .docker-checksums.json && echo 'Docker checksums reset. Next start will rebuild all images.'",
-    "prepare": "husky"
+    "prepare": "husky",
+    "import:users": "bun run compose exec app php scripts/user_import/add_users_by_idcode.php scripts/user_import/idcodes.txt"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^6.7.2",
