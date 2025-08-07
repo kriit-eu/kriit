@@ -136,18 +136,11 @@ class exercises extends Controller
             exit;
         }
 
-        // Render the timeout view for normal requests
-        $this->render('exercises_timeup');
-
-        // Flush output so browser gets the page before session is destroyed
-        if (function_exists('fastcgi_finish_request')) {
-            fastcgi_finish_request();
-        } else {
-            @ob_flush();
-            @flush();
-        }
-        sleep(5);
-        session_destroy();
+    // For normal requests, let master template include the view file
+    // Do NOT call render here; prevents duplicate content
+    return;
+    // Do NOT destroy session here; allow all tabs to show timeup page
+    // If you want to destroy session, do it after user leaves timeup page (e.g. via logout or button)
     }
 
     function congratulations()

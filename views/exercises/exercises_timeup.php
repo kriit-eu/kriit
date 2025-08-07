@@ -9,6 +9,6 @@
 </div>
 <script>
     document.querySelector('.btn-success').addEventListener('click', () => {
-        window.location.href = '';
+        window.location.href = '/logout';
     });
 </script>

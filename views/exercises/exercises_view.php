@@ -689,20 +689,49 @@
         setInterval(updateTimer, 1000);
 
         // Periodically poll backend for time status
+        let timeupRedirected = false;
+        let timeupInterval = null;
         function checkTimeUp() {
+            if (timeupRedirected) return;
             var xhr = new XMLHttpRequest();
             xhr.open('GET', 'exercises/timeup?ajax=1', true);
             xhr.onreadystatechange = function() {
                 if (xhr.readyState === 4 && xhr.status === 200) {
                     // If backend returns a special header or JSON, redirect
                     if (xhr.responseText && xhr.responseText.indexOf('TIMEUP') !== -1) {
-                        window.location.href = 'exercises/timeup';
+                        // Set localStorage flag so all tabs know time is up
+                        try {
+                            localStorage.setItem('exercises_timeup', '1');
+                        } catch (e) {}
+                        timeupRedirected = true;
+                        if (timeupInterval) clearInterval(timeupInterval);
+                        window.removeEventListener('storage', timeupStorageListener);
+                        window.location.href = '/exercises/timeup';
                     }
                 }
             };
             xhr.send();
         }
-        setInterval(checkTimeUp, 2000); // Check every 2 seconds
+        timeupInterval = setInterval(checkTimeUp, 2000); // Check every 2 seconds
+
+        function timeupStorageListener(e) {
+            if (e.key === 'exercises_timeup' && e.newValue === '1' && !timeupRedirected) {
+                timeupRedirected = true;
+                if (timeupInterval) clearInterval(timeupInterval);
+                window.removeEventListener('storage', timeupStorageListener);
+                window.location.href = '/exercises/timeup';
+            }
+        }
+        window.addEventListener('storage', timeupStorageListener);
+
+        // On page load, check if timeup flag is already set
+        if (localStorage.getItem('exercises_timeup') === '1' && !timeupRedirected) {
+            timeupRedirected = true;
+            if (timeupInterval) clearInterval(timeupInterval);
+            window.removeEventListener('storage', timeupStorageListener);
+            localStorage.removeItem('exercises_timeup');
+            window.location.href = '/exercises/timeup';
+        }
     });
 
     // Reinitialize editor when window is resized
