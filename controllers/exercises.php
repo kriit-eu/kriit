@@ -130,7 +130,23 @@ class exercises extends Controller
         Activity::create(ACTIVITY_TIME_UP, $this->auth->userId);
         $this->calculateAndUpdateTotalTimeSpent($this->auth->userId);
 
-        $userId = $_SESSION['userId'];
+        // AJAX check for timeout (used by polling JS)
+        if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
+            echo 'TIMEUP';
+            exit;
+        }
+
+        // Render the timeout view for normal requests
+        $this->render('exercises_timeup');
+
+        // Flush output so browser gets the page before session is destroyed
+        if (function_exists('fastcgi_finish_request')) {
+            fastcgi_finish_request();
+        } else {
+            @ob_flush();
+            @flush();
+        }
+        sleep(5);
         session_destroy();
     }
 

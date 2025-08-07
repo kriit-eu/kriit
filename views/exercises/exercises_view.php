@@ -622,6 +622,7 @@
         validationDoc.close();
     }
 
+
     // Initialize things when the DOM is fully loaded
     document.addEventListener('DOMContentLoaded', function () {
         initEditor();
@@ -654,8 +655,8 @@
         });
 
         // Timer logic (count up)
-    const timerElement = document.getElementById('timer');
-    const timerLabelGroup = document.getElementById('timer-label-group');
+        const timerElement = document.getElementById('timer');
+        const timerLabelGroup = document.getElementById('timer-label-group');
         let elapsed = <?= $this->elapsedTime ?? 0 ?>;
         function updateTimer() {
             const minutes = Math.floor(elapsed / 60);
@@ -686,6 +687,22 @@
             timerElement.classList.remove('overdue');
         }
         setInterval(updateTimer, 1000);
+
+        // Periodically poll backend for time status
+        function checkTimeUp() {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', 'exercises/timeup?ajax=1', true);
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    // If backend returns a special header or JSON, redirect
+                    if (xhr.responseText && xhr.responseText.indexOf('TIMEUP') !== -1) {
+                        window.location.href = 'exercises/timeup';
+                    }
+                }
+            };
+            xhr.send();
+        }
+        setInterval(checkTimeUp, 2000); // Check every 2 seconds
     });
 
     // Reinitialize editor when window is resized
