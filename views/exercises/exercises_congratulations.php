@@ -1,3 +1,4 @@
+
 <?php
 require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../classes/App/Db.php';
@@ -31,3 +32,7 @@ if ($completedExercises < $totalExercises) {
         window.location.href = '';
     });
 </script>
+<?php
+// Destroy session after showing congratulations page ONLY if all exercises are completed
+session_destroy();
+?>

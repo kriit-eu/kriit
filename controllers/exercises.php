@@ -139,7 +139,6 @@ class exercises extends Controller
         $userId = $_SESSION['userId'];
         $this->solvedExercisesCount = Db::getOne("SELECT COUNT(*) FROM userExercises WHERE userId = ? AND status = 'completed'", [$userId]);
 
-        session_destroy();
         Activity::create(ACTIVITY_LOGOUT, $userId);
     }
 
