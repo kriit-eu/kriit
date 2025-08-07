@@ -34,10 +34,17 @@
     </li>
 </ul>
 
-<button type="button" id="confirmButton" class="btn btn-primary" disabled>Kinnitan et olen reeglitega tutvunud</button>
+<button type="button" id="backButton" class="btn btn-secondary">Tagasi</button>
+<button type="button" id="confirmButton" class="btn btn-primary" style="margin-left: 1em;" disabled>Alusta</button>
 <div id="errorMsg" class="text-danger mt-2" style="display:none;"></div>
 
+<div style="height: 4em;"></div>
+
 <script>
+    // Back button handler
+    document.getElementById('backButton').onclick = function() {
+        window.location.href = 'intro';
+    };
     // Keywords for validation
     const keywords = {
         'input-reeglid-60': '60 minutit',
@@ -58,17 +65,39 @@
     function validateInputs() {
         let allValid = true;
         for (const [id, keyword] of Object.entries(keywords)) {
-            const val = normalize(document.getElementById(id).value);
+            const input = document.getElementById(id);
+            const val = normalize(input.value);
             if (!val.includes(keyword.toLowerCase())) {
                 allValid = false;
-                break;
             }
         }
         document.getElementById('confirmButton').disabled = !allValid;
     }
 
     for (const id of Object.keys(keywords)) {
-        document.getElementById(id).addEventListener('input', validateInputs);
+        const input = document.getElementById(id);
+        input.addEventListener('input', function(e) {
+            validateInputs();
+            const val = normalize(input.value);
+            if (val === keywords[id].toLowerCase()) {
+                input.style.border = '2px solid green';
+            } else {
+                input.style.border = '';
+            }
+        });
+        input.addEventListener('blur', function() {
+            const val = normalize(input.value);
+            if (val === keywords[id].toLowerCase()) {
+                input.style.border = '2px solid green';
+            } else if (!val.includes(keywords[id].toLowerCase())) {
+                input.style.border = '2px solid red';
+            } else {
+                input.style.border = '';
+            }
+        });
+        input.addEventListener('focus', function() {
+            input.style.border = '';
+        });
     }
 
     // Confirmation button handler

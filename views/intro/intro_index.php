@@ -63,7 +63,7 @@
     <br>
     <br>
     <p>Soovime teile edu katsetel!</p>
-    <button type="button" id="submitButton" class="btn btn-primary" disabled>Alusta</button>
+    <button type="button" id="submitButton" class="btn btn-primary" disabled>Kinnitan et olen reeglitega tutvunud</button>
 
 </div>
 
