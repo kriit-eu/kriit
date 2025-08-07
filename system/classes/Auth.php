@@ -123,10 +123,9 @@ class Auth
         $this->load_user_data($user);
 
         // Implement Post-Redirect-Get pattern to prevent form resubmission issues
-        $redirect_url = $_SESSION['redirect'] ?? 'intro';
-        unset($_SESSION['redirect']);
-        header("Location: " . BASE_URL . $redirect_url);
-        exit();
+    // Always redirect to /exercises after login
+    header("Location: " . BASE_URL . 'exercises');
+    exit();
     }
 
     /**
