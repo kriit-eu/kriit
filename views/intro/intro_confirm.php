@@ -12,13 +12,21 @@
         -moz-appearance: none;
         background-color: #fff;
         border-radius: 4px;
-        border: 2px solid #ced4da; /* Always 2px, only color changes */
-        transition: border-color 0.2s;
+        border: 2px solid #ced4da;
+        margin: 0.1em 0.1em 0.1em 0.1em;
+        vertical-align: middle;
+    }
+    li {
+        margin-bottom: 0.2em;
+    }
+    ul {
+        margin-bottom: 0.2em;
+    }
+    p {
+        margin-bottom: 0.2em;
     }
     select.form-control:focus {
         outline: none;
-        border-color: #80bdff;
-        box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
     }
     select.form-control option {
         font-size: 1rem;
@@ -143,18 +151,17 @@
     };
     // Keywords for validation
     const keywords = {
-        'input-reeglid-60': '60',
-        'input-reeglid-koostoo': 'Keelatud',
-        'input-reeglid-voite': 'võite',
-        'input-punkt-60': '60',
-        'input-punkt-pingereas': 'eespool',
-        'input-punkt-eespool': 'eespool',
-        'input-punkt-kiirem': 'kiirem',
-        'input-soov-kiiremate': 'kiiremate',
-        'input-soov-vaheldus': 'vaheldus',
-        'input-soov-tekkida': 'tekkida',
-        'input-html-css': 'HTML ja CSS',
-        'input-html-css-experience': 'HTML-i või CSS-iga',
+    'input-reeglid-60': '60',
+    'input-reeglid-koostoo': 'Keelatud',
+    'input-reeglid-voite': 'võite',
+    'input-punkt-60': '60',
+    'input-punkt-pingereas': 'eespool',
+    'input-punkt-eespool': 'eespool',
+    'input-punkt-kiirem': 'kiirem',
+    'input-soov-kiiremate': 'kiiremate',
+    'input-soov-vaheldus': 'vaheldus',
+    'input-soov-tekkida': 'tekkida',
+    'input-html-css': 'HTML ja CSS',
     };
 
     // Dropdown options for each select
@@ -259,71 +266,30 @@
                 }
                 input.addEventListener('change', function(e) {
                     validateInputs();
-                    let isCorrect = false;
-                    if (id === 'input-html-css') {
-                        isCorrect = (input.value === 'HTML ja CSS');
-                    } else if (id === 'input-html-css-experience') {
-                        isCorrect = (input.value === 'HTML-i või CSS-iga');
-                    } else {
-                        isCorrect = (input.value === keywords[id]);
-                    }
-                    if (isCorrect) {
-                        input.style.border = '2px solid green';
-                    } else if (input.value === '') {
-                        input.style.border = '';
-                    } else {
-                        input.style.border = '2px solid red';
-                    }
                     updateBoldSelect();
                 });
                 input.addEventListener('blur', function() {
-                    let isCorrect = false;
-                    if (id === 'input-html-css') {
-                        isCorrect = (input.value === 'HTML ja CSS');
-                    } else if (id === 'input-html-css-experience') {
-                        isCorrect = (input.value === 'HTML-i või CSS-iga');
-                    } else {
-                        isCorrect = (input.value === keywords[id]);
-                    }
-                    if (isCorrect) {
-                        input.style.border = '2px solid green';
-                    } else if (input.value === '') {
-                        input.style.border = '';
-                    } else {
-                        input.style.border = '2px solid red';
-                    }
                     updateBoldSelect();
                 });
                 input.addEventListener('focus', function() {
-                    input.style.border = '';
+                    // No border change
                 });
                 // Initial bold state
                 updateBoldSelect();
             } else {
                 input.addEventListener('input', function(e) {
                     validateInputs();
-                    const val = normalize(input.value);
-                    if (val === keywords[id].toLowerCase()) {
-                        input.style.border = '2px solid green';
-                    } else {
-                        input.style.border = '';
-                    }
                 });
                 input.addEventListener('blur', function() {
-                    const val = normalize(input.value);
-                    if (val === keywords[id].toLowerCase()) {
-                        input.style.border = '2px solid green';
-                    } else if (!val.includes(keywords[id].toLowerCase())) {
-                        input.style.border = '2px solid red';
-                    } else {
-                        input.style.border = '';
-                    }
+                    // No border change
                 });
                 input.addEventListener('focus', function() {
-                    input.style.border = '';
+                    // No border change
                 });
             }
         }
+        // Ensure button state is correct after setup
+        validateInputs();
     });
 
     // Confirmation button handler
