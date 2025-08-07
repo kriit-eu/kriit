@@ -34,8 +34,10 @@
     </li>
 </ul>
 
-<button type="button" id="backButton" class="btn btn-secondary">Tagasi</button>
-<button type="button" id="confirmButton" class="btn btn-primary" style="margin-left: 1em;" disabled>Alusta</button>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1em;">
+    <button type="button" id="backButton" class="btn btn-secondary">Tagasi</button>
+    <button type="button" id="confirmButton" class="btn btn-primary" disabled>Alusta</button>
+</div>
 <div id="errorMsg" class="text-danger mt-2" style="display:none;"></div>
 
 <div style="height: 4em;"></div>
