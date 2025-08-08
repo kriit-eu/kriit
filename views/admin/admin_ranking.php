@@ -36,10 +36,26 @@
             max-width: 80px;
             overflow-wrap: break-word;
         }
+        .table th:nth-child(1), .table td:nth-child(1),
+        .table th:nth-child(2), .table td:nth-child(2),
+        .table th:nth-child(4), .table th:nth-child(5),
+        .table td:nth-child(4), .table td:nth-child(5) {
+            text-align: center;
+            vertical-align: middle;
+        }
 
         .btn {
             font-size: 0.95em;
             padding: 0.3em 0.7em;
+        }
+        .table th:last-child,
+        .table td:last-child {
+            text-align: center;
+            vertical-align: middle;
+        }
+        .table th:nth-child(6), .table td:nth-child(6) {
+            text-align: center;
+            vertical-align: middle;
         }
 
         .row {
@@ -70,7 +86,7 @@
                 <th>Aega jäänud</th>
                 <th>
                     <span class="d-none d-sm-inline">Lahendatud ülesanded</span>
-                    <span class="d-inline d-sm-none">Lah. Ül</span>
+                    <span class="d-inline d-sm-none">Lah.<br>Ül</span>
                 </th>
                 <th>
                     <span class="d-none d-sm-inline">Detailvaade</span>
