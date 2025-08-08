@@ -16,18 +16,23 @@
         margin: 0.1em 0.1em 0.1em 0.1em;
         vertical-align: middle;
     }
+
     li {
         margin-bottom: 0.2em;
     }
+
     ul {
         margin-bottom: 0.2em;
     }
+
     p {
         margin-bottom: 0.2em;
     }
+
     select.form-control:focus {
         outline: none;
     }
+
     select.form-control option {
         font-size: 1rem;
         padding: 4px 8px;
@@ -43,44 +48,44 @@
 <p>Enne katsete alustamist täitke lüngad, kinnitades, et olete eelneva lehe läbi lugenud.</p>
 <h5>Reeglid</h5>
 <ol>
-        <li>Teil on <strong>
+    <li>Teil on <strong>
             <select id="input-reeglid-60" class="form-control d-inline-block" style="width:120px">
                 <option value="">...</option>
                 <option value="10">10</option>
-                <option value="<?= (int)(EXERCISES_SESSION_DURATION/60) ?>"><?= (int)(EXERCISES_SESSION_DURATION/60) ?></option>
+                <option value="<?= (int)(EXERCISES_SESSION_DURATION / 60) ?>"><?= (int)(EXERCISES_SESSION_DURATION / 60) ?></option>
                 <option value="30">30</option>
             </select>
         </strong> minutit ülesannete lahendamiseks. Aeg algab <i>Alusta</i> nupule vajutamise järgselt.</li>
     <li><strong>
-        <select id="input-reeglid-koostoo" class="form-control d-inline-block" style="width:120px">
-            <option value="">...</option>
-            <option value="Keelatud">Keelatud</option>
-            <option value="Lubatud">Lubatud</option>
-        </select>
-        on igasugune koostöö teiste isikutega.
-    </strong></li>
+            <select id="input-reeglid-koostoo" class="form-control d-inline-block" style="width:120px">
+                <option value="">...</option>
+                <option value="Keelatud">Keelatud</option>
+                <option value="Lubatud">Lubatud</option>
+            </select>
+            on igasugune koostöö teiste isikutega.
+        </strong></li>
     <li>Te <strong>
-        <select id="input-reeglid-voite" class="form-control d-inline-block" style="width:120px">
-            <option value="">...</option>
-            <option value="võite">võite</option>
-            <option value="ei või">ei või</option>
-        </select>
-    </strong> selles arvutis kasutada internetti lahenduste leidmiseks.</li>
+            <select id="input-reeglid-voite" class="form-control d-inline-block" style="width:120px">
+                <option value="">...</option>
+                <option value="võite">võite</option>
+                <option value="ei või">ei või</option>
+            </select>
+        </strong> selles arvutis kasutada internetti lahenduste leidmiseks.</li>
 </ol>
 <br>
 <br>
 <h5>Punktiarvestus</h5>
 <ul>
-        <li>Programm lõppeb, kui kõik ülesanded on lahendatud või 
-            <select id="input-punkt-60" class="form-control d-inline-block" style="width:120px">
-                <option value="">...</option>
-                <option value="10">10</option>
-                <option value="<?= (int)(EXERCISES_SESSION_DURATION/60) ?>"><?= (int)(EXERCISES_SESSION_DURATION/60) ?></option>
-                <option value="30">30</option>
-            </select>
-            minutit on ära kasutatud.
-        </li>
-    <li>Kui lahendate kõik ülesanded, siis mida vähem aega teil kulus, seda 
+    <li>Programm lõppeb, kui kõik ülesanded on lahendatud või
+        <select id="input-punkt-60" class="form-control d-inline-block" style="width:120px">
+            <option value="">...</option>
+            <option value="10">10</option>
+            <option value="<?= (int)(EXERCISES_SESSION_DURATION / 60) ?>"><?= (int)(EXERCISES_SESSION_DURATION / 60) ?></option>
+            <option value="30">30</option>
+        </select>
+        minutit on ära kasutatud.
+    </li>
+    <li>Kui lahendate kõik ülesanded, siis mida vähem aega teil kulus, seda
         <select id="input-punkt-pingereas" class="form-control d-inline-block" style="width:120px">
             <option value="">...</option>
             <option value="eespool">eespool</option>
@@ -88,7 +93,7 @@
         </select>
         olete pingereas.
     </li>
-    <li>Kui aeg sai enne otsa, siis mida rohkem ülesandeid on lahendatud, seda 
+    <li>Kui aeg sai enne otsa, siis mida rohkem ülesandeid on lahendatud, seda
         <select id="input-punkt-eespool" class="form-control d-inline-block" style="width:120px">
             <option value="">...</option>
             <option value="eespool">eespool</option>
@@ -96,7 +101,7 @@
         </select>
         olete pingereas.
     </li>
-    <li>Kui mitu inimest on lahendanud sama arvu ülesandeid, siis määrab parema koha 
+    <li>Kui mitu inimest on lahendanud sama arvu ülesandeid, siis määrab parema koha
         <select id="input-punkt-kiirem" class="form-control d-inline-block" style="width:120px">
             <option value="">...</option>
             <option value="kiirem">kiirem</option>
@@ -109,19 +114,19 @@
 <h5>Soovitused:</h5>
 <ul>
     <li>
-        Kuna pingerida kujuneb kõige 
+        Kuna pingerida kujuneb kõige
         <select id="input-soov-kiiremate" class="form-control d-inline-block" style="width:120px">
             <option value="">...</option>
             <option value="kiiremate">kiiremate</option>
             <option value="aeglasemate">aeglasemate</option>
         </select>
         lahendajate põhjal, kui jääte mõne ülesande juures kinni ja
-    tunnete, et mõtted hakkavad ammenduma, ärge lase ajal kuluda, vaid proovige vahepeal teist ülesannet – vaheldus võimaldab uutel ideedel
-    <select id="input-soov-tekkida" class="form-control d-inline-block" style="width:120px">
-        <option value="">...</option>
-        <option value="tekkida">tekkida</option>
-        <option value="kaduda">kaduda</option>
-    </select>.
+        tunnete, et mõtted hakkavad ammenduma, ärge lase ajal kuluda, vaid proovige vahepeal teist ülesannet – vaheldus võimaldab uutel ideedel
+        <select id="input-soov-tekkida" class="form-control d-inline-block" style="width:120px">
+            <option value="">...</option>
+            <option value="tekkida">tekkida</option>
+            <option value="kaduda">kaduda</option>
+        </select>.
     </li>
     <li>NB! Need ülesanded eeldavad
         <select id="input-html-css" class="form-control d-inline-block" style="width:180px">
@@ -150,7 +155,7 @@
         window.location.href = 'intro';
     };
     // Get session duration in minutes from PHP
-    const SESSION_MINUTES = <?= (int)(EXERCISES_SESSION_DURATION/60) ?>;
+    const SESSION_MINUTES = <?= (int)(EXERCISES_SESSION_DURATION / 60) ?>;
 
     // Keywords for validation
     const keywords = {
@@ -182,7 +187,8 @@
     };
 
     function shuffle(array) {
-        let currentIndex = array.length, randomIndex;
+        let currentIndex = array.length,
+            randomIndex;
         while (currentIndex !== 0) {
             randomIndex = Math.floor(Math.random() * currentIndex);
             currentIndex--;
@@ -299,7 +305,9 @@
     document.getElementById('confirmButton').onclick = function() {
         fetch('exercises/start', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
+            headers: {
+                'Content-Type': 'application/json'
+            }
         }).then(function() {
             window.location.href = 'exercises/1';
         });
