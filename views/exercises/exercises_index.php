@@ -46,20 +46,9 @@ if (isset($exercises) && is_array($exercises)) {
                     <td><?= $exercise['exerciseName'] ?></td>
                     <td>
                         <?php
+                        // Only show completed time for completed exercises
                         $timerText = '';
-                        $timerData = '';
-                        $elapsed = null;
                         if (
-                            $exercise['status'] === 'started'
-                            && !empty($exercise['startTime'])
-                            && ($startTimestamp = strtotime($exercise['startTime'])) !== false
-                        ) {
-                            // DEBUG: Output startTime and startTimestamp
-                            echo "<!-- startTime: {$exercise['startTime']} | startTimestamp: {$startTimestamp} | now: ".time()." -->\n";
-                            $elapsed = time() - $startTimestamp;
-                            $timerText = fuzzy_time_et($elapsed);
-                            $timerData = $startTimestamp; // pass startTime as timestamp
-                        } elseif (
                             $exercise['status'] === 'completed'
                             && !empty($exercise['startTime'])
                             && !empty($exercise['endTime'])
@@ -68,19 +57,14 @@ if (isset($exercises) && is_array($exercises)) {
                         ) {
                             $elapsed = $endTimestamp - $startTimestamp;
                             $timerText = fuzzy_time_et($elapsed);
-                            $timerData = 'static'; // completed: static timer
                         }
                         ?>
                         <?php if ($exercise['status'] === 'completed'): ?>
                             <span class="timer" data-time="static" style="min-width:48px; display:inline-block; text-align:left; font-weight:bold;">
                                 <?= htmlspecialchars($timerText) ?>&nbsp;
                             </span>
-                        <?php elseif ($exercise['status'] === 'started'): ?>
-                            <span class="timer<?= ($elapsed !== null && $elapsed >= 300 ? ' overdue' : '') ?>" data-start="<?= htmlspecialchars($timerData) ?>" style="min-width:48px; display:inline-block; text-align:left; font-weight:normal;">
-                                <?= htmlspecialchars($timerText) ?>…&nbsp;
-                            </span>
                         <?php else: ?>
-                            <!-- No timer for not started -->
+                            <!-- No timer for not started or running -->
                         <?php endif; ?>
                     </td>
                     <td>
