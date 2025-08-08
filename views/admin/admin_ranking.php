@@ -26,15 +26,18 @@
             box-sizing: border-box;
         }
 
-        .table th,
-        .table td {
-            padding: 0.15em 0.3em;
-            white-space: normal;
-            word-break: break-word;
-            font-size: 0.95em;
-            max-width: 120px;
-            overflow-wrap: break-word;
-        }
+            .table th,
+            .table td {
+                padding: 0.15em 0.3em;
+                white-space: normal;
+                word-break: break-word;
+                font-size: 0.95em;
+                max-width: 120px;
+                overflow-wrap: break-word;
+            }
+            .table td:nth-child(3), .table th:nth-child(3) {
+                white-space: nowrap;
+            }
 
         .btn {
             font-size: 0.95em;
