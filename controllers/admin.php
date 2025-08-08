@@ -31,7 +31,8 @@ class admin extends Controller
                         WHEN u.userTimeTotal IS NOT NULL THEN 0
                         ELSE 1
                     END ASC,
-                    u.userTimeTotal ASC
+                    u.userTimeTotal ASC,
+                    u.userId ASC
             ) AS userRank
         FROM
             users u
@@ -41,6 +42,7 @@ class admin extends Controller
             userExercises ue ON u.userId = ue.userId AND ue.status = 'completed'
         WHERE
             u.userIsAdmin = 0
+            AND u.userIsTeacher = 0
             AND u.groupId IS NULL
         GROUP BY
             u.userId
