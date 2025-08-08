@@ -95,8 +95,44 @@ if (isset($exercises) && is_array($exercises)) {
         return fuzzyTimeEt(seconds) + '…';
     }
 
+    // Robust session timer: always calculate remaining time from session end timestamp
+    let sessionTimerInterval = null;
+    function updateSessionTimer(forceCheck = false) {
+        const sessionTimer = document.getElementById('session-timer');
+        if (!sessionTimer) return;
+        const initialTime = parseInt(sessionTimer.getAttribute('data-time'), 10);
+        // Store session end timestamp on first run
+        if (!sessionTimer._sessionEnd) {
+            sessionTimer._sessionEnd = Math.floor(Date.now() / 1000) + initialTime;
+        }
+        function tick() {
+            const now = Math.floor(Date.now() / 1000);
+            let remaining = sessionTimer._sessionEnd - now;
+            if (remaining <= 0) {
+                sessionTimer.textContent = '00:00';
+                if (sessionTimerInterval) clearInterval(sessionTimerInterval);
+                window.location.href = 'exercises/timeup';
+                return;
+            }
+            const minutes = Math.floor(remaining / 60);
+            const seconds = remaining % 60;
+            sessionTimer.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+        tick();
+        if (sessionTimerInterval) clearInterval(sessionTimerInterval);
+        sessionTimerInterval = setInterval(tick, 1000);
+        // On forceCheck, immediately redirect if expired
+        if (forceCheck) {
+            const now = Math.floor(Date.now() / 1000);
+            let remaining = sessionTimer._sessionEnd - now;
+            if (remaining <= 0) {
+                window.location.href = 'exercises/timeup';
+            }
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
-        // Per-exercise timers (count up only for started)
+        // ...existing code for per-exercise timers...
         document.querySelectorAll('.timer[data-start]').forEach(timer => {
             const startTimestamp = parseInt(timer.getAttribute('data-start'), 10);
             if (isNaN(startTimestamp) || startTimestamp <= 0) {
@@ -114,28 +150,16 @@ if (isset($exercises) && is_array($exercises)) {
                     timer.classList.remove('overdue');
                 }
             }
-            // Set overdue class immediately if needed
             updateTimer();
             setInterval(updateTimer, 1000);
         });
+        updateSessionTimer(true);
+    });
 
-        // Session timer
-        const sessionTimer = document.getElementById('session-timer');
-        if (sessionTimer) {
-            let sessionTime = parseInt(sessionTimer.getAttribute('data-time'), 10);
-            const sessionInterval = setInterval(function () {
-                if (sessionTime <= 0) {
-                    sessionTimer.textContent = '00:00';
-                    clearInterval(sessionInterval);
-                    // Redirect to timeup page when session ends
-                    window.location.href = 'exercises/timeup';
-                    return;
-                }
-                const minutes = Math.floor(sessionTime / 60);
-                const seconds = sessionTime % 60;
-                sessionTimer.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-                sessionTime--;
-            }, 1000);
+    // Update session timer when tab becomes visible again
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+            updateSessionTimer(true);
         }
     });
 
