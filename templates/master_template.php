@@ -3,10 +3,12 @@
 <script src="assets/js/main.js?<?= COMMIT_HASH ?>"></script>
 
 <div class="container" id="container">
+    <?php if (!($controller === 'intro')): ?>
     <nav class="nav nav-pills flex-column flex-sm-row" style="margin-bottom: 4em">
         <a class="flex-sm-fill text-sm-center nav-link <?= $this->setActive('subjects/index') ?>"
            aria-current="subjects" href="subjects">Ained</a>
     </nav>
+    <?php endif; ?>
     <?php
     require 'templates/partials/admin_and_logout_buttons.php';
 

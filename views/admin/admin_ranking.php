@@ -14,7 +14,9 @@
                 <th>Nimi</th>
                 <th>Isikukood</th>
                 <th>Ajakulu</th>
+                <th>Aega jäänud</th>
                 <th>Lahendatud ülesanded</th>
+                <th>Detailvaade</th>
             </tr>
             </thead>
             <tbody>
@@ -24,11 +26,57 @@
                     <td><?= $user['userName'] ?></td>
                     <td><?= $user['userPersonalCode'] ?></td>
                     <td><?= $user['userTimeTotal'] ?></td>
+                    <td>
+                        <?php
+                            if (!empty($user['userTimeUpAt'])) {
+                                $now = new DateTime();
+                                $upAt = new DateTime($user['userTimeUpAt']);
+                                $diff = $upAt->getTimestamp() - $now->getTimestamp();
+                                $display = '';
+                                if ($diff > 0) {
+                                    $minutes = floor($diff / 60);
+                                    $seconds = $diff % 60;
+                                    $display = sprintf('%02d:%02d', $minutes, $seconds);
+                                } else {
+                                    $display = 'Aeg läbi';
+                                }
+                                echo '<span class="time-left" data-timeupat="' . htmlspecialchars($user['userTimeUpAt']) . '">' . $display . '</span>';
+                            } else {
+                                echo '';
+                            }
+                        ?>
+                    </td>
                     <td><?= $user['userExercisesDone'] ?></td>
+                    <td>
+                        <a href="/views/admin/admin_exercise_detail.php?userId=<?= $user['userId'] ?>" class="btn btn-info btn-sm">Vaata</a>
+                    </td>
                 </tr>
             <?php endforeach; ?>
             </tbody>
         </table>
     </div>
 </div>
+<script>
+function updateTimeLeft() {
+    const now = new Date();
+    document.querySelectorAll('.time-left').forEach(function(span) {
+        const timeUpAt = span.getAttribute('data-timeupat');
+        if (!timeUpAt) return;
+        const upAt = new Date(timeUpAt.replace(' ', 'T'));
+        let diff = Math.floor((upAt - now) / 1000);
+        if (diff > 0) {
+            if (diff >= 60) {
+                const minutes = Math.ceil(diff / 60);
+                span.textContent = minutes + ' min';
+            } else {
+                span.textContent = diff + ' s';
+            }
+        } else {
+            span.textContent = 'Aeg läbi';
+        }
+    });
+}
+setInterval(updateTimeLeft, 1000);
+window.addEventListener('DOMContentLoaded', updateTimeLeft);
+</script>
 

@@ -122,7 +122,10 @@ class Auth
         // Load $this->auth with users table's field values
         $this->load_user_data($user);
 
-        return true;
+        // Implement Post-Redirect-Get pattern to prevent form resubmission issues
+    // Always redirect to /exercises after login
+    header("Location: " . BASE_URL . 'exercises');
+    exit();
     }
 
     /**

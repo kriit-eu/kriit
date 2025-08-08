@@ -56,6 +56,10 @@
                         Kustuta
                     </a>
                     <button class="btn btn-primary save-button" data-id="<?= $exercise['exerciseId'] ?>">Salvesta</button>
+                    <!--
+                    To use the per-user detail view, you need to provide a userId. Example below assumes you have $user['userId'] available in context:
+                    <a href="/views/admin/admin_exercise_detail.php?userId=<?= $user['userId'] ?>" target="_blank" class="btn btn-info ms-2">Vaata</a>
+                    -->
                 </footer>
             </section>
         <?php endforeach; ?>
@@ -315,16 +319,18 @@
 
     // Function to track changes in the editor and apply the red border
     function trackChanges(editor) {
-        let changed = false;
+        // Always set changed to true on every change
+        editor._changed = false;
         editor.getSession().on('change', function () {
-            if (!changed) {
-                changed = true;
-                editor.container.classList.add('editor-changed');
-                enableSaveButton(editor.container.closest('.exercise-card').querySelector('.save-button'));
-            }
+            editor._changed = true;
+            editor.container.classList.add('editor-changed');
+            enableSaveButton(editor.container.closest('.exercise-card').querySelector('.save-button'));
         });
         editor.changed = function () {
-            return changed;
+            return editor._changed;
+        };
+        editor.resetChanged = function () {
+            editor._changed = false;
         };
     }
 
@@ -439,15 +445,15 @@
 
         if (instructionsEditor.changed()) {
             clearChangeIndicator(instructionsEditor);
-            instructionsEditor.changed = () => false;  // Reset the changed status
+            if (typeof instructionsEditor.resetChanged === 'function') instructionsEditor.resetChanged();
         }
         if (initialCodeEditor.changed()) {
             clearChangeIndicator(initialCodeEditor);
-            initialCodeEditor.changed = () => false;
+            if (typeof initialCodeEditor.resetChanged === 'function') initialCodeEditor.resetChanged();
         }
         if (validationFunctionEditor.changed()) {
             clearChangeIndicator(validationFunctionEditor);
-            validationFunctionEditor.changed = () => false;
+            if (typeof validationFunctionEditor.resetChanged === 'function') validationFunctionEditor.resetChanged();
         }
 
         // Clear title change indicator if the title was changed

@@ -1,0 +1,7 @@
+#
+#
+# run with: bun import:users
+# EXAMPLE
+# John Doe,39001010001
+# Jane Smith,49002020002
+# Alice Example,59003030003

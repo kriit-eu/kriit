@@ -5,16 +5,14 @@
 <p>Meil on hea meel, et olete otsustanud meie kooli kasuks. Enne katsete alustamist lugege läbi järgev:</p>
 <h5>Reeglid</h5>
 <ol>
-    <li>Teil on <strong>20 minutit</strong> ülesannete lahendamiseks. Aeg algab <i>Alusta</i> nupule vajutamise
+    <li>Teil on <strong><?= (int)(EXERCISES_SESSION_DURATION / 60) ?> minutit</strong> ülesannete lahendamiseks. Aeg algab <i>Alusta</i> nupule vajutamise
         järgselt.
     </li>
-    <li><strong>Keelatud on igasugune koostöö teiste isikutega,
-            sealhulgas tehisintellektiga.</strong> Vahele jäämine tähendab automaatset läbikukkumist. Arvuti ekraani
+    <li><strong>Keelatud on igasugune koostöö teiste isikutega</strong>. Vahele jäämine tähendab automaatset läbikukkumist. Arvuti ekraani
         salvestatakse!
     </li>
     <li>
-        Te <strong>võite</strong> selles arvutis kasutada internetti lahenduste leidmiseks (nt Google, StackOverflow,
-        MDN, W3Schools).
+        Te <strong>võite</strong> selles arvutis kasutada internetti lahenduste leidmiseks.
     </li>
 </ol>
 <div>
@@ -26,7 +24,7 @@
 <br>
 <h5>Punktiarvestus</h5>
 <ul>
-    <li>Programm lõppeb, kui kõik ülesanded on lahendatud või 20 minutit on ära kasutatud.</li>
+    <li>Programm lõppeb, kui kõik ülesanded on lahendatud või <?= (int)(EXERCISES_SESSION_DURATION / 60) ?> minutit on ära kasutatud.</li>
     <li>Kui lahendate kõik ülesanded, siis mida vähem aega teil kulus, seda eespool olete pingereas.</li>
     <li>Kui aeg sai enne otsa, siis mida rohkem ülesandeid on lahendatud, seda eespool olete pingereas.</li>
     <li>Kui mitu inimest on lahendanud sama arvu ülesandeid, siis määrab parema koha kiirem lahendusaeg.</li>
@@ -41,11 +39,11 @@
     </li>
     <li>NB! Need ülesanded eeldavad HTML ja CSS algtaseme teadmisi. Kui te pole HTML-i või CSS-iga varem kokku puutunud,
         siis soovitame
-    enne alustamist tutvuda järgnevate tutvustustega:
-<div>
-    <button type="button" id="htmlButton" class="btn btn-success">HTML tutvustus</button>
-    <button type="button" id="cssButton" class="btn btn-success">CSS tutvustus</button>
-</div>
+        enne alustamist tutvuda järgnevate tutvustustega:
+        <div>
+            <button type="button" id="htmlButton" class="btn btn-success">HTML tutvustus</button>
+            <button type="button" id="cssButton" class="btn btn-success">CSS tutvustus</button>
+        </div>
     </li>
 </ul>
 
@@ -65,7 +63,7 @@
     <br>
     <br>
     <p>Soovime teile edu katsetel!</p>
-    <button type="button" id="submitButton" class="btn btn-primary" disabled>Alusta</button>
+    <button type="button" id="submitButton" class="btn btn-primary" disabled>Kinnitan et olen reeglitega tutvunud</button>
 
 </div>
 
@@ -79,29 +77,25 @@
     }
 
     // Check all checkboxes on change event
-    $('.agreement').change(function () {
+    $('.agreement').change(function() {
         checkAllCheckboxes();
     });
 
     // Navigate to htmlCourse/ on submit
-    $('#htmlButton').click(function (e) {
+    $('#htmlButton').click(function(e) {
         e.preventDefault();
         window.location.href = 'intro/htmlCourse'
     })
 
     // Navigate to htmlCourse/ on submit
-    $('#cssButton').click(function (e) {
+    $('#cssButton').click(function(e) {
         e.preventDefault();
         window.location.href = 'intro/cssCourse'
     })
 
-    // Navigate to exercises/ on submit
-    $('#submitButton').click(function (e) {
+    // Navigate to confirmation page on submit
+    $('#submitButton').click(function(e) {
         e.preventDefault();
-        ajax("exercises/start", {}, () => {
-
-            window.location.href = 'exercises/1'
-        })
+        window.location.href = 'intro/confirm';
     })
-
 </script>

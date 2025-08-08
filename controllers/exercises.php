@@ -2,10 +2,13 @@
 
 use Exception;
 
+
+
 class exercises extends Controller
 {
     public $auth;
     public $template = 'applicant';
+    private $userTimeUpAt;
 
     function __construct($app)
     {
@@ -14,29 +17,40 @@ class exercises extends Controller
             $this->redirect('/');
         }
 
-        $userTimeUpAt = Db::getOne("SELECT userTimeUpAt FROM users WHERE userId={$app->auth->userId}");
-        $this->timeLeft = ($app->auth->userIsAdmin === 1 || $userTimeUpAt === null) ? null : strtotime($userTimeUpAt) - time();
+        $this->userTimeUpAt = Db::getOne("SELECT userTimeUpAt FROM users WHERE userId={$app->auth->userId}");
+        $this->timeLeft = ($app->auth->userIsAdmin === 1 || $this->userTimeUpAt === null) ? null : strtotime($this->userTimeUpAt) - time();
     }
 
     function index()
     {
+        // Set headers to prevent caching
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+
         $this->redirectIfTimeExpiredOrNotStarted();
-        $this->exercises = Db::getAll("
-            SELECT
-                exercises.*,
-                IF(userDoneExercises.userId IS NOT NULL, 1, 0) AS isSolved
-            FROM exercises
-            LEFT JOIN userDoneExercises
-                ON exercises.exerciseId = userDoneExercises.exerciseId
-                AND userDoneExercises.userId = ?
-            ORDER BY exerciseId", [$this->auth->userId]);
+        $this->exercises = Db::getAll(
+            "SELECT
+                e.*,
+                ue.status,
+                ue.startTime,
+                ue.endTime
+            FROM exercises e
+            LEFT JOIN userExercises ue
+                ON e.exerciseId = ue.exerciseId
+                AND ue.userId = ?
+            ORDER BY e.exerciseId",
+            [$this->auth->userId]
+        );
+
+    // Timeout/deadline logic removed: exercises are always available
+    unset($exercise); // Unset reference to last element
 
         $allSolved = array_reduce($this->exercises, function ($carry, $exercise) {
-            return $carry && $exercise['isSolved'] === 1;
+            return $carry && ($exercise['status'] === 'completed');
         }, true);
 
-        if ($allSolved) {
-            // create activity that all exercises are solved
+        if ($allSolved && count($this->exercises) > 0) {
             Activity::create(ACTIVITY_ALL_SOLVED, $this->auth->userId);
             $this->calculateAndUpdateTotalTimeSpent($this->auth->userId);
             $this->redirect('exercises/congratulations');
@@ -45,12 +59,10 @@ class exercises extends Controller
 
     private function redirectIfTimeExpiredOrNotStarted(): void
     {
-        // Redirect to /intro if user is not admin and timer is not started
         if ($this->auth->userIsAdmin !== 1 && $this->auth->userTimeUpAt === null) {
             $this->redirect('intro');
         }
 
-        // Redirect to /exercises/timeup if time is up
         if ($this->auth->userIsAdmin !== 1 && $this->timeLeft <= 0) {
             $this->redirect('exercises/timeup');
         }
@@ -58,57 +70,107 @@ class exercises extends Controller
 
     function view()
     {
-        $this->redirectIfTimeExpiredOrNotStarted();
+        $exerciseId = $this->getId();
+        $userId = $this->auth->userId;
 
-        $doneExercise = Db::getOne("
-            SELECT * FROM userDoneExercises
-            WHERE userId = ?
-            AND exerciseId = ?", [$this->auth->userId, $this->getId()]);
+        $exerciseState = Db::getFirst("SELECT * FROM userExercises WHERE userId = ? AND exerciseId = ?", [$userId, $exerciseId]);
 
-        if ($doneExercise !== null) {
-            $this->redirect('exercises');
+        if ($exerciseState) {
+            if ($exerciseState['status'] === 'completed') {
+                // For completed, show total time spent
+                if (!empty($exerciseState['startTime']) && !empty($exerciseState['endTime'])) {
+                    $this->elapsedTime = strtotime($exerciseState['endTime']) - strtotime($exerciseState['startTime']);
+                } else {
+                    $this->elapsedTime = 0;
+                }
+                $this->redirect('exercises');
+            } elseif ($exerciseState['status'] === 'started') {
+                if (!empty($exerciseState['startTime'])) {
+                    $this->elapsedTime = time() - strtotime($exerciseState['startTime']);
+                } else {
+                    $this->elapsedTime = 0;
+                }
+            } elseif ($exerciseState['status'] === 'not_started') {
+                // Update to started and set startTime
+                Db::update('userExercises', [
+                    'status' => 'started',
+                    'startTime' => date('Y-m-d H:i:s')
+                ], 'userId = ? AND exerciseId = ?', [$userId, $exerciseId]);
+                $this->elapsedTime = 0;
+            } else {
+                $this->elapsedTime = 0;
+            }
+        } else {
+            Db::insert('userExercises', [
+                'userId' => $userId,
+                'exerciseId' => $exerciseId,
+                'status' => 'started',
+                'startTime' => date('Y-m-d H:i:s'),
+            ]);
+            $this->elapsedTime = 0;
         }
 
-        $this->exercise = Db::getFirst("
-            SELECT * FROM exercises
-            WHERE exerciseId = ?", [$this->getId()]);
-        Activity::create(ACTIVITY_START_EXERCISE, $this->auth->userId, $this->getId());
+        $this->exercise = Db::getFirst("SELECT * FROM exercises WHERE exerciseId = ?", [$exerciseId]);
+        Activity::create(ACTIVITY_START_EXERCISE, $userId, $exerciseId);
     }
 
     function timeup()
     {
-        // Check if time is really up and if not, redirect back to /exercises
         if ($this->timeLeft === null || $this->timeLeft > 0) {
             $this->redirect('exercises');
         }
 
-        // Record activity
-        Activity::create(ACTIVITY_TIME_UP, $this->auth->userId);
+        // Mark only 'started' exercises as timed_out for this user
+        Db::update('userExercises',
+            ['status' => 'timed_out'],
+            'userId = ? AND status = ?',
+            [$this->auth->userId, 'started']
+        );
 
+        Activity::create(ACTIVITY_TIME_UP, $this->auth->userId);
         $this->calculateAndUpdateTotalTimeSpent($this->auth->userId);
 
-        $userId = $_SESSION['userId'];
-        session_destroy();
+        // AJAX check for timeout (used by polling JS)
+        if (isset($_GET['ajax']) && $_GET['ajax'] == '1') {
+            echo 'TIMEUP';
+            exit;
+        }
 
+    // For normal requests, let master template include the view file
+    // Do NOT call render here; prevents duplicate content
+    return;
+    // Do NOT destroy session here; allow all tabs to show timeup page
+    // If you want to destroy session, do it after user leaves timeup page (e.g. via logout or button)
     }
 
     function congratulations()
     {
         $userId = $_SESSION['userId'];
-        // Get solved exercises count
-        $this->solvedExercisesCount = Db::getOne("
-        SELECT COUNT(*) FROM userDoneExercises WHERE userId = ?", [$userId]);
+        $this->solvedExercisesCount = Db::getOne("SELECT COUNT(*) FROM userExercises WHERE userId = ? AND status = 'completed'", [$userId]);
 
-
-        session_destroy();
         Activity::create(ACTIVITY_LOGOUT, $userId);
     }
 
     function start()
     {
-        $formattedDateTime = date('Y-m-d H:i:s', strtotime('+20 minutes'));
-        Db::update('users', ['userTimeUpAt' => $formattedDateTime], 'userId = ?', [$this->auth->userId]);
+    $formattedDateTime = date('Y-m-d H:i:s', time() + EXERCISES_SESSION_DURATION);
+    Db::update('users', ['userTimeUpAt' => $formattedDateTime], 'userId = ?', [$this->auth->userId]);
         Activity::create(ACTIVITY_START_TIMER, $this->auth->userId);
+
+        // Add all exercises for user as not_started if not already present
+        $userId = $this->auth->userId;
+        $exerciseIds = Db::getAll("SELECT exerciseId FROM exercises");
+        foreach ($exerciseIds as $row) {
+            $exerciseId = $row['exerciseId'];
+            $exists = Db::getOne("SELECT 1 FROM userExercises WHERE userId = ? AND exerciseId = ?", [$userId, $exerciseId]);
+            if (!$exists) {
+                Db::insert('userExercises', [
+                    'userId' => $userId,
+                    'exerciseId' => $exerciseId,
+                    'status' => 'not_started',
+                ]);
+            }
+        }
         stop(200);
     }
 
@@ -120,28 +182,23 @@ class exercises extends Controller
         $timestamp = time();
 
         $nodeScriptDir = __DIR__ . "/../.node_scripts";
-
         if (!is_dir($nodeScriptDir)) {
             mkdir($nodeScriptDir, 0755, true);
         }
 
         $tempFilePath = "{$nodeScriptDir}/tempValidation_{$userId}_{$exerciseId}_{$timestamp}.js";
-
         $exerciseValidationFunction = Db::getOne("SELECT exerciseValidationFunction FROM exercises WHERE exerciseId = ?", [$exerciseId]);
         $escapedAnswer = json_encode($answer);
 
         $validationScript = "
-    const jsdom = require('jsdom');
-    const { JSDOM } = jsdom;
-
-    const dom = new JSDOM({$escapedAnswer});
-    const window = dom.window;
-    const document = window.document;
-
-    {$exerciseValidationFunction}
-
-    console.log(validate());
-    ";
+            const jsdom = require('jsdom');
+            const { JSDOM } = jsdom;
+            const dom = new JSDOM({$escapedAnswer});
+            const window = dom.window;
+            const document = window.document;
+            {$exerciseValidationFunction}
+            console.log(validate());
+        ";
 
         try {
             $this->writeValidationScript($tempFilePath, $validationScript);
@@ -149,9 +206,7 @@ class exercises extends Controller
             $this->cleanupTempFile($tempFilePath);
 
             if (isset($output[0]) && $output[0] === 'true') {
-                Db::insert('userDoneExercises', ['userId' => $userId, 'exerciseId' => $exerciseId]);
-                // Create activity
-                Activity::create(ACTIVITY_SOLVED_EXERCISE, $userId, $exerciseId);
+                $this->markExerciseAsSolved($userId, $exerciseId);
                 $response = ['result' => 'success', 'message' => 'Ülesanne on lahendatud.'];
             } else {
                 $response = ['result' => 'fail', 'message' => 'Teie lahendus ei läbinud valideerimist. Palun proovige uuesti.'];
@@ -176,7 +231,6 @@ class exercises extends Controller
         if ($return !== 0) {
             throw new Exception("Node.js script execution failed: " . implode("\n", $output));
         }
-
         return $output;
     }
 
@@ -193,40 +247,56 @@ class exercises extends Controller
 
     function AJAX_markAsSolved()
     {
-        $exerciseId = $this->getId();
-        $userId = $this->auth->userId;
-
-        try {
-            Db::insert('userDoneExercises', ['userId' => $userId, 'exerciseId' => $exerciseId]);
-            // Create activity
-            Activity::create(ACTIVITY_SOLVED_EXERCISE, $userId, $exerciseId);
-        } catch (Exception $e) {
-            // Check if the error is due to duplicate entry
-            if ($e->getCode() !== 1062) {
-                throw $e;
-            }
-
-            Activity::create(ACTIVITY_SOLVED_AGAIN_THE_SAME_EXERCISE, $userId, $exerciseId);
-        }
-
-
+        $this->markExerciseAsSolved($this->auth->userId, $this->getId());
         stop(200);
+    }
+
+    private function markExerciseAsSolved($userId, $exerciseId)
+    {
+        $exerciseState = Db::getFirst("SELECT * FROM userExercises WHERE userId = ? AND exerciseId = ?", [$userId, $exerciseId]);
+
+        if ($exerciseState) {
+            if ($exerciseState['status'] === 'completed') {
+                Activity::create(ACTIVITY_SOLVED_AGAIN_THE_SAME_EXERCISE, $userId, $exerciseId);
+                return;
+            }
+            Db::update('userExercises',
+                ['status' => 'completed', 'endTime' => date('Y-m-d H:i:s')],
+                "userId = ? AND exerciseId = ?",
+                [$userId, $exerciseId]
+            );
+            Activity::create(ACTIVITY_SOLVED_EXERCISE, $userId, $exerciseId);
+        } else {
+            // This case is unlikely if view() logic is correct, but as a fallback:
+            Db::insert('userExercises', [
+                'userId' => $userId,
+                'exerciseId' => $exerciseId,
+                'status' => 'completed',
+                'startTime' => date('Y-m-d H:i:s'),
+                'endTime' => date('Y-m-d H:i:s')
+            ]);
+            Activity::create(ACTIVITY_SOLVED_EXERCISE, $userId, $exerciseId);
+        }
     }
 
     private function calculateAndUpdateTotalTimeSpent($userId): void
     {
-        // Calculate total time spent
-        $startTimer = Db::getOne("
-        SELECT activityLogTimestamp
-        FROM activityLog
-        WHERE userId = ?
-        AND activityId = ?
-        ORDER BY activityLogTimestamp DESC
-        LIMIT 1", [$userId, ACTIVITY_START_TIMER]);
-
-        $spentTimeFormatted = gmdate('H:i:s', time() - strtotime($startTimer));
-
-        // Update user's total time spent
+        // Use class property for userTimeUpAt
+        if (!$this->userTimeUpAt) {
+            // If not set, do not update
+            return;
+        }
+        $userTimeUpAtTs = strtotime($this->userTimeUpAt);
+        $now = time();
+        // Use class constant for session duration
+        $sessionStart = $userTimeUpAtTs - EXERCISES_SESSION_DURATION;
+        // If time is up, use full session duration, else use time so far
+        if ($now >= $userTimeUpAtTs) {
+            $spent = EXERCISES_SESSION_DURATION;
+        } else {
+            $spent = max(0, $now - $sessionStart);
+        }
+        $spentTimeFormatted = gmdate('H:i:s', $spent);
         Db::update('users', ['userTimeTotal' => $spentTimeFormatted], 'userId = ?', [$userId]);
     }
 }

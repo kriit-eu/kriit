@@ -9,7 +9,7 @@ class applicants extends Controller
         $this->users = Db::getAll("
             SELECT
                 u.*,
-                (SELECT COUNT(ud.exerciseId) FROM userDoneExercises ud WHERE ud.userId = u.userId) AS userExercisesDone,
+                (SELECT COUNT(ue.exerciseId) FROM userExercises ue WHERE ue.userId = u.userId AND ue.status = 'completed') AS userExercisesDone,
                 MIN(a1.activityLogTimestamp) AS userFirstLogin,
                 MAX(a2.activityLogTimestamp) AS userStartTimer
             FROM
