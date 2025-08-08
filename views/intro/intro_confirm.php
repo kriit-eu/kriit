@@ -46,9 +46,9 @@
         <li>Teil on <strong>
             <select id="input-reeglid-60" class="form-control d-inline-block" style="width:120px">
                 <option value="">...</option>
+                <option value="10">10</option>
+                <option value="20">20</option>
                 <option value="30">30</option>
-                <option value="60">60</option>
-                <option value="90">90</option>
             </select>
         </strong> minutit ülesannete lahendamiseks. Aeg algab <i>Alusta</i> nupule vajutamise järgselt.</li>
     <li><strong>
@@ -74,9 +74,9 @@
         <li>Programm lõppeb, kui kõik ülesanded on lahendatud või 
             <select id="input-punkt-60" class="form-control d-inline-block" style="width:120px">
                 <option value="">...</option>
+                <option value="10">10</option>
+                <option value="20">20</option>
                 <option value="30">30</option>
-                <option value="60">60</option>
-                <option value="90">90</option>
             </select>
             minutit on ära kasutatud.
         </li>
@@ -151,10 +151,10 @@
     };
     // Keywords for validation
     const keywords = {
-    'input-reeglid-60': '60',
+    'input-reeglid-60': '20',
     'input-reeglid-koostoo': 'Keelatud',
     'input-reeglid-voite': 'võite',
-    'input-punkt-60': '60',
+    'input-punkt-60': '20',
     'input-punkt-pingereas': 'eespool',
     'input-punkt-eespool': 'eespool',
     'input-punkt-kiirem': 'kiirem',
@@ -166,10 +166,10 @@
 
     // Dropdown options for each select
     const dropdownOptions = {
-        'input-reeglid-60': ['30', '60', '90'],
+    'input-reeglid-60': ['10', '20', '30'],
         'input-reeglid-koostoo': ['Keelatud', 'Lubatud'],
         'input-reeglid-voite': ['võite', 'ei või'],
-        'input-punkt-60': ['30', '60', '90'],
+    'input-punkt-60': ['10', '20', '30'],
         'input-punkt-pingereas': ['eespool', 'tagapool'],
         'input-punkt-eespool': ['eespool', 'tagapool'],
         'input-punkt-kiirem': ['kiirem', 'aeglasem'],
