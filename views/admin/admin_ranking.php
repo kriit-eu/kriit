@@ -35,7 +35,8 @@
                 max-width: 120px;
                 overflow-wrap: break-word;
             }
-            .table td:nth-child(3), .table th:nth-child(3) {
+            .table td:nth-child(3), .table th:nth-child(3),
+            .table td:nth-child(4), .table th:nth-child(4) {
                 white-space: nowrap;
             }
 
