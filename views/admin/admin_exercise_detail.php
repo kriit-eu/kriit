@@ -75,6 +75,8 @@ $progress = App\Db::getAll('
             .table td {
                 font-size: 0.95rem;
                 padding: 0.4rem 0.3rem;
+                text-align: center;
+                vertical-align: middle;
             }
         }
 
