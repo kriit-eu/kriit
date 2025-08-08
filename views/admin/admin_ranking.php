@@ -20,25 +20,22 @@
         }
 
         .table {
-            font-size: 0.95em;
-            min-width: 600px;
+            font-size: 0.85em;
             width: 100%;
+            min-width: 0;
             box-sizing: border-box;
+            table-layout: auto;
         }
 
-            .table th,
-            .table td {
-                padding: 0.15em 0.3em;
-                white-space: normal;
-                word-break: break-word;
-                font-size: 0.95em;
-                max-width: 120px;
-                overflow-wrap: break-word;
-            }
-            .table td:nth-child(3), .table th:nth-child(3),
-            .table td:nth-child(4), .table th:nth-child(4) {
-                white-space: nowrap;
-            }
+        .table th,
+        .table td {
+            padding: 0.12em 0.15em;
+            white-space: normal;
+            word-break: break-word;
+            font-size: 0.85em;
+            max-width: 80px;
+            overflow-wrap: break-word;
+        }
 
         .btn {
             font-size: 0.95em;
@@ -65,21 +62,63 @@
         <thead>
             <tr>
                 <th>Rank</th>
-                <th>Nimi</th>
-                <th>Isikukood</th>
+                <th>Nimi<br><span class="d-inline d-sm-none" style="font-weight:normal">ID kood</span></th>
+                <th class="d-none d-sm-table-cell">
+                    <span class="d-none d-sm-inline">Isikukood</span>
+                </th>
                 <th>Ajakulu</th>
                 <th>Aega jäänud</th>
-                <th>Lahendatud ülesanded</th>
-                <th>Detailvaade</th>
+                <th>
+                    <span class="d-none d-sm-inline">Lahendatud ülesanded</span>
+                    <span class="d-inline d-sm-none">Lah. Ül</span>
+                </th>
+                <th>
+                    <span class="d-none d-sm-inline">Detailvaade</span>
+                    <span class="d-inline d-sm-none">Detailv.</span>
+                </th>
             </tr>
         </thead>
         <tbody>
             <?php foreach ($users as $user): ?>
                 <tr>
                     <td><?= $user['userRank'] ?></td>
-                    <td><?= $user['userName'] ?></td>
-                    <td><?= $user['userPersonalCode'] ?></td>
-                    <td><?= $user['userTimeTotal'] ?></td>
+                    <td>
+                        <span class="d-inline d-sm-none"><strong><?= $user['userName'] ?></strong></span>
+                        <span class="d-none d-sm-inline"><?= $user['userName'] ?></span>
+                        <br class="d-inline d-sm-none" />
+                        <span class="d-inline d-sm-none" style="font-size:0.95em;color:#555;"><?= $user['userPersonalCode'] ?></span>
+                    </td>
+                    <td class="d-none d-sm-table-cell"><?= $user['userPersonalCode'] ?></td>
+                    <td>
+                        <?php
+                        // Fuzzy time formatting for Ajakulu
+                        $raw = $user['userTimeTotal'];
+                        $seconds = 0;
+                        if (is_numeric($raw)) {
+                            $seconds = (int)$raw;
+                        } elseif (is_string($raw) && preg_match('/^(\d{1,2}:)?\d{1,2}:\d{2}$/', $raw)) {
+                            // Parse HH:MM:SS or MM:SS
+                            $parts = explode(':', $raw);
+                            if (count($parts) === 3) {
+                                $seconds = $parts[0]*3600 + $parts[1]*60 + $parts[2];
+                            } elseif (count($parts) === 2) {
+                                $seconds = $parts[0]*60 + $parts[1];
+                            }
+                        }
+                        if ($seconds > 0) {
+                            $h = floor($seconds / 3600);
+                            $m = floor(($seconds % 3600) / 60);
+                            $s = $seconds % 60;
+                            $parts = [];
+                            if ($h > 0) $parts[] = $h . ' h';
+                            if ($m > 0) $parts[] = $m . ' min';
+                            if ($h === 0 && $m === 0 && $s > 0) $parts[] = $s . ' s';
+                            echo implode(' ', $parts);
+                        } else {
+                            echo '-';
+                        }
+                        ?>
+                    </td>
                     <td>
                         <?php
                         if (!empty($user['userTimeUpAt'])) {
