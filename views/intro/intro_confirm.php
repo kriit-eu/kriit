@@ -47,7 +47,7 @@
             <select id="input-reeglid-60" class="form-control d-inline-block" style="width:120px">
                 <option value="">...</option>
                 <option value="10">10</option>
-                <option value="20">20</option>
+                <option value="<?= (int)(EXERCISES_SESSION_DURATION/60) ?>"><?= (int)(EXERCISES_SESSION_DURATION/60) ?></option>
                 <option value="30">30</option>
             </select>
         </strong> minutit ülesannete lahendamiseks. Aeg algab <i>Alusta</i> nupule vajutamise järgselt.</li>
@@ -75,7 +75,7 @@
             <select id="input-punkt-60" class="form-control d-inline-block" style="width:120px">
                 <option value="">...</option>
                 <option value="10">10</option>
-                <option value="20">20</option>
+                <option value="<?= (int)(EXERCISES_SESSION_DURATION/60) ?>"><?= (int)(EXERCISES_SESSION_DURATION/60) ?></option>
                 <option value="30">30</option>
             </select>
             minutit on ära kasutatud.
@@ -149,27 +149,30 @@
     document.getElementById('backButton').onclick = function() {
         window.location.href = 'intro';
     };
+    // Get session duration in minutes from PHP
+    const SESSION_MINUTES = <?= (int)(EXERCISES_SESSION_DURATION/60) ?>;
+
     // Keywords for validation
     const keywords = {
-    'input-reeglid-60': '20',
-    'input-reeglid-koostoo': 'Keelatud',
-    'input-reeglid-voite': 'võite',
-    'input-punkt-60': '20',
-    'input-punkt-pingereas': 'eespool',
-    'input-punkt-eespool': 'eespool',
-    'input-punkt-kiirem': 'kiirem',
-    'input-soov-kiiremate': 'kiiremate',
-    'input-soov-vaheldus': 'vaheldus',
-    'input-soov-tekkida': 'tekkida',
-    'input-html-css': 'HTML ja CSS',
+        'input-reeglid-60': SESSION_MINUTES.toString(),
+        'input-reeglid-koostoo': 'Keelatud',
+        'input-reeglid-voite': 'võite',
+        'input-punkt-60': SESSION_MINUTES.toString(),
+        'input-punkt-pingereas': 'eespool',
+        'input-punkt-eespool': 'eespool',
+        'input-punkt-kiirem': 'kiirem',
+        'input-soov-kiiremate': 'kiiremate',
+        'input-soov-vaheldus': 'vaheldus',
+        'input-soov-tekkida': 'tekkida',
+        'input-html-css': 'HTML ja CSS',
     };
 
     // Dropdown options for each select
     const dropdownOptions = {
-    'input-reeglid-60': ['10', '20', '30'],
+        'input-reeglid-60': ['10', SESSION_MINUTES.toString(), '30'],
         'input-reeglid-koostoo': ['Keelatud', 'Lubatud'],
         'input-reeglid-voite': ['võite', 'ei või'],
-    'input-punkt-60': ['10', '20', '30'],
+        'input-punkt-60': ['10', SESSION_MINUTES.toString(), '30'],
         'input-punkt-pingereas': ['eespool', 'tagapool'],
         'input-punkt-eespool': ['eespool', 'tagapool'],
         'input-punkt-kiirem': ['kiirem', 'aeglasem'],
