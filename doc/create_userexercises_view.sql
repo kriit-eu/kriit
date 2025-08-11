@@ -16,17 +16,17 @@ SELECT
     CASE 
         WHEN ue.startTime IS NULL THEN 'not_started'
         WHEN ue.endTime IS NOT NULL THEN 'completed'
-        WHEN u.userTimeUpAt IS NULL THEN 'started'  -- Admin users (no time limit)
-        WHEN NOW() > u.userTimeUpAt THEN 'timed_out'
-        ELSE 'started'
+        WHEN ue.startTime IS NOT NULL AND ue.endTime IS NULL AND u.userTimeUpAt IS NOT NULL AND DATE_ADD(UTC_TIMESTAMP(), INTERVAL 3 HOUR) > u.userTimeUpAt THEN 'timed_out'
+        WHEN ue.startTime IS NOT NULL AND ue.endTime IS NULL THEN 'started'
+        ELSE 'not_started'
     END as status,
     -- Computed duration for convenience
     CASE 
         WHEN ue.startTime IS NULL THEN NULL
         WHEN ue.endTime IS NOT NULL THEN TIMESTAMPDIFF(SECOND, ue.startTime, ue.endTime)
-        WHEN u.userTimeUpAt IS NULL THEN TIMESTAMPDIFF(SECOND, ue.startTime, NOW()) -- Admin, no limit
-        WHEN NOW() > u.userTimeUpAt THEN TIMESTAMPDIFF(SECOND, ue.startTime, u.userTimeUpAt) -- Cap at time limit
-        ELSE TIMESTAMPDIFF(SECOND, ue.startTime, NOW()) -- Currently running
+        WHEN u.userTimeUpAt IS NULL THEN TIMESTAMPDIFF(SECOND, ue.startTime, DATE_ADD(UTC_TIMESTAMP(), INTERVAL 3 HOUR)) -- Admin, no limit
+        WHEN DATE_ADD(UTC_TIMESTAMP(), INTERVAL 3 HOUR) > u.userTimeUpAt THEN TIMESTAMPDIFF(SECOND, ue.startTime, u.userTimeUpAt) -- Cap at time limit
+        ELSE TIMESTAMPDIFF(SECOND, ue.startTime, DATE_ADD(UTC_TIMESTAMP(), INTERVAL 3 HOUR)) -- Currently running
     END as durationSeconds
 FROM userExercises ue 
 JOIN users u ON u.userId = ue.userId;

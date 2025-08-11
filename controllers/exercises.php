@@ -73,7 +73,7 @@ class exercises extends Controller
         $exerciseId = $this->getId();
         $userId = $this->auth->userId;
 
-        $exerciseState = Db::getFirst("SELECT * FROM userExercises WHERE userId = ? AND exerciseId = ?", [$userId, $exerciseId]);
+    $exerciseState = Db::getFirst("SELECT * FROM userExercisesWithComputedStatus WHERE userId = ? AND exerciseId = ?", [$userId, $exerciseId]);
 
         if ($exerciseState) {
             if ($exerciseState['status'] === 'completed') {
@@ -246,7 +246,7 @@ class exercises extends Controller
 
     private function markExerciseAsSolved($userId, $exerciseId)
     {
-        $exerciseState = Db::getFirst("SELECT * FROM userExercises WHERE userId = ? AND exerciseId = ?", [$userId, $exerciseId]);
+    $exerciseState = Db::getFirst("SELECT * FROM userExercisesWithComputedStatus WHERE userId = ? AND exerciseId = ?", [$userId, $exerciseId]);
 
         if ($exerciseState) {
             if ($exerciseState['status'] === 'completed') {
