@@ -5,9 +5,8 @@
 -- Only run if userDoneExercises exists and userExercises does not
 
 
--- 1. Rename userDoneExercises to userExercises if needed
--- This block will drop userExercises if it exists, then rename userDoneExercises
-DROP TABLE IF EXISTS userExercises;
+-- SAFE: Only rename if userExercises does not exist
+-- Manual step may be required if both tables exist
 RENAME TABLE userDoneExercises TO userExercises;
 
 -- 2. Add startTime and endTime columns to userExercises (if not present)
