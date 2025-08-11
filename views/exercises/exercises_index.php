@@ -6,11 +6,16 @@ if (isset($exercises) && is_array($exercises)) {
 ?>
 <h1 style="text-align:center;margin:0;padding:0.7em 0;">Ülesanded</h1>
 <?php if (isset($this->timeLeft) && $this->timeLeft > 0): ?>
-    <div class="sticky-timer" style="position:fixed;top:0.5em;right:1.5em;z-index:1000;display:flex;align-items:center;gap:1em;max-width:400px;background:#e9f7fe;border-radius:8px;padding:0.5em 1em;box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+    <div class="sticky-timer" style="position:fixed;top:0.5em;left:1.5em;z-index:1000;display:flex;align-items:center;gap:1em;max-width:400px;background:#e9f7fe;border-radius:8px;padding:0.5em 1em;box-shadow:0 2px 8px rgba(0,0,0,0.04);">
         <span style="font-weight:bold;">Aega jäänud:</span>
         <span id="session-timer" data-time="<?= (int)$this->timeLeft ?>" style="min-width:60px;display:inline-block;"> <?= gmdate('i:s', $this->timeLeft) ?> </span>
     </div>
 <?php endif; ?>
+
+<!-- Logout button -->
+<div class="logout-container" style="position:fixed;top:0.5em;right:1.5em;z-index:1000;">
+    <button type="button" class="btn btn-secondary" onclick="window.location.href = 'logout'">Logout</button>
+</div>
 
 <div class="row">
 
@@ -64,15 +69,27 @@ if (isset($exercises) && is_array($exercises)) {
                 position: fixed;
                 top: 0;
                 left: 0;
-                right: 0;
-                width: 100vw;
-                max-width: 100vw;
+                right: 80px;
+                width: auto;
+                max-width: calc(100vw - 90px);
                 border-radius: 0;
                 padding: 0.5em 0.5em;
                 font-size: 1em;
                 box-shadow: 0 2px 8px rgba(0,0,0,0.04);
                 justify-content: flex-start;
                 gap: 0.5em;
+            }
+            .logout-container {
+                position: fixed !important;
+                top: 0 !important;
+                right: 0 !important;
+                padding: 0.5em !important;
+                background: #f8f9fa !important;
+                border-radius: 0 !important;
+            }
+            .logout-container .btn {
+                font-size: 0.9em;
+                padding: 0.3em 0.6em;
             }
             .fit-table-wrapper {
                 margin-left: -0.5em;
