@@ -5,6 +5,7 @@ $(document).ready(function () {
     const $userPersonalCodeInput = $("#userPersonalCode");
     const $userPersonalCodeHelp = $("#userPersonalCodeHelp");
     const $userPasswordHelp = $("#userPasswordHelp");
+    const $userPasswordLabel = $("label[for='userPassword']");
     const $submitButton = $("#submitButton");
     const $passwordField = $("#password-field");
     const $passwordInput = $("#userPassword");
@@ -17,7 +18,8 @@ $(document).ready(function () {
     let userPersonalCodeValue = "";
 
     function resetPasswordHelp() {
-        $userPasswordHelp.text("Sisesta parool").removeClass("text-danger text-success");
+        $userPasswordHelp.text("Sisestage oma parool").removeClass("text-danger text-success");
+        $userPasswordLabel.text("Parool");
     }
 
     function showError(message) {
@@ -43,7 +45,13 @@ $(document).ready(function () {
         }
         if (response.data.user.userIsAdmin || response.data.user.userIsTeacher || response.data.user.groupId) {
             if (!response.data.user.isPasswordSet) {
-                showSuccess($userPasswordHelp, "Isikukood on õige. Palun sisesta uus parool.");
+                // Update UI for new password setup
+                $userPasswordLabel.text("Uus parool");
+                showSuccess($userPasswordHelp, "Isikukood on õige. Palun määra endale uus parool.");
+            } else {
+                // Update UI for existing password entry
+                $userPasswordLabel.text("Parool");
+                $userPasswordHelp.text("Sisestage oma parool").removeClass("text-danger text-success");
             }
             $passwordField.show();
         } else {

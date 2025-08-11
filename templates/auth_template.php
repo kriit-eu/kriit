@@ -64,7 +64,7 @@
         <div class="mb-3" id="password-field" style="display: none">
             <label for="userPassword" class="form-label">Parool</label>
             <input type="password" name="userPassword" class="form-control" id="userPassword">
-            <div id="userPasswordHelp" class="form-text">Sisesta teie parool</div>
+            <div id="userPasswordHelp" class="form-text">Sisestage oma parool</div>
 
         </div>
         <button type="submit" id="submitButton" class="btn btn-primary" disabled>Logi sisse</button>
