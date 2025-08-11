@@ -41,6 +41,56 @@ $progress = App\Db::getAll('
     <link rel="stylesheet" href="/assets/css/all.min.css">
     <link rel="stylesheet" href="/assets/css/main.css">
     <style>
+            /* Responsive table: stack rows as cards on mobile (moved from main.css) */
+            @media only screen and (max-width: 576px) {
+                .table-responsive table,
+                .table-responsive thead,
+                .table-responsive tbody,
+                .table-responsive th,
+                .table-responsive td,
+                .table-responsive tr {
+                    display: block;
+                    width: 100%;
+                    box-sizing: border-box;
+                }
+                .table-responsive thead tr {
+                    position: absolute;
+                    top: -9999px;
+                    left: -9999px;
+                }
+                .table-responsive tr {
+                    margin-bottom: 1rem;
+                    border: 1px solid #e3e6ea;
+                    border-radius: 8px;
+                    background: #fff;
+                    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+                    padding: 0.5rem 0.5rem;
+                }
+                .table-responsive td {
+                    border: none;
+                    border-bottom: 1px solid #f2f6fa;
+                    position: relative;
+                    padding-left: 45%;
+                    min-height: 40px;
+                    text-align: left;
+                    background: none;
+                    font-size: 1rem;
+                }
+                .table-responsive td:before {
+                    position: absolute;
+                    top: 8px;
+                    left: 8px;
+                    width: 40%;
+                    padding-right: 10px;
+                    white-space: nowrap;
+                    font-weight: bold;
+                    color: #495057;
+                    content: attr(data-label);
+                }
+                .table-responsive td:last-child {
+                    border-bottom: none;
+                }
+            }
         body {
             background: #f8f9fa;
         }
@@ -78,13 +128,18 @@ $progress = App\Db::getAll('
                 padding: 0.5rem 1rem;
             }
 
-            .table th,
-            .table td {
-                font-size: 0.95rem;
-                padding: 0.4rem 0.3rem;
-                text-align: center;
-                vertical-align: middle;
-            }
+                .table th {
+                    font-size: 1.05rem;
+                    padding: 0.18rem 0.12rem;
+                    text-align: center;
+                    vertical-align: middle;
+                }
+                .table td {
+                    font-size: 0.85rem;
+                    padding: 0.18rem 0.12rem;
+                    text-align: center;
+                    vertical-align: middle;
+                }
         }
 
         .table-responsive {
@@ -92,10 +147,45 @@ $progress = App\Db::getAll('
         }
         @media (max-width: 576px) {
             .table-responsive {
-                overflow-x: auto;
+                overflow-x: unset;
             }
             .table {
-                min-width: 600px;
+                min-width: unset;
+                width: 100% !important;
+                table-layout: fixed;
+                word-break: break-word;
+            }
+            .table td, .table th {
+                white-space: normal !important;
+                word-break: break-word;
+                text-align: center !important;
+                justify-content: center;
+                align-items: center;
+            }
+            .table td[data-label] {
+                word-break: break-word;
+                overflow-wrap: break-word;
+                hyphens: auto;
+                max-width: 100%;
+                white-space: normal !important;
+                position: relative;
+                padding-left: 0.2rem;
+                text-align: center !important;
+                padding-top: 0.7em;
+            }
+            .table td[data-label]::before {
+                    content: attr(data-label);
+                    display: block;
+                    position: static;
+                    font-weight: bold;
+                    color: #495057;
+                    margin-bottom: 0.08em;
+                    font-size: 1.05em;
+                    white-space: normal;
+                    padding: 0;
+                    text-align: center;
+                    margin-left: auto;
+                    margin-right: auto;
             }
         }
 
@@ -168,8 +258,8 @@ $progress = App\Db::getAll('
                     <tbody>
                         <?php foreach ($progress as $row): ?>
                             <tr>
-                                <td><?= htmlspecialchars($row['exerciseName']) ?></td>
-                                <td>
+                                    <td data-label="Ülesanne"><?= htmlspecialchars($row['exerciseName']) ?></td>
+                                    <td data-label="Alustas">
                                     <?php
                                     if ($row['startedAt']) {
                                         $dt = new DateTime($row['startedAt']);
@@ -179,7 +269,7 @@ $progress = App\Db::getAll('
                                     }
                                     ?>
                                 </td>
-                                <td>
+                                    <td data-label="Lõpetas">
                                     <?php
                                     if ($row['status'] === 'completed' && $row['completedAt']) {
                                         $dt = new DateTime($row['completedAt']);
@@ -189,7 +279,7 @@ $progress = App\Db::getAll('
                                     }
                                     ?>
                                 </td>
-                                <td>
+                                    <td data-label="Kestus">
                                     <?php
                                     if ($row['status'] === 'completed' && $row['durationSeconds']) {
                                         $duration = $row['durationSeconds'];
@@ -214,7 +304,7 @@ $progress = App\Db::getAll('
                                     }
                                     ?>
                                 </td>
-                                <td>
+                                    <td data-label="Staatus">
                                     <?php
                                     // Status is computed by the database view
                                     if ($row['status'] === 'completed') {
