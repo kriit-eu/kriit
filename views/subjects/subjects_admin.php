@@ -364,6 +364,12 @@
     }
 </style>
 
+<!-- Alert banner for overdue ungraded assignments (yellow cells) -->
+<div id="overdue-alert" class="alert alert-warning alert-dismissible fade show" role="alert" style="display: none;">
+    <strong>Tähelepanu!</strong> <span id="overdue-message"></span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+
 <?php if ($this->isTeacherOrAdmin): ?>
     <div class="col text-end mb-3 d-flex justify-content-end align-items-center">
         <?php if (!$this->isStudent): ?>
@@ -1419,8 +1425,23 @@
 
         const hasProblems = cell => {
             if (!cell) return false;
+            
+            // Check if cell has red-cell or yellow-cell class (overdue or problematic)
+            if (cell.classList.contains('red-cell') || cell.classList.contains('yellow-cell')) {
+                return true;
+            }
+            
+            // Then check grade value
             const grade = cell.dataset.grade;
-            return cell.classList.contains('red-cell') || ['1', '2', 'MA'].includes(grade);
+            if (!grade || grade === '' || grade === 'undefined') {
+                return false;
+            }
+            
+            // Convert to string for comparison, handle both numeric and string values
+            const gradeStr = String(grade).trim();
+            
+            // Check for failing grades
+            return ['1', '2', 'MA'].includes(gradeStr);
         };
 
         const subjectHeaderBefore = row => {
@@ -1435,16 +1456,19 @@
             $$('#subject-table').forEach(table => {
                 const rows = $$('tr', table);
                 const visibleSubjects = new Set();
+                
                 rows.forEach((r) => {
                     if (r.querySelector('th')) return;
                     const cell = r.querySelector(`td[data-student-id="${id}"]`);
                     const show = hasProblems(cell);
+                    
                     r.style.display = show ? '' : 'none';
                     if (show) {
                         const hdr = subjectHeaderBefore(r);
                         hdr && visibleSubjects.add(hdr.textContent.trim());
                     }
                 });
+                
                 rows.forEach(r => {
                     if (!r.querySelector('th')) return;
                     r.style.display = visibleSubjects.has(r.textContent.trim()) ? '' : 'none';
@@ -1517,6 +1541,96 @@
             });
         };
 
+        const checkForOverdueUngraded = () => {
+            // Only check for teachers/admins, not students
+            const isStudent = document.querySelector('.student-view') !== null;
+            if (isStudent) return;
+            
+            // Find all yellow cells that have empty or no grade
+            const yellowCells = $$('.yellow-cell');
+            const problematicCells = [];
+            const affectedAssignments = new Map();
+            
+            yellowCells.forEach(cell => {
+                const grade = cell.dataset.grade;
+                const cellText = cell.textContent.trim();
+                
+                // Check if grade is empty/undefined AND cell text shows "Esitamata" or is empty
+                if ((!grade || grade === '' || grade === 'undefined') && 
+                    (cellText === 'Esitamata' || cellText === '' || !cellText)) {
+                    problematicCells.push(cell);
+                    
+                    // Find assignment name from the same row
+                    const row = cell.closest('tr');
+                    if (row) {
+                        const assignmentLink = row.querySelector('a[href*="assignments/"]');
+                        if (assignmentLink) {
+                            // Get assignment name (remove date if present)
+                            let assignmentName = assignmentLink.textContent.trim();
+                            // Remove date prefix like "28.11.24" if exists
+                            assignmentName = assignmentName.replace(/^\d{1,2}\.\d{1,2}\.\d{2,4}\s*/, '');
+                            
+                            const assignmentId = assignmentLink.href.match(/assignments\/(\d+)/)?.[1];
+                            
+                            // Find subject name from the table header
+                            const table = row.closest('table');
+                            let subjectName = '';
+                            if (table) {
+                                const headerRow = table.querySelector('tr th b');
+                                if (headerRow) {
+                                    // Get text content, but only the subject name part
+                                    const headerLink = headerRow.querySelector('a');
+                                    subjectName = headerLink ? headerLink.textContent.trim() : 
+                                                 headerRow.childNodes[0]?.textContent?.trim() || '';
+                                }
+                            }
+                            
+                            if (!affectedAssignments.has(assignmentId)) {
+                                affectedAssignments.set(assignmentId, {
+                                    name: assignmentName,
+                                    subject: subjectName,
+                                    count: 1
+                                });
+                            } else {
+                                affectedAssignments.get(assignmentId).count++;
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Show alert if problematic cells found
+            if (problematicCells.length > 0) {
+                const alertDiv = $('#overdue-alert');
+                const messageSpan = $('#overdue-message');
+                
+                const assignmentCount = affectedAssignments.size;
+                const totalProblems = problematicCells.length;
+                
+                let message = `Leiti ${totalProblems} esitamata ülesannet, mille tähtaeg on möödas, aga hinne puudub.<br>`;
+                message += `<small>Kontrollige, kas cronitöö töötab korralikult või on õpetaja seadnud tähtaja minevikku.</small><br><br>`;
+                message += `<details style="margin-top: 10px;">`;
+                message += `<summary style="cursor: pointer;">Näita probleemne ülesanded (${assignmentCount})</summary>`;
+                message += `<ul style="margin-top: 10px; margin-bottom: 0;">`;
+                
+                affectedAssignments.forEach((data, id) => {
+                    message += `<li><strong>${data.subject}:</strong> ${data.name} `;
+                    message += `<span class="badge bg-danger">${data.count} õpilast</span></li>`;
+                });
+                
+                message += `</ul></details>`;
+                
+                messageSpan.innerHTML = message;
+                alertDiv.style.display = 'block';
+                
+                // Log details to console for debugging
+                console.log('Probleemne ülesanded (kollased tühjad lahtrid):');
+                affectedAssignments.forEach((data, id) => {
+                    console.log(`- ${data.subject}: ${data.name} (${data.count} õpilast, ID: ${id})`);
+                });
+            }
+        };
+
         document.addEventListener('DOMContentLoaded', () => {
             $$('[data-bs-toggle="tooltip"]').forEach(el => new bootstrap.Tooltip(el));
             prepareClickableCells();
@@ -1524,6 +1638,7 @@
             setRedCellIntensity();
             updateBadges();
             initSorting();
+            checkForOverdueUngraded();
         });
     })();
 </script>
