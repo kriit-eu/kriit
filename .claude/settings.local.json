@@ -21,7 +21,6 @@
       "Bash(echo $PATH)",
       "Bash(/home/kriit/.bun/bin/bun run setup:revert --help)",
       "Bash(bash:*)",
-      "Bash(rm:*)"
     ],
     "deny": []
   }

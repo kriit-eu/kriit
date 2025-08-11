@@ -7,6 +7,30 @@ require_once __DIR__ . '/../../classes/App/User.php';
 
 use App\User;
 
+function generateEmail($name) {
+    // Convert to lowercase
+    $email = strtolower($name);
+    
+    // Replace Estonian characters
+    $estonian_chars = ['õ', 'ä', 'ö', 'ü', 'š', 'ž', 'Õ', 'Ä', 'Ö', 'Ü', 'Š', 'Ž'];
+    $replacements = ['o', 'a', 'o', 'y', 's', 'z', 'o', 'a', 'o', 'y', 's', 'z'];
+    $email = str_replace($estonian_chars, $replacements, $email);
+    
+    // Replace spaces with dots (keep hyphens)
+    $email = preg_replace('/\s+/', '.', $email);
+    
+    // Remove any non-alphanumeric characters except dots and hyphens
+    $email = preg_replace('/[^a-z0-9.\-]/', '', $email);
+    
+    // Remove multiple consecutive dots
+    $email = preg_replace('/\.+/', '.', $email);
+    
+    // Remove leading/trailing dots
+    $email = trim($email, '.');
+    
+    return $email . '@vikk.ee';
+}
+
 function get_users($argv) {
     if (count($argv) < 2) {
         fwrite(STDERR, "Usage: php add_users_by_idcode.php scripts/user_import/idcodes.txt\n");
@@ -46,12 +70,14 @@ foreach ($users as $user) {
         echo "User already exists: $idcode\n";
         continue;
     }
+    $email = generateEmail($name);
     $data = [
         'userName' => $name,
-        'userPersonalCode' => $idcode
+        'userPersonalCode' => $idcode,
+        'userEmail' => $email
     ];
     $userId = App\Db::insert('users', $data);
-    echo "Created user: $name ($idcode) (ID: $userId)\n";
+    echo "Created user: $name ($idcode) (ID: $userId) Email: $email\n";
 }
 
 echo "Done.\n";

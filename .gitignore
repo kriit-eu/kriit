@@ -17,3 +17,6 @@ logs/output.txt
 # Setup script logs
 .kriit-revert.log
 .kriit-setup.log
+
+# User import files (contain personal data)
+scripts/user_import/idcodes.txt
