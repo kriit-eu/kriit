@@ -1,4 +1,4 @@
--- Dump created on 2025-08-06 12:20:23 by f96b19cfb7e4
+-- Dump created on 2025-08-11 12:22:33 by f96b19cfb7e4
 SET FOREIGN_KEY_CHECKS=0;
 SET @@SESSION.sql_mode='NO_AUTO_VALUE_ON_ZERO';
 
@@ -513,7 +513,6 @@ CREATE TABLE `userExercises` (
 `exerciseId` int unsigned NOT NULL,
 `startTime` timestamp NULL DEFAULT NULL,
 `endTime` timestamp NULL DEFAULT NULL,
-`status` enum('not_started','started','completed','timed_out') NOT NULL DEFAULT 'not_started',
 PRIMARY KEY (`exerciseId`,`userId`),
 KEY `userId` (`userId`),
 CONSTRAINT `userdoneexercises_ibfk_1` FOREIGN KEY (`exerciseId`) REFERENCES `exercises` (`exerciseId`),
@@ -523,6 +522,19 @@ LOCK TABLES `userExercises` WRITE;
 /*!40000 ALTER TABLE `userExercises` DISABLE KEYS */;
 /*!40000 ALTER TABLE `userExercises` ENABLE KEYS */;
 UNLOCK TABLES;
+-- Temporary table structure for view `userExercisesWithComputedStatus`
+/*!50001 DROP VIEW IF EXISTS `userExercisesWithComputedStatus`*/;
+SET @saved_cs_client = @@character_set_client;
+SET character_set_client = utf8mb4;
+/*!50001 CREATE VIEW `userExercisesWithComputedStatus` AS SELECT
+1 AS `userId`,
+1 AS `exerciseId`,
+1 AS `startTime`,
+1 AS `endTime`,
+1 AS `userTimeUpAt`,
+1 AS `status`,
+1 AS `durationSeconds` */;
+SET character_set_client = @saved_cs_client;
 
 -- Table structure for table `users`
 CREATE TABLE `users` (
@@ -554,4 +566,9 @@ INSERT INTO `users` VALUES
 (2,'Mati Vaarikas','31111111114',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,1,NULL,NULL,'demo2',1,0,'',NULL,1);
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
+-- Final view structure for view `userExercisesWithComputedStatus`
+/*!50001 DROP VIEW IF EXISTS `userExercisesWithComputedStatus`*/;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 SQL SECURITY DEFINER */
+/*!50001 VIEW `userExercisesWithComputedStatus` AS select `ue`.`userId` AS `userId`,`ue`.`exerciseId` AS `exerciseId`,`ue`.`startTime` AS `startTime`,`ue`.`endTime` AS `endTime`,`u`.`userTimeUpAt` AS `userTimeUpAt`,case when `ue`.`startTime` is null then 'not_started' when `ue`.`endTime` is not null then 'completed' when `ue`.`startTime` is not null and `ue`.`endTime` is null and `u`.`userTimeUpAt` is not null and utc_timestamp() + interval 3 hour > `u`.`userTimeUpAt` then 'timed_out' when `ue`.`startTime` is not null and `ue`.`endTime` is null then 'started' else 'not_started' end AS `status`,case when `ue`.`startTime` is null then NULL when `ue`.`endTime` is not null then timestampdiff(SECOND,`ue`.`startTime`,`ue`.`endTime`) when `u`.`userTimeUpAt` is null then timestampdiff(SECOND,`ue`.`startTime`,utc_timestamp() + interval 3 hour) when utc_timestamp() + interval 3 hour > `u`.`userTimeUpAt` then timestampdiff(SECOND,`ue`.`startTime`,`u`.`userTimeUpAt`) else timestampdiff(SECOND,`ue`.`startTime`,utc_timestamp() + interval 3 hour) end AS `durationSeconds` from (`userExercises` `ue` join `users` `u` on(`u`.`userId` = `ue`.`userId`)) */;
 /*M!100616 SET NOTE_VERBOSITY=@OLD_NOTE_VERBOSITY */;
