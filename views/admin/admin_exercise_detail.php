@@ -14,11 +14,18 @@ if (!$user) {
     die('Kasutajat ei leitud');
 }
 
-// Fetch all exercises for this user
+// Fetch all exercises for this user using the computed status view
 $progress = App\Db::getAll('
-    SELECT e.exerciseId, e.exerciseName, ue.startTime AS startedAt, ue.endTime AS completedAt, ue.status
+    SELECT 
+        e.exerciseId, 
+        e.exerciseName, 
+        ue.startTime AS startedAt, 
+        ue.endTime AS completedAt, 
+        ue.status,
+        ue.userTimeUpAt,
+        ue.durationSeconds
     FROM exercises e
-    LEFT JOIN userExercises ue ON ue.exerciseId = e.exerciseId AND ue.userId = ?
+    LEFT JOIN userExercisesWithComputedStatus ue ON ue.exerciseId = e.exerciseId AND ue.userId = ?
     ORDER BY e.exerciseId
 ', [$userId]);
 
@@ -184,18 +191,24 @@ $progress = App\Db::getAll('
                                 </td>
                                 <td>
                                     <?php
-                                    if ($row['startedAt'] && $row['completedAt'] && $row['status'] === 'completed') {
-                                        $start = strtotime($row['startedAt']);
-                                        $end = strtotime($row['completedAt']);
-                                        $duration = $end - $start;
+                                    if ($row['status'] === 'completed' && $row['durationSeconds']) {
+                                        $duration = $row['durationSeconds'];
                                         $hours = floor($duration / 3600);
                                         $minutes = floor(($duration % 3600) / 60);
                                         $seconds = $duration % 60;
                                         printf('<span class="badge bg-success">%02d:%02d:%02d</span>', $hours, $minutes, $seconds);
-                                    } elseif ($row['startedAt'] && !$row['completedAt'] && $row['status'] === 'started') {
-                                        // Live timer for started but not completed
+                                    } elseif ($row['status'] === 'started' && $row['startedAt']) {
+                                        // Live timer for started exercises
                                         $startIso = (new DateTime($row['startedAt']))->format(DateTime::ATOM);
-                                        echo '<span class="badge bg-warning text-dark live-timer" data-start="' . htmlspecialchars($startIso) . '">00:00:00</span>';
+                                        $timeUpAtIso = $row['userTimeUpAt'] ? (new DateTime($row['userTimeUpAt']))->format(DateTime::ATOM) : null;
+                                        echo '<span class="badge bg-warning text-dark live-timer" data-start="' . htmlspecialchars($startIso) . '" data-timeup="' . htmlspecialchars($timeUpAtIso ?: '') . '">00:00:00</span>';
+                                    } elseif ($row['status'] === 'timed_out' && $row['durationSeconds']) {
+                                        // Show duration up to time limit (computed by database)
+                                        $duration = $row['durationSeconds'];
+                                        $hours = floor($duration / 3600);
+                                        $minutes = floor(($duration % 3600) / 60);
+                                        $seconds = $duration % 60;
+                                        printf('<span class="badge bg-danger">%02d:%02d:%02d</span>', $hours, $minutes, $seconds);
                                     } else {
                                         echo '<span class="text-muted">-</span>';
                                     }
@@ -203,16 +216,17 @@ $progress = App\Db::getAll('
                                 </td>
                                 <td>
                                     <?php
+                                    // Status is computed by the database view
                                     if ($row['status'] === 'completed') {
                                         echo '<span class="badge bg-success">Sooritatud</span>';
                                     } elseif ($row['status'] === 'started') {
                                         echo '<span class="badge bg-warning text-dark">Alustatud</span>';
                                     } elseif ($row['status'] === 'timed_out') {
                                         echo '<span class="badge bg-danger">Aeg läbi</span>';
-                                    } elseif ($row['status'] === 'not_started' || !$row['status']) {
+                                    } elseif ($row['status'] === 'not_started') {
                                         echo '<span class="badge bg-secondary">Pole alustatud</span>';
                                     } else {
-                                        echo htmlspecialchars($row['status']);
+                                        echo '<span class="text-muted">-</span>';
                                     }
                                     ?>
                                 </td>
@@ -230,9 +244,27 @@ $progress = App\Db::getAll('
         var now = new Date();
         document.querySelectorAll('.live-timer').forEach(function(span) {
             var startIso = span.getAttribute('data-start');
+            var timeUpIso = span.getAttribute('data-timeup');
             if (!startIso) return;
+            
             var start = new Date(startIso);
-            var diff = Math.floor((now - start) / 1000);
+            var timeUp = timeUpIso ? new Date(timeUpIso) : null;
+            
+            var diff;
+            if (timeUp && now > timeUp) {
+                // User time is up, show duration up to time limit
+                diff = Math.floor((timeUp - start) / 1000);
+                span.className = span.className.replace('bg-warning', 'bg-danger');
+            } else if (timeUp) {
+                // Cap duration at time limit
+                var maxDiff = Math.floor((timeUp - start) / 1000);
+                var actualDiff = Math.floor((now - start) / 1000);
+                diff = Math.min(actualDiff, maxDiff);
+            } else {
+                // No time limit (admin user)
+                diff = Math.floor((now - start) / 1000);
+            }
+            
             if (diff < 0) diff = 0;
             var hours = Math.floor(diff / 3600);
             var minutes = Math.floor((diff % 3600) / 60);

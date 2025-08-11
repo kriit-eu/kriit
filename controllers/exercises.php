@@ -36,7 +36,7 @@ class exercises extends Controller
                 ue.startTime,
                 ue.endTime
             FROM exercises e
-            LEFT JOIN userExercises ue
+            LEFT JOIN userExercisesWithComputedStatus ue
                 ON e.exerciseId = ue.exerciseId
                 AND ue.userId = ?
             ORDER BY e.exerciseId",
@@ -91,9 +91,8 @@ class exercises extends Controller
                     $this->elapsedTime = 0;
                 }
             } elseif ($exerciseState['status'] === 'not_started') {
-                // Update to started and set startTime
+                // Set startTime (status will be computed automatically)
                 Db::update('userExercises', [
-                    'status' => 'started',
                     'startTime' => date('Y-m-d H:i:s')
                 ], 'userId = ? AND exerciseId = ?', [$userId, $exerciseId]);
                 $this->elapsedTime = 0;
@@ -104,7 +103,6 @@ class exercises extends Controller
             Db::insert('userExercises', [
                 'userId' => $userId,
                 'exerciseId' => $exerciseId,
-                'status' => 'started',
                 'startTime' => date('Y-m-d H:i:s'),
             ]);
             $this->elapsedTime = 0;
@@ -120,12 +118,8 @@ class exercises extends Controller
             $this->redirect('exercises');
         }
 
-        // Mark only 'started' exercises as timed_out for this user
-        Db::update('userExercises',
-            ['status' => 'timed_out'],
-            'userId = ? AND status = ?',
-            [$this->auth->userId, 'started']
-        );
+        // Status will automatically be computed as 'timed_out' based on userTimeUpAt
+        // No manual status update needed
 
         Activity::create(ACTIVITY_TIME_UP, $this->auth->userId);
         $this->calculateAndUpdateTotalTimeSpent($this->auth->userId);
@@ -146,7 +140,7 @@ class exercises extends Controller
     function congratulations()
     {
         $userId = $_SESSION['userId'];
-        $this->solvedExercisesCount = Db::getOne("SELECT COUNT(*) FROM userExercises WHERE userId = ? AND status = 'completed'", [$userId]);
+        $this->solvedExercisesCount = Db::getOne("SELECT COUNT(*) FROM userExercisesWithComputedStatus WHERE userId = ? AND status = 'completed'", [$userId]);
 
         Activity::create(ACTIVITY_LOGOUT, $userId);
     }
@@ -167,7 +161,6 @@ class exercises extends Controller
                 Db::insert('userExercises', [
                     'userId' => $userId,
                     'exerciseId' => $exerciseId,
-                    'status' => 'not_started',
                 ]);
             }
         }
@@ -261,7 +254,7 @@ class exercises extends Controller
                 return;
             }
             Db::update('userExercises',
-                ['status' => 'completed', 'endTime' => date('Y-m-d H:i:s')],
+                ['endTime' => date('Y-m-d H:i:s')],
                 "userId = ? AND exerciseId = ?",
                 [$userId, $exerciseId]
             );
@@ -271,7 +264,6 @@ class exercises extends Controller
             Db::insert('userExercises', [
                 'userId' => $userId,
                 'exerciseId' => $exerciseId,
-                'status' => 'completed',
                 'startTime' => date('Y-m-d H:i:s'),
                 'endTime' => date('Y-m-d H:i:s')
             ]);
