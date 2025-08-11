@@ -1610,7 +1610,7 @@
                 let message = `Leiti ${totalProblems} esitamata ülesannet, mille tähtaeg on möödas, aga hinne puudub.<br>`;
                 message += `<small>Kontrollige, kas cronitöö töötab korralikult või on õpetaja seadnud tähtaja minevikku.</small><br><br>`;
                 message += `<details style="margin-top: 10px;">`;
-                message += `<summary style="cursor: pointer;">Näita probleemne ülesanded (${assignmentCount})</summary>`;
+                message += `<summary style="cursor: pointer;">Näita probleemseid ülesandeid (${assignmentCount})</summary>`;
                 message += `<ul style="margin-top: 10px; margin-bottom: 0;">`;
                 
                 affectedAssignments.forEach((data, id) => {
