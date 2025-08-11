@@ -111,6 +111,10 @@ class Auth
         }
 
         if (($user['groupId']|| $user['userIsTeacher']) && empty($user['userPassword'])) {
+            // Validate new password length
+            if (strlen($_POST['userPassword']) < 8) {
+                $this->show_login(['Parool peab olema vähemalt 8 tähemärki pikk'], $_POST['userPersonalCode']);
+            }
             $user['userPassword'] = password_hash($_POST['userPassword'], PASSWORD_DEFAULT);
             Db::update('users', $user, 'userId = ?', [$user['userId']]);
         }

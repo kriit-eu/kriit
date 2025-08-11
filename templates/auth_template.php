@@ -70,6 +70,7 @@
         <button type="submit" id="submitButton" class="btn btn-primary" disabled>Logi sisse</button>
     </form>
 </div>
+<script src="node_modules/zxcvbn/dist/zxcvbn.js"></script>
 <script src="assets/js/main.js?<?= COMMIT_HASH ?>"></script>
 
 <?php
