@@ -545,7 +545,8 @@
                                     }
                                 $usedCount = count($usedOv);
                                 $totalOv = isset($subject['learningOutcomes']) && is_array($subject['learningOutcomes']) ? count($subject['learningOutcomes']) : 0;
-                                if ($totalOv > 0) {
+                                // Only show badge if there are outcomes AND not all are used
+                                if ($totalOv > 0 && $usedCount < $totalOv) {
                                     // Badge color: red if subjectLastLessonDate is set, yellow if not
                                     if (!empty($subject['subjectLastLessonDate'])) {
                                         $badgeColor = 'bg-danger subject-enddate-badge';
