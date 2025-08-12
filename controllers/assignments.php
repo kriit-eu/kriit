@@ -17,6 +17,71 @@ class assignments extends Controller
         $criteria = Db::getAll('SELECT criterionId, criterionName FROM criteria WHERE assignmentId = ?', [$assignmentId]);
         stop(200, ['criteria' => $criteria]);
     }
+
+    public function ajax_getAssignmentDetails()
+    {
+        $assignmentId = $_GET['assignmentId'] ?? null;
+        $studentId = $_GET['studentId'] ?? null;
+        
+        if (!$assignmentId) {
+            stop(400, 'Missing assignmentId');
+        }
+        
+        // Permission check
+        $this->checkIfUserHasPermissionForAction($assignmentId) || stop(403, 'Teil pole õigusi sellele tegevusele.');
+        
+        // Get assignment details
+        $assignment = \App\Assignment::getById((int)$assignmentId);
+        if (!$assignment) {
+            stop(404, 'Assignment not found');
+        }
+        
+        // Get criteria with student-specific completion data if studentId is provided
+        if ($studentId) {
+            // Get criteria with student completion status
+            $criteria = Db::getAll('
+                SELECT 
+                    c.criterionId, 
+                    c.criterionName,
+                    CASE WHEN udc.criterionId IS NOT NULL THEN 1 ELSE 0 END AS isCompleted
+                FROM criteria c
+                LEFT JOIN userDoneCriteria udc ON c.criterionId = udc.criterionId AND udc.userId = ?
+                WHERE c.assignmentId = ?
+                ORDER BY c.criterionId
+            ', [$studentId, $assignmentId]);
+            
+            // Get student assignment data
+            $studentAssignment = Db::getFirst(
+                'SELECT solutionUrl, userGrade, assignmentStatusId FROM userAssignments 
+                 WHERE assignmentId = ? AND userId = ?', 
+                [$assignmentId, $studentId]
+            );
+            
+            $response = [
+                'assignmentId' => $assignment['assignmentId'],
+                'assignmentName' => $assignment['assignmentName'],
+                'assignmentInstructions' => $assignment['assignmentInstructions'] ?? '',
+                'assignmentInvolvesOpenApi' => $assignment['assignmentInvolvesOpenApi'] ?? false,
+                'criteria' => $criteria,
+                'solutionUrl' => $studentAssignment['solutionUrl'] ?? '',
+                'currentGrade' => $studentAssignment['userGrade'] ?? '',
+                'assignmentStatusId' => $studentAssignment['assignmentStatusId'] ?? null
+            ];
+        } else {
+            // No student specified, get basic criteria only
+            $criteria = Db::getAll('SELECT criterionId, criterionName FROM criteria WHERE assignmentId = ?', [$assignmentId]);
+            
+            $response = [
+                'assignmentId' => $assignment['assignmentId'],
+                'assignmentName' => $assignment['assignmentName'],
+                'assignmentInstructions' => $assignment['assignmentInstructions'] ?? '',
+                'assignmentInvolvesOpenApi' => $assignment['assignmentInvolvesOpenApi'] ?? false,
+                'criteria' => $criteria
+            ];
+        }
+        
+        stop(200, $response);
+    }
     public $template = 'master';
 
     public function view(): void

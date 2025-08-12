@@ -362,7 +362,28 @@
     .remove-criterion-btn:hover .fa-trash, .remove-criterion-btn:focus .fa-trash {
         color: #fff;
     }
+
+    /* Grade cell hover effects for subjects table */
+    td[data-assignment-id][data-student-id]:hover {
+        background-color: rgba(0, 123, 255, 0.08) !important;
+        transition: background-color 0.15s ease;
+        cursor: pointer;
+    }
+
+    /* Ensure hover effect works with existing grade cell colors */
+    td[data-assignment-id][data-student-id].red-cell:hover {
+        background-color: rgba(220, 53, 69, 0.25) !important;
+    }
+
+    td[data-assignment-id][data-student-id].yellow-cell:hover {
+        background-color: rgba(255, 193, 7, 0.35) !important;
+    }
+
+    td[data-assignment-id][data-student-id].green-cell:hover {
+        background-color: rgba(40, 167, 69, 0.25) !important;
+    }
 </style>
+
 
 <!-- Alert banner for overdue ungraded assignments (yellow cells) -->
 <div id="overdue-alert" class="alert alert-warning alert-dismissible fade show" role="alert" style="display: none;">
@@ -619,6 +640,9 @@
                                         title="<?= nl2br(htmlspecialchars(($tooltip ? "$tooltip\n" : '') . $st['tooltipText'])) ?>"
                                         data-grade="<?= is_numeric($st['grade']) ? intval($st['grade']) : ($st['grade'] ?: '') ?>"
                                         data-student-id="<?= $student['userId'] ?>"
+                                        data-student-name="<?= htmlspecialchars($student['userName']) ?>"
+                                        data-assignment-id="<?= $assignment['assignmentId'] ?>"
+                                        data-assignment-name="<?= htmlspecialchars($assignment['assignmentName']) ?>"
                                         data-is-student="<?= json_encode($this->isStudent) ?>"
                                         data-days-passed="<?= $st['daysPassed'] ?? 0 ?>"
                                         data-url="assignments/<?= $assignment['assignmentId'] ?>?group=<?= urlencode($group['groupName']) ?>">
@@ -653,6 +677,12 @@
 </div>
 
 <?php if (!$this->isStudent): ?>
+    <!-- Include grading modal for teachers -->
+    <?php 
+    $isStudent = false; // For grading modal
+    include __DIR__ . '/../../templates/partials/grading_modal/grading_modal.php'; 
+    ?>
+    
     <div class="modal fade" id="editAssignmentModal" tabindex="-1" aria-labelledby="editAssignmentModalLabel"
          aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-centered">
@@ -798,6 +828,12 @@
 <?php endif; ?>
 
 <script src="/assets/js/markdown_editor.js"></script>
+<?php if (!$this->isStudent): ?>
+<script>
+    // Set BASE_URL for grading modal
+    window.BASE_URL = '<?= BASE_URL ?>';
+</script>
+<?php endif; ?>
 <script>
 
     // Custom Bootstrap modal confirmation for deleting a criterion (define first so all code can use it)
@@ -1490,6 +1526,31 @@
             });
         };
 
+        const openGradingModalFromCell = (cell) => {
+            // Get minimal data needed for the modal (rest will be loaded via AJAX)
+            const assignmentId = cell.dataset.assignmentId;
+            const assignmentName = cell.dataset.assignmentName;
+            const studentId = cell.dataset.studentId;
+            const studentName = cell.dataset.studentName;
+
+            if (!assignmentId || !studentId) {
+                console.error('Missing assignment or student data');
+                return;
+            }
+
+            // Create minimal data object for the modal - everything else loads via AJAX
+            const modalData = {
+                assignmentId: assignmentId,
+                userId: studentId,
+                assignmentName: assignmentName,
+                studentName: studentName
+            };
+
+            // Open the grading modal with this data
+            window.openGradingModal(modalData);
+        };
+
+
         const setRedCellIntensity = () => {
             $$('.red-cell[data-days-passed]').forEach(cell => {
                 const daysPassed = parseInt(cell.dataset.daysPassed, 10);
@@ -1519,7 +1580,24 @@
 
         const prepareClickableCells = () => {
             $$('td[data-url]').forEach(cell => {
-                cell.onclick = () => location.href = cell.dataset.url;
+                // Check if this is a teacher view and the cell has a grade or student data
+                const isTeacher = !document.querySelector('.student-view');
+                const hasStudentData = cell.hasAttribute('data-student-id');
+                const hasGradeData = cell.hasAttribute('data-grade');
+                
+                if (isTeacher && (hasStudentData || hasGradeData)) {
+                    // For teachers, open grading modal instead of navigating
+                    cell.onclick = (e) => {
+                        e.preventDefault();
+                        openGradingModalFromCell(cell);
+                        return false;
+                    };
+                    cell.style.cursor = 'pointer';
+                    cell.title = 'Kliki hindamiseks';
+                } else {
+                    // For students or non-gradable cells, navigate normally
+                    cell.onclick = () => location.href = cell.dataset.url;
+                }
             });
         };
 
