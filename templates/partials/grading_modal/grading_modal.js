@@ -41,21 +41,58 @@ function openGradingModal(row) {
     currentUserId = userId;
 
     // Update modal title
-    document.getElementById('gradingModalLabel').innerHTML = `<span class="badge bg-secondary me-2">${assignmentId}</span>${studentName} | ${assignmentName}`;
+    const modalTitle = document.getElementById('gradingModalLabel');
+    if (modalTitle) {
+        modalTitle.innerHTML = `<span class="badge bg-secondary me-2">${assignmentId}</span>${studentName} | ${assignmentName}`;
+    }
 
     // Show loading state for all sections
-    document.getElementById('assignmentInstructions').innerHTML = '<p class="text-muted">Laen andmeid...</p>';
-    document.getElementById('solutionUrlDetails').classList.add('d-none');
-    document.getElementById('criteriaContainer').innerHTML = '<p class="text-muted">Laen kriteeriumeid...</p>';
+    const instructionsDiv = document.getElementById('assignmentInstructions');
+    const solutionUrlDetails = document.getElementById('solutionUrlDetails');
+    const criteriaContainer = document.getElementById('criteriaContainer');
+    
+    if (instructionsDiv) {
+        instructionsDiv.innerHTML = '<p class="text-muted">Laen andmeid...</p>';
+    }
+    if (solutionUrlDetails) {
+        solutionUrlDetails.classList.add('d-none');
+    }
+    if (criteriaContainer) {
+        criteriaContainer.innerHTML = '<p class="text-muted">Laen kriteeriumeid...</p>';
+    }
     
     // Clear and reset form elements
     resetModalForm();
 
-    // Load all data via AJAX
-    loadAssignmentDataAjax(assignmentId, userId);
-
-    // Show modal
+    // Show modal first to ensure DOM elements are available
     showModal();
+    
+    // Wait for modal to be fully shown before loading data
+    const modalElement = document.getElementById('gradingModal');
+    if (modalElement) {
+        modalElement.addEventListener('shown.bs.modal', function onModalShown() {
+            // Initialize preview functionality when modal is shown
+            initializePreview();
+            
+            // Ensure all DOM elements are fully rendered before loading data
+            requestAnimationFrame(() => {
+                setTimeout(() => {
+                    loadAssignmentDataAjax(assignmentId, userId);
+                }, 50);
+            });
+            
+            // Remove the event listener after use
+            modalElement.removeEventListener('shown.bs.modal', onModalShown);
+        });
+    } else {
+        // Fallback if modal element not found
+        setTimeout(() => {
+            initializePreview();
+            setTimeout(() => {
+                loadAssignmentDataAjax(assignmentId, userId);
+            }, 100);
+        }, 300);
+    }
 }
 
 /**
@@ -103,6 +140,11 @@ function resetModalForm() {
     // Call global updatePreview if it exists
     if (typeof window.updateGradingPreview === 'function') {
         window.updateGradingPreview();
+    }
+    
+    // Also trigger initial preview update if elements exist
+    if (textarea) {
+        textarea.dispatchEvent(new Event('input'));
     }
     
     // Clear image tracking
@@ -177,10 +219,55 @@ function loadAssignmentDataAjax(assignmentId, studentId) {
             if (data.status === 200) {
                 const assignmentData = data.data;
                 
-                // Update instructions
-                const instructionsDiv = document.getElementById('assignmentInstructions');
-                const instructions = assignmentData.assignmentInstructions || '';
-                instructionsDiv.innerHTML = instructions ? parseMarkdown(instructions) : '<p class="text-muted">Kirjeldus puudub</p>';
+                // Update instructions with retry mechanism
+                let instructionsDiv = document.getElementById('assignmentInstructions');
+                
+                // If not found, try a few more times with delays
+                if (!instructionsDiv) {
+                    let retryCount = 0;
+                    const retryInterval = setInterval(() => {
+                        instructionsDiv = document.getElementById('assignmentInstructions');
+                        retryCount++;
+                        
+                        if (instructionsDiv || retryCount >= 5) {
+                            clearInterval(retryInterval);
+                            if (instructionsDiv) {
+                                updateInstructionsContent(instructionsDiv, assignmentData);
+                            } else {
+                                // Try to create the missing div structure
+                                const previewDiv = document.getElementById('assignmentInstructionsPreview');
+                                if (previewDiv) {
+                                    // Clear any existing content in preview div (like "Eelvaade ilmub siia" placeholder)
+                                    previewDiv.innerHTML = '';
+                                    
+                                    // Reset any incorrect styling that might have been applied
+                                    previewDiv.style.height = '';
+                                    previewDiv.style.minHeight = '';
+                                    previewDiv.style.maxHeight = '60px';
+                                    previewDiv.style.overflow = 'hidden';
+                                    
+                                    const instructionsDiv = document.createElement('div');
+                                    instructionsDiv.id = 'assignmentInstructions';
+                                    instructionsDiv.innerHTML = '<p class="text-muted">Kirjeldus puudub</p>';
+                                    previewDiv.appendChild(instructionsDiv);
+                                    
+                                    // Now try to update it
+                                    updateInstructionsContent(instructionsDiv, assignmentData);
+                                }
+                            }
+                        }
+                    }, 50);
+                } else {
+                    updateInstructionsContent(instructionsDiv, assignmentData);
+                }
+                
+                function updateInstructionsContent(div, data) {
+                    const instructions = data.assignmentInstructions || '';
+                    div.innerHTML = instructions ? parseMarkdown(instructions) : '<p class="text-muted">Kirjeldus puudub</p>';
+                    
+                    // Handle instructions preview/expand functionality
+                    updateInstructionsDisplay();
+                }
                 
                 // Update solution URL
                 const solutionUrlDetails = document.getElementById('solutionUrlDetails');
@@ -211,18 +298,95 @@ function loadAssignmentDataAjax(assignmentId, studentId) {
                     loadTeacherNotes(assignmentId, studentId);
                 }
             } else {
-                console.error('Error loading assignment data:', data);
-                document.getElementById('assignmentInstructions').innerHTML = '<p class="text-danger">Viga andmete laadimisel</p>';
-                document.getElementById('criteriaContainer').innerHTML = '<p class="text-danger">Viga kriteeriumide laadimisel</p>';
+                console.error('Error loading assignment data - bad status:', data);
+                const instructionsDiv = document.getElementById('assignmentInstructions');
+                const criteriaContainer = document.getElementById('criteriaContainer');
+                
+                if (instructionsDiv) {
+                    instructionsDiv.innerHTML = '<p class="text-danger">Viga andmete laadimisel</p>';
+                } else {
+                    console.error('Instructions div not found in error handler');
+                }
+                if (criteriaContainer) {
+                    criteriaContainer.innerHTML = '<p class="text-danger">Viga kriteeriumide laadimisel</p>';
+                }
             }
         })
         .catch(error => {
             console.error('Error loading assignment data:', error);
-            document.getElementById('assignmentInstructions').innerHTML = '<p class="text-danger">Viga andmete laadimisel</p>';
-            document.getElementById('criteriaContainer').innerHTML = '<p class="text-danger">Viga kriteeriumide laadimisel</p>';
+            const instructionsDiv = document.getElementById('assignmentInstructions');
+            const criteriaContainer = document.getElementById('criteriaContainer');
+            
+            if (instructionsDiv) {
+                instructionsDiv.innerHTML = '<p class="text-danger">Viga andmete laadimisel</p>';
+            }
+            if (criteriaContainer) {
+                criteriaContainer.innerHTML = '<p class="text-danger">Viga kriteeriumide laadimisel</p>';
+            }
         });
 }
 
+
+/**
+ * Update instructions display with preview/expand functionality
+ */
+function updateInstructionsDisplay() {
+    const instructionsDiv = document.getElementById('assignmentInstructions');
+    const previewDiv = document.getElementById('assignmentInstructionsPreview');
+    const showMoreBtn = document.getElementById('showMoreInstructions');
+    
+    if (!instructionsDiv || !previewDiv || !showMoreBtn) {
+        return;
+    }
+    
+    // Check if content exceeds preview height
+    const contentHeight = instructionsDiv.scrollHeight;
+    const previewHeight = 60; // Max height in pixels
+    
+    if (contentHeight > previewHeight) {
+        // Content is long, show "Show more" button
+        showMoreBtn.style.display = 'block';
+        previewDiv.style.maxHeight = previewHeight + 'px';
+        previewDiv.style.overflow = 'hidden';
+        
+        // Add fade effect at bottom
+        previewDiv.style.backgroundImage = 'linear-gradient(to bottom, transparent 70%, white 100%)';
+        previewDiv.style.backgroundPosition = 'bottom';
+        previewDiv.style.backgroundRepeat = 'no-repeat';
+        
+        showMoreBtn.onclick = function() {
+            if (previewDiv.style.maxHeight === previewHeight + 'px') {
+                // Expand
+                previewDiv.style.maxHeight = contentHeight + 'px'; // Set to actual content height instead of 'none'
+                previewDiv.style.overflow = 'hidden'; // Keep hidden to maintain container bounds
+                previewDiv.style.backgroundImage = 'none';
+                showMoreBtn.innerHTML = '<i class="fas fa-chevron-up me-1"></i>Näita vähem...';
+                
+                // Ensure button is visible and accessible
+                showMoreBtn.style.position = 'relative';
+                showMoreBtn.style.zIndex = '10';
+                showMoreBtn.style.marginTop = '8px';
+            } else {
+                // Collapse
+                previewDiv.style.maxHeight = previewHeight + 'px';
+                previewDiv.style.overflow = 'hidden';
+                previewDiv.style.backgroundImage = 'linear-gradient(to bottom, transparent 70%, white 100%)';
+                showMoreBtn.innerHTML = '<i class="fas fa-chevron-down me-1"></i>Näita rohkem...';
+                
+                // Reset button positioning
+                showMoreBtn.style.position = '';
+                showMoreBtn.style.zIndex = '';
+                showMoreBtn.style.marginTop = '';
+            }
+        };
+    } else {
+        // Content is short, hide "Show more" button
+        showMoreBtn.style.display = 'none';
+        previewDiv.style.maxHeight = 'none';
+        previewDiv.style.overflow = 'visible';
+        previewDiv.style.backgroundImage = 'none';
+    }
+}
 
 /**
  * Load and display criteria
@@ -971,8 +1135,7 @@ function initGradingModal() {
     // Initialize image pasting functionality
     initializeImagePasting();
 
-    // Initialize preview functionality
-    initializePreview();
+    // Note: Preview functionality is initialized when modal is shown
 }
 
 // Initialize when DOM is loaded
@@ -1517,6 +1680,7 @@ function initializePreview() {
     // Update preview on input
     function updatePreview() {
         const content = textarea.value.trim();
+        
         if (content === '') {
             preview.innerHTML = `
                 <div class="text-muted text-center p-3">

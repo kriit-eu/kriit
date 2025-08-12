@@ -45,8 +45,16 @@ $isStudent = $isStudent ?? false;
                 <!-- Assignment Instructions -->
                 <div class="mb-3" id="instructionsSection">
                     <h6>Ülesande kirjeldus</h6>
-                    <div id="assignmentInstructions" class="border rounded p-3 bg-white markdown-content">
-                        <p class="text-muted">Kirjeldus puudub</p>
+                    <div class="border rounded p-3 bg-white markdown-content">
+                        <div id="assignmentInstructionsPreview" style="max-height: 60px; overflow: hidden; position: relative;">
+                            <div id="assignmentInstructions">
+                                <p class="text-muted">Kirjeldus puudub</p>
+                            </div>
+                        </div>
+                        <button class="btn btn-link p-0 text-primary small" type="button" 
+                                id="showMoreInstructions" style="display: none;">
+                            <i class="fas fa-chevron-down me-1"></i>Näita rohkem...
+                        </button>
                     </div>
                 </div>
 
