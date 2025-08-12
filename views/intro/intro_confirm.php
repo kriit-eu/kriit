@@ -261,11 +261,11 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         randomizeDropdowns();
+        let shiftHeld = false;
         for (const id of Object.keys(keywords)) {
             const input = document.getElementById(id);
             if (!input) continue;
             if (input.tagName === 'SELECT') {
-                // Bold the select itself if Keelatud/Lubatud is picked
                 function updateBoldSelect() {
                     if (id === 'input-reeglid-koostoo' && (input.value === 'Keelatud' || input.value === 'Lubatud')) {
                         input.style.fontWeight = 'bold';
@@ -280,36 +280,51 @@
                 input.addEventListener('blur', function() {
                     updateBoldSelect();
                 });
-                input.addEventListener('focus', function() {
-                    // No border change
-                });
-                // Initial bold state
+                input.addEventListener('focus', function() {});
                 updateBoldSelect();
             } else {
                 input.addEventListener('input', function(e) {
                     validateInputs();
                 });
-                input.addEventListener('blur', function() {
-                    // No border change
-                });
-                input.addEventListener('focus', function() {
-                    // No border change
-                });
+                input.addEventListener('blur', function() {});
+                input.addEventListener('focus', function() {});
             }
         }
+        // Shift key logic
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Shift') {
+                shiftHeld = true;
+                document.getElementById('confirmButton').disabled = false;
+            }
+        });
+        document.addEventListener('keyup', function(e) {
+            if (e.key === 'Shift') {
+                shiftHeld = false;
+                validateInputs(); // restore normal validation
+            }
+        });
         // Ensure button state is correct after setup
         validateInputs();
     });
 
     // Confirmation button handler
     document.getElementById('confirmButton').onclick = function() {
-        fetch('exercises/start', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        }).then(function() {
-            window.location.href = 'exercises/1';
-        });
+        if (window.shiftHeld || document.activeElement === document.getElementById('confirmButton')) {
+            fetch('exercises/start', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }).then(function() {
+                window.location.href = 'exercises/1';
+            });
+        } else {
+            // Optionally show a message if not allowed
+            document.getElementById('errorMsg').textContent = 'Alusta nuppu saab vajutada ainult Shift-klahvi all hoides.';
+            document.getElementById('errorMsg').style.display = 'block';
+            setTimeout(function() {
+                document.getElementById('errorMsg').style.display = 'none';
+            }, 2500);
+        }
     };
 </script>
