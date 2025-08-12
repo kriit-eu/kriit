@@ -212,6 +212,24 @@ function restoreDatabase(array $config): void
         exit(1);
     }
 
+    // Preprocess the dump file to remove collation issues before import
+    log_message("Preprocessing dump file to remove collation conflicts...");
+    $preprocessedFile = $config['dumpFilePath'] . '.preprocessed';
+    
+    // Use sed to remove COLLATE clauses that cause issues (case-insensitive)
+    $sedCommand = sprintf(
+        "sed -E 's/[Cc][Oo][Ll][Ll][Aa][Tt][Ee][[:space:]]+[^[:space:],;)]+//g' %s > %s",
+        escapeshellarg($config['dumpFilePath']),
+        escapeshellarg($preprocessedFile)
+    );
+    
+    if (!executeCommand($sedCommand)) {
+        log_message("Failed to preprocess dump file. Attempting import anyway...");
+        $preprocessedFile = $config['dumpFilePath'];
+    } else {
+        log_message("Collation clauses removed from dump file.");
+    }
+
     if (executeCommand(sprintf(
         '%s --binary-mode -u %s %s -h %s -P %s %s < %s',
         escapeshellcmd($config['mysqlExecutablePath']),
@@ -220,11 +238,21 @@ function restoreDatabase(array $config): void
         escapeshellarg($config['databaseHostname']),
         escapeshellarg($config['databasePort']),
         escapeshellarg($config['databaseName']),
-        escapeshellarg($config['dumpFilePath'])
+        escapeshellarg($preprocessedFile)
     ))) {
         log_message("Database restored successfully.");
+        
+        // Clean up preprocessed file if it was created
+        if ($preprocessedFile !== $config['dumpFilePath'] && file_exists($preprocessedFile)) {
+            unlink($preprocessedFile);
+        }
     } else {
         log_message("Failed to restore the database.");
+        
+        // Clean up preprocessed file even on failure
+        if ($preprocessedFile !== $config['dumpFilePath'] && file_exists($preprocessedFile)) {
+            unlink($preprocessedFile);
+        }
     }
 }
 
