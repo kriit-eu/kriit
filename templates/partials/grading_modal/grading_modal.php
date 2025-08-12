@@ -177,7 +177,7 @@ $isStudent = $isStudent ?? false;
                 </div>
 
                 <!-- Teacher Private Notes -->
-                <?php include __DIR__ . '/../../views/modules/teacher_notes_module.php'; ?>
+                <?php include __DIR__ . '/../../../views/modules/teacher_notes_module.php'; ?>
             </div>
             <div class="modal-footer">
                 <div class="d-flex justify-content-end w-100 align-items-center gap-3">
