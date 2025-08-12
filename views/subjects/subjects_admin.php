@@ -464,36 +464,75 @@
         <h1><?= $group['groupName'] ?></h1>
 
     <?php if (!$this->isStudent && !empty($group['subjects'])): ?>
+        <?php 
+        // Create an array with students and their debt counts for sorting
+        $studentsWithDebts = [];
+        foreach ($group['students'] as $studentId => $student) {
+            $studentsWithDebts[] = [
+                'id' => $studentId,
+                'data' => $student,
+                'debts' => $group['pendingGrades'][$studentId] ?? 0
+            ];
+        }
+        
+        // Sort by debt count (descending) first, then by name (ascending)
+        usort($studentsWithDebts, function($a, $b) {
+            // First compare by debt count (higher debts first)
+            $debtCompare = $b['debts'] - $a['debts'];
+            if ($debtCompare !== 0) {
+                return $debtCompare;
+            }
+            // If debts are equal, sort by name (ascending)
+            return strcasecmp($a['data']['userName'], $b['data']['userName']);
+        });
+        ?>
         <div class="mb-4">
             <h5>Õpilaste kokkuvõte</h5>
-            <table class="table table-bordered student-summary-table"
-                   data-group="<?= htmlspecialchars($group['groupName']) ?>" style="width:auto;background-color:#fff;">
-                <thead>
-                <tr>
-                    <th style="cursor:pointer;text-align:left;" onclick="sortStudentTableByElement(this,'name')"><b>Õpilane</b>
-                        <i class="fas fa-sort"></i></th>
-                    <th style="cursor:pointer;text-align:center;" onclick="sortStudentTableByElement(this,'pending')">
-                        <b>Võlad</b> <i class="fas fa-sort"></i></th>
-                </tr>
-                </thead>
-                <tbody>
-                <?php foreach ($group['students'] as $student): ?>
-                    <?php $pending = $group['pendingGrades'][$student['userId']] ?? 0; ?>
-                    <tr class="<?= $student['meta']['css'] ?> student-row" data-student-id="<?= $student['userId'] ?>"
-                        data-student-name="<?= htmlspecialchars($student['userName']) ?>" style="cursor:pointer;"
-                        onclick="toggleStudentFilter(this)">
-                        <td data-sort-value="<?= htmlspecialchars($student['userName']) ?>"
-                            style="background-color:#fff;">
-                            <?= htmlspecialchars($student['userName']) . $student['meta']['status'] ?>
-                        </td>
-                        <td data-sort-value="<?= $pending ?>" class="text-center"
-                            style="background-color:#fff;color:<?= $pending > 0 ? '#dc3545' : '#28a745' ?>;font-weight:bold;">
-                            <?= $pending ?>
-                        </td>
+            <div class="table-responsive">
+                <table class="table table-bordered student-summary-table"
+                       data-group="<?= htmlspecialchars($group['groupName']) ?>" style="width:auto;background-color:#fff;table-layout:fixed;">
+                    <thead>
+                    <tr>
+                        <th style="text-align:left;width:60px;min-width:60px;max-width:60px;background-color:#f2f2f2;"><b>Võlad</b></th>
+                        <?php foreach ($studentsWithDebts as $studentItem): ?>
+                            <?php $student = $studentItem['data']; ?>
+                            <th class="student-name-header text-center <?= $student['meta']['css'] ?>" 
+                                data-student-id="<?= $student['userId'] ?>"
+                                data-student-name="<?= htmlspecialchars($student['userName']) ?>"
+                                data-bs-toggle="tooltip"
+                                data-bs-original-title="<?= $student['userName'] . $student['meta']['status'] ?>"
+                                style="cursor:pointer;width:40px;min-width:40px;max-width:40px;padding:1px 4px;font-weight:400;vertical-align:middle;height:36px;background-color:#f2f2f2;"
+                                onclick="toggleStudentFilter(this)"
+                                title="<?= htmlspecialchars($student['userName']) . $student['meta']['status'] ?>">
+                                <div class="narrow-name">
+                                    <?= $student['nameSplit']['first'] ?><span
+                                            class="lastname"><?= $student['nameSplit']['last'] ?></span>
+                                </div>
+                            </th>
+                        <?php endforeach; ?>
                     </tr>
-                <?php endforeach; ?>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td style="background-color:#fff;font-weight:bold;text-align:center;">Kokku</td>
+                        <?php foreach ($studentsWithDebts as $studentItem): ?>
+                            <?php 
+                            $student = $studentItem['data'];
+                            $pending = $studentItem['debts'];
+                            ?>
+                            <td class="text-center" 
+                                data-student-id="<?= $student['userId'] ?>"
+                                data-student-name="<?= htmlspecialchars($student['userName']) ?>"
+                                style="background-color:#fff;color:<?= $pending > 0 ? '#dc3545' : '#28a745' ?>;font-weight:bold;cursor:pointer;"
+                                onclick="toggleStudentFilter(this)"
+                                title="<?= htmlspecialchars($student['userName']) ?>: <?= $pending ?> võlga">
+                                <?= $pending ?>
+                            </td>
+                        <?php endforeach; ?>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     <?php endif; ?>
 
@@ -1455,7 +1494,6 @@
     });
 
     (() => {
-        const sortStates = new Map();
         let selectedStudent = null;
 
             // Highlight selected student's column in Grades table
@@ -1465,13 +1503,14 @@
                     el.classList.remove('selected-student-column', 'selected-student-column-header', 'non-selected-student-column', 'non-selected-student-column-header');
                 });
                 if (!studentId) return;
-                // Highlight header cell for selected student using data-bs-original-title
-                // Find the student's name from the table
+                
+                // Find the student's name from the transposed table header
                 let studentName = null;
-                const nameCell = document.querySelector(`.student-row[data-student-id="${studentId}"] td[data-sort-value]`);
-                if (nameCell) {
-                    studentName = nameCell.textContent.trim();
+                const headerCell = document.querySelector(`.student-summary-table th[data-student-id="${studentId}"]`);
+                if (headerCell) {
+                    studentName = headerCell.dataset.studentName || headerCell.getAttribute('title');
                 }
+                
                 if (studentName) {
                     // Grades table headers
                     document.querySelectorAll(`#subject-table th.student-name-header[data-bs-original-title]`).forEach(th => {
@@ -1481,15 +1520,16 @@
                             th.classList.add('non-selected-student-column-header');
                         }
                     });
-                    // Student summary table headers
-                    document.querySelectorAll(`.student-summary-table th.student-name-header[data-bs-original-title]`).forEach(th => {
-                        if (th.getAttribute('data-bs-original-title').includes(studentName)) {
+                    // Student summary table headers in transposed layout
+                    document.querySelectorAll(`.student-summary-table th[data-student-id]`).forEach(th => {
+                        if (th.dataset.studentId === studentId) {
                             th.classList.add('selected-student-column-header');
                         } else {
                             th.classList.add('non-selected-student-column-header');
                         }
                     });
                 }
+                
                 // Highlight all cells for this student
                 // Grades table cells
                 document.querySelectorAll(`#subject-table td[data-student-id="${studentId}"]`).forEach(td => {
@@ -1500,12 +1540,13 @@
                         td.classList.add('non-selected-student-column');
                     }
                 });
-                // Student summary table cells
-                document.querySelectorAll(`.student-summary-table tr.student-row`).forEach(row => {
-                    if (row.dataset.studentId === studentId) {
-                        row.classList.add('selected-student-column');
-                    } else {
-                        row.classList.add('non-selected-student-column');
+                // Student summary table cells in transposed layout
+                document.querySelectorAll(`.student-summary-table td[data-student-id="${studentId}"]`).forEach(td => {
+                    td.classList.add('selected-student-column');
+                });
+                document.querySelectorAll(`.student-summary-table td[data-student-id]`).forEach(td => {
+                    if (td.dataset.studentId !== studentId) {
+                        td.classList.add('non-selected-student-column');
                     }
                 });
             }
@@ -1513,48 +1554,26 @@
         const $ = (sel, ctx = document) => ctx.querySelector(sel);
         const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
 
-        const getSortValue = (row, col) => {
-            const cell = row.querySelector(col === 'name' ? 'td[data-sort-value]' : 'td[data-sort-value]:nth-child(2)');
-            return col === 'name' ? (cell?.dataset.sortValue || '').toLowerCase() : parseInt(cell?.dataset.sortValue || 0, 10);
-        };
+        // Sorting removed for transposed table layout
 
-        window.sortStudentTableByElement = (el, col) => {
-            const table = el.closest('table');
-            table && sortStudentTable(table.dataset.group, col);
-        };
-
-        function sortStudentTable(group, col) {
-            const table = $$('table.student-summary-table').find(t => t.dataset.group === group);
-            if (!table) return;
-            if (!sortStates.has(group)) sortStates.set(group, {name: 'none', pending: 'none'});
-
-            const state = sortStates.get(group);
-            const dir = state[col] === 'asc' ? 'desc' : 'asc';
-            sortStates.set(group, {name: 'none', pending: 'none', [col]: dir});
-
-            const rows = $$('tbody tr', table);
-            rows.sort((a, b) => {
-                const av = getSortValue(a, col), bv = getSortValue(b, col);
-                return dir === 'asc' ? (av > bv ? 1 : -1) : (av < bv ? 1 : -1);
-            }).forEach(r => table.tBodies[0].appendChild(r));
-
-            updateSortIcons(group);
-        }
-
-        function updateSortIcons(group) {
-            const table = $$('table.student-summary-table').find(t => t.dataset.group === group);
-            if (!table) return;
-            const state = sortStates.get(group);
-            const icons = $$('th i', table);
-            icons.forEach((icon, i) => {
-                const key = i === 0 ? 'name' : 'pending';
-                icon.className = state[key] === 'asc' ? 'fas fa-sort-up' : state[key] === 'desc' ? 'fas fa-sort-down' : 'fas fa-sort';
-            });
-        }
-
-        window.toggleStudentFilter = row => {
-            const id = row.dataset.studentId;
-            $$('.student-row').forEach(r => r.classList.toggle('selected', r === row && selectedStudent !== id));
+        window.toggleStudentFilter = element => {
+            const id = element.dataset.studentId;
+            // Handle header clicks, cell clicks, and old row clicks
+            const isHeader = element.tagName === 'TH';
+            const isCell = element.tagName === 'TD' && element.closest('.student-summary-table');
+            
+            if (isHeader || isCell) {
+                // For header and cell clicks in transposed table
+                $$('.student-summary-table th[data-student-id], .student-summary-table td[data-student-id]').forEach(el => {
+                    const isSameStudent = el.dataset.studentId === id;
+                    const wasSelected = selectedStudent === id;
+                    el.classList.toggle('selected', isSameStudent && !wasSelected);
+                });
+            } else {
+                // For old row clicks (if any remain)
+                $$('.student-row').forEach(r => r.classList.toggle('selected', r === element && selectedStudent !== id));
+            }
+            
             if (selectedStudent === id) {
                 selectedStudent = null;
                 showAllAssignments();
@@ -1721,12 +1740,7 @@
             };
         };
 
-        const initSorting = () => {
-            $$('.student-summary-table').forEach(tbl => {
-                sortStates.set(tbl.dataset.group, {name: 'none', pending: 'none'});
-                sortStudentTable(tbl.dataset.group, 'pending');
-            });
-        };
+        // Sorting initialization removed for transposed table
 
         const checkForOverdueUngraded = () => {
             // Only check for teachers/admins, not students
@@ -1824,7 +1838,7 @@
             prepareShowAllToggle();
             setRedCellIntensity();
             updateBadges();
-            initSorting();
+            // initSorting() removed for transposed table
             checkForOverdueUngraded();
                 // Remove highlight on page load
                 highlightStudentColumn(null);
