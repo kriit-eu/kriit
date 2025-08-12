@@ -94,7 +94,7 @@
 
                     <div class="mb-3">
                         <label for="userPassword" class="form-label">Parool</label>
-                        <input type="password" name="userPassword" class="form-control" id="userPassword"
+                        <input type="password" name="userPassword" class="form-control" id="userPassword" autocomplete="new-password"
                                aria-describedby="userPasswordHelp">
                         <div id="userPasswordHelp" class="form-text">Sisesta kasutaja parool</div>
                     </div>
