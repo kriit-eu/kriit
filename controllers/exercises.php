@@ -4,8 +4,8 @@ use Exception;
 
 
 
-class exercises extends Controller
-{
+class exercises extends Controller {
+    // class body starts here
     public $auth;
     public $template = 'applicant';
     private $userTimeUpAt;
@@ -130,11 +130,26 @@ class exercises extends Controller
             exit;
         }
 
-    // For normal requests, let master template include the view file
-    // Do NOT call render here; prevents duplicate content
-    return;
-    // Do NOT destroy session here; allow all tabs to show timeup page
-    // If you want to destroy session, do it after user leaves timeup page (e.g. via logout or button)
+        // For normal requests, let master template include the view file
+        // Do NOT call render here; prevents duplicate content
+        return;
+        // Do NOT destroy session here; allow all tabs to show timeup page
+        // If you want to destroy session, do it after user leaves timeup page (e.g. via logout or button)
+    }
+
+    // New endpoint: /exercises/istimeup
+    function istimeup()
+    {
+        // Only check for non-admin users
+        if ($this->auth->userIsAdmin === 1) {
+            stop(200, ['timeup' => false]);
+        }
+        // If time is up, respond with JSON
+        if ($this->timeLeft !== null && $this->timeLeft <= 0) {
+            stop(200, ['timeup' => true]);
+        }
+        // Otherwise, return 200 OK
+        stop(200, ['timeup' => false]);
     }
 
     function congratulations()

@@ -694,20 +694,28 @@
         function checkTimeUp() {
             if (timeupRedirected) return;
             var xhr = new XMLHttpRequest();
-            xhr.open('GET', 'exercises/timeup?ajax=1', true);
+            xhr.open('GET', 'exercises/istimeup', true);
             xhr.onreadystatechange = function() {
                 if (xhr.readyState === 4 && xhr.status === 200) {
-                    // If backend returns a special header or JSON, redirect
-                    if (xhr.responseText && xhr.responseText.indexOf('TIMEUP') !== -1) {
-                        // Set localStorage flag so all tabs know time is up
-                        try {
+                    try {
+                        var resp = JSON.parse(xhr.responseText);
+                        // Support both raw and wrapped responses
+                        var timeup = false;
+                        if (resp && typeof resp === 'object') {
+                            if (typeof resp.timeup !== 'undefined') {
+                                timeup = resp.timeup;
+                            } else if (resp.data && typeof resp.data.timeup !== 'undefined') {
+                                timeup = resp.data.timeup;
+                            }
+                        }
+                        if (timeup) {
                             localStorage.setItem('exercises_timeup', '1');
-                        } catch (e) {}
-                        timeupRedirected = true;
-                        if (timeupInterval) clearInterval(timeupInterval);
-                        window.removeEventListener('storage', timeupStorageListener);
-                        window.location.href = '/exercises/timeup';
-                    }
+                            timeupRedirected = true;
+                            if (timeupInterval) clearInterval(timeupInterval);
+                            window.removeEventListener('storage', timeupStorageListener);
+                            window.location.href = '/exercises/timeup';
+                        }
+                    } catch (e) {}
                 }
             };
             xhr.send();
