@@ -1,3 +1,33 @@
+<style>
+    /* Light gray text for non-selected student columns */
+    .non-selected-student-column {
+        color: #e0e0e0 !important;
+        transition: color 0.2s;
+    }
+    .non-selected-student-column-header {
+        color: #e0e0e0 !important;
+        transition: color 0.2s;
+    }
+</style>
+        <script>
+            // Scroll selected student's column into view (centered if possible)
+            function scrollStudentColumnIntoView(studentId) {
+                if (!studentId) return;
+                // Find the first cell for this student
+                const cell = document.querySelector(`#subject-table td[data-student-id="${studentId}"]`);
+                if (!cell) return;
+                // Find the table's scrollable container
+                const table = cell.closest('table');
+                const responsiveDiv = table ? table.closest('.table-responsive') : null;
+                if (!responsiveDiv) return;
+                // Get cell position relative to container
+                const cellRect = cell.getBoundingClientRect();
+                const containerRect = responsiveDiv.getBoundingClientRect();
+                // Calculate scroll position to center the cell
+                const scrollLeft = cell.offsetLeft - (responsiveDiv.clientWidth / 2) + (cell.clientWidth / 2);
+                responsiveDiv.scrollTo({left: scrollLeft, behavior: 'smooth'});
+            }
+        </script>
 <script>
     // Visual numbering for criteria rows
     function updateCriteriaNumbers() {
@@ -116,8 +146,7 @@
     }
 
     .student-row.selected, .student-row.selected td {
-        background-color: #0d6efd !important;
-        color: #fff !important;
+        color: inherit !important;
     }
 
     .text-center {
@@ -310,6 +339,30 @@
     }
 </style>
 <style>
+    /* Red border for selected student column in Grades table (border inside cell) */
+    .selected-student-column,
+    .selected-student-column-header,
+    .selected-student-column .narrow-name,
+    .selected-student-column-header .narrow-name {
+        color: inherit !important;
+        font-weight: bold !important;
+        z-index: 2;
+        transition: none;
+    }
+    /* Black outline for selected student column header */
+    .selected-student-column-header {
+        outline: 1px solid #000 !important;
+        outline-offset: -1px;
+    }
+    .selected-student-column .narrow-name,
+    .selected-student-column-header .narrow-name {
+        font-size: 0.7em !important;
+    }
+    /* Black outline for selected grades */
+    .selected-student-column[data-grade] {
+        outline: 1px solid #000 !important;
+        outline-offset: -1px;
+    }
     /* Ensure Bootstrap modal and backdrop are always on top */
     .modal-backdrop.show {
         z-index: 2050 !important;
@@ -1405,6 +1458,58 @@
         const sortStates = new Map();
         let selectedStudent = null;
 
+            // Highlight selected student's column in Grades table
+            function highlightStudentColumn(studentId) {
+                // Remove previous highlights and overlays in all tables
+                document.querySelectorAll('.selected-student-column, .selected-student-column-header, .non-selected-student-column, .non-selected-student-column-header').forEach(el => {
+                    el.classList.remove('selected-student-column', 'selected-student-column-header', 'non-selected-student-column', 'non-selected-student-column-header');
+                });
+                if (!studentId) return;
+                // Highlight header cell for selected student using data-bs-original-title
+                // Find the student's name from the table
+                let studentName = null;
+                const nameCell = document.querySelector(`.student-row[data-student-id="${studentId}"] td[data-sort-value]`);
+                if (nameCell) {
+                    studentName = nameCell.textContent.trim();
+                }
+                if (studentName) {
+                    // Grades table headers
+                    document.querySelectorAll(`#subject-table th.student-name-header[data-bs-original-title]`).forEach(th => {
+                        if (th.getAttribute('data-bs-original-title').includes(studentName)) {
+                            th.classList.add('selected-student-column-header');
+                        } else {
+                            th.classList.add('non-selected-student-column-header');
+                        }
+                    });
+                    // Student summary table headers
+                    document.querySelectorAll(`.student-summary-table th.student-name-header[data-bs-original-title]`).forEach(th => {
+                        if (th.getAttribute('data-bs-original-title').includes(studentName)) {
+                            th.classList.add('selected-student-column-header');
+                        } else {
+                            th.classList.add('non-selected-student-column-header');
+                        }
+                    });
+                }
+                // Highlight all cells for this student
+                // Grades table cells
+                document.querySelectorAll(`#subject-table td[data-student-id="${studentId}"]`).forEach(td => {
+                    td.classList.add('selected-student-column');
+                });
+                document.querySelectorAll(`#subject-table td[data-student-id]`).forEach(td => {
+                    if (td.dataset.studentId !== studentId) {
+                        td.classList.add('non-selected-student-column');
+                    }
+                });
+                // Student summary table cells
+                document.querySelectorAll(`.student-summary-table tr.student-row`).forEach(row => {
+                    if (row.dataset.studentId === studentId) {
+                        row.classList.add('selected-student-column');
+                    } else {
+                        row.classList.add('non-selected-student-column');
+                    }
+                });
+            }
+
         const $ = (sel, ctx = document) => ctx.querySelector(sel);
         const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
 
@@ -1453,9 +1558,13 @@
             if (selectedStudent === id) {
                 selectedStudent = null;
                 showAllAssignments();
+                    highlightStudentColumn(null);
+                    // No scroll needed when clearing selection
             } else {
                 selectedStudent = id;
                 filterAssignmentsByStudent(id);
+                    highlightStudentColumn(id);
+                    scrollStudentColumnIntoView(id);
             }
         };
 
@@ -1717,6 +1826,8 @@
             updateBadges();
             initSorting();
             checkForOverdueUngraded();
+                // Remove highlight on page load
+                highlightStudentColumn(null);
         });
     })();
 </script>
