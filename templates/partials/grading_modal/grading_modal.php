@@ -53,7 +53,7 @@ $isStudent = $isStudent ?? false;
                         </div>
                         <button class="btn btn-link p-0 text-primary small" type="button" 
                                 id="showMoreInstructions" style="display: none;">
-                            <i class="fas fa-chevron-down me-1"></i>Näita rohkem...
+                            Näita rohkem...
                         </button>
                     </div>
                 </div>
@@ -79,7 +79,13 @@ $isStudent = $isStudent ?? false;
 
                 <!-- New Message Form -->
                 <div class="mb-3">
-                    <label for="newMessageContent" class="form-label">Lisa kommentaar</label>
+                    <h6 class="mb-2">
+                        <a href="#" class="text-decoration-none" id="toggleCommentSection" aria-expanded="false">
+                            <i class="fas fa-chevron-right me-1"></i>Lisa kommentaar
+                        </a>
+                    </h6>
+                    
+                    <div id="commentFormSection" class="collapse">
                     
                     <!-- Split view: Editor and Preview -->
                     <div class="row">
@@ -162,6 +168,8 @@ $isStudent = $isStudent ?? false;
                     </div>
                     
                     <div class="invalid-feedback" id="messageError"></div>
+                    
+                    </div> <!-- End commentFormSection -->
                 </div>
 
                 <!-- Teacher Private Notes -->

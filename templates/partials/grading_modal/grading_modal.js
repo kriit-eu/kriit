@@ -360,7 +360,7 @@ function updateInstructionsDisplay() {
                 previewDiv.style.maxHeight = contentHeight + 'px'; // Set to actual content height instead of 'none'
                 previewDiv.style.overflow = 'hidden'; // Keep hidden to maintain container bounds
                 previewDiv.style.backgroundImage = 'none';
-                showMoreBtn.innerHTML = '<i class="fas fa-chevron-up me-1"></i>Näita vähem...';
+                showMoreBtn.innerHTML = 'Näita vähem...';
                 
                 // Ensure button is visible and accessible
                 showMoreBtn.style.position = 'relative';
@@ -371,7 +371,7 @@ function updateInstructionsDisplay() {
                 previewDiv.style.maxHeight = previewHeight + 'px';
                 previewDiv.style.overflow = 'hidden';
                 previewDiv.style.backgroundImage = 'linear-gradient(to bottom, transparent 70%, white 100%)';
-                showMoreBtn.innerHTML = '<i class="fas fa-chevron-down me-1"></i>Näita rohkem...';
+                showMoreBtn.innerHTML = 'Näita rohkem...';
                 
                 // Reset button positioning
                 showMoreBtn.style.position = '';
@@ -1135,7 +1135,46 @@ function initGradingModal() {
     // Initialize image pasting functionality
     initializeImagePasting();
 
+    // Initialize comment section toggle
+    initializeCommentToggle();
+
     // Note: Preview functionality is initialized when modal is shown
+}
+
+/**
+ * Initialize comment section toggle functionality
+ */
+function initializeCommentToggle() {
+    const toggleBtn = document.getElementById('toggleCommentSection');
+    const commentSection = document.getElementById('commentFormSection');
+    
+    if (!toggleBtn || !commentSection) {
+        return;
+    }
+    
+    toggleBtn.addEventListener('click', function(e) {
+        e.preventDefault(); // Prevent default link behavior
+        
+        const isExpanded = commentSection.classList.contains('show');
+        
+        if (isExpanded) {
+            // Collapse
+            commentSection.classList.remove('show');
+            toggleBtn.setAttribute('aria-expanded', 'false');
+            toggleBtn.innerHTML = '<i class="fas fa-chevron-right me-1"></i>Lisa kommentaar';
+        } else {
+            // Expand
+            commentSection.classList.add('show');
+            toggleBtn.setAttribute('aria-expanded', 'true');
+            toggleBtn.innerHTML = '<i class="fas fa-chevron-down me-1"></i>Peida kommentaaride vorm';
+            
+            // Focus on textarea when expanded
+            const textarea = document.getElementById('newMessageContent');
+            if (textarea) {
+                setTimeout(() => textarea.focus(), 300);
+            }
+        }
+    });
 }
 
 // Initialize when DOM is loaded

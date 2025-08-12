@@ -409,6 +409,19 @@
     transition: height 0.2s ease;
 }
 
+/* Comment section collapse animation */
+#commentFormSection {
+    transition: all 0.3s ease;
+}
+
+#commentFormSection.collapse:not(.show) {
+    display: none;
+}
+
+#commentFormSection.collapse.show {
+    display: block;
+}
+
 /* Mobile responsiveness */
 @media (max-width: 768px) {
     .editor-wrapper, .preview-wrapper {
