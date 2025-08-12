@@ -619,14 +619,23 @@ function displayMessages(messages) {
             if (message.imageId) {
                 imageHtml = `<div class="mt-2">${displayMessageImage(message.imageId)}</div>`;
             }
+            // Check if this is the current user's message
+            const currentUserId = window.authUserId || window.currentUserId;
+            const isOwnMessage = currentUserId && message.userId && message.userId == currentUserId;
+            const cardClass = isOwnMessage ? 'card own-message' : 'card';
+            
             messagesHtml += `
                 <div class="message-item">
-                    <div class="d-flex justify-content-between">
-                        <span class="message-author">${message.userName || 'Tundmatu'}</span>
-                        <span class="message-time">${messageDate}</span>
+                    <div class="${cardClass}">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="message-author">${message.userName || 'Tundmatu'}</span>
+                                <span class="message-time">${messageDate}</span>
+                            </div>
+                            <div class="message-content">${parseMarkdown(message.content)}</div>
+                            ${imageHtml}
+                        </div>
                     </div>
-                    <div class="message-content">${parseMarkdown(message.content)}</div>
-                    ${imageHtml}
                 </div>
             `;
         }
@@ -1138,6 +1147,9 @@ function initGradingModal() {
     // Initialize comment section toggle
     initializeCommentToggle();
 
+    // Initialize modal close handler
+    initializeModalCloseHandler();
+
     // Note: Preview functionality is initialized when modal is shown
 }
 
@@ -1155,25 +1167,50 @@ function initializeCommentToggle() {
     toggleBtn.addEventListener('click', function(e) {
         e.preventDefault(); // Prevent default link behavior
         
-        const isExpanded = commentSection.classList.contains('show');
+        const isExpanded = commentSection.classList.contains('comment-section-expanded');
         
         if (isExpanded) {
             // Collapse
-            commentSection.classList.remove('show');
+            commentSection.classList.remove('comment-section-expanded');
+            commentSection.classList.add('comment-section-collapsed');
             toggleBtn.setAttribute('aria-expanded', 'false');
             toggleBtn.innerHTML = '<i class="fas fa-chevron-right me-1"></i>Lisa kommentaar';
         } else {
             // Expand
-            commentSection.classList.add('show');
+            commentSection.classList.remove('comment-section-collapsed');
+            // Force a reflow to ensure the collapsed state is applied before expanding
+            commentSection.offsetHeight;
+            commentSection.classList.add('comment-section-expanded');
             toggleBtn.setAttribute('aria-expanded', 'true');
-            toggleBtn.innerHTML = '<i class="fas fa-chevron-down me-1"></i>Peida kommentaaride vorm';
+            toggleBtn.innerHTML = '<i class="fas fa-chevron-down me-1"></i>Lisa kommentaar';
             
             // Focus on textarea when expanded
             const textarea = document.getElementById('newMessageContent');
             if (textarea) {
-                setTimeout(() => textarea.focus(), 300);
+                setTimeout(() => textarea.focus(), 350);
             }
         }
+    });
+}
+
+/**
+ * Initialize modal close handler to reset comment form state
+ */
+function initializeModalCloseHandler() {
+    const modal = document.getElementById('gradingModal');
+    const toggleBtn = document.getElementById('toggleCommentSection');
+    const commentSection = document.getElementById('commentFormSection');
+    
+    if (!modal || !toggleBtn || !commentSection) {
+        return;
+    }
+    
+    // Listen for modal hide event
+    modal.addEventListener('hidden.bs.modal', function() {
+        // Collapse the comment section
+        commentSection.classList.remove('show');
+        toggleBtn.setAttribute('aria-expanded', 'false');
+        toggleBtn.innerHTML = '<i class="fas fa-chevron-right me-1"></i>Lisa kommentaar';
     });
 }
 

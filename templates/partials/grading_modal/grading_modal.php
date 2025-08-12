@@ -12,6 +12,10 @@ $isStudent = $isStudent ?? false;
 <link rel="stylesheet" href="<?= BASE_URL ?>templates/partials/grading_modal/grading_modal.css">
 
 <!-- Load grading modal JavaScript -->
+<script>
+    // Make current user ID available to JavaScript
+    window.authUserId = <?= json_encode($this->auth->userId ?? null) ?>;
+</script>
 <script src="<?= BASE_URL ?>templates/partials/grading_modal/grading_modal.js"></script>
 
 <!-- Grading Modal -->
@@ -85,7 +89,7 @@ $isStudent = $isStudent ?? false;
                         </a>
                     </h6>
                     
-                    <div id="commentFormSection" class="collapse">
+                    <div id="commentFormSection" class="comment-section-collapsed">
                     
                     <!-- Split view: Editor and Preview -->
                     <div class="row">

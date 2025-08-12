@@ -196,10 +196,17 @@ class grading extends Controller
         
         // Add comments from userAssignments
         foreach ($comments as $comment) {
+            // Look up userId based on userName
+            $userId = null;
+            if (!empty($comment['name'])) {
+                $user = Db::getFirst("SELECT userId FROM users WHERE userName = ?", [$comment['name']]);
+                $userId = $user ? $user['userId'] : null;
+            }
+            
             $formattedMessages[] = [
                 'messageId' => null, // Comments don't have messageId
                 'content' => $comment['comment'],
-                'userId' => null, // We'll derive this from name if needed
+                'userId' => $userId,
                 'userName' => $comment['name'],
                 'createdAt' => $comment['createdAt'],
                 'isNotification' => false
