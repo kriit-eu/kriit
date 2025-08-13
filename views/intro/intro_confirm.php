@@ -143,8 +143,9 @@
 
 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1em;">
     <button type="button" id="backButton" class="btn btn-secondary">Tagasi</button>
-    <button type="button" id="confirmButton" class="btn btn-primary" disabled>Alusta</button>
+    <button type="button" id="confirmButton" class="btn btn-primary" disabled>ALUSTA TESTI</button>
 </div>
+<div style="text-align:right; margin-top:0.2em; font-size:0.95em; color:#555;">Taimer käivitub vajutamisel</div>
 <div id="errorMsg" class="text-danger mt-2" style="display:none;"></div>
 
 <div style="height: 4em;"></div>
