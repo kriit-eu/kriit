@@ -8,7 +8,7 @@
     <li>Teil on <strong><?= (int)(EXERCISES_SESSION_DURATION / 60) ?> minutit</strong> ülesannete lahendamiseks. Aeg algab <i>Alusta</i> nupule vajutamise
         järgselt.
     </li>
-    <li><strong>Keelatud on igasugune koostöö teiste isikutega</strong>. Vahele jäämine tähendab automaatset läbikukkumist. Arvuti ekraani
+    <li><strong>Keelatud on igasugune koostöö teiste inimestega</strong>. Vahele jäämine tähendab automaatset läbikukkumist. Arvuti ekraani
         salvestatakse!
     </li>
     <li>
