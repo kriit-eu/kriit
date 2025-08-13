@@ -9,7 +9,7 @@
         järgselt.
     </li>
     <li><strong>Keelatud on igasugune koostöö teiste inimestega</strong>. Vahele jäämine tähendab automaatset läbikukkumist. Arvuti ekraani
-        salvestatakse!
+        jälgitakse!
     </li>
     <li>
         Te <strong>võite</strong> kasutada nii internet otsimootoreid (nt Google) kui ka tehisintellekti (nt ChatGPT) lahenduste leidmiseks.
