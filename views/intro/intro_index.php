@@ -12,7 +12,7 @@
         salvestatakse!
     </li>
     <li>
-        Te <strong>võite</strong> selles arvutis kasutada internetti lahenduste leidmiseks.
+        Te <strong>võite</strong> kasutada nii internet otsimootoreid (nt Google) kui ka tehisintellekti (nt ChatGPT) lahenduste leidmiseks.
     </li>
 </ol>
 <div>
