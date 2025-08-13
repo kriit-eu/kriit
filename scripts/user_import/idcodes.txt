@@ -1,7 +1,21 @@
-#
-#
-# run with: bun import:users
-# EXAMPLE
-# John Doe,39001010001
-# Jane Smith,49002020002
-# Alice Example,59003030003
+Sander Karbus,39701076012
+Bert-Robert Põlluste,50305062783
+Ken-Janek Lember,50312124929
+Rainis Toom,39107136514
+Rainy Mällo,60306022815
+Angeelika Ots,60011022720
+Kaisa Allikmaa,49506152232
+Rainis Toom,60004116043
+Merliis Järve,49312160844
+Olavi Keerd,38701302743
+Karl-Eerik Park,39908035714
+Deivi Lomp,49910112768
+Saskia Ježov,60002216017
+Marcus Mäeväli,50212200288
+Allan Liibert,50112286529
+Jan Kaasik,50112276032
+Liisa-Andra Reim,49302026026
+Markus Laanes,50504272737
+Raily Rammi,47803302744
+Ken Elken,38602052731
+Urmas Rehkalt,37705280348

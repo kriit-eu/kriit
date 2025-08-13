@@ -20,8 +20,9 @@
 - **Setup**: `bun setup` auto-detects platform and prepares containers.
 
 ## Database Conventions
-
-- **MariaDB** in Docker: Host `db`, user `root`, password `kriitkriit`, DB `kriit`.
+- **MariaDB**
+  1. Within Docker: Host `db`, user `root`, password `kriitkriit`, DB `kriit`.
+  2. From host: mysql -h 127.0.0.1 -P 8002 -u root -pkriitkriit kriit -e "Select 1"
 - **Schema changes**: Always update `doc/database.sql` using:
   1. `refreshdb.php --restore` (reset DB)
   2. Apply schema changes via `mysql` in container

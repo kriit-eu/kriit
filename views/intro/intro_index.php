@@ -1,3 +1,26 @@
+<!-- Firefox Warning Banner -->
+<div id="firefox-warning" class="alert alert-danger" style="display: none; margin-bottom: 20px; padding: 15px; background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; border-radius: 4px;">
+    <strong>⚠️ Tähelepanu!</strong> Firefox brauser ei ole toetatud. Palun kasutage jätkamiseks ühte järgnevatest brauseritest:
+    <ul style="margin-top: 10px; margin-bottom: 10px; list-style: none; padding-left: 0;">
+        <li style="padding: 2px 0;">
+            <img src="assets/img/chrome_logo.svg" alt="Chrome" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 8px;">
+            Google Chrome
+        </li>
+        <li style="padding: 2px 0;">
+            <img src="assets/img/edge_logo.svg" alt="Edge" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 8px;">
+            Microsoft Edge
+        </li>
+        <li style="padding: 2px 0;">
+            <img src="assets/img/safari_logo.svg" alt="Safari" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 8px;">
+            Safari
+        </li>
+    </ul>
+    <div style="text-align: center; margin-top: 20px;">
+        <a href="logout" class="btn btn-danger">Logi välja</a>
+    </div>
+</div>
+
+<div id="main-content">
 <h2 class="ui header">Viljandi Kutseõppekeskus</h2>
 <br>
 <br>
@@ -66,9 +89,21 @@
     <button type="button" id="submitButton" class="btn btn-primary" disabled>Kinnitan et olen reeglitega tutvunud</button>
 
 </div>
+</div> <!-- End of main-content -->
 
 <script>
     const userId = <?php echo json_encode($_SESSION['userId']); ?>;
+    
+    // Detect Firefox browser and show warning
+    $(document).ready(function() {
+        const isFirefox = navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
+        if (isFirefox) {
+            $('#firefox-warning').show();
+            // Hide the entire content when Firefox is detected
+            $('#main-content').hide();
+        }
+    });
+    
     // Enable submit button when agreement checkbox is checked and disabled otherwise
     // Function to check if all checkboxes are checked
     function checkAllCheckboxes() {
