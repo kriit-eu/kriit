@@ -749,9 +749,12 @@ foreach ($assignment['students'] as $s): ?>
                                         </p>
                                         <?php if ($this->auth->userId !== $message['userId']): ?>
                                             <div class="d-flex justify-content-end">
-                                                <button type="button" class="btn btn-secondary btn-sm"
+                                                <button type="button" class="btn btn-secondary btn-sm reply-button"
                                                     style="font-size: 0.75rem; padding: 2px 8px;"
-                                                    onclick='replyToMessage(<?= json_encode($message['userName']) ?>, <?= $message['messageId'] ?>, <?= json_encode($message['content']) ?>, "<?= $message['createdAt'] ?>")'>
+                                                    data-reply-user="<?= htmlspecialchars($message['userName'], ENT_QUOTES, 'UTF-8') ?>"
+                                                    data-reply-id="<?= $message['messageId'] ?>"
+                                                    data-reply-content="<?= htmlspecialchars($message['content'], ENT_QUOTES, 'UTF-8') ?>"
+                                                    data-reply-time="<?= htmlspecialchars($message['createdAt'], ENT_QUOTES, 'UTF-8') ?>">
                                                     Vasta
                                                 </button>
                                             </div>
@@ -775,9 +778,12 @@ foreach ($assignment['students'] as $s): ?>
                                         </p>
                                         <?php if ($this->auth->userId !== $message['userId']): ?>
                                             <div class="d-flex justify-content-end">
-                                                <button type="button" class="btn btn-secondary btn-sm"
+                                                <button type="button" class="btn btn-secondary btn-sm reply-button"
                                                     style="font-size: 0.75rem; padding: 2px 8px;"
-                                                    onclick='replyToMessage(<?= json_encode($message['userName']) ?>, <?= $message['messageId'] ?>, <?= json_encode($message['content']) ?>, "<?= $message['createdAt'] ?>")'>
+                                                    data-reply-user="<?= htmlspecialchars($message['userName'], ENT_QUOTES, 'UTF-8') ?>"
+                                                    data-reply-id="<?= $message['messageId'] ?>"
+                                                    data-reply-content="<?= htmlspecialchars($message['content'], ENT_QUOTES, 'UTF-8') ?>"
+                                                    data-reply-time="<?= htmlspecialchars($message['createdAt'], ENT_QUOTES, 'UTF-8') ?>">
                                                     Vasta
                                                 </button>
                                             </div>
@@ -832,6 +838,18 @@ foreach ($assignment['students'] as $s): ?>
             if (openApiButton) {
                 openApiButton.style.display = assignment.assignmentInvolvesOpenApi ? 'inline-block' : 'none';
             }
+
+            // Add event listeners for reply buttons
+            document.addEventListener('click', function(e) {
+                if (e.target && e.target.classList.contains('reply-button')) {
+                    const userName = e.target.getAttribute('data-reply-user');
+                    const messageId = e.target.getAttribute('data-reply-id');
+                    const content = e.target.getAttribute('data-reply-content');
+                    const createdAt = e.target.getAttribute('data-reply-time');
+                    
+                    replyToMessage(userName, messageId, content, createdAt);
+                }
+            });
         });
 
         function initializeTooltips() {
