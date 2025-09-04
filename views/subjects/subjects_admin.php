@@ -909,6 +909,9 @@
                     </form>
                 </div>
                 <div class="modal-footer">
+                    <?php if ($this->isTeacherOrAdmin): ?>
+                        <button type="button" class="btn btn-danger me-auto" id="deleteAssignmentBtn" style="display:none;">Kustuta ülesanne</button>
+                    <?php endif; ?>
                     <button type="button" class="btn btn-primary" onclick="saveEditedAssignment()">Salvesta</button>
                     <button type="button" class="btn btn-secondary" onclick="location.reload()" data-bs-dismiss="modal">
                         Tühista
@@ -1842,6 +1845,85 @@
             checkForOverdueUngraded();
                 // Remove highlight on page load
                 highlightStudentColumn(null);
+        });
+    })();
+</script>
+<script>
+    // Delete assignment button handler: show when modal opens, confirm and call backend
+    (function () {
+        const deleteBtn = document.getElementById('deleteAssignmentBtn');
+        const editModalEl = document.getElementById('editAssignmentModal');
+        if (!editModalEl) return;
+
+        // Show delete button when modal opens and set its data
+        editModalEl.addEventListener('shown.bs.modal', function () {
+            try {
+                const assignmentId = window.currentEditingAssignmentId || null;
+                if (assignmentId && deleteBtn) {
+                    deleteBtn.style.display = '';
+                    deleteBtn.dataset.assignmentId = assignmentId;
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        });
+
+        // Hide button when modal is hidden
+        editModalEl.addEventListener('hidden.bs.modal', function () {
+            if (deleteBtn) {
+                deleteBtn.style.display = 'none';
+                deleteBtn.dataset.assignmentId = '';
+            }
+        });
+
+        if (!deleteBtn) return;
+
+        deleteBtn.addEventListener('click', function () {
+            const assignmentId = this.dataset.assignmentId || window.currentEditingAssignmentId;
+            if (!assignmentId) {
+                alert('Tuvastamatu ülesande ID!');
+                return;
+            }
+
+            // Use a native confirm for simplicity and safety
+            if (!confirm('Oled sa kindel, et soovid selle ülesande kustutada? Seda ei saa tagasi võtta.')) return;
+
+            // POST to admin/AJAX_deleteAssignment
+            const params = new URLSearchParams();
+            params.append('assignmentId', assignmentId);
+
+            fetch('/admin/AJAX_deleteAssignment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: params.toString()
+            })
+                .then(async res => {
+                    let text = await res.text();
+                    try {
+                        const json = JSON.parse(text);
+                        return {status: res.status, data: json};
+                    } catch (e) {
+                        return {status: res.status, data: text};
+                    }
+                })
+                .then(({status, data}) => {
+                    if (status === 200) {
+                        // Close modal and reload to reflect deletion
+                        try {
+                            const modal = bootstrap.Modal.getInstance(editModalEl);
+                            if (modal) modal.hide();
+                        } catch (e) {}
+                        location.reload();
+                    } else {
+                        alert('Kustutamine ebaõnnestus: ' + (data && data.message ? data.message : JSON.stringify(data)));
+                    }
+                })
+                .catch(err => {
+                    alert('Võrgu viga: ' + err);
+                });
         });
     })();
 </script>
