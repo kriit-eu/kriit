@@ -178,6 +178,11 @@
         var editBtn = document.getElementById(editorId + '_editBtn');
         var doneBtn = document.getElementById(editorId + '_doneBtn');
 
+        // Debounce and cache for preview rendering to avoid flashing while typing
+        var _previewTimer = null;
+        var _lastRenderedPreview = '';
+        var _debounceMs = 150; // adjust for responsiveness vs flicker
+
         // State: edit mode or not
         var isEditMode = false;
 
@@ -216,6 +221,43 @@
             showEditMode(false);
         });
 
+        // Helper: when preview or textarea resizes inside a Bootstrap modal, updates
+        // can cause the modal to scroll/jump. We save and restore the nearest
+        // modal-body scroll position around DOM changes to avoid unexpected jumps.
+        function _withPreservedModalScroll(fn) {
+            try {
+                // find the closest ancestor that is a modal-body (Bootstrap modal)
+                var root = container || document.getElementById(editorId + '_container');
+                var modalBody = root && root.closest ? root.closest('.modal-body') : null;
+                var prevScroll = modalBody ? modalBody.scrollTop : null;
+                // perform DOM changes
+                fn();
+                // restore scroll as close as possible (use multiple timeouts to
+                // counter browser auto-scroll after layout/paint)
+                if (modalBody && prevScroll !== null) {
+                    try {
+                        modalBody.scrollTop = prevScroll;
+                    } catch (e) {}
+                    setTimeout(function() {
+                        try {
+                            modalBody.scrollTop = prevScroll;
+                        } catch (e) {}
+                    }, 20);
+                    setTimeout(function() {
+                        try {
+                            modalBody.scrollTop = prevScroll;
+                        } catch (e) {}
+                    }, 120);
+                }
+            } catch (e) {
+                try {
+                    fn();
+                } catch (err) {
+                    console.error(err);
+                }
+            }
+        }
+
         function autoExpand() {
             try {
                 // re-query elements in case DOM was changed or hidden/displayed; scope to container when possible
@@ -235,12 +277,16 @@
                     // If the element is not visible (display:none), skip size calculations
                     var style = window.getComputedStyle(box);
                     if (style.display === 'none' || style.visibility === 'hidden') return;
-                    box.style.height = 'auto';
-                    if (box.innerText.trim() === '' || box.innerHTML.indexOf('Eelvaade ilmub siia') !== -1) {
-                        box.style.height = '200px';
-                    } else {
-                        box.style.height = (box.scrollHeight + 2) + 'px';
-                    }
+                    // Run size update inside preserved-scroll wrapper to avoid
+                    // modal jumping when preview height changes.
+                    _withPreservedModalScroll(function() {
+                        box.style.height = 'auto';
+                        if (box.innerText.trim() === '' || box.innerHTML.indexOf('Eelvaade ilmub siia') !== -1) {
+                            box.style.height = '200px';
+                        } else {
+                            box.style.height = (box.scrollHeight + 2) + 'px';
+                        }
+                    });
                 });
             } catch (err) {
                 console.error('autoExpand error:', err);
@@ -260,24 +306,34 @@
 
                 if (boxPreview) {
                     if (content.trim() === '') {
-                        boxPreview.innerHTML = emptyHtml;
-                        boxPreview.style.overflowY = 'hidden';
+                        _withPreservedModalScroll(function() {
+                            boxPreview.innerHTML = emptyHtml;
+                            boxPreview.style.overflowY = 'hidden';
+                        });
                     } else {
-                        // render even if element was previously hidden
-                        boxPreview.innerHTML = md.render(content);
+                        _withPreservedModalScroll(function() {
+                            // render even if element was previously hidden
+                            boxPreview.innerHTML = md.render(content);
+                        });
 
                     }
                 }
                 if (boxPreviewFull) {
                     if (content.trim() === '') {
-                        boxPreviewFull.innerHTML = emptyHtml;
-                        boxPreviewFull.style.overflowY = 'hidden';
+                        _withPreservedModalScroll(function() {
+                            boxPreviewFull.innerHTML = emptyHtml;
+                            boxPreviewFull.style.overflowY = 'hidden';
+                        });
                     } else {
-                        boxPreviewFull.innerHTML = md.render(content);
+                        _withPreservedModalScroll(function() {
+                            boxPreviewFull.innerHTML = md.render(content);
+                        });
 
                     }
                 }
-                autoExpand();
+                // Run autoExpand inside the preserved-scroll wrapper as well so
+                // any height adjustments won't change the modal scroll.
+                _withPreservedModalScroll(autoExpand);
             } catch (err) {
                 console.error('updatePreview error:', err);
                 // best-effort fallback: set previewFull so user sees something
@@ -296,22 +352,28 @@
                 // Prevent double-attaching by using a marker
                 if (ta._md_listeners_attached) return;
                 ta._md_listeners_attached = true;
-                ta.addEventListener('input', updatePreview);
+                ta.addEventListener('input', function() {
+                    scheduleUpdatePreview();
+                });
                 // fallback for typing: ensure key events trigger update
                 ta.addEventListener('keyup', function() {
                     try {
-                        updatePreview();
+                        scheduleUpdatePreview();
                     } catch (e) {}
                 });
                 ta.addEventListener('paste', function() {
-                    setTimeout(updatePreview, 10);
-                    setTimeout(updatePreview, 800);
+                    setTimeout(function() {
+                        scheduleUpdatePreview(true);
+                    }, 10);
+                    setTimeout(function() {
+                        scheduleUpdatePreview(true);
+                    }, 800);
                 });
                 ta.addEventListener('mouseup', function() {
-                    autoExpand();
+                    scheduleUpdatePreview();
                 });
                 ta.addEventListener('focus', function() {
-                    autoExpand();
+                    scheduleUpdatePreview(true);
                 });
 
             } catch (err) {
@@ -323,7 +385,7 @@
         if (container) {
             container.addEventListener('input', function(e) {
                 try {
-                    if (e && e.target && e.target.id === editorId) updatePreview();
+                    if (e && e.target && e.target.id === editorId) scheduleUpdatePreview();
                 } catch (err) {}
             });
         }
@@ -337,17 +399,51 @@
                     if (!ta) return;
                     if (ta.value !== lastVal) {
                         lastVal = ta.value;
-                        updatePreview();
+                        scheduleUpdatePreview();
                     }
                 } catch (e) {}
             }, 250);
         })();
 
         // Initialize listeners and preview after small delay to allow layout
+        // scheduleUpdatePreview: debounce + optional immediate
+        function scheduleUpdatePreview(immediate) {
+            try {
+                var ta = container ? container.querySelector('#' + editorId) : document.getElementById(editorId);
+                var content = ta ? ta.value : '';
+                if (_lastRenderedPreview === content && !immediate) {
+                    // nothing changed
+                    return;
+                }
+                if (immediate) {
+                    if (_previewTimer) {
+                        clearTimeout(_previewTimer);
+                        _previewTimer = null;
+                    }
+                    _lastRenderedPreview = content;
+                    updatePreview();
+                    return;
+                }
+                if (_previewTimer) clearTimeout(_previewTimer);
+                _previewTimer = setTimeout(function() {
+                    try {
+                        _lastRenderedPreview = content;
+                        updatePreview();
+                    } catch (e) {
+                        console.error('scheduled updatePreview failed', e);
+                    }
+                }, _debounceMs);
+            } catch (e) {
+                try {
+                    updatePreview();
+                } catch (err) {}
+            }
+        }
+
         setTimeout(function() {
             attachTextareaListeners();
             autoExpand();
-            updatePreview();
+            scheduleUpdatePreview(true);
         }, 0);
 
         // --- Image upload/paste/drag-drop logic ---
