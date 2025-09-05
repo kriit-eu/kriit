@@ -4,30 +4,34 @@
         color: #e0e0e0 !important;
         transition: color 0.2s;
     }
+
     .non-selected-student-column-header {
         color: #e0e0e0 !important;
         transition: color 0.2s;
     }
 </style>
-        <script>
-            // Scroll selected student's column into view (centered if possible)
-            function scrollStudentColumnIntoView(studentId) {
-                if (!studentId) return;
-                // Find the first cell for this student
-                const cell = document.querySelector(`#subject-table td[data-student-id="${studentId}"]`);
-                if (!cell) return;
-                // Find the table's scrollable container
-                const table = cell.closest('table');
-                const responsiveDiv = table ? table.closest('.table-responsive') : null;
-                if (!responsiveDiv) return;
-                // Get cell position relative to container
-                const cellRect = cell.getBoundingClientRect();
-                const containerRect = responsiveDiv.getBoundingClientRect();
-                // Calculate scroll position to center the cell
-                const scrollLeft = cell.offsetLeft - (responsiveDiv.clientWidth / 2) + (cell.clientWidth / 2);
-                responsiveDiv.scrollTo({left: scrollLeft, behavior: 'smooth'});
-            }
-        </script>
+<script>
+    // Scroll selected student's column into view (centered if possible)
+    function scrollStudentColumnIntoView(studentId) {
+        if (!studentId) return;
+        // Find the first cell for this student
+        const cell = document.querySelector(`#subject-table td[data-student-id="${studentId}"]`);
+        if (!cell) return;
+        // Find the table's scrollable container
+        const table = cell.closest('table');
+        const responsiveDiv = table ? table.closest('.table-responsive') : null;
+        if (!responsiveDiv) return;
+        // Get cell position relative to container
+        const cellRect = cell.getBoundingClientRect();
+        const containerRect = responsiveDiv.getBoundingClientRect();
+        // Calculate scroll position to center the cell
+        const scrollLeft = cell.offsetLeft - (responsiveDiv.clientWidth / 2) + (cell.clientWidth / 2);
+        responsiveDiv.scrollTo({
+            left: scrollLeft,
+            behavior: 'smooth'
+        });
+    }
+</script>
 <script>
     // Visual numbering for criteria rows
     function updateCriteriaNumbers() {
@@ -44,7 +48,7 @@
 </script>
 <!-- Delete criterion confirmation modal -->
 <div class="modal fade" id="deleteCriterionModal" tabindex="-1" aria-labelledby="deleteCriterionModalLabel"
-     aria-hidden="true">
+    aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
@@ -92,7 +96,8 @@
         min-height: 100vh;
     }
 
-    #container, .table-responsive {
+    #container,
+    .table-responsive {
         background-color: transparent;
     }
 
@@ -132,7 +137,8 @@
         box-shadow: 0 2px 4px rgba(0, 0, 0, .1) !important;
     }
 
-    .student-summary-table th, .student-summary-table td {
+    .student-summary-table th,
+    .student-summary-table td {
         border: 1px solid #dee2e6 !important;
         padding: 8px 12px !important;
     }
@@ -145,7 +151,8 @@
         background-color: #fff !important;
     }
 
-    .student-row.selected, .student-row.selected td {
+    .student-row.selected,
+    .student-row.selected td {
         color: inherit !important;
     }
 
@@ -191,7 +198,11 @@
         height: 36px;
     }
 
-    .subject-spacer, .subject-spacer td, tr.subject-spacer, tr.subject-spacer td, #subject-table tr.subject-spacer td {
+    .subject-spacer,
+    .subject-spacer td,
+    tr.subject-spacer,
+    tr.subject-spacer td,
+    #subject-table tr.subject-spacer td {
         height: 20px;
         background-color: transparent !important;
         border: none !important;
@@ -199,7 +210,8 @@
         outline: none !important;
     }
 
-    .student-name-header, #subject-table td.text-center:not(:first-child) {
+    .student-name-header,
+    #subject-table td.text-center:not(:first-child) {
         width: 40px !important;
         min-width: 40px !important;
         max-width: 40px !important;
@@ -209,7 +221,8 @@
         box-sizing: border-box;
     }
 
-    #subject-table td:first-child, #subject-table th:first-child {
+    #subject-table td:first-child,
+    #subject-table th:first-child {
         width: 60px;
         min-width: 60px;
         max-width: 60px;
@@ -217,7 +230,8 @@
         vertical-align: middle;
     }
 
-    #subject-table td:nth-child(<?= $this->isStudent ? '1' : '2' ?>), #subject-table th:nth-child(<?= $this->isStudent ? '1' : '2' ?>) {
+    #subject-table td:nth-child(<?= $this->isStudent ? '1' : '2' ?>),
+    #subject-table th:nth-child(<?= $this->isStudent ? '1' : '2' ?>) {
         width: auto;
         min-width: 160px;
         max-width: none;
@@ -313,7 +327,8 @@
         text-align: left;
     }
 
-    #subject-table td a:hover, #subject-table th a:hover {
+    #subject-table td a:hover,
+    #subject-table th a:hover {
         text-decoration: underline;
         color: #0056b3;
     }
@@ -349,20 +364,24 @@
         z-index: 2;
         transition: none;
     }
+
     /* Black outline for selected student column header */
     .selected-student-column-header {
         outline: 1px solid #000 !important;
         outline-offset: -1px;
     }
+
     .selected-student-column .narrow-name,
     .selected-student-column-header .narrow-name {
         font-size: 0.7em !important;
     }
+
     /* Black outline for selected grades */
     .selected-student-column[data-grade] {
         outline: 1px solid #000 !important;
         outline-offset: -1px;
     }
+
     /* Ensure Bootstrap modal and backdrop are always on top */
     .modal-backdrop.show {
         z-index: 2050 !important;
@@ -377,12 +396,12 @@
         z-index: 2200 !important;
     }
 
-    #deleteCriterionModal + .modal-backdrop.show {
+    #deleteCriterionModal+.modal-backdrop.show {
         z-index: 2150 !important;
     }
 
     /* Fallback for when Bootstrap inserts the backdrop before the modal */
-    body > .modal-backdrop.delete-criterion-backdrop.show {
+    body>.modal-backdrop.delete-criterion-backdrop.show {
         z-index: 2150 !important;
     }
 </style>
@@ -404,15 +423,18 @@
     }
 
     .remove-criterion-btn .fa-trash {
-        color: #6c757d; /* Bootstrap secondary */
+        color: #6c757d;
+        /* Bootstrap secondary */
         transition: color 0.15s;
     }
 
-    .remove-criterion-btn:hover, .remove-criterion-btn:focus {
+    .remove-criterion-btn:hover,
+    .remove-criterion-btn:focus {
         background: #dc3545 !important;
     }
 
-    .remove-criterion-btn:hover .fa-trash, .remove-criterion-btn:focus .fa-trash {
+    .remove-criterion-btn:hover .fa-trash,
+    .remove-criterion-btn:focus .fa-trash {
         color: #fff;
     }
 
@@ -449,7 +471,7 @@
         <?php if (!$this->isStudent): ?>
             <div class="form-check form-switch me-3">
                 <input class="form-check-input" type="checkbox"
-                       id="showAllToggle" <?= $this->showAll ? 'checked' : '' ?>>
+                    id="showAllToggle" <?= $this->showAll ? 'checked' : '' ?>>
                 <label class="form-check-label" for="showAllToggle">Näita kõiki</label>
             </div>
         <?php endif; ?>
@@ -463,78 +485,78 @@
     <?php foreach ($this->groups as $group): ?>
         <h1><?= $group['groupName'] ?></h1>
 
-    <?php if (!$this->isStudent && !empty($group['subjects'])): ?>
-        <?php 
-        // Create an array with students and their debt counts for sorting
-        $studentsWithDebts = [];
-        foreach ($group['students'] as $studentId => $student) {
-            $studentsWithDebts[] = [
-                'id' => $studentId,
-                'data' => $student,
-                'debts' => $group['pendingGrades'][$studentId] ?? 0
-            ];
-        }
-        
-        // Sort by debt count (descending) first, then by name (ascending)
-        usort($studentsWithDebts, function($a, $b) {
-            // First compare by debt count (higher debts first)
-            $debtCompare = $b['debts'] - $a['debts'];
-            if ($debtCompare !== 0) {
-                return $debtCompare;
+        <?php if (!$this->isStudent && !empty($group['subjects'])): ?>
+            <?php
+            // Create an array with students and their debt counts for sorting
+            $studentsWithDebts = [];
+            foreach ($group['students'] as $studentId => $student) {
+                $studentsWithDebts[] = [
+                    'id' => $studentId,
+                    'data' => $student,
+                    'debts' => $group['pendingGrades'][$studentId] ?? 0
+                ];
             }
-            // If debts are equal, sort by name (ascending)
-            return strcasecmp($a['data']['userName'], $b['data']['userName']);
-        });
-        ?>
-        <div class="mb-4">
-            <h5>Õpilaste kokkuvõte</h5>
-            <div class="table-responsive">
-                <table class="table table-bordered student-summary-table"
-                       data-group="<?= htmlspecialchars($group['groupName']) ?>" style="width:auto;background-color:#fff;table-layout:fixed;">
-                    <thead>
-                    <tr>
-                        <th style="text-align:left;width:60px;min-width:60px;max-width:60px;background-color:#f2f2f2;"><b>Võlad</b></th>
-                        <?php foreach ($studentsWithDebts as $studentItem): ?>
-                            <?php $student = $studentItem['data']; ?>
-                            <th class="student-name-header text-center <?= $student['meta']['css'] ?>" 
-                                data-student-id="<?= $student['userId'] ?>"
-                                data-student-name="<?= htmlspecialchars($student['userName']) ?>"
-                                data-bs-toggle="tooltip"
-                                data-bs-original-title="<?= $student['userName'] . $student['meta']['status'] ?>"
-                                style="cursor:pointer;width:40px;min-width:40px;max-width:40px;padding:1px 4px;font-weight:400;vertical-align:middle;height:36px;background-color:#f2f2f2;"
-                                onclick="toggleStudentFilter(this)"
-                                title="<?= htmlspecialchars($student['userName']) . $student['meta']['status'] ?>">
-                                <div class="narrow-name">
-                                    <?= $student['nameSplit']['first'] ?><span
-                                            class="lastname"><?= $student['nameSplit']['last'] ?></span>
-                                </div>
-                            </th>
-                        <?php endforeach; ?>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr>
-                        <td style="background-color:#fff;font-weight:bold;text-align:center;">Kokku</td>
-                        <?php foreach ($studentsWithDebts as $studentItem): ?>
-                            <?php 
-                            $student = $studentItem['data'];
-                            $pending = $studentItem['debts'];
-                            ?>
-                            <td class="text-center" 
-                                data-student-id="<?= $student['userId'] ?>"
-                                data-student-name="<?= htmlspecialchars($student['userName']) ?>"
-                                style="background-color:#fff;color:<?= $pending > 0 ? '#dc3545' : '#28a745' ?>;font-weight:bold;cursor:pointer;"
-                                onclick="toggleStudentFilter(this)"
-                                title="<?= htmlspecialchars($student['userName']) ?>: <?= $pending ?> võlga">
-                                <?= $pending ?>
-                            </td>
-                        <?php endforeach; ?>
-                    </tr>
-                    </tbody>
-                </table>
+
+            // Sort by debt count (descending) first, then by name (ascending)
+            usort($studentsWithDebts, function ($a, $b) {
+                // First compare by debt count (higher debts first)
+                $debtCompare = $b['debts'] - $a['debts'];
+                if ($debtCompare !== 0) {
+                    return $debtCompare;
+                }
+                // If debts are equal, sort by name (ascending)
+                return strcasecmp($a['data']['userName'], $b['data']['userName']);
+            });
+            ?>
+            <div class="mb-4">
+                <h5>Õpilaste kokkuvõte</h5>
+                <div class="table-responsive">
+                    <table class="table table-bordered student-summary-table"
+                        data-group="<?= htmlspecialchars($group['groupName']) ?>" style="width:auto;background-color:#fff;table-layout:fixed;">
+                        <thead>
+                            <tr>
+                                <th style="text-align:left;width:60px;min-width:60px;max-width:60px;background-color:#f2f2f2;"><b>Võlad</b></th>
+                                <?php foreach ($studentsWithDebts as $studentItem): ?>
+                                    <?php $student = $studentItem['data']; ?>
+                                    <th class="student-name-header text-center <?= $student['meta']['css'] ?>"
+                                        data-student-id="<?= $student['userId'] ?>"
+                                        data-student-name="<?= htmlspecialchars($student['userName']) ?>"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-original-title="<?= $student['userName'] . $student['meta']['status'] ?>"
+                                        style="cursor:pointer;width:40px;min-width:40px;max-width:40px;padding:1px 4px;font-weight:400;vertical-align:middle;height:36px;background-color:#f2f2f2;"
+                                        onclick="toggleStudentFilter(this)"
+                                        title="<?= htmlspecialchars($student['userName']) . $student['meta']['status'] ?>">
+                                        <div class="narrow-name">
+                                            <?= $student['nameSplit']['first'] ?><span
+                                                class="lastname"><?= $student['nameSplit']['last'] ?></span>
+                                        </div>
+                                    </th>
+                                <?php endforeach; ?>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="background-color:#fff;font-weight:bold;text-align:center;">Kokku</td>
+                                <?php foreach ($studentsWithDebts as $studentItem): ?>
+                                    <?php
+                                    $student = $studentItem['data'];
+                                    $pending = $studentItem['debts'];
+                                    ?>
+                                    <td class="text-center"
+                                        data-student-id="<?= $student['userId'] ?>"
+                                        data-student-name="<?= htmlspecialchars($student['userName']) ?>"
+                                        style="background-color:#fff;color:<?= $pending > 0 ? '#dc3545' : '#28a745' ?>;font-weight:bold;cursor:pointer;"
+                                        onclick="toggleStudentFilter(this)"
+                                        title="<?= htmlspecialchars($student['userName']) ?>: <?= $pending ?> võlga">
+                                        <?= $pending ?>
+                                    </td>
+                                <?php endforeach; ?>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </div>
-    <?php endif; ?>
+        <?php endif; ?>
 
 
         <!-- Clean up Bootstrap color classes in criteria rows after modal render -->
@@ -551,7 +573,7 @@
 
             if (window.openEditAssignmentModal) {
                 const origOpenEditAssignmentModal = window.openEditAssignmentModal;
-                window.openEditAssignmentModal = function () {
+                window.openEditAssignmentModal = function() {
                     origOpenEditAssignmentModal.apply(this, arguments);
                     setTimeout(cleanCriteriaRowColors, 100);
                 };
@@ -570,113 +592,142 @@
                             <th class="text-center"><b>ID</b></th><?php endif; ?>
                         <th <?= $this->isStudent ? 'colspan="2"' : '' ?>
                             <b>
-                                <?php if (!empty($subject['subjectExternalId'])): ?>
-                                    <a href="https://tahvel.edu.ee/#/journal/<?= $subject['subjectExternalId'] ?>/edit"
-                                       target="_blank"><?= $subject['subjectName'] ?></a>
-                                <?php else: ?>
-                                    <?= $subject['subjectName'] ?>
-                                <?php endif; ?>
-                                <?php
-                                // --- BEGIN: Last lesson date badge (Estonian) ---
-                                if (!empty($subject['subjectLastLessonDate'])) {
-                                    try {
-                                        $now = new DateTimeImmutable('today');
-                                        $lessonDate = new DateTimeImmutable($subject['subjectLastLessonDate']);
-                                        $diffDays = (int)$now->diff($lessonDate)->format('%r%a');
-                                        if ($diffDays === 0) {
-                                            $badgeColor = 'bg-danger';
-                                            $fuzzy = 'täna';
-                                        } elseif ($diffDays === 1) {
-                                            $badgeColor = 'bg-success';
-                                            $fuzzy = 'homme';
-                                        } elseif ($diffDays > 1) {
-                                            $badgeColor = 'bg-success';
-                                            $fuzzy = $diffDays . ' päeva pärast';
-                                        } elseif ($diffDays === -1) {
-                                            $badgeColor = 'bg-secondary';
-                                            $fuzzy = 'eile';
-                                        } else {
-                                            $badgeColor = 'bg-secondary';
-                                            $fuzzy = abs($diffDays) . ' päeva tagasi';
-                                        }
+                            <?php if (!empty($subject['subjectExternalId'])): ?>
+                                <a href="https://tahvel.edu.ee/#/journal/<?= $subject['subjectExternalId'] ?>/edit"
+                                    target="_blank"><?= $subject['subjectName'] ?></a>
+                            <?php else: ?>
+                                <?= $subject['subjectName'] ?>
+                            <?php endif; ?>
+                            <?php
+                            // --- BEGIN: Last lesson date badge (Estonian) ---
+                            if (!empty($subject['subjectLastLessonDate'])) {
+                                try {
+                                    $now = new DateTimeImmutable('today');
+                                    $lessonDate = new DateTimeImmutable($subject['subjectLastLessonDate']);
+                                    $diffDays = (int)$now->diff($lessonDate)->format('%r%a');
+
+                                    // New thresholds requested:
+                                    // - Red badge only on current date (0) and next day (1)
+                                    // - Green badge only when date is exactly 5 days in the future (diffDays === 5)
+                                    // - Gray (secondary) badge when the date has passed for more than 2 days (diffDays <= -3)
+                                    // - For other cases, do not show a colored badge (use secondary for past/near-past as fallback)
+
+                                    $badgeColor = null;
+                                    $fuzzy = '';
+
+                                    if ($diffDays === 0) {
+                                        $badgeColor = 'bg-danger';
+                                        $fuzzy = 'täna';
+                                    } elseif ($diffDays === 1) {
+                                        $badgeColor = 'bg-danger';
+                                        $fuzzy = 'homme';
+                                    } elseif ($diffDays === 5) {
+                                        $badgeColor = 'bg-success';
+                                        $fuzzy = '5 päeva pärast';
+                                    } elseif ($diffDays <= -3) {
+                                        // Passed more than 2 days ago -> show 'X päeva tagasi'
+                                        $badgeColor = 'bg-secondary';
+                                        $fuzzy = abs($diffDays) . ' päeva tagasi';
+                                    } elseif ($diffDays === -1) {
+                                        // Yesterday: show neutral/secondary
+                                        $badgeColor = 'bg-secondary';
+                                        $fuzzy = 'eile';
+                                    }
+
+                                    // Only render badge if one of the explicit cases matched
+                                    if (!empty($badgeColor)) {
                                         echo '<span class="badge ms-2 ' . $badgeColor . ' subject-enddate-badge" style="vertical-align:middle;min-width:70px;" title="Viimane tund: ' . htmlspecialchars($lessonDate->format('Y-m-d')) . '">' . htmlspecialchars($fuzzy) . '</span>';
-                                    } catch (Exception $e) {
-                                        // Invalid date, do not show badge
+                                    }
+                                } catch (Exception $e) {
+                                    // Invalid date, do not show badge
+                                }
+                            }
+                            // --- END: Last lesson date badge (Estonian) ---
+                            ?>
+                            </style>
+                            <style>
+                                /* Subject end date badge styling */
+                                .subject-enddate-badge {
+                                    font-size: 0.89em;
+                                    font-weight: 500;
+                                    padding: 0.22em 0.62em;
+                                    border-radius: 0.6em;
+                                    margin-left: 0.35em;
+                                    display: inline-block;
+                                    vertical-align: middle;
+                                    line-height: 1.15;
+                                    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+                                    color: #fff !important;
+                                    min-width: 32px;
+                                    text-align: center;
+                                    letter-spacing: 0.01em;
+                                }
+
+                                .bg-success.subject-enddate-badge {
+                                    background-color: #198754 !important;
+                                    color: #fff !important;
+                                }
+
+                                .bg-danger.subject-enddate-badge {
+                                    background-color: #dc3545 !important;
+                                    color: #fff !important;
+                                }
+
+                                .bg-secondary.subject-enddate-badge {
+                                    background-color: #6c757d !important;
+                                    color: #fff !important;
+                                }
+
+                                @media (max-width: 600px) {
+                                    .subject-enddate-badge {
+                                        font-size: 0.78em;
+                                        min-width: 24px;
+                                        padding: 0.13em 0.38em;
                                     }
                                 }
-                                // --- END: Last lesson date badge (Estonian) ---
-                                ?>
-</style>
-<style>
-    /* Subject end date badge styling */
-    .subject-enddate-badge {
-        font-size: 0.89em;
-        font-weight: 500;
-        padding: 0.22em 0.62em;
-        border-radius: 0.6em;
-        margin-left: 0.35em;
-        display: inline-block;
-        vertical-align: middle;
-        line-height: 1.15;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-        color: #fff !important;
-        min-width: 32px;
-        text-align: center;
-        letter-spacing: 0.01em;
-    }
-    .bg-success.subject-enddate-badge { background-color: #198754 !important; color: #fff !important; }
-    .bg-danger.subject-enddate-badge { background-color: #dc3545 !important; color: #fff !important; }
-    .bg-secondary.subject-enddate-badge { background-color: #6c757d !important; color: #fff !important; }
-    @media (max-width: 600px) {
-        .subject-enddate-badge {
-            font-size: 0.78em;
-            min-width: 24px;
-            padding: 0.13em 0.38em;
-        }
-    }
-</style>
-                                <?php
-                                // Calculate unique learning outcomes used in assignments
-                                    $usedOv = [];
-                                    // Build a map: ÕV number (1-based) => learningOutcomeId
-                                    $ovNrToId = [];
-                                    if (!empty($subject['learningOutcomes']) && is_array($subject['learningOutcomes'])) {
-                                        foreach ($subject['learningOutcomes'] as $lo) {
-                                            $nr = isset($lo['learningOutcomeOrderNr']) ? intval($lo['learningOutcomeOrderNr']) + 1 : null;
-                                            if ($nr) $ovNrToId[$nr] = $lo['id'];
-                                        }
-                                    }
-                                    if (!empty($subject['assignments'])) {
-                                        foreach ($subject['assignments'] as $a) {
-                                            if (!empty($a['assignmentName'])) {
-                                                if (preg_match('/\(\s*ÕV(\d+(?:,\s*ÕV\d+)*)\s*\)/u', $a['assignmentName'], $m)) {
-                                                    $ovStr = $m[1];
-                                                    $ovNums = preg_split('/,\s*ÕV/', $ovStr);
-                                                    foreach ($ovNums as $num) {
-                                                        $num = intval($num);
-                                                        if ($num && isset($ovNrToId[$num])) {
-                                                            $usedOv[$ovNrToId[$num]] = true;
-                                                        }
-                                                    }
+                            </style>
+                            <?php
+                            // Calculate unique learning outcomes used in assignments
+                            $usedOv = [];
+                            // Build a map: ÕV number (1-based) => learningOutcomeId
+                            $ovNrToId = [];
+                            if (!empty($subject['learningOutcomes']) && is_array($subject['learningOutcomes'])) {
+                                foreach ($subject['learningOutcomes'] as $lo) {
+                                    $nr = isset($lo['learningOutcomeOrderNr']) ? intval($lo['learningOutcomeOrderNr']) + 1 : null;
+                                    if ($nr) $ovNrToId[$nr] = $lo['id'];
+                                }
+                            }
+                            if (!empty($subject['assignments'])) {
+                                foreach ($subject['assignments'] as $a) {
+                                    if (!empty($a['assignmentName'])) {
+                                        if (preg_match('/\(\s*ÕV(\d+(?:,\s*ÕV\d+)*)\s*\)/u', $a['assignmentName'], $m)) {
+                                            $ovStr = $m[1];
+                                            $ovNums = preg_split('/,\s*ÕV/', $ovStr);
+                                            foreach ($ovNums as $num) {
+                                                $num = intval($num);
+                                                if ($num && isset($ovNrToId[$num])) {
+                                                    $usedOv[$ovNrToId[$num]] = true;
                                                 }
                                             }
                                         }
                                     }
-                                $usedCount = count($usedOv);
-                                $totalOv = isset($subject['learningOutcomes']) && is_array($subject['learningOutcomes']) ? count($subject['learningOutcomes']) : 0;
-                                // Only show badge if there are outcomes AND not all are used
-                                if ($totalOv > 0 && $usedCount < $totalOv) {
-                                    // Badge color: red if subjectLastLessonDate is set, yellow if not
-                                    if (!empty($subject['subjectLastLessonDate'])) {
-                                        $badgeColor = 'bg-danger subject-enddate-badge';
-                                    } else {
-                                        $badgeColor = 'bg-warning subject-enddate-badge';
-                                    }
-                                ?>
+                                }
+                            }
+                            $usedCount = count($usedOv);
+                            $totalOv = isset($subject['learningOutcomes']) && is_array($subject['learningOutcomes']) ? count($subject['learningOutcomes']) : 0;
+                            // Only show badge if there are outcomes AND not all are used
+                            if ($totalOv > 0 && $usedCount < $totalOv) {
+                                // Badge color: red if subjectLastLessonDate is set, yellow if not
+                                if (!empty($subject['subjectLastLessonDate'])) {
+                                    $badgeColor = 'bg-danger subject-enddate-badge';
+                                } else {
+                                    $badgeColor = 'bg-warning subject-enddate-badge';
+                                }
+                            ?>
                                 <span class="badge ms-2 <?= $badgeColor ?>" style="vertical-align:middle;" title="Kasutatud õpiväljundid / kõik õpiväljundid">
                                     <?= $usedCount ?>/<?= $totalOv ?>
                                 </span>
-                                <?php }
+                            <?php }
                             ?>
                             </b>
                         </th>
@@ -687,7 +738,7 @@
                                     class="student-name-header text-center <?= $student['meta']['css'] ?>">
                                     <div class="narrow-name">
                                         <?= $student['nameSplit']['first'] ?><span
-                                                class="lastname"><?= $student['nameSplit']['last'] ?></span>
+                                            class="lastname"><?= $student['nameSplit']['last'] ?></span>
                                     </div>
                                 </th>
                             <?php endforeach; ?>
@@ -709,13 +760,13 @@
                                         </a>
                                     </div>
                                     <button class="btn btn-link p-0 ms-2 edit-assignment-btn" title="Muuda ülesanne"
-                                            data-assignment='<?= htmlspecialchars(json_encode(array_merge($assignment, ["subjectExternalId" => $subject['subjectExternalId']])), ENT_QUOTES, 'UTF-8') ?>'>
+                                        data-assignment='<?= htmlspecialchars(json_encode(array_merge($assignment, ["subjectExternalId" => $subject['subjectExternalId']])), ENT_QUOTES, 'UTF-8') ?>'>
                                         <i class="fa fa-pencil-alt"></i>
                                     </button>
                                     <?php if ($assignment['showDueDate']): ?>
                                         <span class="badge <?= $assignment['finalBadgeClass'] ?> due-date-badge"
-                                              data-days-remaining="<?= $assignment['daysRemaining'] ?>"
-                                              data-is-student=<?= json_encode($this->isStudent) ?>>
+                                            data-days-remaining="<?= $assignment['daysRemaining'] ?>"
+                                            data-is-student=<?= json_encode($this->isStudent) ?>>
                                             <?= $assignment['assignmentDueAt'] ? (new DateTime($assignment['assignmentDueAt']))->format('d.m.y') : 'Pole tähtaega' ?>
                                         </span>
                                     <?php endif; ?>
@@ -770,13 +821,13 @@
 
 <?php if (!$this->isStudent): ?>
     <!-- Include grading modal for teachers -->
-    <?php 
+    <?php
     $isStudent = false; // For grading modal
-    include __DIR__ . '/../../templates/partials/grading_modal/grading_modal.php'; 
+    include __DIR__ . '/../../templates/partials/grading_modal/grading_modal.php';
     ?>
-    
+
     <div class="modal fade" id="editAssignmentModal" tabindex="-1" aria-labelledby="editAssignmentModalLabel"
-         aria-hidden="true">
+        aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
@@ -788,7 +839,7 @@
                         <div class="mb-3">
                             <label for="assignmentName" class="form-label fw-bold">Pealkiri</label>
                             <input type="text" class="form-control" id="assignmentName" name="assignmentName" value=""
-                                   maxlength="100">
+                                maxlength="100">
                             <div class="form-text" id="assignmentNameCounter">0 / 100</div>
                             <div class="invalid-feedback" id="assignmentNameError" style="display:none;">Pealkiri on
                                 liiga pikk maksimum tähemärkide pikkus 100
@@ -826,7 +877,7 @@
                                     transition: all 0.2s;
                                 }
 
-                                .combobox-wrapper .combobox-checkbox:checked ~ .combobox-checkbox-visual {
+                                .combobox-wrapper .combobox-checkbox:checked~.combobox-checkbox-visual {
                                     background: var(--bs-success) !important;
                                     border-color: var(--bs-success) !important;
                                 }
@@ -836,7 +887,7 @@
                                     box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.15);
                                 }
 
-                                .combobox-wrapper .combobox-checkbox:focus ~ .combobox-checkbox-visual {
+                                .combobox-wrapper .combobox-checkbox:focus~.combobox-checkbox-visual {
                                     box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25);
                                 }
 
@@ -852,12 +903,12 @@
                                     transition: stroke-dashoffset 0.3s;
                                 }
 
-                                .combobox-wrapper .combobox-checkbox:checked ~ .combobox-checkbox-visual .combobox-checkmark {
+                                .combobox-wrapper .combobox-checkbox:checked~.combobox-checkbox-visual .combobox-checkmark {
                                     opacity: 1;
                                     transform: scale(1);
                                 }
 
-                                .combobox-wrapper .combobox-checkbox:checked ~ .combobox-checkbox-visual .combobox-checkmark path {
+                                .combobox-wrapper .combobox-checkbox:checked~.combobox-checkbox-visual .combobox-checkmark path {
                                     stroke-dashoffset: 0;
                                 }
 
@@ -884,26 +935,26 @@
                             <div class="col-md-6">
                                 <label for="assignmentEntryDate" class="form-label fw-bold">Sisestamise kuupäev</label>
                                 <input type="date" class="form-control" id="assignmentEntryDate"
-                                       name="assignmentEntryDate" value="">
+                                    name="assignmentEntryDate" value="">
                             </div>
                             <div class="col-md-6">
                                 <label for="assignmentDueAt" class="form-label fw-bold">Tähtaeg</label>
                                 <input type="date" class="form-control" id="assignmentDueAt" name="assignmentDueAt"
-                                       value="">
+                                    value="">
                             </div>
                         </div>
                         <div class="mb-3 form-check">
                             <input type="checkbox" class="form-check-input" id="assignmentInvolvesOpenApi"
-                                   name="assignmentInvolvesOpenApi">
+                                name="assignmentInvolvesOpenApi">
                             <label class="form-check-label" for="assignmentInvolvesOpenApi">Ülesandel on OpenAPI</label>
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-bold">Kriteeriumid</label>
                             <div id="editCriteriaContainer"
-                                 style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%;"></div>
+                                style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%;"></div>
                             <div id="addCriterionInlineContainer" style="width: 100%;">
                                 <input type="text" class="form-control mt-2" id="newCriterionInput"
-                                       placeholder="Lisa uus kriteerium..." autocomplete="off">
+                                    placeholder="Lisa uus kriteerium..." autocomplete="off">
                             </div>
                         </div>
                     </form>
@@ -924,15 +975,17 @@
 
 <script src="/assets/js/markdown_editor.js"></script>
 <?php if (!$this->isStudent): ?>
-<script>
-    // Set BASE_URL for grading modal
-    window.BASE_URL = '<?= BASE_URL ?>';
-</script>
+    <script>
+        // Set BASE_URL for grading modal
+        window.BASE_URL = '<?= BASE_URL ?>';
+    </script>
 <?php endif; ?>
 <script>
-
     // Custom Bootstrap modal confirmation for deleting a criterion (define first so all code can use it)
-    window.showDeleteCriterionModal = function ({row, onDelete}) {
+    window.showDeleteCriterionModal = function({
+        row,
+        onDelete
+    }) {
         // Ensure the confirmation modal's backdrop is always above the edit modal's backdrop
         const modalEl = document.getElementById('deleteCriterionModal');
         if (!modalEl) {
@@ -943,7 +996,7 @@
         // Remove any previous click handler
         confirmBtn.onclick = null;
         // Set up new click handler
-        confirmBtn.onclick = function () {
+        confirmBtn.onclick = function() {
             if (typeof onDelete === 'function') onDelete();
             const modal = bootstrap.Modal.getInstance(modalEl);
             if (modal) modal.hide();
@@ -960,7 +1013,7 @@
         }
         modal.show();
         // After modal is shown, bump the backdrop z-index if needed
-        setTimeout(function () {
+        setTimeout(function() {
             // Find all visible backdrops
             var backdrops = Array.from(document.querySelectorAll('.modal-backdrop.show'));
             if (backdrops.length > 1) {
@@ -1079,13 +1132,13 @@
 
         // AJAX POST to backend
         fetch('/assignments/ajax_editAssignment', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: formData.toString()
-        })
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData.toString()
+            })
             .then(async res => {
                 let data;
                 let status = res.status;
@@ -1097,9 +1150,15 @@
                     alert('Võrgu viga: server tagastas vigase vastuse. Vaata konsooli!');
                     throw new Error('Non-JSON response');
                 }
-                return {status, data};
+                return {
+                    status,
+                    data
+                };
             })
-            .then(({status, data}) => {
+            .then(({
+                status,
+                data
+            }) => {
                 console.log('Assignment save response:', status, data);
                 if (status === 200 || status === 201) {
                     const modal = bootstrap.Modal.getInstance(document.getElementById('editAssignmentModal'));
@@ -1118,15 +1177,15 @@
     // Build a JS object mapping subjectExternalId to learning outcomes
     var subjectLearningOutcomes = {};
     <?php foreach ($this->groups as $group): ?>
-    <?php foreach ($group['subjects'] as $subject): ?>
-    subjectLearningOutcomes[<?= json_encode($subject['subjectExternalId']) ?>] = <?= json_encode(array_map(function ($o) {
-        return [
-            'id' => $o['id'],
-            'nameEt' => $o['nameEt'],
-            'learningOutcomeOrderNr' => isset($o['learningOutcomeOrderNr']) ? $o['learningOutcomeOrderNr'] : (isset($o["learningOutcomeOrderNr"]) ? $o["learningOutcomeOrderNr"] : null)
-        ];
-    }, $subject['learningOutcomes'])) ?>;
-    <?php endforeach; ?>
+        <?php foreach ($group['subjects'] as $subject): ?>
+            subjectLearningOutcomes[<?= json_encode($subject['subjectExternalId']) ?>] = <?= json_encode(array_map(function ($o) {
+                                                                                                return [
+                                                                                                    'id' => $o['id'],
+                                                                                                    'nameEt' => $o['nameEt'],
+                                                                                                    'learningOutcomeOrderNr' => isset($o['learningOutcomeOrderNr']) ? $o['learningOutcomeOrderNr'] : (isset($o["learningOutcomeOrderNr"]) ? $o["learningOutcomeOrderNr"] : null)
+                                                                                                ];
+                                                                                            }, $subject['learningOutcomes'])) ?>;
+        <?php endforeach; ?>
     <?php endforeach; ?>
 
     // Make edit modal globally available
@@ -1187,7 +1246,9 @@
                 console.log('DEBUG: assignment.assignmentInstructions =', assignment.assignmentInstructions);
                 instructionsEditor.value = assignment.assignmentInstructions || '';
                 // Trigger input event to update preview and auto-expand
-                instructionsEditor.dispatchEvent(new Event('input', {bubbles: true}));
+                instructionsEditor.dispatchEvent(new Event('input', {
+                    bubbles: true
+                }));
                 document.getElementById('assignmentDueAt').value = assignment.assignmentDueAt ? (assignment.assignmentDueAt.length > 0 ? assignment.assignmentDueAt.split('T')[0] : '') : '';
                 document.getElementById('assignmentEntryDate').value = assignment.assignmentEntryDate ? (assignment.assignmentEntryDate.length > 0 ? assignment.assignmentEntryDate.split('T')[0] : '') : '';
                 document.getElementById('assignmentInvolvesOpenApi').checked = assignment.assignmentInvolvesOpenApi ? true : false;
@@ -1206,7 +1267,7 @@
                     }
                 }
                 // Render custom checkbox list
-                combobox.innerHTML = outcomes.map(function (outcome, i) {
+                combobox.innerHTML = outcomes.map(function(outcome, i) {
                     var nr = (parseInt(outcome.learningOutcomeOrderNr, 10) || 0) + 1;
                     var checked = selectedOutcomes.includes(outcome.id);
                     // Remove leading number and punctuation from outcome.nameEt
@@ -1227,7 +1288,7 @@
                 }).join('');
                 // Add event listeners for change/click to update counter
                 combobox.querySelectorAll('.combobox-checkbox').forEach(cb => {
-                    cb.addEventListener('change', function () {
+                    cb.addEventListener('change', function() {
                         updateCounter();
                         var label = combobox.querySelector('label[for="' + cb.id + '"]');
                         if (label) {
@@ -1244,12 +1305,14 @@
                 });
                 // Make the custom checkbox visual itself toggle the checkbox
                 combobox.querySelectorAll('.combobox-checkbox-visual').forEach(visual => {
-                    visual.addEventListener('click', function (e) {
+                    visual.addEventListener('click', function(e) {
                         const checkboxId = visual.getAttribute('data-checkbox-id');
                         const cb = combobox.querySelector('#' + CSS.escape(checkboxId));
                         if (cb) {
                             cb.checked = !cb.checked;
-                            cb.dispatchEvent(new Event('change', {bubbles: true}));
+                            cb.dispatchEvent(new Event('change', {
+                                bubbles: true
+                            }));
                         }
                         e.preventDefault();
                         e.stopPropagation();
@@ -1257,7 +1320,7 @@
                 });
                 // Make the entire combobox-item row clickable to toggle the checkbox
                 combobox.querySelectorAll('.combobox-item').forEach(item => {
-                    item.addEventListener('click', function (e) {
+                    item.addEventListener('click', function(e) {
                         // Prevent double toggle if click is on label, checkbox, or checkbox visual
                         if (
                             e.target.classList.contains('combobox-checkbox-visual') ||
@@ -1270,7 +1333,9 @@
                         const cb = item.querySelector('.combobox-checkbox');
                         if (cb) {
                             cb.checked = !cb.checked;
-                            cb.dispatchEvent(new Event('change', {bubbles: true}));
+                            cb.dispatchEvent(new Event('change', {
+                                bubbles: true
+                            }));
                         }
                     });
                 });
@@ -1283,10 +1348,10 @@
                         row.dataset.criterionId = criterion.criterionId;
                         row.innerHTML = `<div class=\"d-inline-block\"><label class=\"editable-criterion-label\" style=\"cursor:pointer;color:#212529 !important;\">${criterion.criterionName}</label></div> <button type=\"button\" class=\"remove-criterion-btn p-0 ms-2\" title=\"Eemalda kriteerium\" style=\"background:none;border:none;\"><i class=\"fa fa-trash\"></i></button>`;
                         // Add remove handler
-                        row.querySelector('.remove-criterion-btn').onclick = function () {
+                        row.querySelector('.remove-criterion-btn').onclick = function() {
                             showDeleteCriterionModal({
                                 row,
-                                onDelete: function () {
+                                onDelete: function() {
                                     row.remove();
                                     if (!window.oldCriteria) window.oldCriteria = {};
                                     window.oldCriteria[criterion.criterionId] = false;
@@ -1302,7 +1367,7 @@
                             label.style.color = '#212529';
                             label.style.setProperty('color', '#212529', 'important');
                         }
-                        label.addEventListener('click', function (e) {
+                        label.addEventListener('click', function(e) {
                             e.stopPropagation();
                             // Prevent multiple inputs
                             if (row.querySelector('input.edit-criterion-input')) return;
@@ -1336,7 +1401,7 @@
                             }
 
                             input.addEventListener('blur', saveEdit);
-                            input.addEventListener('keydown', function (ev) {
+                            input.addEventListener('keydown', function(ev) {
                                 if (ev.key === 'Enter') {
                                     saveEdit();
                                 } else if (ev.key === 'Escape') {
@@ -1377,13 +1442,13 @@
                         // Remove previous listeners
                         input.onkeydown = null;
                         input.onblur = null;
-                        input.addEventListener('keydown', function (e) {
+                        input.addEventListener('keydown', function(e) {
                             if (e.key === 'Enter') {
                                 var assignmentId = window.currentEditingAssignmentId;
                                 addCriterionInline(input.value, assignmentId);
                             }
                         });
-                        input.addEventListener('blur', function () {
+                        input.addEventListener('blur', function() {
                             if (input.value.trim()) {
                                 var assignmentId = window.currentEditingAssignmentId;
                                 addCriterionInline(input.value, assignmentId);
@@ -1422,7 +1487,7 @@
             label.style.color = '#212529';
             label.style.setProperty('color', '#212529', 'important');
             // Attach click-to-edit handler (same as backend)
-            label.addEventListener('click', function (e) {
+            label.addEventListener('click', function(e) {
                 e.stopPropagation();
                 // Prevent multiple inputs
                 if (row.querySelector('input.edit-criterion-input')) return;
@@ -1458,7 +1523,7 @@
                 }
 
                 input.addEventListener('blur', saveEdit);
-                input.addEventListener('keydown', function (ev) {
+                input.addEventListener('keydown', function(ev) {
                     if (ev.key === 'Enter') {
                         saveEdit();
                     } else if (ev.key === 'Escape') {
@@ -1469,10 +1534,10 @@
                 });
             });
         }
-        row.querySelector('.remove-criterion-btn').onclick = function () {
+        row.querySelector('.remove-criterion-btn').onclick = function() {
             showDeleteCriterionModal({
                 row,
-                onDelete: function () {
+                onDelete: function() {
                     row.remove();
                     window.newAddedCriteria = window.newAddedCriteria.filter(n => n !== name);
                     updateCriteriaNumbers();
@@ -1487,9 +1552,9 @@
         input.focus();
     }
 
-    document.addEventListener('DOMContentLoaded', function () {
-        document.querySelectorAll('.edit-assignment-btn').forEach(function (btn) {
-            btn.addEventListener('click', function () {
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.edit-assignment-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
                 var assignment = btn.getAttribute('data-assignment');
                 openEditAssignmentModal(assignment);
             });
@@ -1499,60 +1564,60 @@
     (() => {
         let selectedStudent = null;
 
-            // Highlight selected student's column in Grades table
-            function highlightStudentColumn(studentId) {
-                // Remove previous highlights and overlays in all tables
-                document.querySelectorAll('.selected-student-column, .selected-student-column-header, .non-selected-student-column, .non-selected-student-column-header').forEach(el => {
-                    el.classList.remove('selected-student-column', 'selected-student-column-header', 'non-selected-student-column', 'non-selected-student-column-header');
-                });
-                if (!studentId) return;
-                
-                // Find the student's name from the transposed table header
-                let studentName = null;
-                const headerCell = document.querySelector(`.student-summary-table th[data-student-id="${studentId}"]`);
-                if (headerCell) {
-                    studentName = headerCell.dataset.studentName || headerCell.getAttribute('title');
-                }
-                
-                if (studentName) {
-                    // Grades table headers
-                    document.querySelectorAll(`#subject-table th.student-name-header[data-bs-original-title]`).forEach(th => {
-                        if (th.getAttribute('data-bs-original-title').includes(studentName)) {
-                            th.classList.add('selected-student-column-header');
-                        } else {
-                            th.classList.add('non-selected-student-column-header');
-                        }
-                    });
-                    // Student summary table headers in transposed layout
-                    document.querySelectorAll(`.student-summary-table th[data-student-id]`).forEach(th => {
-                        if (th.dataset.studentId === studentId) {
-                            th.classList.add('selected-student-column-header');
-                        } else {
-                            th.classList.add('non-selected-student-column-header');
-                        }
-                    });
-                }
-                
-                // Highlight all cells for this student
-                // Grades table cells
-                document.querySelectorAll(`#subject-table td[data-student-id="${studentId}"]`).forEach(td => {
-                    td.classList.add('selected-student-column');
-                });
-                document.querySelectorAll(`#subject-table td[data-student-id]`).forEach(td => {
-                    if (td.dataset.studentId !== studentId) {
-                        td.classList.add('non-selected-student-column');
+        // Highlight selected student's column in Grades table
+        function highlightStudentColumn(studentId) {
+            // Remove previous highlights and overlays in all tables
+            document.querySelectorAll('.selected-student-column, .selected-student-column-header, .non-selected-student-column, .non-selected-student-column-header').forEach(el => {
+                el.classList.remove('selected-student-column', 'selected-student-column-header', 'non-selected-student-column', 'non-selected-student-column-header');
+            });
+            if (!studentId) return;
+
+            // Find the student's name from the transposed table header
+            let studentName = null;
+            const headerCell = document.querySelector(`.student-summary-table th[data-student-id="${studentId}"]`);
+            if (headerCell) {
+                studentName = headerCell.dataset.studentName || headerCell.getAttribute('title');
+            }
+
+            if (studentName) {
+                // Grades table headers
+                document.querySelectorAll(`#subject-table th.student-name-header[data-bs-original-title]`).forEach(th => {
+                    if (th.getAttribute('data-bs-original-title').includes(studentName)) {
+                        th.classList.add('selected-student-column-header');
+                    } else {
+                        th.classList.add('non-selected-student-column-header');
                     }
                 });
-                // Student summary table cells in transposed layout
-                document.querySelectorAll(`.student-summary-table td[data-student-id="${studentId}"]`).forEach(td => {
-                    td.classList.add('selected-student-column');
-                });
-                document.querySelectorAll(`.student-summary-table td[data-student-id]`).forEach(td => {
-                    if (td.dataset.studentId !== studentId) {
-                        td.classList.add('non-selected-student-column');
+                // Student summary table headers in transposed layout
+                document.querySelectorAll(`.student-summary-table th[data-student-id]`).forEach(th => {
+                    if (th.dataset.studentId === studentId) {
+                        th.classList.add('selected-student-column-header');
+                    } else {
+                        th.classList.add('non-selected-student-column-header');
                     }
                 });
             }
+
+            // Highlight all cells for this student
+            // Grades table cells
+            document.querySelectorAll(`#subject-table td[data-student-id="${studentId}"]`).forEach(td => {
+                td.classList.add('selected-student-column');
+            });
+            document.querySelectorAll(`#subject-table td[data-student-id]`).forEach(td => {
+                if (td.dataset.studentId !== studentId) {
+                    td.classList.add('non-selected-student-column');
+                }
+            });
+            // Student summary table cells in transposed layout
+            document.querySelectorAll(`.student-summary-table td[data-student-id="${studentId}"]`).forEach(td => {
+                td.classList.add('selected-student-column');
+            });
+            document.querySelectorAll(`.student-summary-table td[data-student-id]`).forEach(td => {
+                if (td.dataset.studentId !== studentId) {
+                    td.classList.add('non-selected-student-column');
+                }
+            });
+        }
 
         const $ = (sel, ctx = document) => ctx.querySelector(sel);
         const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
@@ -1564,7 +1629,7 @@
             // Handle header clicks, cell clicks, and old row clicks
             const isHeader = element.tagName === 'TH';
             const isCell = element.tagName === 'TD' && element.closest('.student-summary-table');
-            
+
             if (isHeader || isCell) {
                 // For header and cell clicks in transposed table
                 $$('.student-summary-table th[data-student-id], .student-summary-table td[data-student-id]').forEach(el => {
@@ -1576,37 +1641,37 @@
                 // For old row clicks (if any remain)
                 $$('.student-row').forEach(r => r.classList.toggle('selected', r === element && selectedStudent !== id));
             }
-            
+
             if (selectedStudent === id) {
                 selectedStudent = null;
                 showAllAssignments();
-                    highlightStudentColumn(null);
-                    // No scroll needed when clearing selection
+                highlightStudentColumn(null);
+                // No scroll needed when clearing selection
             } else {
                 selectedStudent = id;
                 filterAssignmentsByStudent(id);
-                    highlightStudentColumn(id);
-                    scrollStudentColumnIntoView(id);
+                highlightStudentColumn(id);
+                scrollStudentColumnIntoView(id);
             }
         };
 
         const hasProblems = cell => {
             if (!cell) return false;
-            
+
             // Check if cell has red-cell or yellow-cell class (overdue or problematic)
             if (cell.classList.contains('red-cell') || cell.classList.contains('yellow-cell')) {
                 return true;
             }
-            
+
             // Then check grade value
             const grade = cell.dataset.grade;
             if (!grade || grade === '' || grade === 'undefined') {
                 return false;
             }
-            
+
             // Convert to string for comparison, handle both numeric and string values
             const gradeStr = String(grade).trim();
-            
+
             // Check for failing grades
             return ['1', '2', 'MA'].includes(gradeStr);
         };
@@ -1623,19 +1688,19 @@
             $$('#subject-table').forEach(table => {
                 const rows = $$('tr', table);
                 const visibleSubjects = new Set();
-                
+
                 rows.forEach((r) => {
                     if (r.querySelector('th')) return;
                     const cell = r.querySelector(`td[data-student-id="${id}"]`);
                     const show = hasProblems(cell);
-                    
+
                     r.style.display = show ? '' : 'none';
                     if (show) {
                         const hdr = subjectHeaderBefore(r);
                         hdr && visibleSubjects.add(hdr.textContent.trim());
                     }
                 });
-                
+
                 rows.forEach(r => {
                     if (!r.querySelector('th')) return;
                     r.style.display = visibleSubjects.has(r.textContent.trim()) ? '' : 'none';
@@ -1715,7 +1780,7 @@
                 const isTeacher = !document.querySelector('.student-view');
                 const hasStudentData = cell.hasAttribute('data-student-id');
                 const hasGradeData = cell.hasAttribute('data-grade');
-                
+
                 if (isTeacher && (hasStudentData || hasGradeData)) {
                     // For teachers, open grading modal instead of navigating
                     cell.onclick = (e) => {
@@ -1749,21 +1814,21 @@
             // Only check for teachers/admins, not students
             const isStudent = document.querySelector('.student-view') !== null;
             if (isStudent) return;
-            
+
             // Find all yellow cells that have empty or no grade
             const yellowCells = $$('.yellow-cell');
             const problematicCells = [];
             const affectedAssignments = new Map();
-            
+
             yellowCells.forEach(cell => {
                 const grade = cell.dataset.grade;
                 const cellText = cell.textContent.trim();
-                
+
                 // Check if grade is empty/undefined AND cell text shows "Esitamata" or is empty
-                if ((!grade || grade === '' || grade === 'undefined') && 
+                if ((!grade || grade === '' || grade === 'undefined') &&
                     (cellText === 'Esitamata' || cellText === '' || !cellText)) {
                     problematicCells.push(cell);
-                    
+
                     // Find assignment name from the same row
                     const row = cell.closest('tr');
                     if (row) {
@@ -1773,9 +1838,9 @@
                             let assignmentName = assignmentLink.textContent.trim();
                             // Remove date prefix like "28.11.24" if exists
                             assignmentName = assignmentName.replace(/^\d{1,2}\.\d{1,2}\.\d{2,4}\s*/, '');
-                            
+
                             const assignmentId = assignmentLink.href.match(/assignments\/(\d+)/)?.[1];
-                            
+
                             // Find subject name from the table header
                             const table = row.closest('table');
                             let subjectName = '';
@@ -1784,11 +1849,11 @@
                                 if (headerRow) {
                                     // Get text content, but only the subject name part
                                     const headerLink = headerRow.querySelector('a');
-                                    subjectName = headerLink ? headerLink.textContent.trim() : 
-                                                 headerRow.childNodes[0]?.textContent?.trim() || '';
+                                    subjectName = headerLink ? headerLink.textContent.trim() :
+                                        headerRow.childNodes[0]?.textContent?.trim() || '';
                                 }
                             }
-                            
+
                             if (!affectedAssignments.has(assignmentId)) {
                                 affectedAssignments.set(assignmentId, {
                                     name: assignmentName,
@@ -1802,31 +1867,31 @@
                     }
                 }
             });
-            
+
             // Show alert if problematic cells found
             if (problematicCells.length > 0) {
                 const alertDiv = $('#overdue-alert');
                 const messageSpan = $('#overdue-message');
-                
+
                 const assignmentCount = affectedAssignments.size;
                 const totalProblems = problematicCells.length;
-                
+
                 let message = `Leiti ${totalProblems} esitamata ülesannet, mille tähtaeg on möödas, aga hinne puudub.<br>`;
                 message += `<small>Kontrollige, kas cronitöö töötab korralikult või on õpetaja seadnud tähtaja minevikku.</small><br><br>`;
                 message += `<details style="margin-top: 10px;">`;
                 message += `<summary style="cursor: pointer;">Näita probleemseid ülesandeid (${assignmentCount})</summary>`;
                 message += `<ul style="margin-top: 10px; margin-bottom: 0;">`;
-                
+
                 affectedAssignments.forEach((data, id) => {
                     message += `<li><strong>${data.subject}:</strong> ${data.name} `;
                     message += `<span class="badge bg-danger">${data.count} õpilast</span></li>`;
                 });
-                
+
                 message += `</ul></details>`;
-                
+
                 messageSpan.innerHTML = message;
                 alertDiv.style.display = 'block';
-                
+
                 // Log details to console for debugging
                 console.log('Probleemne ülesanded (kollased tühjad lahtrid):');
                 affectedAssignments.forEach((data, id) => {
@@ -1843,20 +1908,20 @@
             updateBadges();
             // initSorting() removed for transposed table
             checkForOverdueUngraded();
-                // Remove highlight on page load
-                highlightStudentColumn(null);
+            // Remove highlight on page load
+            highlightStudentColumn(null);
         });
     })();
 </script>
 <script>
     // Delete assignment button handler: show when modal opens, confirm and call backend
-    (function () {
+    (function() {
         const deleteBtn = document.getElementById('deleteAssignmentBtn');
         const editModalEl = document.getElementById('editAssignmentModal');
         if (!editModalEl) return;
 
         // Show delete button when modal opens and set its data
-        editModalEl.addEventListener('shown.bs.modal', function () {
+        editModalEl.addEventListener('shown.bs.modal', function() {
             try {
                 const assignmentId = window.currentEditingAssignmentId || null;
                 if (assignmentId && deleteBtn) {
@@ -1869,7 +1934,7 @@
         });
 
         // Hide button when modal is hidden
-        editModalEl.addEventListener('hidden.bs.modal', function () {
+        editModalEl.addEventListener('hidden.bs.modal', function() {
             if (deleteBtn) {
                 deleteBtn.style.display = 'none';
                 deleteBtn.dataset.assignmentId = '';
@@ -1878,7 +1943,7 @@
 
         if (!deleteBtn) return;
 
-        deleteBtn.addEventListener('click', function () {
+        deleteBtn.addEventListener('click', function() {
             const assignmentId = this.dataset.assignmentId || window.currentEditingAssignmentId;
             if (!assignmentId) {
                 alert('Tuvastamatu ülesande ID!');
@@ -1893,23 +1958,32 @@
             params.append('assignmentId', assignmentId);
 
             fetch('/admin/AJAX_deleteAssignment', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: params.toString()
-            })
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: params.toString()
+                })
                 .then(async res => {
                     let text = await res.text();
                     try {
                         const json = JSON.parse(text);
-                        return {status: res.status, data: json};
+                        return {
+                            status: res.status,
+                            data: json
+                        };
                     } catch (e) {
-                        return {status: res.status, data: text};
+                        return {
+                            status: res.status,
+                            data: text
+                        };
                     }
                 })
-                .then(({status, data}) => {
+                .then(({
+                    status,
+                    data
+                }) => {
                     if (status === 200) {
                         // Close modal and reload to reflect deletion
                         try {
