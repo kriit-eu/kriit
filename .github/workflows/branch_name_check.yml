@@ -15,8 +15,8 @@ jobs:
           BRANCH_NAME="${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
           echo "Current branch: $BRANCH_NAME"
 
-          if [[ ! "$BRANCH_NAME" =~ ^[0-9]+_[a-zA-Z0-9_äöõüÄÖÕÜ]+$ ]]; then
-            echo "❌ Haru nimi peab olema kujul: number_snake_case_nimi"
-            echo "Näide: 42_edit_assignment_criteria või 16_learning_outcomes_õv või 23_TÜ_Õppekava"
+          if [[ ! "$BRANCH_NAME" =~ ^[0-9]+[-_][a-zA-Z0-9_\-äöõüÄÖÕÜ]+$ ]]; then
+            echo "❌ Haru nimi peab olema kujul: number_snake_or_kebab_case_nimi"
+            echo "Näide: 42-edit-assignment-criteria või 42_edit_assignment_criteria või 16_learning_outcomes_õv"
             exit 1
           fi
