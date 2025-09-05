@@ -1,4 +1,6 @@
-<?php namespace App;
+<?php
+
+namespace App;
 
 use HTMLPurifier;
 use HTMLPurifier_Config;
@@ -89,7 +91,6 @@ class admin extends Controller
         ORDER BY  g.groupName, u.userName");
 
         $this->groups = Db::getAll("SELECT * FROM groups");
-
     }
 
     function subjects(): void
@@ -220,7 +221,6 @@ class admin extends Controller
         } catch (\Exception $e) {
             stop(400, $e->getMessage());
         }
-
     }
 
     function AJAX_deleteStudent()
@@ -283,7 +283,6 @@ class admin extends Controller
 
 
         stop(200, ['assignmentId' => $assignmentId]);
-
     }
 
     function AJAX_addSubject()
@@ -329,7 +328,6 @@ class admin extends Controller
         }
 
         stop(200, ['subjectId' => $subjectId]);
-
     }
 
 
@@ -410,7 +408,6 @@ class admin extends Controller
         try {
             $userId = Db::insert('users', $data);
             Activity::create(ACTIVITY_ADD_USER, $this->auth->userId, $userId);
-
         } catch (\Exception $e) {
             stop(400, $e->getMessage());
         }
@@ -508,9 +505,7 @@ class admin extends Controller
                 $newGroupName = 'No Group';
             }
 
-            $changeDescription = ($oldGroupName === 'No Group' && $newGroupName !== 'No Group') ? "Added to group $newGroupName" :
-                (($oldGroupName !== 'No Group' && $newGroupName === 'No Group') ? "Removed from group $oldGroupName" :
-                    (($oldGroupName !== 'No Group' && $newGroupName !== 'No Group' && $oldGroupName !== $newGroupName) ? "Moved from group $oldGroupName to group $newGroupName" : null));
+            $changeDescription = ($oldGroupName === 'No Group' && $newGroupName !== 'No Group') ? "Added to group $newGroupName" : (($oldGroupName !== 'No Group' && $newGroupName === 'No Group') ? "Removed from group $oldGroupName" : (($oldGroupName !== 'No Group' && $newGroupName !== 'No Group' && $oldGroupName !== $newGroupName) ? "Moved from group $oldGroupName to group $newGroupName" : null));
 
 
             Activity::create(ACTIVITY_UPDATE_USER, $this->auth->userId, $userId, $changeDescription);
@@ -590,7 +585,6 @@ class admin extends Controller
         $pure_html = $purifier->purify($html);
 
         return !!strcmp($html, $pure_html);
-
     }
 
     private function getUserDataForAddingOrUpdating(): array
@@ -600,7 +594,8 @@ class admin extends Controller
             'userPersonalCode' => $_POST['userPersonalCode'],
             'groupId' => empty($_POST['groupId']) ? null : $_POST['groupId'],
             'userIsAdmin' => empty($_POST['userIsAdmin']) ? 0 : 1,
-            'userEmail' => $_POST['userEmail']
+            'userEmail' => $_POST['userEmail'],
+            'userDeleted' => empty($_POST['userDeleted']) ? 0 : 1
         ];
 
         if (!empty($_POST['userPassword'])) {
@@ -608,7 +603,6 @@ class admin extends Controller
         }
 
         return $data;
-
     }
 
     function exercises()
@@ -721,7 +715,6 @@ class admin extends Controller
         }
 
         return [];
-
     }
 
 
@@ -745,7 +738,7 @@ class admin extends Controller
                         'groupId' => $groupId
                     ]);
 
-                Activity::create(ACTIVITY_ADD_USER, $this->auth->userId, $userId);
+                    Activity::create(ACTIVITY_ADD_USER, $this->auth->userId, $userId);
                 } catch (\Exception $e) {
                     stop(400, 'Õpilase lisamine ebaõnnestus: ' . $e->getMessage());
                 }
@@ -753,5 +746,4 @@ class admin extends Controller
             stop(200, ['groupId' => $groupId]);
         }
     }
-
 }
