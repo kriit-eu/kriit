@@ -84,7 +84,39 @@ class subjects extends Controller
             'summary' => "Sync completed with " . count($differences) . " subjects having differences"
         ]);
         
-        stop(200, $differences);
+        // Also include assignments that were newly created during addMissingEntities
+        $newAssignments = Sync::getCreatedAssignmentsBySubject();
+
+        // Additionally, include any existing local assignments that are missing an external ID
+        // so the frontend knows these need to be written to the external system as well.
+        $localMissing = [];
+        $rows = \App\Db::getAll(
+            "SELECT a.assignmentId, a.subjectId, s.subjectExternalId, a.assignmentName, a.assignmentEntryDate, a.assignmentDueAt
+             FROM assignments a
+             JOIN subjects s ON a.subjectId = s.subjectId
+             WHERE (a.assignmentExternalId IS NULL OR a.assignmentExternalId = '')"
+        );
+        foreach ($rows as $r) {
+            $sx = $r['subjectExternalId'] ?? null;
+            if ($sx === null) continue; // skip assignments for subjects without external id
+            if (!isset($localMissing[$sx])) $localMissing[$sx] = [];
+            $localMissing[$sx][] = [
+                'assignmentExternalId' => null,
+                'assignmentName' => $r['assignmentName'] ?? null,
+                'assignmentEntryDate' => $r['assignmentEntryDate'] ?? null,
+                'assignmentDueAt' => $r['assignmentDueAt'] ?? null,
+                'createdAssignmentId' => $r['assignmentId']
+            ];
+        }
+
+        // Merge created-by-sync and preexisting local-missing lists (localMissing should not overwrite existing keys)
+        foreach ($localMissing as $sx => $list) {
+            if (!isset($newAssignments[$sx])) $newAssignments[$sx] = [];
+            // Append local missing assignments after any sync-created ones
+            $newAssignments[$sx] = array_merge($newAssignments[$sx], $list);
+        }
+
+        stop(200, ['differences' => $differences, 'newAssignments' => $newAssignments]);
     }
 
 }

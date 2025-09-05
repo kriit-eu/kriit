@@ -552,6 +552,38 @@ class assignments extends Controller
         stop(200, 'Assignment edited');
     }
 
+    /**
+     * Accepts an assignmentExternalId for an existing assignment and writes it to DB.
+     * Expected POST params: assignmentId, assignmentExternalId, systemId (optional)
+     */
+    function ajax_setAssignmentExternalId(): void
+    {
+        $assignmentId = isset($_POST['assignmentId']) ? (int)$_POST['assignmentId'] : 0;
+        $assignmentExternalId = isset($_POST['assignmentExternalId']) ? trim($_POST['assignmentExternalId']) : null;
+        $systemId = isset($_POST['systemId']) ? (int)$_POST['systemId'] : 1;
+
+        if ($assignmentId <= 0) stop(400, 'Invalid assignmentId');
+        if (empty($assignmentExternalId)) stop(400, 'Missing assignmentExternalId');
+
+        // Permission check - ensures the assignment exists and user may modify it
+        $this->checkIfUserHasPermissionForAction($assignmentId) || stop(403, 'Teil pole õigusi sellele tegevusele.');
+
+        // Ensure uniqueness: no other assignment with same external id and system
+        $existing = Db::getFirst('SELECT assignmentId FROM assignments WHERE assignmentExternalId = ? AND systemId = ?', [$assignmentExternalId, $systemId]);
+        if ($existing && (int)$existing['assignmentId'] !== $assignmentId) {
+            stop(409, 'assignmentExternalId already in use');
+        }
+
+        try {
+            Db::update('assignments', ['assignmentExternalId' => $assignmentExternalId, 'systemId' => $systemId], 'assignmentId = ?', [$assignmentId]);
+            Activity::create(ACTIVITY_UPDATE_ASSIGNMENT, $this->auth->userId, $assignmentId, "Set assignmentExternalId to $assignmentExternalId (system $systemId)");
+        } catch (\Exception $e) {
+            stop(500, $e->getMessage());
+        }
+
+        stop(200, ['assignmentId' => $assignmentId, 'assignmentExternalId' => $assignmentExternalId, 'systemId' => $systemId]);
+    }
+
     function ajax_validateAndCheckLinkAccessibility(): void
     {
         $solutionUrl = $_POST['solutionUrl'];
