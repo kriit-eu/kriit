@@ -763,6 +763,10 @@
                                         data-assignment='<?= htmlspecialchars(json_encode(array_merge($assignment, ["subjectExternalId" => $subject['subjectExternalId']])), ENT_QUOTES, 'UTF-8') ?>'>
                                         <i class="fa fa-pencil-alt"></i>
                                     </button>
+                                    <button class="btn btn-link p-0 ms-1 create-assignment-btn" title="Lisa uus ülesanne"
+                                        data-subject-id="<?= $subject['subjectId'] ?>">
+                                        <i class="fa fa-plus"></i>
+                                    </button>
                                     <?php if ($assignment['showDueDate']): ?>
                                         <span class="badge <?= $assignment['finalBadgeClass'] ?> due-date-badge"
                                             data-days-remaining="<?= $assignment['daysRemaining'] ?>"
@@ -963,7 +967,7 @@
                     <?php if ($this->isTeacherOrAdmin): ?>
                         <button type="button" class="btn btn-danger me-auto" id="deleteAssignmentBtn" style="display:none;">Kustuta ülesanne</button>
                     <?php endif; ?>
-                    <button type="button" class="btn btn-primary" onclick="saveEditedAssignment()">Salvesta</button>
+                    <button type="button" class="btn btn-primary" onclick="saveAssignment()">Salvesta</button>
                     <button type="button" class="btn btn-secondary" onclick="location.reload()" data-bs-dismiss="modal">
                         Tühista
                     </button>
@@ -1559,7 +1563,136 @@
                 openEditAssignmentModal(assignment);
             });
         });
+        // Create-assignment buttons open the same modal in create mode
+        document.querySelectorAll('.create-assignment-btn').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const subjectId = btn.getAttribute('data-subject-id');
+                openCreateAssignmentModal(subjectId);
+            });
+        });
     });
+
+    // Open the edit modal but in "create new assignment" mode (clears fields)
+    function openCreateAssignmentModal(subjectId) {
+        window.isCreatingAssignment = true;
+        window.currentEditingAssignmentId = null;
+        // Clear any criteria buffers
+        window.newAddedCriteria = [];
+        window.editedCriteria = {};
+        // Reset form fields
+        const form = document.getElementById('editAssignmentForm');
+        form.assignmentName.value = '';
+        form.assignmentInstructions.value = '';
+        form.assignmentDueAt.value = '';
+        form.assignmentEntryDate.value = '';
+        form.assignmentInvolvesOpenApi.checked = false;
+        document.getElementById('editCriteriaContainer').innerHTML = '';
+        // Set modal title
+        const label = document.getElementById('editAssignmentModalLabel');
+        if (label) label.textContent = 'Lisa uus ülesanne';
+        // Ensure delete button hidden
+        const deleteBtn = document.getElementById('deleteAssignmentBtn');
+        if (deleteBtn) deleteBtn.style.display = 'none';
+
+        // Store subjectId for creation
+        window.currentCreatingSubjectId = subjectId;
+
+        const modal = new bootstrap.Modal(document.getElementById('editAssignmentModal'));
+        modal.show();
+    }
+
+    // Unified save function: create or edit based on window.isCreatingAssignment
+    function saveAssignment() {
+        const form = document.getElementById('editAssignmentForm');
+        if (window.isCreatingAssignment) {
+            // Create new assignment via admin endpoint, then optionally add criteria via edit endpoint
+            const assignmentName = form.assignmentName.value.trim();
+            const assignmentInstructions = form.assignmentInstructions.value.trim();
+            let assignmentDueAt = form.assignmentDueAt.value;
+            const assignmentEntryDate = form.assignmentEntryDate.value;
+            if (!assignmentDueAt) assignmentDueAt = assignmentEntryDate || new Date().toISOString().split('T')[0];
+            if (!assignmentName) {
+                alert('Pealkiri on kohustuslik!');
+                return;
+            }
+            const params = new URLSearchParams();
+            params.append('subjectId', window.currentCreatingSubjectId || '');
+            params.append('assignmentName', assignmentName);
+            params.append('assignmentInstructions', assignmentInstructions);
+            params.append('assignmentDueAt', assignmentDueAt);
+
+            fetch('/admin/addAssignment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: params.toString()
+                })
+                .then(async res => {
+                    const status = res.status;
+                    let data = null;
+                    try { data = await res.clone().json(); } catch (e) { data = await res.text(); }
+                    return { status, data };
+                })
+                .then(({ status, data }) => {
+                    if (status === 200 || status === 201) {
+                        const newId = data.assignmentId || (data && data.assignmentId) || null;
+                        if (!newId) {
+                            // If server didn't return id, just reload to pick up change
+                            location.reload();
+                            return;
+                        }
+                        // If there are new criteria added in modal, call edit endpoint to persist them
+                        const newCriteria = window.newAddedCriteria && window.newAddedCriteria.length ? window.newAddedCriteria : [];
+                        // Prepare second call to save criteria and other optional fields
+                        const editParams = new URLSearchParams();
+                        editParams.append('assignmentId', newId);
+                        editParams.append('assignmentName', assignmentName);
+                        editParams.append('assignmentInstructions', assignmentInstructions);
+                        editParams.append('assignmentDueAt', assignmentDueAt);
+                        editParams.append('assignmentEntryDate', assignmentEntryDate || '');
+                        editParams.append('teacherName', window.teacherName || '');
+                        editParams.append('teacherId', window.teacherId || '');
+                        editParams.append('assignmentInvolvesOpenApi', form.assignmentInvolvesOpenApi.checked ? 1 : 0);
+                        newCriteria.forEach((c, idx) => {
+                            editParams.append(`newCriteria[${idx}][criteriaName]`, c);
+                        });
+
+                        // Call edit endpoint to attach criteria
+                        return fetch('/assignments/ajax_editAssignment', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                            body: editParams.toString()
+                        }).then(async res2 => {
+                            if (res2.status === 200 || res2.status === 201) {
+                                const modal = bootstrap.Modal.getInstance(document.getElementById('editAssignmentModal'));
+                                if (modal) modal.hide();
+                                window.newAddedCriteria = [];
+                                window.isCreatingAssignment = false;
+                                location.reload();
+                            } else {
+                                const text = await res2.text();
+                                alert('Kreateerimine õnnestus, kuid ei õnnestunud lisada kriteeriume: ' + text);
+                                location.reload();
+                            }
+                        });
+                    } else {
+                        alert('Ülesande loomine ebaõnnestus: ' + (data && data.message ? data.message : JSON.stringify(data)));
+                    }
+                })
+                .catch(err => {
+                    alert('Võrgu viga: ' + err);
+                });
+        } else {
+            // Edit existing assignment
+            saveEditedAssignment();
+        }
+    }
 
     (() => {
         let selectedStudent = null;
