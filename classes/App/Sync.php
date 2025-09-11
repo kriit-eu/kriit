@@ -391,25 +391,23 @@ class Sync {
 
                         if ($resultsDiff) {
                             $assignDiff['results'] = [];
-                            foreach ($resultsDiff as $studCode => $d) {
-                                // The user wants final data, but we show that there's a difference
-                                // We could choose Kriit's or Remote's grade; the user specifically wants to see
-                                // that the grade is different. We'll show Kriit's final data for now.
-                                $resultEntry = [
-                                    'studentPersonalCode' => $studCode,
-                                    'studentName'        => $d['studentName']
-                                ];
-
-                                // Check if kriitGrade exists (it might not if only studentIsActive differs)
-                                if (isset($d['kriitGrade'])) {
-                                    $resultEntry['grade'] = $d['kriitGrade'];
-                                } else {
-                                    // If no grade difference, use the grade from kriitResults if available
-                                    $resultEntry['grade'] = $kriitResults[$studCode]['grade'] ?? null;
+                                foreach ($resultsDiff as $studCode => $d) {
+                                    $grade = null;
+                                    if (isset($d['kriitGrade'])) {
+                                        $grade = $d['kriitGrade'];
+                                    } else {
+                                        $grade = $kriitResults[$studCode]['grade'] ?? null;
+                                    }
+                                    // Only include if grade is not null
+                                    if ($grade !== null) {
+                                        $resultEntry = [
+                                            'studentPersonalCode' => $studCode,
+                                            'studentName'        => $d['studentName'],
+                                            'grade'              => $grade
+                                        ];
+                                        $assignDiff['results'][] = $resultEntry;
+                                    }
                                 }
-
-                                $assignDiff['results'][] = $resultEntry;
-                            }
                         }
 
                         $assignmentsDifferences[] = $assignDiff;
