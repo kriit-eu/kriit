@@ -71,9 +71,57 @@
         resize: none;
         box-sizing: border-box;
     }
+    /* Sticky header that contains both the label and action buttons */
+    .md-editor-sticky-header {
+        position: -webkit-sticky; /* Safari */
+        position: sticky;
+        top: 0; /* flush to top of the scroll container */
+        z-index: 30;
+        background: #ffffff;
+        border: 1px solid rgba(0,0,0,0.06);
+        padding: 0.5rem 0.75rem;
+        border-radius: 6px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+        margin-bottom: 0.75rem;
+    }
+    .md-editor-sticky-header .form-label {
+        margin: 0;
+    }
+    .md-editor-sticky-header .btn {
+        white-space: nowrap;
+    }
+    /* When inside a Bootstrap modal-body that has its own padding,
+       sticky headers can appear with an awkward gap. Use transform to
+       visually pull the header up by the modal's padding amount. */
+    .modal .modal-body .md-editor-sticky-header {
+        /* Pull up by 0.5rem (matches previous top gap) */
+        transform: translateY(-1rem);
+        /* Extend the header width so rounded corners don't clip in modal */
+        margin-left: -0.5rem;
+        margin-right: -0.5rem;
+        border-radius: 6px;
+    }
+    /* On very small viewports, reduce the pull so layout isn't broken */
+    @media (max-width: 576px) {
+        .modal .modal-body .md-editor-sticky-header {
+            transform: translateY(-0.25rem);
+            margin-left: -0.25rem;
+            margin-right: -0.25rem;
+        }
+    }
 </style>
 <div class="mb-3" id="<?= htmlspecialchars($editorId) ?>_container">
-    <label for="<?= htmlspecialchars($editorId) ?>" class="form-label fw-bold"><?= htmlspecialchars($labelText) ?></label>
+    <div class="md-editor-sticky-header d-flex justify-content-between align-items-center">
+        <label for="<?= htmlspecialchars($editorId) ?>" class="form-label fw-bold mb-0"><?= htmlspecialchars($labelText) ?></label>
+        <div class="d-flex" style="gap:0.5em;">
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="<?= htmlspecialchars($editorId) ?>_editBtn" style="display:none;">
+                <i class="fas fa-edit"></i> Muuda
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="<?= htmlspecialchars($editorId) ?>_doneBtn" style="display:none;">
+                <i class="fas fa-eye"></i> Vaata
+            </button>
+        </div>
+    </div>
     <!-- Preview-only mode (default) -->
     <div class="row" id="<?= htmlspecialchars($editorId) ?>_previewOnlyRow">
         <div class="col-12">
@@ -120,16 +168,11 @@
             </div>
         </div>
     </div>
-    <!-- Bottom left action buttons: Muuda/Eelvaade -->
+    <!-- Bottom left action buttons: removed (buttons moved to top) -->
     <div class="row mt-2">
         <div class="col-12">
             <div id="<?= htmlspecialchars($editorId) ?>_actionBtns" class="d-flex flex-row align-items-center" style="gap: 0.5em;">
-                <button type="button" class="btn btn-outline-secondary btn-sm" id="<?= htmlspecialchars($editorId) ?>_editBtn" style="display:none;">
-                    <i class="fas fa-edit"></i> Muuda
-                </button>
-                <button type="button" class="btn btn-outline-secondary btn-sm" id="<?= htmlspecialchars($editorId) ?>_doneBtn" style="display:none;">
-                    <i class="fas fa-eye"></i> Eelvaade
-                </button>
+                <!-- Controls moved to top-right of the label for compact layout -->
             </div>
         </div>
     </div>
@@ -202,7 +245,27 @@
                 }
                 setTimeout(function() {
                     var ta = document.getElementById(editorId);
-                    if (ta) ta.focus();
+                    if (ta) {
+                        try {
+                            // modern browsers: prevent scrolling when focusing
+                            ta.focus({preventScroll: true});
+                        } catch (e) {
+                            // fallback: preserve nearest scroll container's position
+                            try {
+                                var root = container || document.getElementById(editorId + '_container');
+                                var scrollParent = root && root.closest ? root.closest('.modal-body') : null;
+                                if (!scrollParent) scrollParent = document.scrollingElement || document.documentElement || document.body;
+                                var prevScroll = scrollParent.scrollTop;
+                                ta.focus();
+                                // restore after a tick
+                                setTimeout(function() {
+                                    try { scrollParent.scrollTop = prevScroll; } catch (e) {}
+                                }, 0);
+                            } catch (err) {
+                                try { ta.focus(); } catch (e) {}
+                            }
+                        }
+                    }
                 }, 100);
             } else {
                 if (previewOnlyRow) previewOnlyRow.style.display = '';
