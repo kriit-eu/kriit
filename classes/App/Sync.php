@@ -5,6 +5,13 @@ use Exception;
 
 class Sync {
     /**
+     * Map of subjectExternalId => array of created assignments (each is an array with details)
+     * Populated during addMissingEntities / createKriitSubject / ensureAssignmentsExist
+     * @var array
+     */
+    private static $createdAssignmentsBySubject = [];
+
+    /**
      * Converts ISO 8601 date string to MySQL DATE format
      * @param string|null $isoDate ISO 8601 date string (e.g., "2025-06-15T00:00:00Z") or null
      * @return string|null MySQL DATE formatted string (Y-m-d) or null
@@ -139,6 +146,9 @@ class Sync {
 
         // Reset our data caches
         self::resetCaches();
+
+    // Reset created assignments tracker for this run
+    self::$createdAssignmentsBySubject = [];
 
         // Preload all relevant data at once
         self::preloadAllData($remoteSubjects, $systemId);
@@ -438,6 +448,15 @@ class Sync {
     }
 
     /**
+     * Returns the map of created assignments grouped by subjectExternalId for the last addMissingEntities run.
+     * @return array
+     */
+    public static function getCreatedAssignmentsBySubject(): array
+    {
+        return self::$createdAssignmentsBySubject;
+    }
+
+    /**
      * Loads from Kriit the subjects that match the external IDs found in the given Remote data.
      *
      * @param array $remoteSubjects Array of subjects from External System, each with assignments and results
@@ -625,6 +644,21 @@ class Sync {
                 $remoteSubject['subjectName']
             );
 
+            // Record this creation so API can return new assignments per subjectExternalId
+            // Even if the external assignment ID is missing/empty (frontend may write it later),
+            // we want to inform the client which internal assignment was created.
+            $ext = $asm['assignmentExternalId'] ?? null;
+            if (!isset(self::$createdAssignmentsBySubject[$remoteSubject['subjectExternalId']])) {
+                self::$createdAssignmentsBySubject[$remoteSubject['subjectExternalId']] = [];
+            }
+            self::$createdAssignmentsBySubject[$remoteSubject['subjectExternalId']][] = [
+                'assignmentExternalId' => $ext,
+                'assignmentName' => $asm['assignmentName'] ?? null,
+                'assignmentEntryDate' => $asm['assignmentEntryDate'] ?? null,
+                'assignmentDueAt' => $asm['assignmentDueAt'] ?? null,
+                'createdAssignmentId' => $newAssignId
+            ];
+
             // Insert userAssignments for all students (with or without grades)
             foreach ($asm['results'] as $res) {
                 // Determine the correct group for this student
@@ -717,7 +751,7 @@ class Sync {
             $subject = self::$subjectInfoCache[$kriitSubjectId];
         } else {
             // Not in cache, fetch it
-            $subject = Db::getFirst("SELECT s.subjectId, s.subjectName, s.teacherId, u.userName FROM subjects s JOIN users u ON s.teacherId = u.userId WHERE s.subjectId = ?", [$kriitSubjectId]);
+            $subject = Db::getFirst("SELECT s.subjectId, s.subjectName, s.teacherId, s.subjectExternalId, u.userName FROM subjects s JOIN users u ON s.teacherId = u.userId WHERE s.subjectId = ?", [$kriitSubjectId]);
 
             if ($subject) {
                 // Store in cache for future use
@@ -792,6 +826,22 @@ class Sync {
             } else {
                 // Assignment doesn't exist - create it
                 $newAssignId = Assignment::createFromExternalData($ra, $kriitSubjectId, $systemId, $teacherId, $subjectName);
+
+                // Record created assignment so API can report it
+                // Use the subject's external ID even if assignment external ID is empty/null.
+                $subjectExtId = $subject['subjectExternalId'] ?? null;
+                if ($subjectExtId !== null) {
+                    if (!isset(self::$createdAssignmentsBySubject[$subjectExtId])) {
+                        self::$createdAssignmentsBySubject[$subjectExtId] = [];
+                    }
+                    self::$createdAssignmentsBySubject[$subjectExtId][] = [
+                        'assignmentExternalId' => $extId,
+                        'assignmentName' => $ra['assignmentName'] ?? null,
+                        'assignmentEntryDate' => $ra['assignmentEntryDate'] ?? null,
+                        'assignmentDueAt' => $ra['assignmentDueAt'] ?? null,
+                        'createdAssignmentId' => $newAssignId
+                    ];
+                }
 
                 // Process student results for the new assignment
                 self::ensureStudentsAndGrades($newAssignId, $assignmentResults[$extId], $systemId);
