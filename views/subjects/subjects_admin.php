@@ -1639,9 +1639,13 @@
             const assignmentInstructions = form.assignmentInstructions.value.trim();
             let assignmentDueAt = form.assignmentDueAt.value;
             const assignmentEntryDate = form.assignmentEntryDate.value;
-            if (!assignmentDueAt) assignmentDueAt = assignmentEntryDate || new Date().toISOString().split('T')[0];
+            // Require title and due date; default entry date to today if not provided
             if (!assignmentName) {
                 alert('Pealkiri on kohustuslik!');
+                return;
+            }
+            if (!assignmentDueAt) {
+                alert('Tähtaeg on kohustuslik!');
                 return;
             }
             const params = new URLSearchParams();
@@ -1651,9 +1655,11 @@
             params.append('assignmentDueAt', assignmentDueAt);
             // Ensure assignmentEntryDate is sent to server when creating from subjects page.
             // Use explicit entry date if provided, otherwise fall back to due date or today.
+            // If entry date missing, default to today
+            const today = new Date().toISOString().split('T')[0];
             const entryDateToSend = (document.getElementById('assignmentEntryDate') && document.getElementById('assignmentEntryDate').value)
                 ? document.getElementById('assignmentEntryDate').value
-                : (assignmentDueAt || new Date().toISOString().split('T')[0]);
+                : today;
             params.append('assignmentEntryDate', entryDateToSend);
 
             console.log('Creating assignment, params:', params.toString());
@@ -1690,7 +1696,7 @@
                         // Ensure assignmentEntryDate is included in edit call as well.
                         // Prefer explicit modal value, then the entry date we sent earlier, then fallback to due date or today.
                         const explicitEntry = (document.getElementById('assignmentEntryDate') && document.getElementById('assignmentEntryDate').value) ? document.getElementById('assignmentEntryDate').value : null;
-                        const entryToEdit = explicitEntry || (params.get('assignmentEntryDate')) || (assignmentDueAt || new Date().toISOString().split('T')[0]);
+                        const entryToEdit = explicitEntry || (params.get('assignmentEntryDate')) || (today);
                         editParams.append('assignmentEntryDate', entryToEdit);
                         editParams.append('teacherName', window.teacherName || '');
                         editParams.append('teacherId', window.teacherId || '');

@@ -264,13 +264,15 @@ class admin extends Controller
             stop(400, 'Due date is required');
         }
 
+        // Ensure assignmentEntryDate is present; default to today if missing
+        $assignmentEntryDate = empty($_POST['assignmentEntryDate']) ? date('Y-m-d') : $_POST['assignmentEntryDate'];
+
         $data = [
             'subjectId' => $_POST['subjectId'],
             'assignmentName' => $_POST['assignmentName'],
             'assignmentInstructions' => $_POST['assignmentInstructions'],
             'assignmentDueAt' => $_POST['assignmentDueAt'],
-            // Accept assignmentEntryDate from client and store it on create to avoid needing a follow-up edit call
-            'assignmentEntryDate' => empty($_POST['assignmentEntryDate']) ? null : $_POST['assignmentEntryDate'],
+            'assignmentEntryDate' => $assignmentEntryDate,
             'assignmentInitialCode' => $_POST['assignmentInitialCode'] ?? null,
             'assignmentValidationFunction' => $_POST['assignmentValidationFunction'] ?? null
         ];
