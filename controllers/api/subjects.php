@@ -106,6 +106,7 @@ class subjects extends Controller
                 'assignmentEntryDate' => $r['assignmentEntryDate'] ?? null,
                 'assignmentDueAt' => $r['assignmentDueAt'] ?? null,
                 'assignmentHours' => isset($r['assignmentHours']) ? $r['assignmentHours'] : null,
+                'lessons' => isset($r['assignmentLessons']) ? $r['assignmentLessons'] : null,
                 'createdAssignmentId' => $r['assignmentId']
             ];
         }

@@ -478,8 +478,8 @@ class Sync {
             SELECT s.subjectId, s.subjectName, s.subjectExternalId, s.systemId, s.subjectLastLessonDate,
                    COALESCE(ug.groupName, g.groupName) as groupName,
                    t.userPersonalCode AS teacherPersonalCode, t.userName AS teacherName,
-                   a.assignmentId, a.assignmentExternalId, a.systemId as assignmentSystemId, a.assignmentName,
-                   a.assignmentInstructions, a.assignmentDueAt, a.assignmentEntryDate,
+             a.assignmentId, a.assignmentExternalId, a.systemId as assignmentSystemId, a.assignmentName,
+             a.assignmentInstructions, a.assignmentDueAt, a.assignmentEntryDate, a.assignmentLessons,
                    ua.userGrade, st.userPersonalCode, st.userName, st.userDeleted
             FROM subjects s
             LEFT JOIN `groups` g ON s.groupId = g.groupId
@@ -522,6 +522,7 @@ class Sync {
                     'assignmentInstructions' => $r['assignmentInstructions'],
                     'assignmentDueAt'        => $r['assignmentDueAt'],
                     'assignmentEntryDate'    => $r['assignmentEntryDate'],
+                    'assignmentLessons'      => $r['assignmentLessons'] ?? null,
                     'results'                => []
                 ];
             }
@@ -657,6 +658,7 @@ class Sync {
                 'assignmentEntryDate' => $asm['assignmentEntryDate'] ?? null,
                 'assignmentDueAt' => $asm['assignmentDueAt'] ?? null,
                 'assignmentHours' => isset($asm['assignmentHours']) ? $asm['assignmentHours'] : null,
+                'lessons' => isset($asm['lessons']) ? $asm['lessons'] : null,
                 'createdAssignmentId' => $newAssignId
             ];
 
@@ -841,6 +843,7 @@ class Sync {
                         'assignmentEntryDate' => $ra['assignmentEntryDate'] ?? null,
                         'assignmentDueAt' => $ra['assignmentDueAt'] ?? null,
                         'assignmentHours' => isset($ra['assignmentHours']) ? $ra['assignmentHours'] : null,
+                        'lessons' => isset($ra['lessons']) ? $ra['lessons'] : null,
                         'createdAssignmentId' => $newAssignId
                     ];
                 }
@@ -1426,15 +1429,21 @@ class Sync {
      */
     private static function diffAssignmentFields($kriitAssignment, $remoteAssignment)
     {
-    $check = ['assignmentName', 'assignmentInstructions', 'assignmentDueAt', 'assignmentEntryDate', 'assignmentHours'];
+    $check = ['assignmentName', 'assignmentInstructions', 'assignmentDueAt', 'assignmentEntryDate', 'assignmentHours', 'assignmentLessons'];
         $diffs = [];
         // Only compare if assignmentExternalId exists in both
         $kriitId = isset($kriitAssignment['assignmentExternalId']) ? $kriitAssignment['assignmentExternalId'] : null;
         $remoteId = isset($remoteAssignment['assignmentExternalId']) ? $remoteAssignment['assignmentExternalId'] : null;
         if ($kriitId && $remoteId && $kriitId == $remoteId) {
             foreach ($check as $fld) {
-                $kriitVal = isset($kriitAssignment[$fld]) ? $kriitAssignment[$fld] : null;
-                $remoteVal = isset($remoteAssignment[$fld]) ? $remoteAssignment[$fld] : null;
+                // For 'assignmentLessons' our remote field name is 'lessons'
+                if ($fld === 'assignmentLessons') {
+                    $kriitVal = isset($kriitAssignment[$fld]) ? $kriitAssignment[$fld] : null;
+                    $remoteVal = isset($remoteAssignment['lessons']) ? $remoteAssignment['lessons'] : null;
+                } else {
+                    $kriitVal = isset($kriitAssignment[$fld]) ? $kriitAssignment[$fld] : null;
+                    $remoteVal = isset($remoteAssignment[$fld]) ? $remoteAssignment[$fld] : null;
+                }
 
                 // For assignmentName, assignmentDueAt, and assignmentEntryDate, always return as difference object if IDs match and values differ
                 if (($fld === 'assignmentName' || $fld === 'assignmentDueAt' || $fld === 'assignmentEntryDate') && $kriitVal !== $remoteVal) {
