@@ -508,6 +508,7 @@ class assignments extends Controller
     $assignmentName = $_POST['assignmentName'];
     $assignmentInstructions = $_POST['assignmentInstructions'];
     $assignmentDueAt = empty($_POST['assignmentDueAt']) ? null : $_POST['assignmentDueAt'];
+    $assignmentHours = isset($_POST['assignmentHours']) && $_POST['assignmentHours'] !== '' ? (is_numeric($_POST['assignmentHours']) ? (int)$_POST['assignmentHours'] : null) : null;
     $assignmentEntryDate = empty($_POST['assignmentEntryDate']) ? null : $_POST['assignmentEntryDate'];
     $assignmentInvolvesOpenApi = isset($_POST['assignmentInvolvesOpenApi']) ? (int)$_POST['assignmentInvolvesOpenApi'] : 0;
     $oldCriteria = $_POST['oldCriteria'] ?? [];
@@ -521,7 +522,8 @@ class assignments extends Controller
             'assignmentInstructions' => $assignmentInstructions,
             'assignmentDueAt' => $assignmentDueAt,
             'assignmentEntryDate' => $assignmentEntryDate,
-            'assignmentInvolvesOpenApi' => $assignmentInvolvesOpenApi
+            'assignmentInvolvesOpenApi' => $assignmentInvolvesOpenApi,
+            'assignmentHours' => $assignmentHours
         ], 'assignmentId = ?', [$assignmentId]);
 
         if ($existAssignment['assignmentName'] !== $assignmentName) {

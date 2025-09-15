@@ -975,6 +975,10 @@
                                     value="">
                             </div>
                         </div>
+                        <div class="mb-3">
+                            <label for="assignmentHours" class="form-label fw-bold">Tundide arv</label>
+                            <input type="number" min="0" step="1" class="form-control form-control-sm" id="assignmentHours" name="assignmentHours" value="" style="max-width:120px;">
+                        </div>
                         <div class="mb-3 form-check">
                             <input type="checkbox" class="form-check-input" id="assignmentInvolvesOpenApi"
                                 name="assignmentInvolvesOpenApi">
@@ -1131,6 +1135,9 @@
         formData.append('assignmentDueAt', assignmentDueAt);
         formData.append('assignmentInvolvesOpenApi', assignmentInvolvesOpenApi);
         formData.append('assignmentEntryDate', assignmentEntryDate);
+        // Optional: number of hours for the assignment
+        const assignmentHours = form.assignmentHours ? form.assignmentHours.value.trim() : '';
+        formData.append('assignmentHours', assignmentHours);
         assignmentLearningOutcomeId.forEach((id, idx) => {
             formData.append(`assignmentLearningOutcomeId[${idx}]`, id);
         });
@@ -1283,6 +1290,12 @@
                 }));
                 document.getElementById('assignmentDueAt').value = assignment.assignmentDueAt ? (assignment.assignmentDueAt.length > 0 ? assignment.assignmentDueAt.split('T')[0] : '') : '';
                 document.getElementById('assignmentEntryDate').value = assignment.assignmentEntryDate ? (assignment.assignmentEntryDate.length > 0 ? assignment.assignmentEntryDate.split('T')[0] : '') : '';
+                // Populate hours field if present
+                try {
+                    if (document.getElementById('assignmentHours')) {
+                        document.getElementById('assignmentHours').value = (assignment.assignmentHours !== undefined && assignment.assignmentHours !== null) ? String(assignment.assignmentHours) : '';
+                    }
+                } catch (e) { console.error('Error setting assignmentHours:', e); }
                 document.getElementById('assignmentInvolvesOpenApi').checked = assignment.assignmentInvolvesOpenApi ? true : false;
                 var combobox = document.getElementById('assignmentLearningOutcomeCombobox');
                 var subjectExternalId = assignment.subjectExternalId;
@@ -1613,6 +1626,7 @@
         form.assignmentName.value = '';
         form.assignmentInstructions.value = '';
         form.assignmentDueAt.value = '';
+    if (form.assignmentHours) form.assignmentHours.value = '';
         form.assignmentEntryDate.value = '';
         form.assignmentInvolvesOpenApi.checked = false;
         document.getElementById('editCriteriaContainer').innerHTML = '';
@@ -1653,6 +1667,9 @@
             params.append('assignmentName', assignmentName);
             params.append('assignmentInstructions', assignmentInstructions);
             params.append('assignmentDueAt', assignmentDueAt);
+            // Add hours to initial create POST
+            const assignmentHours = form.assignmentHours ? form.assignmentHours.value.trim() : '';
+            params.append('assignmentHours', assignmentHours);
             // Ensure assignmentEntryDate is sent to server when creating from subjects page.
             // Use explicit entry date if provided, otherwise fall back to due date or today.
             // If entry date missing, default to today
@@ -1701,6 +1718,8 @@
                         editParams.append('teacherName', window.teacherName || '');
                         editParams.append('teacherId', window.teacherId || '');
                         editParams.append('assignmentInvolvesOpenApi', form.assignmentInvolvesOpenApi.checked ? 1 : 0);
+                        // Include hours value when persisting optional fields after creation
+                        editParams.append('assignmentHours', form.assignmentHours ? form.assignmentHours.value.trim() : '');
                         newCriteria.forEach((c, idx) => {
                             editParams.append(`newCriteria[${idx}][criteriaName]`, c);
                         });

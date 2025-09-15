@@ -79,6 +79,7 @@ CREATE TABLE `assignments` (
 `assignmentEntryDate` date DEFAULT NULL,
 `assignmentExternalId` int unsigned DEFAULT NULL,
 `assignmentDueAt` date DEFAULT NULL,
+`assignmentHours` smallint unsigned DEFAULT NULL,
 `systemId` int unsigned NOT NULL DEFAULT 1,
 `assignmentInitialCode` text DEFAULT NULL,
 `assignmentValidationFunction` text DEFAULT NULL,

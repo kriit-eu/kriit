@@ -206,7 +206,8 @@ class Assignment
                 'systemId'              => $systemId,
                 'assignmentDueAt'       => $assignmentDueAt,
                 'assignmentEntryDate'   => $assignmentEntryDate,
-                'assignmentInstructions'=> $assignmentInstructions
+                'assignmentInstructions'=> $assignmentInstructions,
+                'assignmentHours'       => isset($assignmentData['assignmentHours']) && $assignmentData['assignmentHours'] !== '' && is_numeric($assignmentData['assignmentHours']) ? (int)$assignmentData['assignmentHours'] : null
             ]);
 
             $newAssignId = Db::getOne("

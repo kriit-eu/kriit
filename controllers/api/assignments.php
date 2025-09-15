@@ -43,6 +43,7 @@ class assignments extends Controller
                 'assignmentExternalId' => $_POST['assignmentExternalId'],
                 'assignmentDueAt' => $_POST['assignmentDueAt'],
                 'assignmentInstructions' => $_POST['assignmentInstructions'],
+                'assignmentHours' => isset($_POST['assignmentHours']) && $_POST['assignmentHours'] !== '' && is_numeric($_POST['assignmentHours']) ? (int)$_POST['assignmentHours'] : null,
             ];
 
             $assignmentId = Db::insert('assignments', $data);
@@ -60,6 +61,7 @@ class assignments extends Controller
             'assignmentName' => $assignmentName,
             'assignmentDueAt' => $_POST['assignmentDueAt'],
             'assignmentInstructions' => $_POST['assignmentInstructions'],
+            'assignmentHours' => isset($_POST['assignmentHours']) && $_POST['assignmentHours'] !== '' && is_numeric($_POST['assignmentHours']) ? (int)$_POST['assignmentHours'] : null,
         ];
 
         Db::update('assignments', $data, "assignmentId=$existingAssignment[assignmentId]");

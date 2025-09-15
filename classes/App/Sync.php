@@ -656,6 +656,7 @@ class Sync {
                 'assignmentName' => $asm['assignmentName'] ?? null,
                 'assignmentEntryDate' => $asm['assignmentEntryDate'] ?? null,
                 'assignmentDueAt' => $asm['assignmentDueAt'] ?? null,
+                'assignmentHours' => isset($asm['assignmentHours']) ? $asm['assignmentHours'] : null,
                 'createdAssignmentId' => $newAssignId
             ];
 
@@ -839,6 +840,7 @@ class Sync {
                         'assignmentName' => $ra['assignmentName'] ?? null,
                         'assignmentEntryDate' => $ra['assignmentEntryDate'] ?? null,
                         'assignmentDueAt' => $ra['assignmentDueAt'] ?? null,
+                        'assignmentHours' => isset($ra['assignmentHours']) ? $ra['assignmentHours'] : null,
                         'createdAssignmentId' => $newAssignId
                     ];
                 }
@@ -1424,7 +1426,7 @@ class Sync {
      */
     private static function diffAssignmentFields($kriitAssignment, $remoteAssignment)
     {
-        $check = ['assignmentName', 'assignmentInstructions', 'assignmentDueAt', 'assignmentEntryDate'];
+    $check = ['assignmentName', 'assignmentInstructions', 'assignmentDueAt', 'assignmentEntryDate', 'assignmentHours'];
         $diffs = [];
         // Only compare if assignmentExternalId exists in both
         $kriitId = isset($kriitAssignment['assignmentExternalId']) ? $kriitAssignment['assignmentExternalId'] : null;

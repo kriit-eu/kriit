@@ -515,6 +515,12 @@
                                     value="<?= (!empty($assignment['assignmentDueAt']) && strtotime($assignment['assignmentDueAt']) > 0) ? date('Y-m-d', strtotime($assignment['assignmentDueAt'])) : "" ?>">
                             </div>
 
+                            <div class="mb-3">
+                                <label for="assignmentHours" class="form-label">Tundide arv</label>
+                                <input type="number" min="0" step="1" class="form-control" id="assignmentHours" name="assignmentHours"
+                                    value="<?= isset($assignment['assignmentHours']) ? (int)$assignment['assignmentHours'] : '' ?>">
+                            </div>
+
                             <div class="mb-3 form-check">
                                 <input type="checkbox" class="form-check-input" id="assignmentInvolvesOpenApi" name="assignmentInvolvesOpenApi"
                                     <?= isset($assignment['assignmentInvolvesOpenApi']) && $assignment['assignmentInvolvesOpenApi'] ? 'checked' : '' ?>>
@@ -1133,6 +1139,7 @@ foreach ($assignment['students'] as $s): ?>
             const assignmentName = document.getElementById('assignmentName').value;
             const assignmentInstructions = document.getElementById('assignmentInstructions').value;
             const assignmentDueAt = document.getElementById('assignmentDueAt').value;
+            const assignmentHours = document.getElementById('assignmentHours') ? document.getElementById('assignmentHours').value : '';
             const assignmentInvolvesOpenApi = document.getElementById('assignmentInvolvesOpenApi').checked ? 1 : 0;
             const criteria = getCriteriaList('#editCriteriaContainer input[type="checkbox"]');
             ajax(`assignments/editAssignment`, {
@@ -1142,6 +1149,7 @@ foreach ($assignment['students'] as $s): ?>
                     assignmentName: assignmentName,
                     assignmentInstructions: assignmentInstructions,
                     assignmentDueAt: assignmentDueAt,
+                    assignmentHours: assignmentHours,
                     assignmentInvolvesOpenApi: assignmentInvolvesOpenApi,
                     oldCriteria: criteria,
                     newCriteria: newAddedCriteria ?? [],
