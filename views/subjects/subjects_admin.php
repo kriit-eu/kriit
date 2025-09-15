@@ -110,6 +110,23 @@
         width: 100% !important;
     }
 
+    /* Position header-level create button to the right and vertically center it */
+    #subject-table th {
+        position: relative;
+    }
+
+    .create-assignment-btn {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: inherit;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
     #subject-table td {
         background-color: #fff;
         border-color: #d8d8d8 !important;
@@ -644,7 +661,12 @@
                             }
                             // --- END: Last lesson date badge (Estonian) ---
                             ?>
-                            </style>
+                            <?php if ($this->isTeacherOrAdmin): ?>
+                                <button class="btn btn-link p-0 ms-2 create-assignment-btn" title="Lisa uus ülesanne"
+                                    data-subject-id="<?= $subject['subjectId'] ?>">
+                                    <i class="fa fa-plus"></i>
+                                </button>
+                            <?php endif; ?>
                             <style>
                                 /* Subject end date badge styling */
                                 .subject-enddate-badge {
@@ -684,6 +706,16 @@
                                         min-width: 24px;
                                         padding: 0.13em 0.38em;
                                     }
+                                }
+                                /* Position the header-level create button to the right and vertically center it */
+                                #subject-table th { position: relative; }
+                                .create-assignment-btn {
+                                    position: absolute;
+                                    right: 10px;
+                                    top: 50%;
+                                    transform: translateY(-50%);
+                                    color: #0d6efd;
+                                    opacity: 0.9;
                                 }
                             </style>
                             <?php
@@ -762,10 +794,6 @@
                                     <button class="btn btn-link p-0 ms-2 edit-assignment-btn" title="Muuda ülesanne"
                                         data-assignment='<?= htmlspecialchars(json_encode(array_merge($assignment, ["subjectExternalId" => $subject['subjectExternalId']])), ENT_QUOTES, 'UTF-8') ?>'>
                                         <i class="fa fa-pencil-alt"></i>
-                                    </button>
-                                    <button class="btn btn-link p-0 ms-1 create-assignment-btn" title="Lisa uus ülesanne"
-                                        data-subject-id="<?= $subject['subjectId'] ?>">
-                                        <i class="fa fa-plus"></i>
                                     </button>
                                     <?php if ($assignment['showDueDate']): ?>
                                         <span class="badge <?= $assignment['finalBadgeClass'] ?> due-date-badge"
@@ -1621,7 +1649,14 @@
             params.append('assignmentName', assignmentName);
             params.append('assignmentInstructions', assignmentInstructions);
             params.append('assignmentDueAt', assignmentDueAt);
+            // Ensure assignmentEntryDate is sent to server when creating from subjects page.
+            // Use explicit entry date if provided, otherwise fall back to due date or today.
+            const entryDateToSend = (document.getElementById('assignmentEntryDate') && document.getElementById('assignmentEntryDate').value)
+                ? document.getElementById('assignmentEntryDate').value
+                : (assignmentDueAt || new Date().toISOString().split('T')[0]);
+            params.append('assignmentEntryDate', entryDateToSend);
 
+            console.log('Creating assignment, params:', params.toString());
             fetch('/admin/addAssignment', {
                     method: 'POST',
                     headers: {
@@ -1652,7 +1687,11 @@
                         editParams.append('assignmentName', assignmentName);
                         editParams.append('assignmentInstructions', assignmentInstructions);
                         editParams.append('assignmentDueAt', assignmentDueAt);
-                        editParams.append('assignmentEntryDate', assignmentEntryDate || '');
+                        // Ensure assignmentEntryDate is included in edit call as well.
+                        // Prefer explicit modal value, then the entry date we sent earlier, then fallback to due date or today.
+                        const explicitEntry = (document.getElementById('assignmentEntryDate') && document.getElementById('assignmentEntryDate').value) ? document.getElementById('assignmentEntryDate').value : null;
+                        const entryToEdit = explicitEntry || (params.get('assignmentEntryDate')) || (assignmentDueAt || new Date().toISOString().split('T')[0]);
+                        editParams.append('assignmentEntryDate', entryToEdit);
                         editParams.append('teacherName', window.teacherName || '');
                         editParams.append('teacherId', window.teacherId || '');
                         editParams.append('assignmentInvolvesOpenApi', form.assignmentInvolvesOpenApi.checked ? 1 : 0);
@@ -1660,6 +1699,7 @@
                             editParams.append(`newCriteria[${idx}][criteriaName]`, c);
                         });
 
+                        console.log('Calling edit to persist optional fields, editParams:', editParams.toString());
                         // Call edit endpoint to attach criteria
                         return fetch('/assignments/ajax_editAssignment', {
                             method: 'POST',
