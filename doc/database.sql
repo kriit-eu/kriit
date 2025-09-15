@@ -92,7 +92,7 @@ CONSTRAINT `assignments_subjectId_fk` FOREIGN KEY (`subjectId`) REFERENCES `subj
 LOCK TABLES `assignments` WRITE;
 /*!40000 ALTER TABLE `assignments` DISABLE KEYS */;
 INSERT INTO `assignments` VALUES
-(1,'Aatomi lõhustamine','',1,NULL,1,'2024-11-30',2024,'',NULL,1);
+(1,'Aatomi lõhustamine','',1,NULL,1,'2024-11-30',1,1,'',NULL,1);
 /*!40000 ALTER TABLE `assignments` ENABLE KEYS */;
 UNLOCK TABLES;
 

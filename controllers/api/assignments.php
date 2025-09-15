@@ -43,7 +43,8 @@ class assignments extends Controller
                 'assignmentExternalId' => $_POST['assignmentExternalId'],
                 'assignmentDueAt' => $_POST['assignmentDueAt'],
                 'assignmentInstructions' => $_POST['assignmentInstructions'],
-                'assignmentHours' => isset($_POST['assignmentHours']) && $_POST['assignmentHours'] !== '' && is_numeric($_POST['assignmentHours']) ? (int)$_POST['assignmentHours'] : null,
+                // Map incoming 'lessons' to assignmentHours on create if assignmentHours isn't provided
+                'assignmentHours' => (isset($_POST['assignmentHours']) && $_POST['assignmentHours'] !== '' && is_numeric($_POST['assignmentHours'])) ? (int)$_POST['assignmentHours'] : ((isset($_POST['lessons']) && $_POST['lessons'] !== '' && is_numeric($_POST['lessons'])) ? (int)$_POST['lessons'] : null),
             ];
 
             $assignmentId = Db::insert('assignments', $data);
@@ -62,6 +63,8 @@ class assignments extends Controller
             'assignmentDueAt' => $_POST['assignmentDueAt'],
             'assignmentInstructions' => $_POST['assignmentInstructions'],
             'assignmentHours' => isset($_POST['assignmentHours']) && $_POST['assignmentHours'] !== '' && is_numeric($_POST['assignmentHours']) ? (int)$_POST['assignmentHours'] : null,
+            // Only update assignmentHours if explicitly provided in POST; otherwise keep existing DB value to avoid overwriting on sync
+            'assignmentHours' => (isset($_POST['assignmentHours']) && $_POST['assignmentHours'] !== '' && is_numeric($_POST['assignmentHours'])) ? (int)$_POST['assignmentHours'] : ($existingAssignment['assignmentHours'] ?? null),
         ];
 
         Db::update('assignments', $data, "assignmentId=$existingAssignment[assignmentId]");

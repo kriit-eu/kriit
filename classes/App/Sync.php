@@ -479,7 +479,7 @@ class Sync {
                    COALESCE(ug.groupName, g.groupName) as groupName,
                    t.userPersonalCode AS teacherPersonalCode, t.userName AS teacherName,
              a.assignmentId, a.assignmentExternalId, a.systemId as assignmentSystemId, a.assignmentName,
-             a.assignmentInstructions, a.assignmentDueAt, a.assignmentEntryDate, a.assignmentLessons,
+             a.assignmentInstructions, a.assignmentDueAt, a.assignmentEntryDate, a.assignmentHours,
                    ua.userGrade, st.userPersonalCode, st.userName, st.userDeleted
             FROM subjects s
             LEFT JOIN `groups` g ON s.groupId = g.groupId
@@ -513,7 +513,7 @@ class Sync {
                 ];
             }
             $axId = $r['assignmentExternalId'];
-            if (!isset($subjects[$subjectKey]['assignments'][$axId])) {
+                if (!isset($subjects[$subjectKey]['assignments'][$axId])) {
                 $subjects[$subjectKey]['assignments'][$axId] = [
                     'assignmentId'          => $r['assignmentId'],
                     'assignmentExternalId'   => $axId,
@@ -522,7 +522,8 @@ class Sync {
                     'assignmentInstructions' => $r['assignmentInstructions'],
                     'assignmentDueAt'        => $r['assignmentDueAt'],
                     'assignmentEntryDate'    => $r['assignmentEntryDate'],
-                    'assignmentLessons'      => $r['assignmentLessons'] ?? null,
+                    // Use assignmentHours as the canonical stored value for lesson/hour counts
+                    'assignmentHours'        => $r['assignmentHours'] ?? null,
                     'results'                => []
                 ];
             }
@@ -649,7 +650,7 @@ class Sync {
             // Even if the external assignment ID is missing/empty (frontend may write it later),
             // we want to inform the client which internal assignment was created.
             $ext = $asm['assignmentExternalId'] ?? null;
-            if (!isset(self::$createdAssignmentsBySubject[$remoteSubject['subjectExternalId']])) {
+                if (!isset(self::$createdAssignmentsBySubject[$remoteSubject['subjectExternalId']])) {
                 self::$createdAssignmentsBySubject[$remoteSubject['subjectExternalId']] = [];
             }
             self::$createdAssignmentsBySubject[$remoteSubject['subjectExternalId']][] = [
@@ -657,8 +658,8 @@ class Sync {
                 'assignmentName' => $asm['assignmentName'] ?? null,
                 'assignmentEntryDate' => $asm['assignmentEntryDate'] ?? null,
                 'assignmentDueAt' => $asm['assignmentDueAt'] ?? null,
-                'assignmentHours' => isset($asm['assignmentHours']) ? $asm['assignmentHours'] : null,
-                'lessons' => isset($asm['lessons']) ? $asm['lessons'] : null,
+                // Convey hours to the caller. If external provided 'assignmentHours' use that, otherwise map 'lessons' to the same field.
+                'assignmentHours' => isset($asm['assignmentHours']) ? $asm['assignmentHours'] : (isset($asm['lessons']) ? $asm['lessons'] : null),
                 'createdAssignmentId' => $newAssignId
             ];
 
@@ -1429,17 +1430,22 @@ class Sync {
      */
     private static function diffAssignmentFields($kriitAssignment, $remoteAssignment)
     {
-    $check = ['assignmentName', 'assignmentInstructions', 'assignmentDueAt', 'assignmentEntryDate', 'assignmentHours', 'assignmentLessons'];
+    $check = ['assignmentName', 'assignmentInstructions', 'assignmentDueAt', 'assignmentEntryDate', 'assignmentHours'];
         $diffs = [];
         // Only compare if assignmentExternalId exists in both
         $kriitId = isset($kriitAssignment['assignmentExternalId']) ? $kriitAssignment['assignmentExternalId'] : null;
         $remoteId = isset($remoteAssignment['assignmentExternalId']) ? $remoteAssignment['assignmentExternalId'] : null;
         if ($kriitId && $remoteId && $kriitId == $remoteId) {
             foreach ($check as $fld) {
-                // For 'assignmentLessons' our remote field name is 'lessons'
-                if ($fld === 'assignmentLessons') {
-                    $kriitVal = isset($kriitAssignment[$fld]) ? $kriitAssignment[$fld] : null;
-                    $remoteVal = isset($remoteAssignment['lessons']) ? $remoteAssignment['lessons'] : null;
+                // Map remote 'lessons' field to Kriit's stored 'assignmentHours' when comparing
+                if ($fld === 'assignmentHours') {
+                    $kriitVal = isset($kriitAssignment['assignmentHours']) ? $kriitAssignment['assignmentHours'] : null;
+                    // Remote systems may send 'assignmentHours' or 'lessons' — prefer 'assignmentHours' if present
+                    if (isset($remoteAssignment['assignmentHours'])) {
+                        $remoteVal = $remoteAssignment['assignmentHours'];
+                    } else {
+                        $remoteVal = $remoteAssignment['lessons'] ?? null;
+                    }
                 } else {
                     $kriitVal = isset($kriitAssignment[$fld]) ? $kriitAssignment[$fld] : null;
                     $remoteVal = isset($remoteAssignment[$fld]) ? $remoteAssignment[$fld] : null;
