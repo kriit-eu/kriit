@@ -275,9 +275,71 @@ function loadAssignmentDataAjax(assignmentId, studentId) {
 
         function updateInstructionsContent(div, data) {
           const instructions = data.assignmentInstructions || "";
-          div.innerHTML = instructions
-            ? parseMarkdown(instructions)
-            : '<p class="text-muted">Kirjeldus puudub</p>';
+
+          // Prefer markdown-it rendering if available (same as markdown_editor.php)
+          try {
+            if (instructions && typeof window.markdownit === "function") {
+              // create a lightweight markdown-it instance if not already available
+              if (!window.__gradingModalMarkdownIt) {
+                try {
+                  var _md = window.markdownit({
+                    html: true,
+                    linkify: true,
+                    typographer: true,
+                    breaks: true,
+                  });
+                  // Register commonly used plugins when available to match markdown_editor.php
+                  try {
+                    if (window.markdownitFootnote)
+                      _md = _md.use(window.markdownitFootnote);
+                  } catch (e) {}
+                  try {
+                    if (window.markdownitDeflist)
+                      _md = _md.use(window.markdownitDeflist);
+                  } catch (e) {}
+                  try {
+                    if (window.markdownitEmoji)
+                      _md = _md.use(window.markdownitEmoji);
+                  } catch (e) {}
+                  try {
+                    if (window.markdownitSub)
+                      _md = _md.use(window.markdownitSub);
+                  } catch (e) {}
+                  try {
+                    if (window.markdownitSup)
+                      _md = _md.use(window.markdownitSup);
+                  } catch (e) {}
+                  window.__gradingModalMarkdownIt = _md;
+                } catch (e) {
+                  window.__gradingModalMarkdownIt = null;
+                }
+              }
+              if (window.__gradingModalMarkdownIt) {
+                console.log(
+                  "[grading_modal] using markdown-it renderer for assignment instructions"
+                );
+                div.innerHTML =
+                  window.__gradingModalMarkdownIt.render(instructions);
+              } else {
+                console.log(
+                  "[grading_modal] markdown-it initialization failed; falling back to parseMarkdown"
+                );
+                div.innerHTML = parseMarkdown(instructions);
+              }
+            } else if (instructions) {
+              console.log(
+                "[grading_modal] markdown-it not available; using fallback parseMarkdown"
+              );
+              div.innerHTML = parseMarkdown(instructions);
+            } else {
+              div.innerHTML = '<p class="text-muted">Kirjeldus puudub</p>';
+            }
+          } catch (err) {
+            console.error("Error rendering instructions markdown:", err);
+            div.innerHTML = instructions
+              ? parseMarkdown(instructions)
+              : '<p class="text-muted">Kirjeldus puudub</p>';
+          }
 
           // Handle instructions preview/expand functionality
           updateInstructionsDisplay();
@@ -378,30 +440,43 @@ function updateInstructionsDisplay() {
     previewDiv.style.backgroundRepeat = "no-repeat";
 
     showMoreBtn.onclick = function () {
-      if (previewDiv.style.maxHeight === previewHeight + "px") {
-        // Expand
-        previewDiv.style.maxHeight = contentHeight + "px"; // Set to actual content height instead of 'none'
-        previewDiv.style.overflow = "hidden"; // Keep hidden to maintain container bounds
+      // Prefer explicit wrapper element if present
+      const explicitWrapper = document.getElementById(
+        "assignmentInstructionsWrapper"
+      );
+      const wrapper =
+        explicitWrapper ||
+        previewDiv.closest(".markdown-content") ||
+        previewDiv.parentElement;
+
+      const isCollapsed = !(
+        wrapper &&
+        wrapper.classList &&
+        wrapper.classList.contains("assignment-instructions-expanded")
+      );
+
+      if (isCollapsed) {
+        // Expand: remove max-height constraints on the wrapper so everything is visible
+        if (wrapper) wrapper.classList.add("assignment-instructions-expanded");
+        previewDiv.style.maxHeight = "none";
+        previewDiv.style.overflow = "visible";
         previewDiv.style.backgroundImage = "none";
         showMoreBtn.innerHTML = "Näita vähem...";
-
-        // Ensure button is visible and accessible
-        showMoreBtn.style.position = "relative";
-        showMoreBtn.style.zIndex = "10";
-        showMoreBtn.style.marginTop = "8px";
+        showMoreBtn.setAttribute("aria-expanded", "true");
+        if (wrapper) wrapper.setAttribute("aria-expanded", "true");
       } else {
-        // Collapse
+        // Collapse: restore preview constraints on the wrapper
+        if (wrapper)
+          wrapper.classList.remove("assignment-instructions-expanded");
         previewDiv.style.maxHeight = previewHeight + "px";
         previewDiv.style.overflow = "hidden";
         previewDiv.style.backgroundImage =
           "linear-gradient(to bottom, transparent 70%, white 100%)";
         showMoreBtn.innerHTML = "Näita rohkem...";
-
-        // Reset button positioning
-        showMoreBtn.style.position = "";
-        showMoreBtn.style.zIndex = "";
-        showMoreBtn.style.marginTop = "";
+        showMoreBtn.setAttribute("aria-expanded", "false");
+        if (wrapper) wrapper.setAttribute("aria-expanded", "false");
       }
+      // Let CSS handle spacing; no inline positioning needed
     };
   } else {
     // Content is short, hide "Show more" button

@@ -120,6 +120,74 @@
   line-height: 1.6;
 }
 
+/* Ensure instruction preview matches markdown editor behavior: expand to fit content */
+.markdown-content,
+.form-control.markdown-content,
+.markdown-content #assignmentInstructionsPreview,
+.form-control #assignmentInstructionsPreview {
+  min-height: 40px;
+  height: auto !important;
+  max-height: none !important;
+  overflow-y: visible !important;
+  resize: none;
+  box-sizing: border-box;
+}
+
+/* Show more / less button spacing and behavior */
+#showMoreInstructions {
+  display: inline-block;
+  margin-top: 8px;
+  margin-bottom: 4px;
+}
+
+/* When preview is expanded, ensure preview wrapper can grow and doesn't clip content */
+.assignment-instructions-expanded #assignmentInstructionsPreview {
+  max-height: none !important;
+  overflow: visible !important;
+  background-image: none !important;
+}
+
+/* Explicit wrapper that will be toggled by JS. Defaults to collapsed state. */
+#assignmentInstructionsWrapper {
+  max-height: 120px; /* collapsed preview height */
+  overflow: hidden;
+  position: relative;
+  transition: max-height 0.28s ease;
+}
+
+/* Fade gradient at bottom when collapsed to hint at more content */
+#assignmentInstructionsWrapper::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3.2rem;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 1) 85%
+  );
+  transition: opacity 0.18s ease;
+}
+
+/* When expanded, allow full content and remove fade */
+#assignmentInstructionsWrapper.assignment-instructions-expanded {
+  max-height: 2000px; /* large enough to show all content */
+}
+
+#assignmentInstructionsWrapper.assignment-instructions-expanded::after {
+  opacity: 0;
+}
+
+/* Ensure the toggle button is visually separated and does not overlap */
+#showMoreInstructions {
+  display: inline-block;
+  margin-top: 12px;
+  margin-bottom: 6px;
+}
+
 .markdown-content img {
   max-width: 100%;
   height: auto;

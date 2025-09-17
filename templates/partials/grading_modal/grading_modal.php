@@ -16,6 +16,14 @@ $isStudent = $isStudent ?? false;
     // Make current user ID available to JavaScript
     window.authUserId = <?= json_encode($this->auth->userId ?? null) ?>;
 </script>
+<!-- Ensure markdown-it renderer is available (same includes as markdown_editor.php) -->
+<script src="/assets/js/markdown-it.min.js"></script>
+<script src="/assets/js/markdown-it-footnote.min.js"></script>
+<script src="/assets/js/markdown-it-emoji.min.js"></script>
+<script src="/assets/js/markdown-it-sub.min.js"></script>
+<script src="/assets/js/markdown-it-deflist.min.js"></script>
+<script src="/assets/js/markdown-it-sup.min.js"></script>
+
 <script src="<?= BASE_URL ?>templates/partials/grading_modal/grading_modal.js"></script>
 
 <!-- Grading Modal -->
@@ -50,13 +58,15 @@ $isStudent = $isStudent ?? false;
                 <div class="mb-3" id="instructionsSection">
                     <h6>Ülesande kirjeldus</h6>
                     <div class="border rounded p-3 bg-white markdown-content">
-                        <div id="assignmentInstructionsPreview" style="max-height: 60px; overflow: hidden; position: relative;">
-                            <div id="assignmentInstructions">
-                                <p class="text-muted">Kirjeldus puudub</p>
-                            </div>
+                        <div id="assignmentInstructionsWrapper" aria-expanded="false" role="region">
+                          <div id="assignmentInstructionsPreview">
+                              <div id="assignmentInstructions">
+                                  <p class="text-muted">Kirjeldus puudub</p>
+                              </div>
+                          </div>
                         </div>
                         <button class="btn btn-link p-0 text-primary small" type="button" 
-                                id="showMoreInstructions" style="display: none;">
+                                id="showMoreInstructions" style="display: none;" aria-controls="assignmentInstructionsWrapper" aria-expanded="false">
                             Näita rohkem...
                         </button>
                     </div>
