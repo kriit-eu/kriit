@@ -267,6 +267,15 @@ class admin extends Controller
         // Ensure assignmentEntryDate is present; default to today if missing
         $assignmentEntryDate = empty($_POST['assignmentEntryDate']) ? date('Y-m-d') : $_POST['assignmentEntryDate'];
 
+        // Optional: assignmentHours (Tundide arv) - should be a non-negative integer or null
+        $assignmentHours = null;
+        if (isset($_POST['assignmentHours']) && $_POST['assignmentHours'] !== '') {
+            if (!is_numeric($_POST['assignmentHours']) || (int)$_POST['assignmentHours'] < 0) {
+                stop(400, 'Invalid assignmentHours');
+            }
+            $assignmentHours = (int)$_POST['assignmentHours'];
+        }
+
         $data = [
             'subjectId' => $_POST['subjectId'],
             'assignmentName' => $_POST['assignmentName'],
@@ -274,7 +283,8 @@ class admin extends Controller
             'assignmentDueAt' => $_POST['assignmentDueAt'],
             'assignmentEntryDate' => $assignmentEntryDate,
             'assignmentInitialCode' => $_POST['assignmentInitialCode'] ?? null,
-            'assignmentValidationFunction' => $_POST['assignmentValidationFunction'] ?? null
+            'assignmentValidationFunction' => $_POST['assignmentValidationFunction'] ?? null,
+            'assignmentHours' => $assignmentHours
         ];
 
         try {
@@ -283,6 +293,16 @@ class admin extends Controller
             Activity::create(ACTIVITY_CREATE_ASSIGNMENT, $this->auth->userId, $assignmentId);
         } catch (\Exception $e) {
             stop(400, $e->getMessage());
+        }
+
+        // Defensive: some DB helpers may ignore NULLs in insert; ensure assignmentHours is explicitly set when provided
+        if ($assignmentHours !== null) {
+            try {
+                Db::update('assignments', ['assignmentHours' => $assignmentHours], 'assignmentId = ?', [$assignmentId]);
+            } catch (\Exception $e) {
+                // Non-fatal: log activity and continue
+                Activity::create(ACTIVITY_UPDATE_ASSIGNMENT, $this->auth->userId, $assignmentId, "Failed to set assignmentHours: " . $e->getMessage());
+            }
         }
 
 
@@ -323,6 +343,15 @@ class admin extends Controller
             'teacherId' => $_POST['teacherId'],
             'groupId' => $_POST['groupId']
         ];
+
+        // Optional: plannedHours (incoming) - map to DB column 'subjectPlannedHours'
+        if (isset($_POST['plannedHours']) && $_POST['plannedHours'] !== '') {
+            if (!is_numeric($_POST['plannedHours']) || (int)$_POST['plannedHours'] < 0) {
+                stop(400, 'Invalid plannedHours');
+            }
+            // Keep API compatible: incoming field stays 'plannedHours', but store as 'subjectPlannedHours' in DB
+            $data['subjectPlannedHours'] = (int)$_POST['plannedHours'];
+        }
 
         try {
             $subjectId = Db::insert('subjects', $data);

@@ -79,6 +79,7 @@ CREATE TABLE `assignments` (
 `assignmentEntryDate` date DEFAULT NULL,
 `assignmentExternalId` int unsigned DEFAULT NULL,
 `assignmentDueAt` date DEFAULT NULL,
+`assignmentHours` smallint unsigned DEFAULT NULL,
 `systemId` int unsigned NOT NULL DEFAULT 1,
 `assignmentInitialCode` text DEFAULT NULL,
 `assignmentValidationFunction` text DEFAULT NULL,
@@ -91,7 +92,7 @@ CONSTRAINT `assignments_subjectId_fk` FOREIGN KEY (`subjectId`) REFERENCES `subj
 LOCK TABLES `assignments` WRITE;
 /*!40000 ALTER TABLE `assignments` DISABLE KEYS */;
 INSERT INTO `assignments` VALUES
-(1,'Aatomi lõhustamine','',1,NULL,1,'2024-11-30',2024,'',NULL,1);
+(1,'Aatomi lõhustamine','',1,NULL,1,'2024-11-30',1,1,'',NULL,1);
 /*!40000 ALTER TABLE `assignments` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -315,6 +316,7 @@ CREATE TABLE `subjects` (
 `teacherId` int unsigned NOT NULL,
 `isSynchronized` tinyint DEFAULT 0,
 `subjectLastLessonDate` date DEFAULT NULL COMMENT 'Date of the last lesson for this subject',
+`subjectPlannedHours` smallint unsigned DEFAULT NULL COMMENT 'Planned independent work hours for the subject',
 PRIMARY KEY (`subjectId`),
 UNIQUE KEY `idx_subjects_ext_system_group` (`subjectExternalId`,`systemId`,`groupId`),
 KEY `subjects_groups_groupId_fk` (`groupId`),
@@ -325,7 +327,7 @@ CONSTRAINT `subjects_users_userId_fk` FOREIGN KEY (`teacherId`) REFERENCES `user
 LOCK TABLES `subjects` WRITE;
 /*!40000 ALTER TABLE `subjects` DISABLE KEYS */;
 INSERT INTO `subjects` VALUES
-(1,'Keemia',1,1,1,1,0,NULL);
+(1,'Keemia',1,1,1,1,0,NULL,NULL);
 /*!40000 ALTER TABLE `subjects` ENABLE KEYS */;
 UNLOCK TABLES;
 

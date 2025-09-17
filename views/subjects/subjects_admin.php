@@ -761,6 +761,31 @@
                                 </span>
                             <?php }
                             ?>
+                            <?php
+                            // --- BEGIN: Assignment hours vs planned hours badge and insufficiency indicator ---
+                            // Show textual total/required and a visual warning when workload is insufficient
+                            $assignmentHoursSum = isset($subject['assignmentHoursSum']) ? $subject['assignmentHoursSum'] : 0;
+                            $planned = isset($subject['subjectPlannedHours']) ? $subject['subjectPlannedHours'] : null;
+
+                            // Textual display: "Kokku: Xh / Nõutud: Yh" (Estonian labels)
+                            if ($assignmentHoursSum > 0 || $planned !== null) {
+                                $displayPlanned = $planned === null ? '-' : $planned;
+                                // Compact numeric display; tooltip uses requested phrasing
+                                $numericTitle = 'Iseseisvate tööde tunde: Kokku: ' . $assignmentHoursSum . 'h / Nõutud: ' . ($displayPlanned === '-' ? '-' : $displayPlanned . 'h');
+                                // Wrap numeric values in a neutral badge for visual grouping
+                                echo '<span class="ms-2 badge bg-secondary text-white" title="' . htmlspecialchars($numericTitle) . '">';
+                                echo htmlspecialchars($assignmentHoursSum) . ' / ' . htmlspecialchars($displayPlanned);
+                                echo '</span>';
+
+                                // Icon-only visual badge when insufficient (sum < planned and planned is set)
+                                if ($planned !== null && is_numeric($planned) && $assignmentHoursSum < intval($planned)) {
+                                    echo ' <span class="ms-2 badge bg-danger" title="Iseseisvate tööde tunde on alla nõutud">';
+                                    echo '<i class="fa fa-exclamation-triangle" aria-hidden="true"></i>';
+                                    echo '</span>';
+                                }
+                            }
+                            // --- END: Assignment hours badge and indicator ---
+                            ?>
                             </b>
                         </th>
                         <?php if (!$this->isStudent): ?>
@@ -863,7 +888,7 @@
         <div class="modal-dialog modal-xl modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="editAssignmentModalLabel">Muuta ülesanne</h5>
+                    <h5 class="modal-title" id="editAssignmentModalLabel">Muuda ülesanne</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -974,6 +999,10 @@
                                 <input type="date" class="form-control" id="assignmentDueAt" name="assignmentDueAt"
                                     value="">
                             </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="assignmentHours" class="form-label fw-bold">Tundide arv</label>
+                            <input type="number" min="0" step="1" class="form-control form-control-sm" id="assignmentHours" name="assignmentHours" value="" style="max-width:120px;">
                         </div>
                         <div class="mb-3 form-check">
                             <input type="checkbox" class="form-check-input" id="assignmentInvolvesOpenApi"
@@ -1131,6 +1160,9 @@
         formData.append('assignmentDueAt', assignmentDueAt);
         formData.append('assignmentInvolvesOpenApi', assignmentInvolvesOpenApi);
         formData.append('assignmentEntryDate', assignmentEntryDate);
+        // Optional: number of hours for the assignment
+        const assignmentHours = form.assignmentHours ? form.assignmentHours.value.trim() : '';
+        formData.append('assignmentHours', assignmentHours);
         assignmentLearningOutcomeId.forEach((id, idx) => {
             formData.append(`assignmentLearningOutcomeId[${idx}]`, id);
         });
@@ -1283,6 +1315,16 @@
                 }));
                 document.getElementById('assignmentDueAt').value = assignment.assignmentDueAt ? (assignment.assignmentDueAt.length > 0 ? assignment.assignmentDueAt.split('T')[0] : '') : '';
                 document.getElementById('assignmentEntryDate').value = assignment.assignmentEntryDate ? (assignment.assignmentEntryDate.length > 0 ? assignment.assignmentEntryDate.split('T')[0] : '') : '';
+                // Populate hours field if present
+                try {
+                    if (document.getElementById('assignmentHours')) {
+                        // Prefill hours: prefer assignment.assignmentHours (DB), otherwise fall back to assignment.lessons (remote payload)
+                        const hoursVal = (assignment.assignmentHours !== undefined && assignment.assignmentHours !== null)
+                            ? assignment.assignmentHours
+                            : (assignment.lessons !== undefined && assignment.lessons !== null ? assignment.lessons : '');
+                        document.getElementById('assignmentHours').value = hoursVal !== '' ? String(hoursVal) : '';
+                    }
+                } catch (e) { console.error('Error setting assignmentHours:', e); }
                 document.getElementById('assignmentInvolvesOpenApi').checked = assignment.assignmentInvolvesOpenApi ? true : false;
                 var combobox = document.getElementById('assignmentLearningOutcomeCombobox');
                 var subjectExternalId = assignment.subjectExternalId;
@@ -1613,6 +1655,7 @@
         form.assignmentName.value = '';
         form.assignmentInstructions.value = '';
         form.assignmentDueAt.value = '';
+    if (form.assignmentHours) form.assignmentHours.value = '';
         form.assignmentEntryDate.value = '';
         form.assignmentInvolvesOpenApi.checked = false;
         document.getElementById('editCriteriaContainer').innerHTML = '';
@@ -1653,6 +1696,9 @@
             params.append('assignmentName', assignmentName);
             params.append('assignmentInstructions', assignmentInstructions);
             params.append('assignmentDueAt', assignmentDueAt);
+            // Add hours to initial create POST
+            const assignmentHours = form.assignmentHours ? form.assignmentHours.value.trim() : '';
+            params.append('assignmentHours', assignmentHours);
             // Ensure assignmentEntryDate is sent to server when creating from subjects page.
             // Use explicit entry date if provided, otherwise fall back to due date or today.
             // If entry date missing, default to today
@@ -1701,6 +1747,8 @@
                         editParams.append('teacherName', window.teacherName || '');
                         editParams.append('teacherId', window.teacherId || '');
                         editParams.append('assignmentInvolvesOpenApi', form.assignmentInvolvesOpenApi.checked ? 1 : 0);
+                        // Include hours value when persisting optional fields after creation
+                        editParams.append('assignmentHours', form.assignmentHours ? form.assignmentHours.value.trim() : '');
                         newCriteria.forEach((c, idx) => {
                             editParams.append(`newCriteria[${idx}][criteriaName]`, c);
                         });

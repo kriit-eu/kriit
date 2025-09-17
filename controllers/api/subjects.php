@@ -91,7 +91,7 @@ class subjects extends Controller
         // so the frontend knows these need to be written to the external system as well.
         $localMissing = [];
         $rows = \App\Db::getAll(
-            "SELECT a.assignmentId, a.subjectId, s.subjectExternalId, a.assignmentName, a.assignmentEntryDate, a.assignmentDueAt
+            "SELECT a.assignmentId, a.subjectId, s.subjectExternalId, a.assignmentName, a.assignmentEntryDate, a.assignmentDueAt, a.assignmentHours
              FROM assignments a
              JOIN subjects s ON a.subjectId = s.subjectId
              WHERE (a.assignmentExternalId IS NULL OR a.assignmentExternalId = '')"
@@ -105,6 +105,9 @@ class subjects extends Controller
                 'assignmentName' => $r['assignmentName'] ?? null,
                 'assignmentEntryDate' => $r['assignmentEntryDate'] ?? null,
                 'assignmentDueAt' => $r['assignmentDueAt'] ?? null,
+                'assignmentHours' => isset($r['assignmentHours']) ? $r['assignmentHours'] : null,
+                // Expose 'lessons' to clients using the stored assignmentHours value for compatibility
+                'lessons' => isset($r['assignmentHours']) ? $r['assignmentHours'] : null,
                 'createdAssignmentId' => $r['assignmentId']
             ];
         }

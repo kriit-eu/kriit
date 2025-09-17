@@ -206,7 +206,13 @@ class Assignment
                 'systemId'              => $systemId,
                 'assignmentDueAt'       => $assignmentDueAt,
                 'assignmentEntryDate'   => $assignmentEntryDate,
-                'assignmentInstructions'=> $assignmentInstructions
+                'assignmentInstructions'=> $assignmentInstructions,
+                // Map incoming 'lessons' to the existing 'assignmentHours' column on initial create only.
+                'assignmentHours'       => (
+                    isset($assignmentData['assignmentHours']) && $assignmentData['assignmentHours'] !== '' && is_numeric($assignmentData['assignmentHours'])
+                ) ? (int)$assignmentData['assignmentHours'] : (
+                    isset($assignmentData['lessons']) && $assignmentData['lessons'] !== '' && is_numeric($assignmentData['lessons']) ? (int)$assignmentData['lessons'] : null
+                )
             ]);
 
             $newAssignId = Db::getOne("

@@ -478,8 +478,8 @@ class Sync {
             SELECT s.subjectId, s.subjectName, s.subjectExternalId, s.systemId, s.subjectLastLessonDate,
                    COALESCE(ug.groupName, g.groupName) as groupName,
                    t.userPersonalCode AS teacherPersonalCode, t.userName AS teacherName,
-                   a.assignmentId, a.assignmentExternalId, a.systemId as assignmentSystemId, a.assignmentName,
-                   a.assignmentInstructions, a.assignmentDueAt, a.assignmentEntryDate,
+             a.assignmentId, a.assignmentExternalId, a.systemId as assignmentSystemId, a.assignmentName,
+             a.assignmentInstructions, a.assignmentDueAt, a.assignmentEntryDate, a.assignmentHours,
                    ua.userGrade, st.userPersonalCode, st.userName, st.userDeleted
             FROM subjects s
             LEFT JOIN `groups` g ON s.groupId = g.groupId
@@ -513,7 +513,7 @@ class Sync {
                 ];
             }
             $axId = $r['assignmentExternalId'];
-            if (!isset($subjects[$subjectKey]['assignments'][$axId])) {
+                if (!isset($subjects[$subjectKey]['assignments'][$axId])) {
                 $subjects[$subjectKey]['assignments'][$axId] = [
                     'assignmentId'          => $r['assignmentId'],
                     'assignmentExternalId'   => $axId,
@@ -522,6 +522,8 @@ class Sync {
                     'assignmentInstructions' => $r['assignmentInstructions'],
                     'assignmentDueAt'        => $r['assignmentDueAt'],
                     'assignmentEntryDate'    => $r['assignmentEntryDate'],
+                    // Use assignmentHours as the canonical stored value for lesson/hour counts
+                    'assignmentHours'        => $r['assignmentHours'] ?? null,
                     'results'                => []
                 ];
             }
@@ -580,16 +582,26 @@ class Sync {
             // Subject already exists, use its ID
             $subjId = $existingSubject['subjectId'];
             
-            // Update the last lesson date if it has changed
-            // Only expect 'lastLessonDate' from frontend/external system
+            // Update the last lesson date and plannedHours if provided from frontend/external system
             $subjectLastLessonDate = self::convertIsoDateToMysqlDate(
                 $remoteSubject['lastLessonDate'] ?? null
             );
+
+            $updateData = ['subjectLastLessonDate' => $subjectLastLessonDate];
+            if (isset($remoteSubject['plannedHours']) && $remoteSubject['plannedHours'] !== '') {
+                // Accept numeric plannedHours >= 0
+                if (!is_numeric($remoteSubject['plannedHours']) || (int)$remoteSubject['plannedHours'] < 0) {
+                    error_log("Ignoring invalid plannedHours for subject {$remoteSubject['subjectExternalId']}");
+                } else {
+                    // Map incoming plannedHours to DB column 'subjectPlannedHours'
+                    $updateData['subjectPlannedHours'] = (int)$remoteSubject['plannedHours'];
+                }
+            }
             
             // Debug logging
             error_log("Updating subject {$subjId} with subjectLastLessonDate: " . ($subjectLastLessonDate ?? 'NULL'));
             
-            Db::update('subjects', ['subjectLastLessonDate' => $subjectLastLessonDate], "subjectId = ?", [$subjId]);
+            Db::update('subjects', $updateData, "subjectId = ?", [$subjId]);
 
             // Log that we're reusing an existing subject
             Activity::create(ACTIVITY_CREATE_SUBJECT_SYNC, $teacher['userId'], $subjId, [
@@ -604,7 +616,7 @@ class Sync {
             ]);
         } else {
             // Create new subject
-            // Only expect 'lastLessonDate' from frontend/external system
+            // Expect 'lastLessonDate' and optional 'plannedHours' from frontend/external system
             $subjectLastLessonDate = self::convertIsoDateToMysqlDate(
                 $remoteSubject['lastLessonDate'] ?? null
             );
@@ -612,14 +624,25 @@ class Sync {
             // Debug logging
             error_log("Creating new subject with subjectLastLessonDate: " . ($subjectLastLessonDate ?? 'NULL'));
             
-            $subjId = Db::insert('subjects', [
+            $subjectData = [
                 'subjectName'     => $remoteSubject['subjectName'],
                 'subjectExternalId' => $remoteSubject['subjectExternalId'],
                 'systemId'        => $systemId,
                 'groupId'         => $group['groupId'], // Keep original for compatibility
                 'teacherId'       => $teacher['userId'],
                 'subjectLastLessonDate' => $subjectLastLessonDate
-            ]);
+            ];
+
+            if (isset($remoteSubject['plannedHours']) && $remoteSubject['plannedHours'] !== '') {
+                if (!is_numeric($remoteSubject['plannedHours']) || (int)$remoteSubject['plannedHours'] < 0) {
+                    error_log("Ignoring invalid plannedHours for new subject {$remoteSubject['subjectExternalId']}");
+                } else {
+                    // Map incoming plannedHours to DB column 'subjectPlannedHours'
+                    $subjectData['subjectPlannedHours'] = (int)$remoteSubject['plannedHours'];
+                }
+            }
+
+            $subjId = Db::insert('subjects', $subjectData);
 
             // Log subject creation with detected multi-group info
             Activity::create(ACTIVITY_CREATE_SUBJECT_SYNC, $teacher['userId'], $subjId, [
@@ -648,7 +671,7 @@ class Sync {
             // Even if the external assignment ID is missing/empty (frontend may write it later),
             // we want to inform the client which internal assignment was created.
             $ext = $asm['assignmentExternalId'] ?? null;
-            if (!isset(self::$createdAssignmentsBySubject[$remoteSubject['subjectExternalId']])) {
+                if (!isset(self::$createdAssignmentsBySubject[$remoteSubject['subjectExternalId']])) {
                 self::$createdAssignmentsBySubject[$remoteSubject['subjectExternalId']] = [];
             }
             self::$createdAssignmentsBySubject[$remoteSubject['subjectExternalId']][] = [
@@ -656,6 +679,8 @@ class Sync {
                 'assignmentName' => $asm['assignmentName'] ?? null,
                 'assignmentEntryDate' => $asm['assignmentEntryDate'] ?? null,
                 'assignmentDueAt' => $asm['assignmentDueAt'] ?? null,
+                // Convey hours to the caller. If external provided 'assignmentHours' use that, otherwise map 'lessons' to the same field.
+                'assignmentHours' => isset($asm['assignmentHours']) ? $asm['assignmentHours'] : (isset($asm['lessons']) ? $asm['lessons'] : null),
                 'createdAssignmentId' => $newAssignId
             ];
 
@@ -839,6 +864,8 @@ class Sync {
                         'assignmentName' => $ra['assignmentName'] ?? null,
                         'assignmentEntryDate' => $ra['assignmentEntryDate'] ?? null,
                         'assignmentDueAt' => $ra['assignmentDueAt'] ?? null,
+                        'assignmentHours' => isset($ra['assignmentHours']) ? $ra['assignmentHours'] : null,
+                        'lessons' => isset($ra['lessons']) ? $ra['lessons'] : null,
                         'createdAssignmentId' => $newAssignId
                     ];
                 }
@@ -1424,18 +1451,33 @@ class Sync {
      */
     private static function diffAssignmentFields($kriitAssignment, $remoteAssignment)
     {
-        $check = ['assignmentName', 'assignmentInstructions', 'assignmentDueAt', 'assignmentEntryDate'];
+    $check = ['assignmentName', 'assignmentInstructions', 'assignmentDueAt', 'assignmentEntryDate', 'assignmentHours'];
         $diffs = [];
         // Only compare if assignmentExternalId exists in both
         $kriitId = isset($kriitAssignment['assignmentExternalId']) ? $kriitAssignment['assignmentExternalId'] : null;
         $remoteId = isset($remoteAssignment['assignmentExternalId']) ? $remoteAssignment['assignmentExternalId'] : null;
         if ($kriitId && $remoteId && $kriitId == $remoteId) {
             foreach ($check as $fld) {
-                $kriitVal = isset($kriitAssignment[$fld]) ? $kriitAssignment[$fld] : null;
-                $remoteVal = isset($remoteAssignment[$fld]) ? $remoteAssignment[$fld] : null;
+                // Map remote 'lessons' field to Kriit's stored 'assignmentHours' when comparing
+                if ($fld === 'assignmentHours') {
+                    $kriitVal = isset($kriitAssignment['assignmentHours']) ? $kriitAssignment['assignmentHours'] : null;
+                    // Remote systems may send 'assignmentHours' or 'lessons' — prefer 'assignmentHours' if present
+                    if (isset($remoteAssignment['assignmentHours'])) {
+                        $remoteVal = $remoteAssignment['assignmentHours'];
+                    } else {
+                        $remoteVal = $remoteAssignment['lessons'] ?? null;
+                    }
+                } else {
+                    $kriitVal = isset($kriitAssignment[$fld]) ? $kriitAssignment[$fld] : null;
+                    $remoteVal = isset($remoteAssignment[$fld]) ? $remoteAssignment[$fld] : null;
+                }
 
-                // For assignmentName, assignmentDueAt, and assignmentEntryDate, always return as difference object if IDs match and values differ
-                if (($fld === 'assignmentName' || $fld === 'assignmentDueAt' || $fld === 'assignmentEntryDate') && $kriitVal !== $remoteVal) {
+                // For assignmentName, assignmentDueAt and assignmentEntryDate always return a simple
+                // difference object if IDs match and values differ. For assignmentHours we behave
+                // the same but only if the remote payload actually provided 'assignmentHours' or 'lessons'.
+                $remoteProvidedForHours = array_key_exists('assignmentHours', $remoteAssignment) || array_key_exists('lessons', $remoteAssignment);
+                if ((($fld === 'assignmentName' || $fld === 'assignmentDueAt' || $fld === 'assignmentEntryDate') && $kriitVal !== $remoteVal)
+                    || ($fld === 'assignmentHours' && $remoteProvidedForHours && $kriitVal !== $remoteVal)) {
                     $diffs[$fld] = [
                         'kriit' => $kriitVal,
                         'remote' => $remoteVal
