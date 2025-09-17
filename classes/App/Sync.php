@@ -1451,8 +1451,12 @@ class Sync {
                     $remoteVal = isset($remoteAssignment[$fld]) ? $remoteAssignment[$fld] : null;
                 }
 
-                // For assignmentName, assignmentDueAt, and assignmentEntryDate, always return as difference object if IDs match and values differ
-                if (($fld === 'assignmentName' || $fld === 'assignmentDueAt' || $fld === 'assignmentEntryDate') && $kriitVal !== $remoteVal) {
+                // For assignmentName, assignmentDueAt and assignmentEntryDate always return a simple
+                // difference object if IDs match and values differ. For assignmentHours we behave
+                // the same but only if the remote payload actually provided 'assignmentHours' or 'lessons'.
+                $remoteProvidedForHours = array_key_exists('assignmentHours', $remoteAssignment) || array_key_exists('lessons', $remoteAssignment);
+                if ((($fld === 'assignmentName' || $fld === 'assignmentDueAt' || $fld === 'assignmentEntryDate') && $kriitVal !== $remoteVal)
+                    || ($fld === 'assignmentHours' && $remoteProvidedForHours && $kriitVal !== $remoteVal)) {
                     $diffs[$fld] = [
                         'kriit' => $kriitVal,
                         'remote' => $remoteVal
