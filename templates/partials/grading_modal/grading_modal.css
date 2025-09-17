@@ -1,478 +1,500 @@
 /* Modal styling */
 .modal-header {
-    background-color: #f8f9fa;
-    border-bottom: 1px solid #dee2e6;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
 }
 
 /* Assignment ID badge in modal title */
 .modal-title .badge {
-    font-size: 0.8em;
-    vertical-align: middle;
+  font-size: 0.8em;
+  vertical-align: middle;
 }
 
 .modal-body {
-    max-height: 70vh;
-    overflow-y: auto;
+  /* Allow modal body to expand naturally so internal sections can grow to fit their content.
+       Previously constrained with max-height/scrolling which caused the conversation to be limited. */
+  max-height: none;
+  overflow: visible;
 }
 
 .message-container {
-    padding: 0;
-    background-color: transparent;
+  padding: 0;
+  background-color: transparent;
+}
+
+/* Ensure messages container expands to fit all messages and does not scroll internally */
+#messagesContainer {
+  max-height: none !important;
+  overflow: visible !important;
 }
 
 .message-item {
-    margin-bottom: 0.75rem;
+  margin-bottom: 0.75rem;
 }
 
 .message-item:last-child {
-    margin-bottom: 0;
+  margin-bottom: 0;
 }
 
 .message-item .card {
-    border: 1px solid #dee2e6;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  background-color: #f8f9fa;
 }
 
 /* Own message styling (like Facebook Messenger) */
 .message-item .card.own-message {
-    background-color: #f0f4f8;
-    border-color: #c5d4e6;
-    color: inherit;
+  background-color: #f0f4f8;
+  border-color: #c5d4e6;
+  color: inherit;
 }
 
 .message-item .card.own-message .message-author {
-    color: #2c3e50;
-    font-weight: bold;
+  color: #2c3e50;
+  font-weight: bold;
 }
 
 .message-item .card.own-message .message-time {
-    color: #546e7a;
+  color: #546e7a;
 }
 
 .message-item .card.own-message .message-content {
-    color: #34495e;
+  color: #34495e;
 }
 
 /* Code blocks in own messages */
 .message-item .card.own-message .message-content pre {
-    background-color: #eef1f5 !important;
-    border-color: #d1d9e6 !important;
-    color: #495057 !important;
+  background-color: #eef1f5 !important;
+  border-color: #d1d9e6 !important;
+  color: #495057 !important;
 }
 
 .message-item .card.own-message .message-content code {
-    background-color: #eef1f5 !important;
-    color: #495057 !important;
+  background-color: #eef1f5 !important;
+  color: #495057 !important;
 }
 
 .message-author {
-    font-weight: bold;
-    color: #495057;
-    font-size: 0.9em;
+  font-weight: bold;
+  color: #495057;
+  font-size: 0.9em;
 }
 
 .message-time {
-    color: #6c757d;
-    font-size: 0.8em;
+  color: #6c757d;
+  font-size: 0.8em;
 }
 
 .message-content {
-    margin-top: 0.5rem;
-    color: #212529;
+  margin-top: 0.5rem;
+  color: #212529;
 }
 
 .loading-spinner {
-    display: inline-block;
-    width: 1rem;
-    height: 1rem;
-    border: 2px solid #f3f3f3;
-    border-top: 2px solid #007bff;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
-    100% {
-        transform: rotate(360deg);
-    }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Solution URL styling */
 #solutionUrlInput {
-    font-size: 0.85em;
-    background-color: #f8f9fa;
+  font-size: 0.85em;
+  background-color: #f8f9fa;
 }
 
 /* Markdown content styling */
 .markdown-content {
-    line-height: 1.6;
+  line-height: 1.6;
 }
 
 .markdown-content img {
-    max-width: 100%;
-    height: auto;
+  max-width: 100%;
+  height: auto;
 }
 
-.markdown-content h1, .markdown-content h2, .markdown-content h3,
-.markdown-content h4, .markdown-content h5, .markdown-content h6 {
-    margin-top: 1rem;
-    margin-bottom: 0.5rem;
-    font-weight: 600;
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
 }
 
 .markdown-content h1 {
-    font-size: 1.5rem;
+  font-size: 1.5rem;
 }
 
 .markdown-content h2 {
-    font-size: 1.3rem;
+  font-size: 1.3rem;
 }
 
 .markdown-content h3 {
-    font-size: 1.1rem;
+  font-size: 1.1rem;
 }
 
-.markdown-content h4, .markdown-content h5, .markdown-content h6 {
-    font-size: 1rem;
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+  font-size: 1rem;
 }
 
-.markdown-content ul, .markdown-content ol {
-    padding-left: 1.5rem;
-    margin-bottom: 1rem;
+.markdown-content ul,
+.markdown-content ol {
+  padding-left: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 .markdown-content li {
-    margin-bottom: 0.25rem;
+  margin-bottom: 0.25rem;
 }
 
 .markdown-content code {
-    background-color: #f1f3f4;
-    padding: 0.125rem 0.25rem;
-    border-radius: 0.25rem;
-    font-family: 'Courier New', monospace;
-    font-size: 0.9em;
+  background-color: #f1f3f4;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-family: "Courier New", monospace;
+  font-size: 0.9em;
 }
 
 .markdown-content pre {
-    background-color: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 0.375rem;
-    padding: 1rem;
-    overflow-x: auto;
-    margin-bottom: 1rem;
-    line-height: 1 !important;
-    font-size: 0.875rem;
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 0.375rem;
+  padding: 1rem;
+  overflow-x: auto;
+  margin-bottom: 1rem;
+  line-height: 1 !important;
+  font-size: 0.875rem;
 }
 
 .markdown-content pre code {
-    background-color: transparent;
-    padding: 0 !important;
-    margin: 0 !important;
-    line-height: 1 !important;
-    white-space: pre !important;
-    display: block;
-    font-size: inherit;
-    border: none !important;
+  background-color: transparent;
+  padding: 0 !important;
+  margin: 0 !important;
+  line-height: 1 !important;
+  white-space: pre !important;
+  display: block;
+  font-size: inherit;
+  border: none !important;
 }
 
 /* Specific targeting for message content code blocks */
 .message-content pre {
-    line-height: 1 !important;
-    font-size: 0.875rem;
-    background-color: #e9ecef !important;
-    border: 1px solid #ced4da !important;
-    border-radius: 0.25rem !important;
-    padding: 0.75rem !important;
-    margin-bottom: 1rem !important;
-    overflow: visible !important;
-    word-wrap: break-word;
-    white-space: pre-wrap;
+  line-height: 1 !important;
+  font-size: 0.875rem;
+  background-color: #e9ecef !important;
+  border: 1px solid #ced4da !important;
+  border-radius: 0.25rem !important;
+  padding: 0.75rem !important;
+  margin-bottom: 1rem !important;
+  overflow: visible !important;
+  word-wrap: break-word;
+  white-space: pre-wrap;
 }
 
 .message-content pre code {
-    line-height: 1 !important;
-    white-space: pre-wrap !important;
-    display: block;
-    padding: 0 !important;
-    margin: 0 !important;
-    font-size: inherit;
-    border: none !important;
+  line-height: 1 !important;
+  white-space: pre-wrap !important;
+  display: block;
+  padding: 0 !important;
+  margin: 0 !important;
+  font-size: inherit;
+  border: none !important;
 }
 
 .markdown-content blockquote {
-    border-left: 4px solid #dee2e6;
-    padding-left: 1rem;
-    margin-left: 0;
-    margin-bottom: 1rem;
-    color: #6c757d;
+  border-left: 4px solid #dee2e6;
+  padding-left: 1rem;
+  margin-left: 0;
+  margin-bottom: 1rem;
+  color: #6c757d;
 }
 
 .markdown-content p {
-    margin-bottom: 1rem;
+  margin-bottom: 1rem;
 }
 
 .markdown-content strong {
-    font-weight: 600;
+  font-weight: 600;
 }
 
 .markdown-content em {
-    font-style: italic;
+  font-style: italic;
 }
 
 /* Table styling within message content */
 .message-content table {
-    font-size: 0.9em;
-    margin: 0.5rem 0;
+  font-size: 0.9em;
+  margin: 0.5rem 0;
 }
 
 .message-content table th,
 .message-content table td {
-    padding: 0.375rem 0.5rem;
-    vertical-align: top;
-    word-wrap: break-word;
+  padding: 0.375rem 0.5rem;
+  vertical-align: top;
+  word-wrap: break-word;
 }
 
 .message-content table th {
-    background-color: #f8f9fa;
-    font-weight: 600;
-    border-bottom: 2px solid #dee2e6;
+  background-color: #f8f9fa;
+  font-weight: 600;
+  border-bottom: 2px solid #dee2e6;
 }
 
 /* Horizontal rule styling within message content */
 .message-content hr {
-    margin: 1rem 0;
-    border: 0;
-    border-top: 1px solid #dee2e6;
-    opacity: 0.7;
+  margin: 1rem 0;
+  border: 0;
+  border-top: 1px solid #dee2e6;
+  opacity: 0.7;
 }
 
 /* Grade error styling */
 #gradeError {
-    display: none;
-    margin-top: 0.5rem;
+  display: none;
+  margin-top: 0.5rem;
 }
 
 /* Grade button styling */
 #gradeButtons .btn-check:checked + .btn {
-    font-weight: bold;
+  font-weight: bold;
 }
 
 /* Save grade button styling */
 #saveGradeBtn:disabled {
-    opacity: 0.6;
+  opacity: 0.6;
 }
 
 /* Grade badge styling for table rows */
 .grade-badge {
-    font-weight: bold;
-    font-size: 0.9em;
-    padding: 0.25rem 0.5rem;
-    border-radius: 0.375rem;
-    display: inline-block;
-    min-width: 2rem;
-    text-align: center;
+  font-weight: bold;
+  font-size: 0.9em;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  display: inline-block;
+  min-width: 2rem;
+  text-align: center;
 }
 
 /* Modal footer button consistency */
 .modal-footer #gradeButtons .btn {
-    height: 38px; /* Match standard Bootstrap button height */
-    min-width: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  height: 38px; /* Match standard Bootstrap button height */
+  min-width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .modal-footer #saveBtn {
-    height: 38px; /* Match grade button height */
-    min-width: 100px;
+  height: 38px; /* Match grade button height */
+  min-width: 100px;
 }
 
 /* Improved modal footer layout */
 .modal-footer .d-flex.gap-3 {
-    gap: 1rem !important;
+  gap: 1rem !important;
 }
 
 /* Grade button group spacing */
 .modal-footer #gradeButtons {
-    margin-right: 0.5rem;
+  margin-right: 0.5rem;
 }
 
 /* Grade cell styling */
 .grade-cell {
-    vertical-align: middle !important;
-    padding: 0.5rem !important;
+  vertical-align: middle !important;
+  padding: 0.5rem !important;
 }
 
 /* Grade badge in table styling */
 .grade-cell .grade-badge {
-    font-weight: bold;
-    font-size: 0.875rem;
-    padding: 0.375rem 0.75rem;
-    border-radius: 0.375rem;
-    display: inline-block;
-    min-width: 2.5rem;
-    text-align: center;
+  font-weight: bold;
+  font-size: 0.875rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.375rem;
+  display: inline-block;
+  min-width: 2.5rem;
+  text-align: center;
 }
 
 /* Image upload and preview styles */
 .message-image {
-    max-width: 100%;
-    height: auto;
-    border-radius: 8px;
-    margin: 10px 0;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 10px 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 #newMessageContent.image-paste-active {
-    border-color: #007bff !important;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
-    background-color: #f8f9ff !important;
+  border-color: #007bff !important;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+  background-color: #f8f9ff !important;
 }
 
 .image-upload-hint {
-    font-size: 0.875rem;
-    color: #6c757d;
-    margin-top: 4px;
+  font-size: 0.875rem;
+  color: #6c757d;
+  margin-top: 4px;
 }
 
 .drag-drop-zone {
-    position: relative;
-    border: 2px dashed #dee2e6;
-    border-radius: 8px;
-    padding: 20px;
-    text-align: center;
-    transition: all 0.3s ease;
-    background-color: #f8f9fa;
+  position: relative;
+  border: 2px dashed #dee2e6;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  transition: all 0.3s ease;
+  background-color: #f8f9fa;
 }
 
 .drag-drop-zone.drag-over {
-    border-color: #007bff;
-    background-color: #f0f8ff;
-    transform: scale(1.01);
+  border-color: #007bff;
+  background-color: #f0f8ff;
+  transform: scale(1.01);
 }
 
 .upload-item {
-    background-color: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 6px;
-    padding: 8px 12px;
-    margin-bottom: 8px;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
 }
 
 .upload-item.success {
-    background-color: #d4edda;
-    border-color: #c3e6cb;
-    color: #155724;
+  background-color: #d4edda;
+  border-color: #c3e6cb;
+  color: #155724;
 }
 
 .upload-item.error {
-    background-color: #f8d7da;
-    border-color: #f5c6cb;
-    color: #721c24;
+  background-color: #f8d7da;
+  border-color: #f5c6cb;
+  color: #721c24;
 }
 
 .file-info {
-    font-size: 0.875rem;
-    color: #6c757d;
+  font-size: 0.875rem;
+  color: #6c757d;
 }
 
 /* Split editor styles */
-.editor-wrapper, .preview-wrapper {
-    border: 1px solid #dee2e6;
-    border-radius: 0.375rem;
-    overflow: hidden;
+.editor-wrapper,
+.preview-wrapper {
+  border: 1px solid #dee2e6;
+  border-radius: 0.375rem;
+  overflow: hidden;
 }
 
-.editor-header, .preview-header {
-    background-color: #f8f9fa;
-    padding: 8px 12px;
-    border-bottom: 1px solid #dee2e6;
-    font-weight: 500;
+.editor-header,
+.preview-header {
+  background-color: #f8f9fa;
+  padding: 8px 12px;
+  border-bottom: 1px solid #dee2e6;
+  font-weight: 500;
 }
 
 .editor-wrapper textarea {
-    border: none;
-    border-radius: 0;
-    box-shadow: none;
-    padding: 12px;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 12px;
 }
 
 .editor-wrapper textarea:focus {
-    border: none;
-    box-shadow: none;
+  border: none;
+  box-shadow: none;
 }
 
 #messagePreview {
-    border: none;
-    border-radius: 0;
-    padding: 12px;
-    font-family: inherit;
-    line-height: 1.5;
+  border: none;
+  border-radius: 0;
+  padding: 12px;
+  font-family: inherit;
+  line-height: 1.5;
 }
 
 #messagePreview img {
-    max-width: 100%;
-    height: auto;
-    border-radius: 6px;
-    margin: 8px 0;
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 8px 0;
 }
 
-#messagePreview h1, #messagePreview h2, #messagePreview h3, #messagePreview h4 {
-    margin-top: 1rem;
-    margin-bottom: 0.5rem;
+#messagePreview h1,
+#messagePreview h2,
+#messagePreview h3,
+#messagePreview h4 {
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
 }
 
 #messagePreview code {
-    background-color: #f1f3f4;
-    padding: 2px 4px;
-    border-radius: 3px;
-    font-size: 0.9em;
+  background-color: #f1f3f4;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-size: 0.9em;
 }
 
 #messagePreview pre {
-    background-color: #f8f9fa;
-    padding: 1rem;
-    border-radius: 6px;
-    border-left: 4px solid #007bff;
-    overflow-x: auto;
+  background-color: #f8f9fa;
+  padding: 1rem;
+  border-radius: 6px;
+  border-left: 4px solid #007bff;
+  overflow-x: auto;
 }
 
 /* Dynamic resizing styles */
 #newMessageContent {
-    transition: height 0.2s ease;
+  transition: height 0.2s ease;
 }
 
 #messagePreview {
-    transition: height 0.2s ease;
+  transition: height 0.2s ease;
 }
 
 /* Comment section collapse animation */
 #commentFormSection {
-    transition: max-height 0.3s ease-out, opacity 0.3s ease-out, padding 0.3s ease-out;
-    overflow: hidden;
+  transition: max-height 0.3s ease-out, opacity 0.3s ease-out,
+    padding 0.3s ease-out;
+  overflow: hidden;
 }
 
 #commentFormSection.comment-section-collapsed {
-    max-height: 0;
-    opacity: 0;
-    padding-top: 0;
-    padding-bottom: 0;
+  max-height: 0;
+  opacity: 0;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 #commentFormSection.comment-section-expanded {
-    max-height: 2000px; /* Large enough to fit the form */
-    opacity: 1;
-    padding-top: 1rem;
-    padding-bottom: 0;
+  max-height: 2000px; /* Large enough to fit the form */
+  opacity: 1;
+  padding-top: 1rem;
+  padding-bottom: 0;
 }
 
 /* Mobile responsiveness */
 @media (max-width: 768px) {
-    .editor-wrapper, .preview-wrapper {
-        margin-bottom: 1rem;
-    }
+  .editor-wrapper,
+  .preview-wrapper {
+    margin-bottom: 1rem;
+  }
 }
