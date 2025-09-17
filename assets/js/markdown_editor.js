@@ -7,6 +7,22 @@ function markdownEditorInit({ editorId, previewId }) {
   function parseMarkdown(text) {
     if (!text) return "";
     let html = text;
+    // task list: - [ ] item  or - [x] item -> produce checkbox inside li
+    // Do this early so list handling wraps li correctly
+    // Accept optional list marker and flexible spaces: "-  [ ] item" or "[x] item"
+    html = html.replace(/^\s*(?:[-*+]\s*)?\[\s\]\s*(.+)$/gim, function (m, t) {
+      return '<li><input type="checkbox" class="task-checkbox"> ' + t + "</li>";
+    });
+    html = html.replace(
+      /^\s*(?:[-*+]\s*)?\[[xX]\]\s*(.+)$/gim,
+      function (m, t) {
+        return (
+          '<li><input type="checkbox" class="task-checkbox" checked> ' +
+          t +
+          "</li>"
+        );
+      }
+    );
     html = html.replace(/^#### (.*$)/gim, "<h4>$1</h4>");
     html = html.replace(/^### (.*$)/gim, "<h3>$1</h3>");
     html = html.replace(/^## (.*$)/gim, "<h2>$1</h2>");
@@ -63,6 +79,35 @@ function markdownEditorInit({ editorId, previewId }) {
       preview.style.overflowY = "hidden";
     } else {
       preview.innerHTML = parseMarkdown(content);
+      // attach delegated handler for checkboxes in preview to sync back to textarea
+      // find all checkboxes and wire change event to flip corresponding markdown marker
+      const boxes = preview.querySelectorAll("input.task-checkbox");
+      if (boxes.length > 0) {
+        // Build index map of task-list lines in source
+        const sourceLines = textarea.value.split("\n");
+        const taskLineIndexes = [];
+        for (let i = 0; i < sourceLines.length; i++) {
+          if (/^\s*[-*+]?\s*\[[ xX]\]\s+/.test(sourceLines[i]))
+            taskLineIndexes.push(i);
+        }
+        boxes.forEach(function (box, idx) {
+          box.addEventListener("change", function () {
+            try {
+              const targetLine = taskLineIndexes[idx];
+              if (typeof targetLine === "number") {
+                sourceLines[targetLine] = sourceLines[targetLine].replace(
+                  /\[[ xX]\]/,
+                  box.checked ? "[x]" : "[ ]"
+                );
+                textarea.value = sourceLines.join("\n");
+                textarea.dispatchEvent(new Event("input"));
+              }
+            } catch (e) {
+              console.error("checkbox sync failed", e);
+            }
+          });
+        });
+      }
     }
     autoExpand();
   }

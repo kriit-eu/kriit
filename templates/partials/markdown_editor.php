@@ -292,26 +292,54 @@
                 // find the closest ancestor that is a modal-body (Bootstrap modal)
                 var root = container || document.getElementById(editorId + '_container');
                 var modalBody = root && root.closest ? root.closest('.modal-body') : null;
-                var prevScroll = modalBody ? modalBody.scrollTop : null;
+                // find other possible scroll containers
+                var scrollContainers = [];
+                if (modalBody) scrollContainers.push({ el: modalBody, top: modalBody.scrollTop, left: modalBody.scrollLeft });
+                // add nearest scrollable ancestor of root
+                try {
+                    var sc = root;
+                    while (sc && sc !== document.body) {
+                        var cs = window.getComputedStyle(sc);
+                        if (cs && (cs.overflowY === 'auto' || cs.overflowY === 'scroll')) {
+                            scrollContainers.push({ el: sc, top: sc.scrollTop, left: sc.scrollLeft });
+                            break;
+                        }
+                        sc = sc.parentElement;
+                    }
+                } catch (e) {}
+                // fallback to document scrolling element
+                try { scrollContainers.push({ el: document.scrollingElement || document.documentElement || document.body, top: (window.pageYOffset || document.documentElement.scrollTop), left: (window.pageXOffset || document.documentElement.scrollLeft) }); } catch (e) {}
+
+                // remember active element to avoid focus-caused scrolling
+                var prevActive = document.activeElement;
+
                 // perform DOM changes
                 fn();
-                // restore scroll as close as possible (use multiple timeouts to
-                // counter browser auto-scroll after layout/paint)
-                if (modalBody && prevScroll !== null) {
+
+                // Restore scroll positions and active element; run multiple times to counter layout/paint
+                var restore = function() {
+                    for (var i = 0; i < scrollContainers.length; i++) {
+                        try {
+                            var obj = scrollContainers[i];
+                            if (!obj || !obj.el) continue;
+                            if (obj.el === document.scrollingElement || obj.el === document.documentElement || obj.el === document.body) {
+                                // window scroll
+                                try { window.scrollTo(obj.left || 0, obj.top || 0); } catch (e) {}
+                            } else {
+                                try { obj.el.scrollTop = obj.top; obj.el.scrollLeft = obj.left || 0; } catch (e) {}
+                            }
+                        } catch (e) {}
+                    }
+                    // restore focus without scrolling if possible
                     try {
-                        modalBody.scrollTop = prevScroll;
+                        if (prevActive && prevActive.focus) {
+                            try { prevActive.focus({preventScroll: true}); } catch (e) { try { prevActive.focus(); } catch (e) {} }
+                        }
                     } catch (e) {}
-                    setTimeout(function() {
-                        try {
-                            modalBody.scrollTop = prevScroll;
-                        } catch (e) {}
-                    }, 20);
-                    setTimeout(function() {
-                        try {
-                            modalBody.scrollTop = prevScroll;
-                        } catch (e) {}
-                    }, 120);
-                }
+                };
+                try { restore(); } catch (e) {}
+                setTimeout(function() { try { restore(); } catch (e) {} }, 20);
+                setTimeout(function() { try { restore(); } catch (e) {} }, 120);
             } catch (e) {
                 try {
                     fn();
@@ -376,7 +404,9 @@
                     } else {
                         _withPreservedModalScroll(function() {
                             // render even if element was previously hidden
-                            boxPreview.innerHTML = md.render(content);
+                            // post-process rendered HTML to convert task-list markers like "[ ]" and "[x]"
+                            var rendered = md.render(content);
+                            enhanceTaskLists(rendered, boxPreview, ta);
                         });
 
                     }
@@ -389,7 +419,8 @@
                         });
                     } else {
                         _withPreservedModalScroll(function() {
-                            boxPreviewFull.innerHTML = md.render(content);
+                            var rendered = md.render(content);
+                            enhanceTaskLists(rendered, boxPreviewFull, ta);
                         });
 
                     }
@@ -405,6 +436,106 @@
                     if (fallback) fallback.innerHTML = '<div class="text-muted text-center p-3">Eelvaade ei ole saadaval (viga)</div>';
                 } catch (e) {}
             }
+
+                // Enhance task lists: derive task items from source lines and map them
+                // into the rendered <li> elements. This avoids relying on how markdown-it
+                // renders the literal "[x]" marker in the generated HTML.
+                function enhanceTaskLists(renderedHtml, containerEl, textareaEl) {
+                    try {
+                        var tmp = document.createElement('div');
+                        tmp.innerHTML = renderedHtml;
+
+                        // Use markdown-it tokens to map rendered list items to source lines.
+                        // We'll walk tokens and rendered <li> elements in order and match them
+                        // by occurrence. This avoids fragile string heuristics and handles
+                        // nested/mixed lists because markdown-it token stream preserves
+                        // the logical order of list items.
+                        var content = textareaEl ? textareaEl.value : '';
+                        var sourceLines = content.split('\n');
+                        var tokens = md.parse ? md.parse(content, {}) : [];
+
+                        // Build an array of task descriptors in document order by scanning tokens.
+                        var taskItems = [];
+                        for (var ti = 0; ti < tokens.length; ti++) {
+                            var tok = tokens[ti];
+                            if (tok && tok.type === 'list_item_open' && Array.isArray(tok.map)) {
+                                var start = tok.map[0];
+                                var end = tok.map[1];
+                                // Prefer the first non-empty source line in the item's range
+                                for (var s = start; s < Math.min(end, sourceLines.length); s++) {
+                                    var line = sourceLines[s] || '';
+                                    var m = line.match(/^\s*(?:[-*+]\s*)?\[([ xX])\]\s*(.*)$/);
+                                    if (m) {
+                                        taskItems.push({ lineIndex: s, checked: (m[1].toLowerCase() === 'x'), text: m[2] });
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
+                        // Now walk rendered <li> elements and attach checkboxes for taskItems in order.
+                        var liEls = tmp.querySelectorAll('li');
+                        var taskIdx = 0;
+                        for (var j = 0; j < liEls.length && taskIdx < taskItems.length; j++) {
+                            var li = liEls[j];
+                            var item = taskItems[taskIdx];
+                            // Heuristic: ensure this <li> actually corresponds to an item that
+                            // contains a task marker by checking its textContent for a [ ] or [x]
+                            // early in the rendered text. This guards against non-task <li>s
+                            // consuming taskItems in complex nesting situations.
+                            var textPreview = (li.textContent || '').trim();
+                            if (!textPreview.match(/^[\s\-\*\+]*\[[ xX]\]/)) {
+                                // not a task-looking <li>, skip it
+                                continue;
+                            }
+
+                            // Replace the li contents with a checkbox + rendered inline label
+                            li.innerHTML = '';
+                            var cb = document.createElement('input');
+                            cb.type = 'checkbox';
+                            cb.checked = !!item.checked;
+                            cb.className = 'task-checkbox me-2';
+                            // Add a data attribute to help debug mapping between DOM and source
+                            cb.setAttribute('data-source-line', String(item.lineIndex));
+                            li.appendChild(cb);
+                            var span = document.createElement('span');
+                            try {
+                                span.innerHTML = md.renderInline(item.text || '');
+                            } catch (e) {
+                                span.textContent = item.text || '';
+                            }
+                            li.appendChild(span);
+
+                            // Wire toggle back to the specific source line
+                            (function(cbRef, srcIndex) {
+                                cbRef.addEventListener('change', function() {
+                                    try {
+                                        var lines = textareaEl.value.split('\n');
+                                        if (typeof lines[srcIndex] !== 'undefined') {
+                                            lines[srcIndex] = lines[srcIndex].replace(/\[[ xX]\]/, cbRef.checked ? '[x]' : '[ ]');
+                                            textareaEl.value = lines.join('\n');
+                                            textareaEl.dispatchEvent(new Event('input'));
+                                        }
+                                    } catch (err) {
+                                        console.error('task checkbox handler failed', err);
+                                    }
+                                });
+                            })(cb, item.lineIndex);
+
+                            taskIdx++;
+                        }
+
+                        // Finally set the container content by moving nodes from tmp to containerEl
+                        try {
+                            while (containerEl.firstChild) containerEl.removeChild(containerEl.firstChild);
+                            while (tmp.firstChild) containerEl.appendChild(tmp.firstChild);
+                        } catch (e) {
+                            containerEl.innerHTML = tmp.innerHTML;
+                        }
+                    } catch (err) {
+                        try { containerEl.innerHTML = renderedHtml; } catch (e) {}
+                    }
+                }
         }
 
         // Helper: attach listeners to the textarea (called on init and when entering edit mode)
