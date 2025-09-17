@@ -761,6 +761,30 @@
                                 </span>
                             <?php }
                             ?>
+                            <?php
+                            // --- BEGIN: Assignment hours vs planned hours badge and insufficiency indicator ---
+                            // Show textual total/required and a visual warning when workload is insufficient
+                            $assignmentHoursSum = isset($subject['assignmentHoursSum']) ? $subject['assignmentHoursSum'] : 0;
+                            $planned = isset($subject['subjectPlannedHours']) ? $subject['subjectPlannedHours'] : null;
+
+                            // Textual display: "Kokku: Xh / Nõutud: Yh" (Estonian labels)
+                            if ($assignmentHoursSum > 0 || $planned !== null) {
+                                $displayPlanned = $planned === null ? '-' : $planned;
+                                // Compact numeric display; tooltip uses requested phrasing
+                                $numericTitle = 'Iseseisvate tööde tunde: Kokku: ' . $assignmentHoursSum . 'h / Nõutud: ' . ($displayPlanned === '-' ? '-' : $displayPlanned . 'h');
+                                echo '<span class="ms-2 text-muted small" title="' . htmlspecialchars($numericTitle) . '">';
+                                echo htmlspecialchars($assignmentHoursSum) . ' / ' . htmlspecialchars($displayPlanned);
+                                echo '</span>';
+
+                                // Icon-only visual badge when insufficient (sum < planned and planned is set)
+                                if ($planned !== null && is_numeric($planned) && $assignmentHoursSum < intval($planned)) {
+                                    echo ' <span class="ms-2 badge bg-danger" title="Iseseisvate tööde tunde on alla nõutud">';
+                                    echo '<i class="fa fa-exclamation-triangle" aria-hidden="true"></i>';
+                                    echo '</span>';
+                                }
+                            }
+                            // --- END: Assignment hours badge and indicator ---
+                            ?>
                             </b>
                         </th>
                         <?php if (!$this->isStudent): ?>

@@ -96,6 +96,7 @@ class subjects extends Controller
                                 s.teacherId,
                                 s.subjectExternalId,
                                 s.subjectLastLessonDate,
+                                s.subjectPlannedHours,
                                 t.userName                     AS teacherName,
 
                                 u.userId                       AS studentId,
@@ -198,12 +199,16 @@ class subjects extends Controller
             $groups[$groupName]['students'][$studentId] = $studentData;
 
             // Add or update subject in group
-            if (!isset($groups[$groupName]['subjects'][$subjectId])) {
+                if (!isset($groups[$groupName]['subjects'][$subjectId])) {
                 $groups[$groupName]['subjects'][$subjectId] = [
                     'subjectId' => $subjectId,
                     'subjectName' => $row['subjectName'],
                     'subjectExternalId' => $row['subjectExternalId'],
                     'subjectLastLessonDate' => $row['subjectLastLessonDate'],
+                        // Planned independent work hours for the subject (nullable)
+                        'subjectPlannedHours' => isset($row['subjectPlannedHours']) ? $row['subjectPlannedHours'] : null,
+                        // Sum of assignmentHours across assignments in this subject (computed)
+                        'assignmentHoursSum' => 0,
                     'teacherName' => $row['teacherName'],
                     'assignments' => [],
                     // Use pre-fetched learning outcomes
@@ -240,6 +245,9 @@ class subjects extends Controller
                         'daysRemaining' => $daysRemaining,
                         'assignmentStatuses' => []
                     ];
+                    // Add to subject-level assignment hours sum (treat non-numeric as 0)
+                    $ah = isset($row['assignmentHours']) && is_numeric($row['assignmentHours']) ? intval($row['assignmentHours']) : 0;
+                    $groups[$groupName]['subjects'][$subjectId]['assignmentHoursSum'] += $ah;
                 }
 
                 $statusName = $row['assignmentStatusName'] ?? 'Esitamata';
