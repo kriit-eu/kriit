@@ -1671,6 +1671,27 @@
 
         const modal = new bootstrap.Modal(document.getElementById('editAssignmentModal'));
         modal.show();
+
+        // Ensure the inline new criterion input works for create mode as well
+        setTimeout(() => {
+            var input = document.getElementById('newCriterionInput');
+            if (!input) return;
+            // Remove previous listeners if any
+            input.onkeydown = null;
+            input.onblur = null;
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    addCriterionInline(input.value);
+                }
+            });
+            input.addEventListener('blur', function() {
+                if (input.value.trim()) {
+                    addCriterionInline(input.value);
+                }
+            });
+            // focus the input to encourage adding
+            input.focus();
+        }, 0);
     }
 
     // Unified save function: create or edit based on window.isCreatingAssignment
@@ -1707,6 +1728,21 @@
                 ? document.getElementById('assignmentEntryDate').value
                 : today;
             params.append('assignmentEntryDate', entryDateToSend);
+
+            // Require at least one criterion when creating a new assignment
+            const criteriaInDom = document.querySelectorAll('#editCriteriaContainer .criteria-row').length;
+            const newCriteriaCount = window.newAddedCriteria ? window.newAddedCriteria.length : 0;
+            if (criteriaInDom === 0 && newCriteriaCount === 0) {
+                alert('Lisa vähemalt üks kriteerium!');
+                const inputEl = document.getElementById('newCriterionInput');
+                if (inputEl) {
+                    inputEl.focus();
+                    // brief visual hint
+                    inputEl.classList.add('is-invalid');
+                    setTimeout(() => inputEl.classList.remove('is-invalid'), 1500);
+                }
+                return;
+            }
 
             console.log('Creating assignment, params:', params.toString());
             fetch('/admin/addAssignment', {
