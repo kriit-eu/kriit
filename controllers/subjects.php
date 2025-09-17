@@ -109,6 +109,7 @@ class subjects extends Controller
                                 a.assignmentInstructions,
                                 a.assignmentDueAt,
                                 a.assignmentEntryDate,
+                                a.assignmentHours,
 
                                 ua.userGrade,
                                 ua.assignmentStatusId,
@@ -230,6 +231,9 @@ class subjects extends Controller
                         'assignmentInstructions' => $row['assignmentInstructions'],
                         'assignmentDueAt' => $row['assignmentDueAt'],
                         'assignmentEntryDate' => $row['assignmentEntryDate'],
+                        // Ensure assignmentHours is available to the view and provide 'lessons' for frontend compatibility
+                        'assignmentHours' => isset($row['assignmentHours']) ? $row['assignmentHours'] : null,
+                        'lessons' => isset($row['assignmentHours']) ? $row['assignmentHours'] : null,
                         'assignmentEntryDateFormatted' => $entryDateFormatted,
                         'badgeClass' => $daysRemaining >= 3 ? 'badge bg-light text-dark' :
                             ($daysRemaining > 0 ? 'badge bg-warning text-dark' : 'badge bg-danger'),

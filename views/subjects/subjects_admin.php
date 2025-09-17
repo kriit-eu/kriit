@@ -863,7 +863,7 @@
         <div class="modal-dialog modal-xl modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="editAssignmentModalLabel">Muuta ülesanne</h5>
+                    <h5 class="modal-title" id="editAssignmentModalLabel">Muuda ülesanne</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -1293,7 +1293,11 @@
                 // Populate hours field if present
                 try {
                     if (document.getElementById('assignmentHours')) {
-                        document.getElementById('assignmentHours').value = (assignment.assignmentHours !== undefined && assignment.assignmentHours !== null) ? String(assignment.assignmentHours) : '';
+                        // Prefill hours: prefer assignment.assignmentHours (DB), otherwise fall back to assignment.lessons (remote payload)
+                        const hoursVal = (assignment.assignmentHours !== undefined && assignment.assignmentHours !== null)
+                            ? assignment.assignmentHours
+                            : (assignment.lessons !== undefined && assignment.lessons !== null ? assignment.lessons : '');
+                        document.getElementById('assignmentHours').value = hoursVal !== '' ? String(hoursVal) : '';
                     }
                 } catch (e) { console.error('Error setting assignmentHours:', e); }
                 document.getElementById('assignmentInvolvesOpenApi').checked = assignment.assignmentInvolvesOpenApi ? true : false;
