@@ -772,7 +772,8 @@
                                 $displayPlanned = $planned === null ? '-' : $planned;
                                 // Compact numeric display; tooltip uses requested phrasing
                                 $numericTitle = 'Iseseisvate tööde tunde: Kokku: ' . $assignmentHoursSum . 'h / Nõutud: ' . ($displayPlanned === '-' ? '-' : $displayPlanned . 'h');
-                                echo '<span class="ms-2 text-muted small" title="' . htmlspecialchars($numericTitle) . '">';
+                                // Wrap numeric values in a neutral badge for visual grouping
+                                echo '<span class="ms-2 badge bg-secondary text-white" title="' . htmlspecialchars($numericTitle) . '">';
                                 echo htmlspecialchars($assignmentHoursSum) . ' / ' . htmlspecialchars($displayPlanned);
                                 echo '</span>';
 
