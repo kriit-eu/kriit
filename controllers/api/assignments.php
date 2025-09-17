@@ -118,7 +118,17 @@ class assignments extends Controller
             if ($field === 'subjectId') {
                 stop(400, "Invalid subjectId provided");
             } else {
-                $subjectId = Db::insert('subjects', ['subjectName' => $_POST['subjectName'], 'subjectExternalId' => $_POST['subjectExternalId'], 'groupId' => $groupId, 'teacherId' => $this->auth->userId]);
+                    // Prepare subject data, accept optional plannedHours
+                    $subjectData = ['subjectName' => $_POST['subjectName'], 'subjectExternalId' => $_POST['subjectExternalId'], 'groupId' => $groupId, 'teacherId' => $this->auth->userId];
+                    if (isset($_POST['plannedHours']) && $_POST['plannedHours'] !== '') {
+                        if (!is_numeric($_POST['plannedHours']) || (int)$_POST['plannedHours'] < 0) {
+                            stop(400, 'Invalid plannedHours');
+                        }
+                        // Store planned hours in DB column 'subjectPlannedHours' while accepting 'plannedHours' from API
+                        $subjectData['subjectPlannedHours'] = (int)$_POST['plannedHours'];
+                    }
+
+                    $subjectId = Db::insert('subjects', $subjectData);
                 Activity::create(ACTIVITY_CREATE_SUBJECT, $this->auth->userId, $subjectId);
             }
         } else {

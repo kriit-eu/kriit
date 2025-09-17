@@ -344,6 +344,15 @@ class admin extends Controller
             'groupId' => $_POST['groupId']
         ];
 
+        // Optional: plannedHours (incoming) - map to DB column 'subjectPlannedHours'
+        if (isset($_POST['plannedHours']) && $_POST['plannedHours'] !== '') {
+            if (!is_numeric($_POST['plannedHours']) || (int)$_POST['plannedHours'] < 0) {
+                stop(400, 'Invalid plannedHours');
+            }
+            // Keep API compatible: incoming field stays 'plannedHours', but store as 'subjectPlannedHours' in DB
+            $data['subjectPlannedHours'] = (int)$_POST['plannedHours'];
+        }
+
         try {
             $subjectId = Db::insert('subjects', $data);
             Activity::create(ACTIVITY_CREATE_SUBJECT, $this->auth->userId, $subjectId);
