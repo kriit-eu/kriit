@@ -1883,7 +1883,7 @@
             }
 
             console.log('Creating assignment, params:', params.toString());
-            fetch('/admin/addAssignment', {
+            fetch('/assignments/ajax_createAssignment', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',

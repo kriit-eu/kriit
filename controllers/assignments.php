@@ -1283,4 +1283,95 @@ class assignments extends Controller
 
         return null;
     }
+
+    /**
+     * Create a new assignment (for teachers and admins)
+     * Teachers can only create assignments for subjects they teach
+     */
+    public function ajax_createAssignment()
+    {
+        // Basic validation
+        if (empty($_POST['subjectId']) || !is_numeric($_POST['subjectId'])) {
+            stop(400, 'Invalid subjectId');
+        }
+
+        if (empty($_POST['assignmentName'])) {
+            stop(400, 'Assignment name is required');
+        }
+
+        if (empty($_POST['assignmentInstructions'])) {
+            stop(400, 'Instructions are required');
+        }
+
+        if (empty($_POST['assignmentDueAt'])) {
+            stop(400, 'Due date is required');
+        }
+
+        $subjectId = (int)$_POST['subjectId'];
+
+        // Permission check: Only admins or teachers can create assignments (any teacher can create for any subject)
+        if (!$this->auth->userIsAdmin && !$this->auth->userIsTeacher) {
+            stop(403, 'Teil pole õigusi ülesandeid luua');
+        }
+
+        // Ensure assignmentEntryDate is present; default to today if missing
+        $assignmentEntryDate = empty($_POST['assignmentEntryDate']) ? date('Y-m-d') : $_POST['assignmentEntryDate'];
+
+        // Optional: assignmentHours (Tundide arv) - should be a non-negative integer or null
+        $assignmentHours = null;
+        if (isset($_POST['assignmentHours']) && $_POST['assignmentHours'] !== '') {
+            if (!is_numeric($_POST['assignmentHours']) || (int)$_POST['assignmentHours'] < 0) {
+                stop(400, 'Invalid assignmentHours');
+            }
+            $assignmentHours = (int)$_POST['assignmentHours'];
+        }
+
+        $data = [
+            'subjectId' => $subjectId,
+            'assignmentName' => $_POST['assignmentName'],
+            'assignmentInstructions' => $_POST['assignmentInstructions'],
+            'assignmentDueAt' => $_POST['assignmentDueAt'],
+            'assignmentEntryDate' => $assignmentEntryDate,
+            'assignmentInitialCode' => $_POST['assignmentInitialCode'] ?? null,
+            'assignmentValidationFunction' => $_POST['assignmentValidationFunction'] ?? null,
+            'assignmentHours' => $assignmentHours,
+            'assignmentSkipLinkCheck' => isset($_POST['assignmentSkipLinkCheck']) ? (int)$_POST['assignmentSkipLinkCheck'] : 0
+        ];
+
+        try {
+            $assignmentId = Db::insert('assignments', $data);
+            Activity::create(ACTIVITY_CREATE_ASSIGNMENT, $this->auth->userId, $assignmentId);
+        } catch (\Exception $e) {
+            stop(400, $e->getMessage());
+        }
+
+        // Defensive: some DB helpers may ignore NULLs in insert; ensure assignmentHours is explicitly set when provided
+        if ($assignmentHours !== null) {
+            try {
+                Db::update('assignments', ['assignmentHours' => $assignmentHours], 'assignmentId = ?', [$assignmentId]);
+            } catch (\Exception $e) {
+                // Non-fatal: log activity and continue
+                Activity::create(ACTIVITY_UPDATE_ASSIGNMENT, $this->auth->userId, $assignmentId, "Failed to set assignmentHours: " . $e->getMessage());
+            }
+        }
+
+        // Handle learning outcome associations if provided
+        if (isset($_POST['assignmentLearningOutcomeId']) && is_array($_POST['assignmentLearningOutcomeId'])) {
+            foreach ($_POST['assignmentLearningOutcomeId'] as $learningOutcomeId) {
+                if (is_numeric($learningOutcomeId)) {
+                    try {
+                        Db::insert('assignmentLearningOutcomes', [
+                            'assignmentId' => $assignmentId,
+                            'learningOutcomeId' => (int)$learningOutcomeId
+                        ]);
+                    } catch (\Exception $e) {
+                        // Non-fatal: continue processing
+                        Activity::create(ACTIVITY_UPDATE_ASSIGNMENT, $this->auth->userId, $assignmentId, "Failed to associate learning outcome: " . $e->getMessage());
+                    }
+                }
+            }
+        }
+
+        stop(200, ['assignmentId' => $assignmentId]);
+    }
 }
