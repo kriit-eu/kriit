@@ -284,7 +284,8 @@ class admin extends Controller
             'assignmentEntryDate' => $assignmentEntryDate,
             'assignmentInitialCode' => $_POST['assignmentInitialCode'] ?? null,
             'assignmentValidationFunction' => $_POST['assignmentValidationFunction'] ?? null,
-            'assignmentHours' => $assignmentHours
+            'assignmentHours' => $assignmentHours,
+            'assignmentSkipLinkCheck' => isset($_POST['assignmentSkipLinkCheck']) ? (int)$_POST['assignmentSkipLinkCheck'] : 0
         ];
 
         try {

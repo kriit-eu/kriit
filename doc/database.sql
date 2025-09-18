@@ -84,6 +84,7 @@ CREATE TABLE `assignments` (
 `assignmentInitialCode` text DEFAULT NULL,
 `assignmentValidationFunction` text DEFAULT NULL,
 `assignmentInvolvesOpenApi` tinyint unsigned NOT NULL DEFAULT 0,
+`assignmentSkipLinkCheck` tinyint unsigned NOT NULL DEFAULT 0,
 PRIMARY KEY (`assignmentId`),
 UNIQUE KEY `idx_assignments_ext_system` (`assignmentExternalId`,`systemId`),
 KEY `assignments_subjectId_fk` (`subjectId`),
@@ -92,7 +93,7 @@ CONSTRAINT `assignments_subjectId_fk` FOREIGN KEY (`subjectId`) REFERENCES `subj
 LOCK TABLES `assignments` WRITE;
 /*!40000 ALTER TABLE `assignments` DISABLE KEYS */;
 INSERT INTO `assignments` VALUES
-(1,'Aatomi lõhustamine','',1,NULL,1,'2024-11-30',1,1,'',NULL,1);
+(1,'Aatomi lõhustamine','',1,NULL,1,'2024-11-30',1,1,'',NULL,1,0);
 /*!40000 ALTER TABLE `assignments` ENABLE KEYS */;
 UNLOCK TABLES;
 

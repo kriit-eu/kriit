@@ -61,7 +61,8 @@ class assignments extends Controller
                 'assignmentId' => $assignment['assignmentId'],
                 'assignmentName' => $assignment['assignmentName'],
                 'assignmentInstructions' => $assignment['assignmentInstructions'] ?? '',
-                'assignmentInvolvesOpenApi' => $assignment['assignmentInvolvesOpenApi'] ?? false,
+                    'assignmentInvolvesOpenApi' => $assignment['assignmentInvolvesOpenApi'] ?? false,
+                    'assignmentSkipLinkCheck' => isset($assignment['assignmentSkipLinkCheck']) ? (int)$assignment['assignmentSkipLinkCheck'] : 0,
                 'criteria' => $criteria,
                 'solutionUrl' => $studentAssignment['solutionUrl'] ?? '',
                 'currentGrade' => $studentAssignment['userGrade'] ?? '',
@@ -76,6 +77,7 @@ class assignments extends Controller
                 'assignmentName' => $assignment['assignmentName'],
                 'assignmentInstructions' => $assignment['assignmentInstructions'] ?? '',
                 'assignmentInvolvesOpenApi' => $assignment['assignmentInvolvesOpenApi'] ?? false,
+                    'assignmentSkipLinkCheck' => isset($assignment['assignmentSkipLinkCheck']) ? (int)$assignment['assignmentSkipLinkCheck'] : 0,
                 'criteria' => $criteria
             ];
         }
@@ -177,6 +179,7 @@ class assignments extends Controller
                 $assignment['assignmentInstructions'] = $basic['assignmentInstructions'];
                 $assignment['assignmentDueAt'] = !empty($basic['assignmentDueAt']) ? date('d.m.Y', strtotime($basic['assignmentDueAt'])) : 'Pole tähtaega';
                 $assignment['assignmentInvolvesOpenApi'] = (int)$basic['assignmentInvolvesOpenApi'];
+                $assignment['assignmentSkipLinkCheck'] = isset($basic['assignmentSkipLinkCheck']) ? (int)$basic['assignmentSkipLinkCheck'] : 0;
                 $assignment['teacherId'] = $basic['teacherId'];
                 $assignment['teacherName'] = $basic['teacherName'];
             }
@@ -417,7 +420,10 @@ class assignments extends Controller
         $subjectId = Db::getOne("SELECT subjectId FROM assignments WHERE assignmentId = ?", [$assignmentId]);
         $ifStudentHasAllCriteria = $this->checkIfStudentHasAllCriteria();
         $ifStudentHasPositiveGrade = $this->checkIfStudentHasPositiveGrade($studentId, $assignmentId);
-        $isValidUrl = $this->validateSolutionUrl($solutionUrl);
+        // Fetch assignment skip flag to decide whether to validate accessibility
+        $assignmentRow = Db::getFirst('SELECT assignmentSkipLinkCheck FROM assignments WHERE assignmentId = ?', [$assignmentId]);
+        $skipLinkCheck = !empty($assignmentRow['assignmentSkipLinkCheck']);
+        $isValidUrl = $this->validateSolutionUrl($solutionUrl, $skipLinkCheck);
 
         if (!$ifStudentHasAllCriteria) {
             error_out('Teil pole täidetud kõiki kriteeriume.', 403);
@@ -575,7 +581,8 @@ class assignments extends Controller
             'assignmentDueAt' => $assignmentDueAt,
             'assignmentEntryDate' => $assignmentEntryDate,
             'assignmentInvolvesOpenApi' => $assignmentInvolvesOpenApi,
-            'assignmentHours' => $assignmentHours
+            'assignmentHours' => $assignmentHours,
+            'assignmentSkipLinkCheck' => isset($_POST['assignmentSkipLinkCheck']) ? (int)$_POST['assignmentSkipLinkCheck'] : 0
         ], 'assignmentId = ?', [$assignmentId]);
 
         if ($existAssignment['assignmentName'] !== $assignmentName) {
@@ -601,6 +608,16 @@ class assignments extends Controller
             $message = "$_POST[teacherName] $status OpenAPI toe ülesandel.";
             $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
             Activity::create(ACTIVITY_UPDATE_ASSIGNMENT, $this->auth->userId, $assignmentId, "Changed assignment OpenAPI support from '" . (int)$existAssignment['assignmentInvolvesOpenApi'] . "' to '$assignmentInvolvesOpenApi'");
+        }
+
+        // assignmentSkipLinkCheck change message
+        $newSkip = isset($_POST['assignmentSkipLinkCheck']) ? (int)$_POST['assignmentSkipLinkCheck'] : 0;
+        $oldSkip = isset($existAssignment['assignmentSkipLinkCheck']) ? (int)$existAssignment['assignmentSkipLinkCheck'] : 0;
+        if ($newSkip !== $oldSkip) {
+            $status = $newSkip ? 'aktiveeris' : 'deaktiveeris';
+            $message = "$_POST[teacherName] $status ülesande linkide kättesaadavuse kontrolli.";
+            $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
+            Activity::create(ACTIVITY_UPDATE_ASSIGNMENT, $this->auth->userId, $assignmentId, "Changed assignmentSkipLinkCheck from '$oldSkip' to '$newSkip'");
         }
 
         stop(200, 'Assignment edited');
@@ -641,8 +658,18 @@ class assignments extends Controller
     function ajax_validateAndCheckLinkAccessibility(): void
     {
         $solutionUrl = $_POST['solutionUrl'];
+        $assignmentId = isset($_POST['assignmentId']) ? (int)$_POST['assignmentId'] : null;
 
-        $response = $this->validateSolutionUrl($solutionUrl);
+        // Default: do not skip accessibility. If assignmentId provided, read the flag from DB.
+        $skipAccessibility = false;
+        if ($assignmentId) {
+            $row = Db::getFirst('SELECT assignmentSkipLinkCheck FROM assignments WHERE assignmentId = ?', [$assignmentId]);
+            $skipAccessibility = !empty($row['assignmentSkipLinkCheck']);
+        } elseif (isset($_POST['skipAccessibility'])) {
+            $skipAccessibility = (bool)$_POST['skipAccessibility'];
+        }
+
+        $response = $this->validateSolutionUrl($solutionUrl, $skipAccessibility);
 
         stop($response['code'], $response['message']);
     }
@@ -1096,6 +1123,14 @@ class assignments extends Controller
             ) {
                 return ['code' => 400, 'message' => 'GitHubi URL peab olema kas commiti, repositooriumi või issue link.'];
             }
+        }
+
+        // By default validate accessibility unless caller asked to skip it
+        $args = func_get_args();
+        $skipAccessibility = isset($args[1]) ? (bool)$args[1] : false;
+
+        if ($skipAccessibility) {
+            return ['code' => 200, 'message' => 'Link ei vaja kättesaadavuse kontrolli antud ülesande seadistuse tõttu'];
         }
 
         $headers = @get_headers($solutionUrl);
