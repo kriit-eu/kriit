@@ -179,6 +179,7 @@ class assignments extends Controller
                 $assignment['assignmentInstructions'] = $basic['assignmentInstructions'];
                 $assignment['assignmentDueAt'] = !empty($basic['assignmentDueAt']) ? date('d.m.Y', strtotime($basic['assignmentDueAt'])) : 'Pole tähtaega';
                 $assignment['assignmentInvolvesOpenApi'] = (int)$basic['assignmentInvolvesOpenApi'];
+                $assignment['assignmentSkipLinkCheck'] = isset($basic['assignmentSkipLinkCheck']) ? (int)$basic['assignmentSkipLinkCheck'] : 0;
                 $assignment['teacherId'] = $basic['teacherId'];
                 $assignment['teacherName'] = $basic['teacherName'];
             }
@@ -657,8 +658,18 @@ class assignments extends Controller
     function ajax_validateAndCheckLinkAccessibility(): void
     {
         $solutionUrl = $_POST['solutionUrl'];
+        $assignmentId = isset($_POST['assignmentId']) ? (int)$_POST['assignmentId'] : null;
 
-        $response = $this->validateSolutionUrl($solutionUrl);
+        // Default: do not skip accessibility. If assignmentId provided, read the flag from DB.
+        $skipAccessibility = false;
+        if ($assignmentId) {
+            $row = Db::getFirst('SELECT assignmentSkipLinkCheck FROM assignments WHERE assignmentId = ?', [$assignmentId]);
+            $skipAccessibility = !empty($row['assignmentSkipLinkCheck']);
+        } elseif (isset($_POST['skipAccessibility'])) {
+            $skipAccessibility = (bool)$_POST['skipAccessibility'];
+        }
+
+        $response = $this->validateSolutionUrl($solutionUrl, $skipAccessibility);
 
         stop($response['code'], $response['message']);
     }

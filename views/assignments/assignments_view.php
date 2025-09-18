@@ -972,7 +972,8 @@ foreach ($assignment['students'] as $s): ?>
                     }
                     try {
                         ajax('assignments/validateAndCheckLinkAccessibility', {
-                            solutionUrl: solutionUrlValue
+                            solutionUrl: solutionUrlValue,
+                            assignmentId: assignment.assignmentId
                         }, function(res) {
                             if (res.status === 200) {
                                 solutionInputFeedback.textContent = 'Link on valideeritud ja kättesaadav.';
