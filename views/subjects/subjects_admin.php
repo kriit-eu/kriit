@@ -1853,7 +1853,7 @@
             }
             params.append('assignmentInstructions', assignmentInstructions);
             params.append('assignmentDueAt', assignmentDueAt);
-            // Add hours to initial create POST
+            // Include hours to initial create POST
             const assignmentHours = form.assignmentHours ? form.assignmentHours.value.trim() : '';
             params.append('assignmentHours', assignmentHours);
             // Include skip-link-check flag for creation
@@ -1867,9 +1867,15 @@
                 : today;
             params.append('assignmentEntryDate', entryDateToSend);
 
+            // Include criteria directly in the create call
+            const newCriteria = window.newAddedCriteria ? window.newAddedCriteria : [];
+            newCriteria.forEach((c, idx) => {
+                params.append(`newCriteria[${idx}]`, c);
+            });
+
             // Require at least one criterion when creating a new assignment
             const criteriaInDom = document.querySelectorAll('#editCriteriaContainer .criteria-row').length;
-            const newCriteriaCount = window.newAddedCriteria ? window.newAddedCriteria.length : 0;
+            const newCriteriaCount = newCriteria.length;
             if (criteriaInDom === 0 && newCriteriaCount === 0) {
                 alert('Lisa vähemalt üks kriteerium!');
                 const inputEl = document.getElementById('newCriterionInput');
@@ -1899,73 +1905,12 @@
                 })
                 .then(({ status, data }) => {
                     if (status === 200 || status === 201) {
-                        const newId = data.assignmentId || (data && data.assignmentId) || null;
-                        if (!newId) {
-                            // If server didn't return id, just reload to pick up change
-                            location.reload();
-                            return;
-                        }
-                        // If there are new criteria added in modal, call edit endpoint to persist them
-                        const newCriteria = window.newAddedCriteria && window.newAddedCriteria.length ? window.newAddedCriteria : [];
-                        // Prepare second call to save criteria and other optional fields
-                        const editParams = new URLSearchParams();
-                        editParams.append('assignmentId', newId);
-                        // Append same ÕV labels to edited name as well
-                        try {
-                            const combobox2 = document.getElementById('assignmentLearningOutcomeCombobox');
-                            const checkedBoxes2 = combobox2 ? Array.from(combobox2.querySelectorAll('.combobox-checkbox:checked')) : [];
-                            const selectedOvLabels2 = checkedBoxes2.map(cb => 'ÕV' + (cb.dataset.nr || '?'));
-                            if (selectedOvLabels2.length > 0) {
-                                editParams.append('assignmentName', assignmentName + ' (' + selectedOvLabels2.join(', ') + ')');
-                            } else {
-                                editParams.append('assignmentName', assignmentName);
-                            }
-                            checkedBoxes2.forEach((cb, idx) => {
-                                editParams.append(`assignmentLearningOutcomeId[${idx}]`, cb.value);
-                            });
-                        } catch (e) {
-                            editParams.append('assignmentName', assignmentName);
-                        }
-                        editParams.append('assignmentInstructions', assignmentInstructions);
-                        editParams.append('assignmentDueAt', assignmentDueAt);
-                        // Ensure assignmentEntryDate is included in edit call as well.
-                        // Prefer explicit modal value, then the entry date we sent earlier, then fallback to due date or today.
-                        const explicitEntry = (document.getElementById('assignmentEntryDate') && document.getElementById('assignmentEntryDate').value) ? document.getElementById('assignmentEntryDate').value : null;
-                        const entryToEdit = explicitEntry || (params.get('assignmentEntryDate')) || (today);
-                        editParams.append('assignmentEntryDate', entryToEdit);
-                        editParams.append('teacherName', window.teacherName || '');
-                        editParams.append('teacherId', window.teacherId || '');
-                        editParams.append('assignmentInvolvesOpenApi', form.assignmentInvolvesOpenApi.checked ? 1 : 0);
-                        // Include skip-link-check flag when persisting optional fields after creation
-                        editParams.append('assignmentSkipLinkCheck', form.assignmentSkipLinkCheck && form.assignmentSkipLinkCheck.checked ? 1 : 0);
-                        // Include hours value when persisting optional fields after creation
-                        editParams.append('assignmentHours', form.assignmentHours ? form.assignmentHours.value.trim() : '');
-                        newCriteria.forEach((c, idx) => {
-                            editParams.append(`newCriteria[${idx}][criteriaName]`, c);
-                        });
-
-                        console.log('Calling edit to persist optional fields, editParams:', editParams.toString());
-                        // Call edit endpoint to attach criteria
-                        return fetch('/assignments/ajax_editAssignment', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/x-www-form-urlencoded',
-                                'X-Requested-With': 'XMLHttpRequest'
-                            },
-                            body: editParams.toString()
-                        }).then(async res2 => {
-                            if (res2.status === 200 || res2.status === 201) {
-                                const modal = bootstrap.Modal.getInstance(document.getElementById('editAssignmentModal'));
-                                if (modal) modal.hide();
-                                window.newAddedCriteria = [];
-                                window.isCreatingAssignment = false;
-                                location.reload();
-                            } else {
-                                const text = await res2.text();
-                                alert('Kreateerimine õnnestus, kuid ei õnnestunud lisada kriteeriume: ' + text);
-                                location.reload();
-                            }
-                        });
+                        // Success! Assignment created with criteria in one call
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('editAssignmentModal'));
+                        if (modal) modal.hide();
+                        window.newAddedCriteria = [];
+                        window.isCreatingAssignment = false;
+                        location.reload();
                     } else {
                         alert('Ülesande loomine ebaõnnestus: ' + (data && data.message ? data.message : JSON.stringify(data)));
                     }

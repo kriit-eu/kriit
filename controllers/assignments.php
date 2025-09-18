@@ -1075,10 +1075,10 @@ class assignments extends Controller
                 }
                 if (!empty($criterionName)) {
                     Db::insert('criteria', ['assignmentId' => $assignmentId, 'criterionName' => $criterionName]);
-                    $message = "$_POST[teacherName] lisas uue kriteeriumi '$criterionName'.";
-                    $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
+                        $message = "$_POST[teacherName] lisas uue kriteeriumi '$criterionName'.";
+                        $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
+                    }
                 }
-            }
         }
     }
 
@@ -1367,6 +1367,27 @@ class assignments extends Controller
                     } catch (\Exception $e) {
                         // Non-fatal: continue processing
                         Activity::create(ACTIVITY_UPDATE_ASSIGNMENT, $this->auth->userId, $assignmentId, "Failed to associate learning outcome: " . $e->getMessage());
+                    }
+                }
+            }
+        }
+
+        // Handle criteria if provided
+        if (isset($_POST['newCriteria']) && is_array($_POST['newCriteria']) && count($_POST['newCriteria']) > 0) {
+            foreach ($_POST['newCriteria'] as $crit) {
+                // Accept both string and array/object
+                if (is_array($crit) && isset($crit['criteriaName'])) {
+                    $criterionName = $crit['criteriaName'];
+                } else {
+                    $criterionName = $crit;
+                }
+                if (!empty($criterionName)) {
+                    try {
+                        Db::insert('criteria', ['assignmentId' => $assignmentId, 'criterionName' => $criterionName]);
+                        Activity::create(ACTIVITY_UPDATE_ASSIGNMENT, $this->auth->userId, $assignmentId, "Added criterion: $criterionName");
+                    } catch (\Exception $e) {
+                        // Non-fatal: continue processing
+                        Activity::create(ACTIVITY_UPDATE_ASSIGNMENT, $this->auth->userId, $assignmentId, "Failed to add criterion: " . $e->getMessage());
                     }
                 }
             }
