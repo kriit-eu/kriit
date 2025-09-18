@@ -86,9 +86,16 @@
         display: block;
     }
 
-    /* Make assignment edit modal even wider than Bootstrap modal-xl */
-    .modal-xl {
-        max-width: 1200px;
+    /* Make assignment edit modal cover 90% of viewport */
+    .modal-dialog {
+        max-width: 90vw !important;
+        width: 90vw !important;
+        height: 90vh !important;
+        max-height: 90vh !important;
+    }
+
+    .modal-dialog .modal-content {
+        height: 100% !important;
     }
 
     body {
@@ -885,13 +892,13 @@
 
     <div class="modal fade" id="editAssignmentModal" tabindex="-1" aria-labelledby="editAssignmentModalLabel"
         aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-centered">
-            <div class="modal-content">
+        <div class="modal-dialog modal-dialog-centered modal-fullscreen-lg-down" style="max-width: 90vw; width: 90vw; height: 90vh; max-height: 90vh;">
+            <div class="modal-content" style="height: 100%;">
                 <div class="modal-header">
                     <h5 class="modal-title" id="editAssignmentModalLabel">Muuda ülesanne</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body" style="overflow-y: auto; max-height: calc(90vh - 120px);">
                     <form id="editAssignmentForm">
                         <div class="mb-3">
                             <label for="assignmentName" class="form-label fw-bold">Pealkiri</label>
