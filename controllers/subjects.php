@@ -112,6 +112,7 @@ class subjects extends Controller
                                 a.assignmentDueAt,
                                 a.assignmentEntryDate,
                                 a.assignmentHours,
+                                a.assignmentInvolvesOpenApi,
 
                                 ua.userGrade,
                                 ua.assignmentStatusId,
@@ -235,6 +236,7 @@ class subjects extends Controller
                         'assignmentId' => $assignmentId,
                         'assignmentName' => $row['assignmentName'],
                         'assignmentInstructions' => $row['assignmentInstructions'],
+                        'assignmentInvolvesOpenApi' => isset($row['assignmentInvolvesOpenApi']) ? (int)$row['assignmentInvolvesOpenApi'] : 0,
                         'assignmentDueAt' => $row['assignmentDueAt'],
                         'assignmentEntryDate' => $row['assignmentEntryDate'],
                         'assignmentSkipLinkCheck' => isset($row['assignmentSkipLinkCheck']) ? (int)$row['assignmentSkipLinkCheck'] : 0,
