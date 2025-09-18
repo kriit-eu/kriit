@@ -158,6 +158,58 @@ class assignments extends Controller
             'messages' => []
         ];
 
+        // If the main query returned no rows (e.g. assignment exists but no userAssignments yet,
+        // which can happen for assignments synced later or created locally) we should still
+        // populate basic assignment info so students can view/submit it. Without this the
+        // view shows an empty page because no rows were iterated below.
+        if (empty($data)) {
+            $basic = Db::getFirst(
+                "SELECT a.assignmentId, a.assignmentName, a.assignmentInstructions, a.assignmentDueAt, a.assignmentInvolvesOpenApi, subj.teacherId, t.userName AS teacherName
+                 FROM assignments a
+                 JOIN subjects subj ON a.subjectId = subj.subjectId
+                 JOIN users t ON subj.teacherId = t.userId
+                 WHERE a.assignmentId = ?",
+                [$assignmentId]
+            );
+
+            if ($basic) {
+                $assignment['assignmentName'] = $basic['assignmentName'];
+                $assignment['assignmentInstructions'] = $basic['assignmentInstructions'];
+                $assignment['assignmentDueAt'] = !empty($basic['assignmentDueAt']) ? date('d.m.Y', strtotime($basic['assignmentDueAt'])) : 'Pole tähtaega';
+                $assignment['assignmentInvolvesOpenApi'] = (int)$basic['assignmentInvolvesOpenApi'];
+                $assignment['teacherId'] = $basic['teacherId'];
+                $assignment['teacherName'] = $basic['teacherName'];
+            }
+
+            // Ensure students (current student) can still see the assignment page and submit.
+            if ($this->isStudent) {
+                $studentId = $this->auth->userId;
+                $fullName = $this->auth->userName ?? '';
+                $initials = mb_substr($fullName, 0, 1) . (mb_strrpos($fullName, ' ') !== false ? mb_substr($fullName, mb_strrpos($fullName, ' ') + 1, 1) : '');
+
+                $dueDate = !empty($basic['assignmentDueAt']) ? new \DateTime($basic['assignmentDueAt']) : null;
+                $daysRemaining = $dueDate ? (int)(new \DateTime())->diff($dueDate)->format('%r%a') : 1000;
+
+                $class = Assignment::cellColor($this->isStudent, $this->isTeacher, false, $daysRemaining, ASSIGNMENT_STATUS_NOT_SUBMITTED, 'Esitamata');
+
+                $assignment['students'][$studentId] = [
+                    'studentId' => $studentId,
+                    'studentName' => $fullName,
+                    'grade' => '',
+                    'assignmentStatusName' => 'Esitamata',
+                    'initials' => $initials,
+                    'solutionUrl' => '',
+                    'comments' => [],
+                    'userDoneCriteria' => [],
+                    'userDoneCriteriaCount' => 0,
+                    'class' => $class,
+                    'tooltipText' => 'Esitamata',
+                    'studentActionButtonName' => 'Esita',
+                    'isDisabledStudentActionButton' => ''
+                ];
+            }
+        }
+
         // Determine the primary group for this assignment
         $groupParam = $_GET['group'] ?? null; // Get group from URL parameter
         $primaryGroupId = $this->determinePrimaryGroup($data, $groupParam);
