@@ -1262,6 +1262,14 @@
         <?php endforeach; ?>
     <?php endforeach; ?>
 
+        // Map internal subjectId to subjectExternalId for create-modal lookup
+        var subjectIdToExternalId = {};
+        <?php foreach ($this->groups as $group): ?>
+            <?php foreach ($group['subjects'] as $subject): ?>
+                subjectIdToExternalId[<?= json_encode($subject['subjectId']) ?>] = <?= json_encode($subject['subjectExternalId']) ?>;
+            <?php endforeach; ?>
+        <?php endforeach; ?>
+
     // Make edit modal globally available
     function openEditAssignmentModal(assignment) {
         // Character counter and validation for assignment name
@@ -1686,26 +1694,123 @@
 
         const modal = new bootstrap.Modal(document.getElementById('editAssignmentModal'));
         modal.show();
-
-        // Ensure the inline new criterion input works for create mode as well
+        // Populate ÕV combobox and wire up counter/checkbox logic same as edit modal
         setTimeout(() => {
+            // character counter wiring (reuse updateCounter if available)
+            const nameInput = document.getElementById('assignmentName');
+            const counter = document.getElementById('assignmentNameCounter');
+            const errorDiv = document.getElementById('assignmentNameError');
+
+            function updateCounterCreate() {
+                const combobox = document.getElementById('assignmentLearningOutcomeCombobox');
+                const checkedBoxes = combobox ? Array.from(combobox.querySelectorAll('.combobox-checkbox:checked')) : [];
+                const selectedOvLabels = checkedBoxes.map(cb => 'ÕV' + (cb.dataset.nr || '?'));
+                let ovLabelString = '';
+                if (selectedOvLabels.length > 0) ovLabelString = ' (' + selectedOvLabels.join(', ') + ')';
+                const len = (nameInput ? nameInput.value.length : 0) + ovLabelString.length;
+                if (counter) counter.textContent = len + ' / 100';
+                if (len > 100) {
+                    nameInput && nameInput.classList.add('is-invalid');
+                    if (errorDiv) errorDiv.style.display = '';
+                } else {
+                    nameInput && nameInput.classList.remove('is-invalid');
+                    if (errorDiv) errorDiv.style.display = 'none';
+                }
+            }
+
+            // Build combobox from subjectLearningOutcomes using subjectExternalId
+            const combobox = document.getElementById('assignmentLearningOutcomeCombobox');
+            if (combobox) {
+                const externalId = subjectIdToExternalId[subjectId] || null;
+                const outcomes = externalId ? (subjectLearningOutcomes[externalId] || []) : [];
+                combobox.innerHTML = outcomes.map(function(outcome, i) {
+                    var nr = (parseInt(outcome.learningOutcomeOrderNr, 10) || 0) + 1;
+                    // Remove leading number and punctuation from outcome.nameEt
+                    var cleanName = outcome.nameEt ? outcome.nameEt.replace(/^\s*\d+[).\-:]?\s*/, '') : '';
+                    return `
+            <div class="list-group-item list-group-item-action combobox-item border-0 py-2 px-3 d-flex align-items-start">
+              <input class="combobox-checkbox" type="checkbox" id="create-combobox-cb${i}" value="${outcome.id}" data-nr="${nr}" name="nameEt">
+              <div class="combobox-checkbox-visual d-flex align-items-center justify-content-center bg-white border border-2 rounded me-2 mt-1 flex-shrink-0" data-checkbox-id="create-combobox-cb${i}" style="cursor:pointer;">
+                <svg class="combobox-checkmark" viewBox="0 0 12 12" width="12" height="12">
+                  <path fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M2.5 6l3 3 4.5-6"/>
+                </svg>
+              </div>
+              <label class="combobox-label flex-grow-1 text-secondary lh-sm pt-1" for="create-combobox-cb${i}" lang="et" style="cursor:pointer;">ÕV${nr} – ${cleanName}</label>
+            </div>
+            `;
+                }).join('');
+
+                // add listeners
+                combobox.querySelectorAll('.combobox-checkbox').forEach(cb => {
+                    cb.addEventListener('change', function() {
+                        updateCounterCreate();
+                        var label = combobox.querySelector('label[for="' + cb.id + '"]');
+                        if (label) {
+                            if (cb.checked) {
+                                label.classList.remove('text-secondary');
+                                label.classList.add('text-dark', 'fw-medium');
+                            } else {
+                                label.classList.remove('text-dark', 'fw-medium');
+                                label.classList.add('text-secondary');
+                            }
+                        }
+                    });
+                    cb.addEventListener('click', updateCounterCreate);
+                });
+                combobox.querySelectorAll('.combobox-checkbox-visual').forEach(visual => {
+                    visual.addEventListener('click', function(e) {
+                        const checkboxId = visual.getAttribute('data-checkbox-id');
+                        const cb = combobox.querySelector('#' + CSS.escape(checkboxId));
+                        if (cb) {
+                            cb.checked = !cb.checked;
+                            cb.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
+                        e.preventDefault();
+                        e.stopPropagation();
+                    });
+                });
+                combobox.querySelectorAll('.combobox-item').forEach(item => {
+                    item.addEventListener('click', function(e) {
+                        if (
+                            e.target.classList.contains('combobox-checkbox-visual') ||
+                            e.target.classList.contains('combobox-checkmark') ||
+                            e.target.classList.contains('combobox-label') ||
+                            e.target.classList.contains('combobox-checkbox')
+                        ) {
+                            return;
+                        }
+                        const cb = item.querySelector('.combobox-checkbox');
+                        if (cb) {
+                            cb.checked = !cb.checked;
+                            cb.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
+                    });
+                });
+            }
+
+            // Attach event handlers for inline criterion add (same as edit)
             var input = document.getElementById('newCriterionInput');
-            if (!input) return;
-            // Remove previous listeners if any
-            input.onkeydown = null;
-            input.onblur = null;
-            input.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    addCriterionInline(input.value);
-                }
-            });
-            input.addEventListener('blur', function() {
-                if (input.value.trim()) {
-                    addCriterionInline(input.value);
-                }
-            });
-            // focus the input to encourage adding
-            input.focus();
+            if (input) {
+                input.onkeydown = null;
+                input.onblur = null;
+                input.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        addCriterionInline(input.value);
+                    }
+                });
+                input.addEventListener('blur', function() {
+                    if (input.value.trim()) addCriterionInline(input.value);
+                });
+                input.focus();
+            }
+
+            // wire name input counter
+            if (nameInput) {
+                nameInput.removeEventListener('input', updateCounterCreate);
+                nameInput.addEventListener('input', updateCounterCreate);
+            }
+            // initial counter
+            setTimeout(updateCounterCreate, 0);
         }, 0);
     }
 
@@ -1729,7 +1834,23 @@
             }
             const params = new URLSearchParams();
             params.append('subjectId', window.currentCreatingSubjectId || '');
-            params.append('assignmentName', assignmentName);
+            // Append selected ÕV labels to the name for saving (but keep input field unchanged)
+            try {
+                const combobox = document.getElementById('assignmentLearningOutcomeCombobox');
+                const checkedBoxes = combobox ? Array.from(combobox.querySelectorAll('.combobox-checkbox:checked')) : [];
+                const selectedOvLabels = checkedBoxes.map(cb => 'ÕV' + (cb.dataset.nr || '?'));
+                if (selectedOvLabels.length > 0) {
+                    params.append('assignmentName', assignmentName + ' (' + selectedOvLabels.join(', ') + ')');
+                } else {
+                    params.append('assignmentName', assignmentName);
+                }
+                // Also include selected learning outcome ids so backend can persist the mapping
+                checkedBoxes.forEach((cb, idx) => {
+                    params.append(`assignmentLearningOutcomeId[${idx}]`, cb.value);
+                });
+            } catch (e) {
+                params.append('assignmentName', assignmentName);
+            }
             params.append('assignmentInstructions', assignmentInstructions);
             params.append('assignmentDueAt', assignmentDueAt);
             // Add hours to initial create POST
@@ -1789,7 +1910,22 @@
                         // Prepare second call to save criteria and other optional fields
                         const editParams = new URLSearchParams();
                         editParams.append('assignmentId', newId);
-                        editParams.append('assignmentName', assignmentName);
+                        // Append same ÕV labels to edited name as well
+                        try {
+                            const combobox2 = document.getElementById('assignmentLearningOutcomeCombobox');
+                            const checkedBoxes2 = combobox2 ? Array.from(combobox2.querySelectorAll('.combobox-checkbox:checked')) : [];
+                            const selectedOvLabels2 = checkedBoxes2.map(cb => 'ÕV' + (cb.dataset.nr || '?'));
+                            if (selectedOvLabels2.length > 0) {
+                                editParams.append('assignmentName', assignmentName + ' (' + selectedOvLabels2.join(', ') + ')');
+                            } else {
+                                editParams.append('assignmentName', assignmentName);
+                            }
+                            checkedBoxes2.forEach((cb, idx) => {
+                                editParams.append(`assignmentLearningOutcomeId[${idx}]`, cb.value);
+                            });
+                        } catch (e) {
+                            editParams.append('assignmentName', assignmentName);
+                        }
                         editParams.append('assignmentInstructions', assignmentInstructions);
                         editParams.append('assignmentDueAt', assignmentDueAt);
                         // Ensure assignmentEntryDate is included in edit call as well.
