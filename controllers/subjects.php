@@ -107,6 +107,7 @@ class subjects extends Controller
 
                                 a.assignmentId,
                                 a.assignmentName,
+                                a.assignmentSkipLinkCheck,
                                 a.assignmentInstructions,
                                 a.assignmentDueAt,
                                 a.assignmentEntryDate,
@@ -236,6 +237,7 @@ class subjects extends Controller
                         'assignmentInstructions' => $row['assignmentInstructions'],
                         'assignmentDueAt' => $row['assignmentDueAt'],
                         'assignmentEntryDate' => $row['assignmentEntryDate'],
+                        'assignmentSkipLinkCheck' => isset($row['assignmentSkipLinkCheck']) ? (int)$row['assignmentSkipLinkCheck'] : 0,
                         // Ensure assignmentHours is available to the view and provide 'lessons' for frontend compatibility
                         'assignmentHours' => isset($row['assignmentHours']) ? $row['assignmentHours'] : null,
                         'lessons' => isset($row['assignmentHours']) ? $row['assignmentHours'] : null,

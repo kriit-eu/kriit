@@ -1009,6 +1009,10 @@
                                 name="assignmentInvolvesOpenApi">
                             <label class="form-check-label" for="assignmentInvolvesOpenApi">Ülesandel on OpenAPI</label>
                         </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="assignmentSkipLinkCheck" name="assignmentSkipLinkCheck">
+                            <label class="form-check-label" for="assignmentSkipLinkCheck">Ära kontrolli linkide staatust</label>
+                        </div>
                         <div class="mb-3">
                             <label class="form-label fw-bold">Kriteeriumid</label>
                             <div id="editCriteriaContainer"
@@ -1193,6 +1197,12 @@
         });
         formData.append('teacherName', teacherName);
         formData.append('teacherId', teacherId);
+        // Include skip-link-check flag (1 or 0)
+        try {
+            formData.append('assignmentSkipLinkCheck', form.assignmentSkipLinkCheck && form.assignmentSkipLinkCheck.checked ? 1 : 0);
+        } catch (e) {
+            formData.append('assignmentSkipLinkCheck', 0);
+        }
 
         // AJAX POST to backend
         fetch('/assignments/ajax_editAssignment', {
@@ -1326,6 +1336,10 @@
                     }
                 } catch (e) { console.error('Error setting assignmentHours:', e); }
                 document.getElementById('assignmentInvolvesOpenApi').checked = assignment.assignmentInvolvesOpenApi ? true : false;
+                // Initialize skip link check checkbox (use assignment.assignmentSkipLinkCheck if provided)
+                try {
+                    document.getElementById('assignmentSkipLinkCheck').checked = assignment.assignmentSkipLinkCheck ? true : false;
+                } catch (e) { /* ignore if element missing */ }
                 var combobox = document.getElementById('assignmentLearningOutcomeCombobox');
                 var subjectExternalId = assignment.subjectExternalId;
                 var outcomes = subjectLearningOutcomes[subjectExternalId] || [];
@@ -1658,6 +1672,7 @@
     if (form.assignmentHours) form.assignmentHours.value = '';
         form.assignmentEntryDate.value = '';
         form.assignmentInvolvesOpenApi.checked = false;
+    try { document.getElementById('assignmentSkipLinkCheck').checked = false; } catch (e) {}
         document.getElementById('editCriteriaContainer').innerHTML = '';
         // Set modal title
         const label = document.getElementById('editAssignmentModalLabel');
@@ -1720,6 +1735,8 @@
             // Add hours to initial create POST
             const assignmentHours = form.assignmentHours ? form.assignmentHours.value.trim() : '';
             params.append('assignmentHours', assignmentHours);
+            // Include skip-link-check flag for creation
+            try { params.append('assignmentSkipLinkCheck', form.assignmentSkipLinkCheck && form.assignmentSkipLinkCheck.checked ? 1 : 0); } catch (e) { params.append('assignmentSkipLinkCheck', 0); }
             // Ensure assignmentEntryDate is sent to server when creating from subjects page.
             // Use explicit entry date if provided, otherwise fall back to due date or today.
             // If entry date missing, default to today
@@ -1783,6 +1800,8 @@
                         editParams.append('teacherName', window.teacherName || '');
                         editParams.append('teacherId', window.teacherId || '');
                         editParams.append('assignmentInvolvesOpenApi', form.assignmentInvolvesOpenApi.checked ? 1 : 0);
+                        // Include skip-link-check flag when persisting optional fields after creation
+                        editParams.append('assignmentSkipLinkCheck', form.assignmentSkipLinkCheck && form.assignmentSkipLinkCheck.checked ? 1 : 0);
                         // Include hours value when persisting optional fields after creation
                         editParams.append('assignmentHours', form.assignmentHours ? form.assignmentHours.value.trim() : '');
                         newCriteria.forEach((c, idx) => {
