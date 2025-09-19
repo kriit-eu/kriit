@@ -68,6 +68,63 @@
     </div>
 </div>
 <style>
+    /* Make delete criterion modal compact and centered without affecting other modals */
+    #deleteCriterionModal .modal-dialog {
+        /* Narrower to appear like a compact confirmation banner */
+        max-width: 360px !important;
+        width: auto !important;
+        margin: 0.75rem auto !important;
+        /* Keep overall height limited on small screens */
+        max-height: 65vh !important;
+    }
+    /* Make modal content a vertical flex container so header and footer stay fixed
+       while the body grows and becomes scrollable when content is long. */
+    #deleteCriterionModal .modal-content {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        /* Reduced padding for compact appearance */
+        padding: 0.4rem 0.5rem;
+        box-sizing: border-box;
+        font-size: 0.95rem;
+    }
+
+    /* Modal body should be flexible and scroll when needed. The max-height
+       ensures the entire dialog never exceeds viewport constraints set on
+       .modal-dialog above. */
+    #deleteCriterionModal .modal-body {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        max-height: calc(65vh - 100px);
+        padding: 0.35rem 0.35rem;
+        font-size: 0.95rem;
+        line-height: 1.15;
+    }
+
+    /* Ensure header and footer don't shrink and remain visible */
+    #deleteCriterionModal .modal-header,
+    #deleteCriterionModal .modal-footer {
+        flex: 0 0 auto;
+    }
+
+    /* Make header title slightly smaller and tighten footer buttons */
+    #deleteCriterionModal .modal-header .modal-title {
+        font-size: 0.98rem;
+        margin: 0;
+    }
+
+    #deleteCriterionModal .modal-footer .btn {
+        padding: 0.35rem 0.6rem;
+        font-size: 0.9rem;
+    }
+
+    /* Reduce gap between body and footer for compactness */
+    #deleteCriterionModal .modal-footer {
+        margin-top: 0.25rem;
+        gap: 0.5rem;
+    }
+</style>
+<style>
     /* Criteria section: add border to each row except when editing */
     #editCriteriaContainer .criteria-row {
         border: 0.5px solid #dee2e6;
@@ -86,15 +143,17 @@
         display: block;
     }
 
-    /* Make assignment edit modal cover 90% of viewport */
-    .modal-dialog {
+    /* Make assignment edit modal cover 90% of viewport (scoped to editAssignmentModal only) */
+    #editAssignmentModal .modal-dialog,
+    #editAssignmentModal.modal .modal-dialog,
+    #editAssignmentModal .modal-dialog.modal-fullscreen-lg-down {
         max-width: 90vw !important;
         width: 90vw !important;
         height: 90vh !important;
         max-height: 90vh !important;
     }
 
-    .modal-dialog .modal-content {
+    #editAssignmentModal .modal-dialog .modal-content {
         height: 100% !important;
     }
 
@@ -427,6 +486,12 @@
     /* Fallback for when Bootstrap inserts the backdrop before the modal */
     body>.modal-backdrop.delete-criterion-backdrop.show {
         z-index: 2150 !important;
+    }
+</style>
+<style>
+    /* Ensure Bootstrap tooltips appear above modals/backdrops */
+    .tooltip {
+        z-index: 2350 !important;
     }
 </style>
 <style>
@@ -1021,12 +1086,14 @@
                             <label class="form-check-label" for="assignmentSkipLinkCheck">Ära kontrolli linkide staatust</label>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label fw-bold">Kriteeriumid</label>
-                            <div id="editCriteriaContainer"
-                                style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%;"></div>
+                            <label class="form-label fw-bold">Kriteeriumid
+                                <button type="button" class="btn btn-link btn-sm p-0 align-text-top ms-2" id="newCriterionHelpBtn" data-bs-toggle="tooltip" data-bs-placement="top" title="Kleebi mitu rida (Enteriga eraldatud). Iga rida lisatakse eraldi kriteeriumina." aria-label="Kriteeriumi abi">
+                                    <i class="fa fa-info-circle" aria-hidden="true"></i>
+                                </button>
+                            </label>
+                            <div id="editCriteriaContainer" style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%;"></div>
                             <div id="addCriterionInlineContainer" style="width: 100%;">
-                                <input type="text" class="form-control mt-2" id="newCriterionInput"
-                                    placeholder="Lisa uus kriteerium..." autocomplete="off">
+                                <input type="text" class="form-control mt-2" id="newCriterionInput" placeholder="Lisa uus kriteerium..." autocomplete="off">
                             </div>
                         </div>
                     </form>
@@ -1545,18 +1612,37 @@
                         // Remove previous listeners
                         input.onkeydown = null;
                         input.onblur = null;
-                        input.addEventListener('keydown', function(e) {
-                            if (e.key === 'Enter') {
-                                var assignmentId = window.currentEditingAssignmentId;
-                                addCriterionInline(input.value, assignmentId);
-                            }
-                        });
-                        input.addEventListener('blur', function() {
-                            if (input.value.trim()) {
-                                var assignmentId = window.currentEditingAssignmentId;
-                                addCriterionInline(input.value, assignmentId);
-                            }
-                        });
+                                // Enter: add or bulk-split and add
+                                input.addEventListener('keydown', function(e) {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        var val = input.value;
+                                        addCriterionInline(val);
+                                        input.value = '';
+                                    }
+                                });
+                                // Blur: add remaining text
+                                input.addEventListener('blur', function() {
+                                    if (input.value.trim()) {
+                                        addCriterionInline(input.value);
+                                        input.value = '';
+                                    }
+                                });
+                                // Paste: if multiple lines or separators, add them
+                                input.addEventListener('paste', function(e) {
+                                    try {
+                                        const clipboard = (e.clipboardData || window.clipboardData).getData('text');
+                                        const parts = splitCriteriaFromText(clipboard);
+                                        // If clipboard contains any newline, treat as bulk paste. This
+                                        // handles cases where filtering would leave a single part
+                                        // (e.g. trailing/leading empty lines) but user expects bulk.
+                                        if (parts.length > 1 || /\r|\n/.test(clipboard)) {
+                                            e.preventDefault();
+                                            parts.forEach(p => addCriterionInline(p, true));
+                                            input.value = '';
+                                        }
+                                    } catch (err) { /* ignore */ }
+                                });
                     }
                 }, 0);
             });
@@ -1569,14 +1655,41 @@
     // Collect new criteria in array and update UI only
     window.newAddedCriteria = window.newAddedCriteria || [];
 
-    function addCriterionInline(name) {
+    // Split pasted or bulk text into separate criterion names. Use newline-only splitting.
+    function splitCriteriaFromText(text) {
+        if (!text || !text.trim()) return [];
+        // Normalize newlines (convert CR and CRLF to LF)
+        text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+        // Split only on one or more newlines - do not split on dots or semicolons
+        const parts = text.split(/\n+/);
+        // Remove leading numeric prefixes like '1.' or '2)'
+        return parts.map(s => s.replace(/^\s*\d+[)\.\-:\s]*/, '').trim()).filter(Boolean);
+    }
+
+    function addCriterionInline(name, _isBulk) {
         var criteriaContainer = document.getElementById('editCriteriaContainer');
-        if (!name || !name.trim()) return;
-        name = name.trim();
-        // Prevent duplicates
-        var existing = Array.from(criteriaContainer.querySelectorAll('.form-check-label')).map(l => l.textContent.trim());
+        if (!name || !name.toString().trim()) return;
+        name = name.toString().trim();
+    // Keep trailing punctuation: do not remove final dots — user requested periods be preserved
+    name = name.trim();
+        // If this looks like bulk text and not already handled, split and add each
+        if (!_isBulk) {
+            const split = splitCriteriaFromText(name);
+            if (split.length > 1) {
+                split.forEach(part => addCriterionInline(part, true));
+                return;
+            }
+        }
+        // Prevent duplicates (normalize by trimming and removing visual numeric prefixes)
+        var existing = [];
+        try {
+            existing = Array.from(criteriaContainer.querySelectorAll('.form-check-label, .editable-criterion-label')).map(l => l.textContent.replace(/^\s*\d+\.\s*/, '').trim());
+        } catch (e) {
+            existing = [];
+        }
         if (existing.includes(name) || window.newAddedCriteria.includes(name)) {
-            alert('Selline kriteerium on juba olemas!');
+            // show a non-blocking notice instead of alert when bulk-adding multiple
+            if (!_isBulk) alert('Selline kriteerium on juba olemas!');
             return;
         }
         window.newAddedCriteria.push(name);
@@ -1609,6 +1722,7 @@
 
                 // Save logic
                 function saveEdit() {
+                    // Preserve trailing punctuation; only trim surrounding whitespace
                     const newName = input.value.trim();
                     if (newName && newName !== oldName) {
                         label.textContent = newName;
@@ -1802,11 +1916,30 @@
                 input.onblur = null;
                 input.addEventListener('keydown', function(e) {
                     if (e.key === 'Enter') {
+                        e.preventDefault();
                         addCriterionInline(input.value);
+                        input.value = '';
                     }
                 });
                 input.addEventListener('blur', function() {
-                    if (input.value.trim()) addCriterionInline(input.value);
+                    if (input.value.trim()) {
+                        addCriterionInline(input.value);
+                        input.value = '';
+                    }
+                });
+                input.addEventListener('paste', function(e) {
+                    try {
+                        const clipboard = (e.clipboardData || window.clipboardData).getData('text');
+                        const parts = splitCriteriaFromText(clipboard);
+                        // Treat any paste that contains newlines as bulk input so
+                        // empty lines or leading/trailing newlines won't prevent
+                        // bulk creation when there is already a criterion present.
+                        if (parts.length > 1 || /\r|\n/.test(clipboard)) {
+                            e.preventDefault();
+                            parts.forEach(p => addCriterionInline(p, true));
+                            input.value = '';
+                        }
+                    } catch (err) { /* ignore */ }
                 });
                 input.focus();
             }
@@ -2271,7 +2404,13 @@
         };
 
         document.addEventListener('DOMContentLoaded', () => {
-            $$('[data-bs-toggle="tooltip"]').forEach(el => new bootstrap.Tooltip(el));
+            // Initialize all tooltips and attach them to body to avoid clipping inside modals
+            $$('[data-bs-toggle="tooltip"]').forEach(el => new bootstrap.Tooltip(el, { container: 'body' }));
+            // Ensure tooltip for inline criterion help button is initialized specifically (defensive)
+            try {
+                var helpBtn = document.getElementById('newCriterionHelpBtn');
+                if (helpBtn) new bootstrap.Tooltip(helpBtn, { container: 'body' });
+            } catch (e) { console.warn('Could not initialize newCriterionHelpBtn tooltip', e); }
             prepareClickableCells();
             prepareShowAllToggle();
             setRedCellIntensity();
