@@ -906,13 +906,18 @@ foreach ($assignment['students'] as $s):
                     const cardBody = document.createElement('div');
                     cardBody.classList.add('card-body');
 
-                    // Add comment content inside the card body
-                    const commentContent = document.createElement('p');
-                    commentContent.innerHTML = `
-                    ${comment.createdAt} <strong>${comment.name || 'Tundmatu'}</strong><br>
-                    <em>${comment.comment}</em>
-                `;
-                    cardBody.appendChild(commentContent);
+                    // Meta (date + author)
+                    const meta = document.createElement('p');
+                    meta.className = 'comment-date small text-muted';
+                    meta.innerHTML = `${comment.createdAt} <strong>${comment.name || 'Tundmatu'}</strong>`;
+
+                    // Comment content stored as raw markdown so processComments() can render images/markdown
+                    const content = document.createElement('p');
+                    content.className = 'comment-text';
+                    content.setAttribute('data-raw-comment', comment.comment || '');
+
+                    cardBody.appendChild(meta);
+                    cardBody.appendChild(content);
 
                     // Append the card body to the card
                     card.appendChild(cardBody);
@@ -920,6 +925,8 @@ foreach ($assignment['students'] as $s):
                     // Append the card to the comments container
                     commentsContainer.appendChild(card);
                 }
+                // After dynamically populating comments, run the markdown processor so images render
+                try { processComments(); } catch (e) { console.error('processComments error', e); }
             } else {
                 commentsContainer.innerHTML = '<p>Kommentaare pole.</p>';
             }
