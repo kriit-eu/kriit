@@ -443,7 +443,10 @@
     <div id="main-container">
         <div style="display: flex; gap: 20px; align-items: flex-start;">
             <!-- Left side - only current student (viewer) -->
-            <div id="assignments-container" style="overflow-x: auto; flex: 1;">
+            <div id="assignments-container" style="overflow-x: auto; flex: 0 0 40%; max-width: 100px;">
+                <div class="mb-2">
+                    <strong>Sinu seis</strong>
+                </div>
                 <div class="assignments-body">
                     <?php 
 $currentUserId = $this->auth->userId;
