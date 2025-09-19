@@ -562,7 +562,7 @@ foreach ($assignment['students'] as $s):
     <!-- Inline student panel: appears in page flow instead of as an overlay modal. Render for students but keep hidden by default; client-side will open when appropriate -->
     <div id="studentPanel" class="card mb-4" style="display:none;">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0" id="studentName"></h5>
+            <h5 class="mb-0" id="studentName">Ülesande lahendus</h5>
         </div>
         <div class="card-body">
             <div class="mb-3">
@@ -826,8 +826,8 @@ foreach ($assignment['students'] as $s):
             }
 
                 if (isStudent) {
-                    // For student viewers, show a generic label 'Hinne' instead of their full name
-                    modalTitle.textContent = 'Hinne';
+                    // For student viewers, show a generic label 'Ülesande lahendus' instead of their full name
+                    modalTitle.textContent = 'Ülesande lahendus';
 
                     // Student-specific UI: show solution input and wire validation/submit state
                     solutionInputContainer.style.display = 'block'; // Show the input for students to enter a link
