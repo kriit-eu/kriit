@@ -1451,7 +1451,8 @@ class Sync {
      */
     private static function diffAssignmentFields($kriitAssignment, $remoteAssignment)
     {
-    $check = ['assignmentName', 'assignmentInstructions', 'assignmentDueAt', 'assignmentEntryDate', 'assignmentHours'];
+    // Do NOT include `assignmentInstructions` in diffs sent back to the frontend
+    $check = ['assignmentName', 'assignmentDueAt', 'assignmentEntryDate', 'assignmentHours'];
         $diffs = [];
         // Only compare if assignmentExternalId exists in both
         $kriitId = isset($kriitAssignment['assignmentExternalId']) ? $kriitAssignment['assignmentExternalId'] : null;
