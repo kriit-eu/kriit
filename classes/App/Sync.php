@@ -227,10 +227,22 @@ class Sync {
                 $remoteSubject['lastLessonDate'] ?? null
             );
             
+            // Prepare update payload for all subjects with same external ID
+            $updatePayload = ['subjectLastLessonDate' => $subjectLastLessonDate];
+
+            // If frontend provided plannedHours, always map and validate it and include in bulk update
+            if (isset($remoteSubject['plannedHours']) && $remoteSubject['plannedHours'] !== '') {
+                if (!is_numeric($remoteSubject['plannedHours']) || (int)$remoteSubject['plannedHours'] < 0) {
+                    error_log("Ignoring invalid plannedHours for subject {$remoteSubject['subjectExternalId']}");
+                } else {
+                    $updatePayload['subjectPlannedHours'] = (int)$remoteSubject['plannedHours'];
+                }
+            }
+
             // Update all subjects with the same external ID in the same system
             $affectedRows = Db::update(
                 'subjects', 
-                ['subjectLastLessonDate' => $subjectLastLessonDate], 
+                $updatePayload, 
                 "subjectExternalId = ? AND systemId = ?", 
                 [$remoteSubject['subjectExternalId'], $systemId]
             );
@@ -238,15 +250,25 @@ class Sync {
             // Log the update if any rows were affected
             if ($affectedRows > 0) {
                 $teacher = User::findByPersonalCode($remoteSubject['teacherPersonalCode']);
-                Activity::create(ACTIVITY_UPDATE_ASSIGNMENT_SYNC, $teacher['userId'], null, [
-                    'field' => 'subjectLastLessonDate',
-                    'newValue' => $subjectLastLessonDate,
+                $activityData = [
                     'subjectName' => $remoteSubject['subjectName'],
                     'subjectExternalId' => $remoteSubject['subjectExternalId'],
                     'systemId' => $systemId,
                     'affectedSubjects' => $affectedRows,
-                    'action' => 'bulk_update_last_lesson_date'
-                ]);
+                ];
+
+                // Include which fields were updated for clearer logging
+                if (array_key_exists('subjectLastLessonDate', $updatePayload)) {
+                    $activityData['field_lastLessonDate'] = $updatePayload['subjectLastLessonDate'];
+                }
+                if (array_key_exists('subjectPlannedHours', $updatePayload)) {
+                    $activityData['field_plannedHours'] = $updatePayload['subjectPlannedHours'];
+                    $activityData['action'] = 'bulk_update_last_lesson_date_and_planned_hours';
+                } else {
+                    $activityData['action'] = 'bulk_update_last_lesson_date';
+                }
+
+                Activity::create(ACTIVITY_UPDATE_ASSIGNMENT_SYNC, $teacher['userId'], null, $activityData);
             }
             
             foreach ($matchingSubjects as $kriitSubject) {
