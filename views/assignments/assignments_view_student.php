@@ -225,6 +225,11 @@
         border-radius: 8px;
     }
 
+        /* Reduce bottom margin to compensate for large utility class (mb-5) */
+        #criterionDisplay {
+            margin-bottom: 10px !important; /* original mb-5 equals 3rem (48px) in Bootstrap 5; reduce by 28px to 20px total */
+        }
+
     #notificationContainer {
         max-height: 500px;
         border: 2px solid #4a90e2;
@@ -411,6 +416,16 @@
         color: #6c757d;
         font-size: 0.9em;
     }
+
+    /* Fade animation for student panel */
+    #studentPanel {
+        transition: opacity 0.3s ease-in-out;
+    }
+
+    #studentPanel.fade-hidden {
+        opacity: 0;
+        pointer-events: none;
+    }
 </style>
 <div>
     <div class="mb-3">
@@ -560,7 +575,7 @@ foreach ($assignment['students'] as $s):
 
     <?php if ($isStudent): ?>
     <!-- Inline student panel: appears in page flow instead of as an overlay modal. Render for students but keep hidden by default; client-side will open when appropriate -->
-    <div id="studentPanel" class="card mb-4" style="display:none;">
+    <div id="studentPanel" class="card mb-4 fade-hidden" style="display:none;">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0" id="studentName">Ülesande lahendus</h5>
         </div>
@@ -774,9 +789,7 @@ foreach ($assignment['students'] as $s):
                     if (submitButton) {
                         submitButton.style.display = 'none';
                     }
-                    if (studentPanel) {
-                        studentPanel.style.display = 'none';
-                    }
+                    hideStudentPanel();
                 }
             }
         });
@@ -786,6 +799,39 @@ foreach ($assignment['students'] as $s):
             const boxes = Array.from(document.querySelectorAll('#requiredCriteria input[type="checkbox"]'));
             if (boxes.length === 0) return false;
             return boxes.every(cb => cb.checked);
+        }
+
+        // Helper functions for smooth student panel show/hide with fade animation
+        function showStudentPanel() {
+            const panel = document.getElementById('studentPanel');
+            if (!panel) return;
+            
+            panel.style.display = 'block';
+            // Force reflow to ensure display:block is applied before removing fade-hidden
+            panel.offsetHeight;
+            
+            // Remove fade-hidden class on next frame to trigger fade-in animation
+            requestAnimationFrame(() => {
+                panel.classList.remove('fade-hidden');
+            });
+            
+            // Smooth scroll into view after animation starts
+            setTimeout(() => {
+                panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
+        }
+
+        function hideStudentPanel() {
+            const panel = document.getElementById('studentPanel');
+            if (!panel) return;
+            
+            panel.classList.add('fade-hidden');
+            // Hide after fade animation completes
+            setTimeout(() => {
+                if (panel.classList.contains('fade-hidden')) {
+                    panel.style.display = 'none';
+                }
+            }, 300);
         }
 
         // If the student panel exists, open it and ensure submit button is visible/enabled
@@ -1068,18 +1114,12 @@ foreach ($assignment['students'] as $s):
             });
 
 
-            // Show inline student panel instead of Bootstrap modal
-            const studentPanel = document.getElementById('studentPanel');
-            if (studentPanel) {
-                studentPanel.style.display = '';
-                // Scroll into view for better UX
-                studentPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
+            // Show inline student panel instead of Bootstrap modal with smooth fade
+            showStudentPanel();
         }
 
         function closeStudentPanel() {
-            const studentPanel = document.getElementById('studentPanel');
-            if (studentPanel) studentPanel.style.display = 'none';
+            hideStudentPanel();
         }
 
         function saveStudentCriteria() {
