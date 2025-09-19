@@ -794,6 +794,61 @@ foreach ($assignment['students'] as $s):
             }
         });
 
+        // Auto-save student criteria on change/blur with debounce to batch rapid toggles
+        (function() {
+            const requiredContainer = document.getElementById('requiredCriteria');
+            if (!requiredContainer) return;
+
+            // Only attach auto-save handlers for student users
+            const isStudentViewer = <?= $isStudent ? 'true' : 'false' ?>;
+            if (!isStudentViewer) return;
+
+            // Debounce helper
+            function debounce(fn, wait) {
+                let t = null;
+                return function(...args) {
+                    clearTimeout(t);
+                    t = setTimeout(() => fn.apply(this, args), wait);
+                };
+            }
+
+            // Read current criteria state and send to server
+            function saveCriteriaNow() {
+                const criteria = getCriteriaList('#requiredCriteria input[type="checkbox"]');
+                ajax('assignments/saveStudentCriteria', {
+                    assignmentId: assignment.assignmentId,
+                    studentId: <?= $this->auth->userId ?>,
+                    criteria: criteria,
+                    teacherId: assignment.teacherId,
+                    teacherName: assignment.teacherName
+                }, function(res) {
+                    // Success - optionally give subtle UI feedback (disabled for now)
+                }, function(err) {
+                    console.error('Failed to save criteria:', err);
+                });
+            }
+
+            const debouncedSave = debounce(saveCriteriaNow, 400);
+
+            // Attach listeners: change for immediate toggles, blur for keyboard navigation
+            requiredContainer.addEventListener('change', function(e) {
+                if (e.target && e.target.type === 'checkbox') {
+                    // Update submit UI immediately
+                    const submitBtn = document.getElementById('submitButton');
+                    if (submitBtn) submitBtn.disabled = !areAllRequiredCriteriaChecked();
+                    // Auto-save with debounce
+                    debouncedSave();
+                }
+            });
+
+            // Also listen for blur events on checkboxes to force-save (e.g., keyboard navigation)
+            requiredContainer.addEventListener('focusout', function(e) {
+                if (e.target && e.target.type === 'checkbox') {
+                    saveCriteriaNow();
+                }
+            }, true);
+        })();
+
         // Return true if all checkboxes inside #requiredCriteria are checked
         function areAllRequiredCriteriaChecked() {
             const boxes = Array.from(document.querySelectorAll('#requiredCriteria input[type="checkbox"]'));
