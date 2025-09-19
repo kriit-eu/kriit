@@ -6,6 +6,10 @@
         background-color: rgb(255, 180, 176) !important;
     }
 
+    .green-cell {
+        background-color: #d4f7d4 !important; /* light green */
+    }
+
     .yellow-cell {
         background-color: #fff8b3 !important;
     }
@@ -448,18 +452,18 @@ foreach ($assignment['students'] as $s):
     // Only show the current student (viewer) on the left side
     if ($s['studentId'] == $currentUserId): ?>
         <div>
-            <div class="header-item" data-bs-toggle="tooltip" title="<?= $s['studentName'] ?>" style="<?= $s['studentId'] !== array_key_first($assignment['students']) ? 'border-left: 1px solid #ccc;' : '' ?>">
-                <?= $s['initials'] ?>
+            <div class="header-item" data-bs-toggle="tooltip" title="<?= $s['studentId'] == $currentUserId ? 'Hinne' : htmlspecialchars($s['studentName'], ENT_QUOTES) ?>" style="<?= $s['studentId'] !== array_key_first($assignment['students']) ? 'border-left: 1px solid #ccc;' : '' ?>">
+                <?php if ($s['studentId'] == $currentUserId): ?>
+                    Hinne
+                <?php else: ?>
+                    <?= $s['initials'] ?>
+                <?php endif; ?>
             </div>
             <div class="body-item <?= $s['class'] ?> text-center clickable-cells-row"
                 data-bs-toggle="tooltip"
                 style="<?= $s['studentId'] !== array_key_first($assignment['students']) ? 'border-left: 1px solid #ccc;' : '' ?>"
-                
-                onclick="openStudentModal(<?= $isStudent ? 'true' : 'false' ?>, <?= $s['studentId'] ?>)">
+                <?php if (!$isStudent): ?>onclick="openStudentModal(false, <?= $s['studentId'] ?>)"<?php endif; ?> >
                 <?= $s['grade'] ?? '' ?>
-                <?php if ($s['assignmentStatusName'] !== 'Esitamata'): ?>
-                    <span style="font-size: 8px"><?= $s['userDoneCriteriaCount'] ?>/<?= count($assignment['criteria']) ?></span>
-                <?php endif; ?>
             </div>
         </div>
     <?php endif; ?>
@@ -469,24 +473,44 @@ foreach ($assignment['students'] as $s):
             
             <!-- Right side - all other students (excluding current viewer) -->
             <div id="assignments-container-right" style="overflow-x: auto; flex: 1;">
+                <div class="mb-2">
+                    <strong>Teiste õpilaste seis</strong>
+                </div>
                 <div class="assignments-body">
                     <?php
                     // Show only other students (exclude the current viewer) on the right side
                     foreach ($assignment['students'] as $s):
                         if ($s['studentId'] == $currentUserId) continue;
+
+                        // Determine pass/fail status based on grade
+                        $grade = $s['grade'] ?? '';
+                        $showOk = false;
+                        $showFail = false;
+                        if (!empty($grade)) {
+                            if (in_array($grade, ['3', '4', '5', 'A'])) {
+                                $showOk = true;
+                            } elseif (in_array($grade, ['1', '2', 'MA'])) {
+                                $showFail = true;
+                            }
+                        }
+
+                        // Ensure we don't show a red-cell for other students; fall back to default styling
+                        $cellClass = isset($s['class']) ? $s['class'] : '';
+                        // Remove any occurrence of 'red-cell' to avoid red highlighting for fails
+                        $cellClass = trim(str_replace('red-cell', '', $cellClass));
+                        // If student has a failing grade, mark with yellow background; if passing, add green
+                        if ($showFail) {
+                            $cellClass = trim($cellClass . ' yellow-cell');
+                        }
                     ?>
                         <div>
-                            <div class="header-item" data-bs-toggle="tooltip" title="<?= $s['studentName'] ?>" style="<?= $s['studentId'] !== array_key_first($assignment['students']) ? 'border-left: 1px solid #ccc;' : '' ?>">
+                            <div class="header-item" data-bs-toggle="tooltip" title="<?= 'Õpilane: ' . htmlspecialchars($s['studentName'], ENT_QUOTES) ?>" style="<?= $s['studentId'] !== array_key_first($assignment['students']) ? 'border-left: 1px solid #ccc;' : '' ?>">
                                 <?= $s['initials'] ?>
                             </div>
-                            <div class="body-item <?= $s['class'] ?> text-center clickable-cells-row"
-                                data-bs-toggle="tooltip"
-                                style="<?= $s['studentId'] !== array_key_first($assignment['students']) ? 'border-left: 1px solid #ccc;' : '' ?>"
-                                onclick="openStudentModal(<?= $isStudent ? 'true' : 'false' ?>, <?= $s['studentId'] ?>)">
-                                <?= $s['grade'] ?? '' ?>
-                                <?php if ($s['assignmentStatusName'] !== 'Esitamata'): ?>
-                                    <span style="font-size: 8px"><?= $s['userDoneCriteriaCount'] ?>/<?= count($assignment['criteria']) ?></span>
-                                <?php endif; ?>
+                            <div class="body-item <?= $cellClass ?><?= $showOk ? ' green-cell' : '' ?> text-center"
+                                data-bs-toggle="tooltip" title="Õpilase seis"
+                                style="<?= $s['studentId'] !== array_key_first($assignment['students']) ? 'border-left: 1px solid #ccc;' : '' ?>">
+                                <?= $showOk ? 'OK' : '' ?>
                             </div>
                         </div>
                     <?php
@@ -799,107 +823,118 @@ foreach ($assignment['students'] as $s):
             }
 
                 if (isStudent) {
-                modalTitle.textContent = 'Sisesta Lahendus';
-                solutionInputContainer.style.display = 'block'; // Show the input for students to enter a link
+                    // For student viewers, show a generic label 'Hinne' instead of their full name
+                    modalTitle.textContent = 'Hinne';
 
-                if (submitButton) {
-                    submitButton.textContent = student.studentActionButtonName;
-                    // Always show the submit button when the student panel opens so it's accessible
-                    submitButton.style.display = '';
-                    // Ensure the button is enabled; validation functions (updateButtonState) can disable it later if needed
-                    try { submitButton.disabled = false; } catch (e) {}
-                }
+                    // Student-specific UI: show solution input and wire validation/submit state
+                    solutionInputContainer.style.display = 'block'; // Show the input for students to enter a link
 
-                if (solutionInput) {
-                    solutionInput.addEventListener('input', updateSubmitButtonState);
-                    // Immediate local handler to make the submit button responsive without waiting for async validation
-                    solutionInput.addEventListener('input', function() {
-                        try {
-                            if (!submitButton) return;
-                            const urlPresent = solutionInput.value.trim() !== '';
-                            submitButton.disabled = !(urlPresent && areAllRequiredCriteriaChecked());
-                        } catch (e) {
-                            console.debug('Error in immediate solutionInput handler', e);
-                        }
-                    });
-                }
-
-                // Attach change listener only if the checkboxes container exists
-                const _checkboxesEl = document.getElementById('checkboxesContainer');
-                if (_checkboxesEl) {
-                    _checkboxesEl.addEventListener('change', function(event) {
-                        if (event.target && event.target.type === 'checkbox') {
-                            updateButtonState();
-                        }
-                    });
-                }
-
-                if (solutionInput) {
-                    solutionInput.addEventListener('input', updateSubmitButtonState);
-                }
-
-                let isValidUrl = false;
-
-                async function updateSubmitButtonState() {
-                    const solutionUrlValue = solutionInput.value.trim();
-                    const solutionInputFeedback = document.getElementById('solutionInputFeedback');
-
-                    // If empty, clear feedback and disable submit
-                    if (solutionUrlValue === '') {
-                        solutionInputFeedback.textContent = '';
-                        isValidUrl = false;
-                        if (submitButton) submitButton.disabled = true;
-                        return;
+                    if (submitButton) {
+                        submitButton.textContent = student.studentActionButtonName || submitButton.textContent;
+                        // Always show the submit button when the student panel opens so it's accessible
+                        submitButton.style.display = '';
+                        // Ensure the button is enabled; validation functions (updateButtonState) can disable it later if needed
+                        try { submitButton.disabled = false; } catch (e) {}
                     }
 
-                    // Optimistically consider a non-empty URL as valid so the submit button becomes accessible immediately.
-                    // Continue validating the URL asynchronously and update the feedback if validation fails.
-                    isValidUrl = true;
-                    updateButtonState();
+                    if (solutionInput) {
+                        solutionInput.addEventListener('input', updateSubmitButtonState);
+                        // Immediate local handler to make the submit button responsive without waiting for async validation
+                        solutionInput.addEventListener('input', function() {
+                            try {
+                                if (!submitButton) return;
+                                const urlPresent = solutionInput.value.trim() !== '';
+                                submitButton.disabled = !(urlPresent && areAllRequiredCriteriaChecked());
+                            } catch (e) {
+                                console.debug('Error in immediate solutionInput handler', e);
+                            }
+                        });
+                    }
 
-                    try {
-                        ajax('assignments/validateAndCheckLinkAccessibility', {
-                            solutionUrl: solutionUrlValue,
-                            assignmentId: assignment.assignmentId
-                        }, function(res) {
-                            if (res.status === 200) {
-                                solutionInputFeedback.textContent = 'Link on valideeritud ja kättesaadav.';
-                                solutionInputFeedback.style.color = 'green';
-                                isValidUrl = true;
+                    // Attach change listener only if the checkboxes container exists
+                    const _checkboxesEl = document.getElementById('checkboxesContainer');
+                    if (_checkboxesEl) {
+                        _checkboxesEl.addEventListener('change', function(event) {
+                            if (event.target && event.target.type === 'checkbox') {
                                 updateButtonState();
                             }
-                        }, function(error) {
-                            solutionInputFeedback.textContent = error || 'Link on vigane või kättesaamatu.';
-                            solutionInputFeedback.style.color = 'red';
+                        });
+                    }
+
+                    if (solutionInput) {
+                        solutionInput.addEventListener('input', updateSubmitButtonState);
+                    }
+
+                    let isValidUrl = false;
+
+                    async function updateSubmitButtonState() {
+                        const solutionUrlValue = solutionInput.value.trim();
+                        const solutionInputFeedback = document.getElementById('solutionInputFeedback');
+
+                        // If empty, clear feedback and disable submit
+                        if (solutionUrlValue === '') {
+                            if (solutionInputFeedback) solutionInputFeedback.textContent = '';
+                            isValidUrl = false;
+                            if (submitButton) submitButton.disabled = true;
+                            return;
+                        }
+
+                        // Optimistically consider a non-empty URL as valid so the submit button becomes accessible immediately.
+                        // Continue validating the URL asynchronously and update the feedback if validation fails.
+                        isValidUrl = true;
+                        updateButtonState();
+
+                        try {
+                            ajax('assignments/validateAndCheckLinkAccessibility', {
+                                solutionUrl: solutionUrlValue,
+                                assignmentId: assignment.assignmentId
+                            }, function(res) {
+                                if (res.status === 200) {
+                                    if (solutionInputFeedback) {
+                                        solutionInputFeedback.textContent = 'Link on valideeritud ja kättesaadav.';
+                                        solutionInputFeedback.style.color = 'green';
+                                    }
+                                    isValidUrl = true;
+                                    updateButtonState();
+                                }
+                            }, function(error) {
+                                if (solutionInputFeedback) {
+                                    solutionInputFeedback.textContent = error || 'Link on vigane või kättesaamatu.';
+                                    solutionInputFeedback.style.color = 'red';
+                                }
+                                isValidUrl = false;
+                                updateButtonState();
+                            });
+                        } catch (error) {
+                            if (solutionInputFeedback) {
+                                solutionInputFeedback.textContent = 'Tekkis viga URL-i valideerimisel';
+                                solutionInputFeedback.style.color = 'red';
+                            }
                             isValidUrl = false;
                             updateButtonState();
-                        });
-                    } catch (error) {
-                        solutionInputFeedback.textContent = 'Tekkis viga URL-i valideerimisel';
-                        solutionInputFeedback.style.color = 'red';
-                        isValidUrl = false;
-                        updateButtonState();
-                    }
-                }
-
-                function updateButtonState() {
-                    // Determine whether required criteria are all checked.
-                    // Prefer the canonical #requiredCriteria on the page (user-visible),
-                    // but fall back to the per-student checkboxes inside the panel if present.
-                    let allChecked = areAllRequiredCriteriaChecked();
-                    const panelChecks = Array.from(document.querySelectorAll('#checkboxesContainer input[type="checkbox"]'));
-                    if (!allChecked && panelChecks.length > 0) {
-                        allChecked = panelChecks.every(cb => cb.checked);
+                        }
                     }
 
-                    // Consider URL presence as sufficient for enabling immediately (optimistic). If empty, button stays disabled.
-                    const solutionUrlValue = solutionInput ? solutionInput.value.trim() : '';
-                    const urlPresent = solutionUrlValue !== '';
+                    function updateButtonState() {
+                        // Determine whether required criteria are all checked.
+                        // Prefer the canonical #requiredCriteria on the page (user-visible),
+                        // but fall back to the per-student checkboxes inside the panel if present.
+                        let allChecked = areAllRequiredCriteriaChecked();
+                        const panelChecks = Array.from(document.querySelectorAll('#checkboxesContainer input[type="checkbox"]'));
+                        if (!allChecked && panelChecks.length > 0) {
+                            allChecked = panelChecks.every(cb => cb.checked);
+                        }
 
-                    if (submitButton) submitButton.disabled = !(allChecked && urlPresent);
+                        // Consider URL presence as sufficient for enabling immediately (optimistic). If empty, button stays disabled.
+                        const solutionUrlValue = solutionInput ? solutionInput.value.trim() : '';
+                        const urlPresent = solutionUrlValue !== '';
+
+                        if (submitButton) submitButton.disabled = !(allChecked && urlPresent);
+                    }
+                } else if (student && student.studentName) {
+                    // Non-student viewers see the student's name in the header
+                    modalTitle.textContent = student.studentName;
                 }
-
-            }
 
             if (student.solutionUrl) {
                 solutionUrlContainer.innerHTML = `<p class="pt-2 mb-0">Juba esitatud lahendus:</p><a href="${student.solutionUrl}" id="solutionUrl" target="_blank" rel="noopener noreferrer">${student.solutionUrl}</a>`;
