@@ -579,11 +579,6 @@ foreach ($assignment['students'] as $s):
             <?php include 'views/modules/openapi_module.php'; ?>
 
             <!-- Kriteeriumid section removed for student submit panel -->
-            <div id="commentSection" class="mb-3">
-                <label for="studentComment" class="form-label fw-bold">Kommentaar</label>
-                <div id="commentsContainer"></div>
-                <textarea class="form-control" id="studentComment" rows="3" placeholder="Lisa kommentaar siia..."></textarea>
-            </div>
         </div>
         <div class="card-footer text-end">
             <?php if ($isStudent): ?>
@@ -592,6 +587,32 @@ foreach ($assignment['students'] as $s):
                 <button type="button" class="btn btn-primary" id="submitButton">Salvesta muudatused</button>
             <?php endif; ?>
             <!-- Cancel button removed for student submit panel -->
+        </div>
+    </div>
+    <div id="commentSection" class="card mb-4">
+        <div class="card-body">
+            <div class="mb-3">
+                <label for="studentComment" class="form-label fw-bold">Kommentaar</label>
+                <div id="commentsContainer">
+                    <?php
+                    // Render existing comments for the current student so they are visible before the panel is opened.
+                    $currentStudentId = $this->auth->userId;
+                    $studentComments = $assignment['students'][$currentStudentId]['comments'] ?? [];
+                    if (!empty($studentComments)):
+                        foreach ($studentComments as $c): ?>
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <p class="comment-date small text-muted"><?= htmlspecialchars($c['createdAt'] ?? '') ?> <strong><?= htmlspecialchars($c['name'] ?? 'Tundmatu') ?></strong></p>
+                                    <p class="comment-text" data-raw-comment="<?= htmlspecialchars($c['comment'] ?? '', ENT_QUOTES) ?>"></p>
+                                </div>
+                            </div>
+                        <?php endforeach;
+                    else: ?>
+                        <p>Kommentaare pole.</p>
+                    <?php endif; ?>
+                </div>
+                <textarea class="form-control" id="studentComment" rows="3" placeholder="Lisa kommentaar siia..."></textarea>
+            </div>
         </div>
     </div>
     <?php endif; ?>
