@@ -112,8 +112,10 @@ class assignments extends Controller
         // Build WHERE clause for student filtering based on user permissions
         $studentFilterClause = '';
         if ($this->isStudent) {
-            // Students only see themselves
-            $studentFilterClause = " AND u.userId = {$this->auth->userId}";
+            // Students: do not restrict the main query to a single user here.
+            // We will rely on primary-group filtering and later view logic to
+            // present the current student separately from classmates.
+            $studentFilterClause = "";
         } elseif ($this->isTeacher && !$this->auth->userIsAdmin) {
             // For teachers: show all students who have userAssignments for this assignment
             // regardless of group - this allows cross-group assignments to work properly
@@ -234,9 +236,8 @@ class assignments extends Controller
             $studentId = $row['studentId'];
             $criteriaId = $row['criterionId'];
 
-            if ($this->isStudent && $this->auth->userId !== $studentId) {
-                continue;
-            }
+            // Do not skip other students for student viewers here; the view will
+            // render the current student specially and show classmates as needed.
 
             // Filter students to only show those from the primary group
             if ($primaryGroupId && $row['groupId'] != $primaryGroupId) {
@@ -418,6 +419,15 @@ class assignments extends Controller
         $commentForTeacher = $_POST['comment'];
 
         $subjectId = Db::getOne("SELECT subjectId FROM assignments WHERE assignmentId = ?", [$assignmentId]);
+        // If the client sent criteria in the submission payload, save them first so subsequent
+        // checks (like checkIfStudentHasAllCriteria) operate on the updated state.
+        $postedCriteria = $_POST['criteria'] ?? [];
+        if (is_array($postedCriteria) && count($postedCriteria) > 0) {
+            // saveStudentCriteria reads from $_POST so ensure expected keys are present
+            // (studentId and criteria are already in $_POST from the AJAX call)
+            $this->saveStudentCriteria();
+        }
+
         $ifStudentHasAllCriteria = $this->checkIfStudentHasAllCriteria();
         $ifStudentHasPositiveGrade = $this->checkIfStudentHasPositiveGrade($studentId, $assignmentId);
         // Fetch assignment skip flag to decide whether to validate accessibility

@@ -431,19 +431,74 @@
         <p class="mt-4 fw-bold">Tähtaeg: <?= $assignment['assignmentDueAt'] ?></p>
 
         <?php if ($isStudent): ?>
-            <div class="d-flex justify-content-end mt-3">
-                <span <?php if ($assignment['students'][$this->auth->userId]['isDisabledStudentActionButton'] === 'disabled'): ?>
-                    data-bs-toggle="tooltip" title="<?php if ($assignment['students'][$this->auth->userId]['isAllCriteriaCompleted']): ?>Ülesanne on juba hinnatud<?php else: ?>Kõik kriteeriumid pole sul veel märgitud valmis<?php endif; ?>"
-                    <?php endif; ?>>
-                    <button class="btn btn-primary" onclick="openStudentModal(true, <?= $this->auth->userId ?>)" <?= $assignment['students'][$this->auth->userId]['isDisabledStudentActionButton'] ?>>
-                        <?= $assignment['students'][$this->auth->userId]['studentActionButtonName'] ?>
-                    </button>
-                </span>
-            </div>
+            <!-- Student action panel is rendered inline below only when all criteria are completed. -->
         <?php endif; ?>
 
     </div>
 
+    <div id="main-container">
+        <div style="display: flex; gap: 20px; align-items: flex-start;">
+            <!-- Left side - only current student (viewer) -->
+            <div id="assignments-container" style="overflow-x: auto; flex: 1;">
+                <div class="assignments-body">
+                    <?php 
+$currentUserId = $this->auth->userId;
+$studentCount = count($assignment['students']);
+foreach ($assignment['students'] as $s): 
+    // Only show the current student (viewer) on the left side
+    if ($s['studentId'] == $currentUserId): ?>
+        <div>
+            <div class="header-item" data-bs-toggle="tooltip" title="<?= $s['studentName'] ?>" style="<?= $s['studentId'] !== array_key_first($assignment['students']) ? 'border-left: 1px solid #ccc;' : '' ?>">
+                <?= $s['initials'] ?>
+            </div>
+            <div class="body-item <?= $s['class'] ?> text-center clickable-cells-row"
+                data-bs-toggle="tooltip"
+                style="<?= $s['studentId'] !== array_key_first($assignment['students']) ? 'border-left: 1px solid #ccc;' : '' ?>"
+                
+                onclick="openStudentModal(<?= $isStudent ? 'true' : 'false' ?>, <?= $s['studentId'] ?>)">
+                <?= $s['grade'] ?? '' ?>
+                <?php if ($s['assignmentStatusName'] !== 'Esitamata'): ?>
+                    <span style="font-size: 8px"><?= $s['userDoneCriteriaCount'] ?>/<?= count($assignment['criteria']) ?></span>
+                <?php endif; ?>
+            </div>
+        </div>
+    <?php endif; ?>
+<?php endforeach; ?>
+                </div>
+            </div>
+            
+            <!-- Right side - all other students (excluding current viewer) -->
+            <div id="assignments-container-right" style="overflow-x: auto; flex: 1;">
+                <div class="assignments-body">
+                    <?php
+                    // Show only other students (exclude the current viewer) on the right side
+                    foreach ($assignment['students'] as $s):
+                        if ($s['studentId'] == $currentUserId) continue;
+                    ?>
+                        <div>
+                            <div class="header-item" data-bs-toggle="tooltip" title="<?= $s['studentName'] ?>" style="<?= $s['studentId'] !== array_key_first($assignment['students']) ? 'border-left: 1px solid #ccc;' : '' ?>">
+                                <?= $s['initials'] ?>
+                            </div>
+                            <div class="body-item <?= $s['class'] ?> text-center clickable-cells-row"
+                                data-bs-toggle="tooltip"
+                                style="<?= $s['studentId'] !== array_key_first($assignment['students']) ? 'border-left: 1px solid #ccc;' : '' ?>"
+                                onclick="openStudentModal(<?= $isStudent ? 'true' : 'false' ?>, <?= $s['studentId'] ?>)">
+                                <?= $s['grade'] ?? '' ?>
+                                <?php if ($s['assignmentStatusName'] !== 'Esitamata'): ?>
+                                    <span style="font-size: 8px"><?= $s['userDoneCriteriaCount'] ?>/<?= count($assignment['criteria']) ?></span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    <?php
+                    endforeach;
+                    ?>
+                </div>
+            </div>
+        </div>
+        <!-- Events (Sündmused) and Chat (Vestlus) sections removed -->
+
+
+    </div>
 
     <div id="criterionDisplay" class="adaptive-background p-3 mb-5 mt-5">
         <h5 class="mb-3">Kriteeriumid</h5>
@@ -471,87 +526,48 @@
                 <?php endforeach; ?>
             </div>
             <?php if ($isStudent): ?>
-                <button type="button" class="btn btn-primary mt-3" onclick="saveStudentCriteria()" hidden="hidden">
-                    Salvesta
-                </button>
+                <!-- 'Salvesta' button removed: criteria are saved together with the submit action -->
             <?php endif; ?>
         </form>
     </div>
 
-    <div class="modal fade" id="studentModal" tabindex="-1" aria-labelledby="studentModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="studentName"></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <?php if ($isStudent): ?>
+    <!-- Inline student panel: appears in page flow instead of as an overlay modal. Render for students but keep hidden by default; client-side will open when appropriate -->
+    <div id="studentPanel" class="card mb-4" style="display:none;">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0" id="studentName"></h5>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label for="solutionUrl" class="form-label fw-bold">Lahenduse link</label>
+                <div id="solutionInputContainer">
+                    <input type="text" id="solutionInput" class="form-control" placeholder="Sisesta link siia...">
+                    <small id="solutionInputFeedback"></small>
                 </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="solutionUrl" class="form-label fw-bold">Lahenduse link</label>
-                        <div id="solutionInputContainer">
-                            <input type="text" id="solutionInput" class="form-control"
-                                placeholder="Sisesta link siia...">
-                            <small id="solutionInputFeedback"></small>
-                        </div>
 
-                        <p class="mt-1" id="solutionUrlContainer">
-                            <a href="#" id="solutionUrl" target="_blank" rel="noopener noreferrer">No link provided</a>
-                        </p>
-                    </div>
-                    <?php include 'views/modules/openapi_module.php'; ?>
-                    
-                    <div id="studentGradeCriteriaContainer">
-                        <h6 class="fw-bold">Kriteeriumid</h6>
-                        <div id="checkboxesContainer">
-                        </div>
-                    </div>
-                    <div id="commentSection" class="mb-3">
-                        <label for="studentComment" class="form-label fw-bold">Kommentaar</label>
-                        <div id="commentsContainer"></div>
-                        <textarea class="form-control" id="studentComment" rows="3"
-                            placeholder="Lisa kommentaar siia..."></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" id="submitButton">
-                        Salvesta muudatused
-                    </button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tühista</button>
-                </div>
+                <p class="mt-1" id="solutionUrlContainer">
+                    <a href="#" id="solutionUrl" target="_blank" rel="noopener noreferrer">No link provided</a>
+                </p>
+            </div>
+            <?php include 'views/modules/openapi_module.php'; ?>
+
+            <!-- Kriteeriumid section removed for student submit panel -->
+            <div id="commentSection" class="mb-3">
+                <label for="studentComment" class="form-label fw-bold">Kommentaar</label>
+                <div id="commentsContainer"></div>
+                <textarea class="form-control" id="studentComment" rows="3" placeholder="Lisa kommentaar siia..."></textarea>
             </div>
         </div>
-    </div>
-
-    
-
-    <div id="main-container">
-        <div id="assignments-container" style="overflow-x: auto;">
-            <div class="assignments-body">
-                <?php 
-$studentCount = count($assignment['students']);
-foreach ($assignment['students'] as $s): ?>
-    <div>
-        <div class="header-item" data-bs-toggle="tooltip" title="<?= $s['studentName'] ?>" style="<?= $s['studentId'] !== array_key_first($assignment['students']) ? 'border-left: 1px solid #ccc;' : '' ?>">
-            <?= $s['initials'] ?>
-        </div>
-        <div class="body-item <?= $s['class'] ?> text-center clickable-cells-row"
-            data-bs-toggle="tooltip"
-            style="<?= $s['studentId'] !== array_key_first($assignment['students']) ? 'border-left: 1px solid #ccc;' : '' ?>"
-            
-            onclick="openStudentModal(<?= $isStudent ? 'true' : 'false' ?>, <?= $s['studentId'] ?>)">
-            <?= $s['grade'] ?? '' ?>
-            <?php if ($s['assignmentStatusName'] !== 'Esitamata'): ?>
-                <span style="font-size: 8px"><?= $s['userDoneCriteriaCount'] ?>/<?= count($assignment['criteria']) ?></span>
+        <div class="card-footer text-end">
+            <?php if ($isStudent): ?>
+                <button type="button" class="btn btn-primary" id="submitButton" style="display:none;">Salvesta muudatused</button>
+            <?php else: ?>
+                <button type="button" class="btn btn-primary" id="submitButton">Salvesta muudatused</button>
             <?php endif; ?>
+            <!-- Cancel button removed for student submit panel -->
         </div>
     </div>
-<?php endforeach; ?>
-            </div>
-        </div>
-        <!-- Events (Sündmused) and Chat (Vestlus) sections removed -->
-
-
-    </div>
+    <?php endif; ?>
     <script>
         const assignment = <?= json_encode($assignment) ?>;
         let currentStudentId = null;
@@ -580,6 +596,17 @@ foreach ($assignment['students'] as $s): ?>
                     replyToMessage(userName, messageId, content, createdAt);
                 }
             });
+
+            // Auto-open student panel for the logged-in student (no click) only when server says all criteria are completed
+            try {
+                <?php if ($isStudent && $assignment['students'][$this->auth->userId]['isAllCriteriaCompleted']): ?>
+                if (typeof assignment !== 'undefined' && assignment.students && assignment.students[<?= $this->auth->userId ?>]) {
+                    openStudentModal(true, <?= $this->auth->userId ?>);
+                }
+                <?php endif; ?>
+            } catch (e) {
+                console.error('Failed to auto-open student panel:', e);
+            }
         });
 
         function initializeTooltips() {
@@ -598,24 +625,87 @@ foreach ($assignment['students'] as $s): ?>
 
         document.getElementById('requiredCriteria').addEventListener('change', function(event) {
             if (event.target && event.target.type === 'checkbox') {
-                document.querySelector('#studentCriteriaForm .btn-primary').hidden = false;
+                // Previously required clicking 'Salvesta' in the criteria form; now open submit panel automatically when all criteria checked
+                try {
+                    const saveBtn = document.querySelector('#studentCriteriaForm .btn-primary');
+                    if (saveBtn) saveBtn.hidden = false;
+                } catch (e) {
+                    // Defensive: if the save button was removed, don't let this block the rest
+                    console.debug('Save button not present in studentCriteriaForm, continuing.');
+                }
+
+                const allChecked = areAllRequiredCriteriaChecked();
+                const studentPanel = document.getElementById('studentPanel');
+                const submitButton = document.getElementById('submitButton');
+
+                if (allChecked) {
+                    try {
+                        checkAndOpenStudentPanel();
+                    } catch (e) {
+                        console.error('Error auto-opening student panel on criteria change:', e);
+                    }
+                } else {
+                    // Hide submit UI when at least one required criterion is unchecked
+                    if (submitButton) {
+                        submitButton.style.display = 'none';
+                    }
+                    if (studentPanel) {
+                        studentPanel.style.display = 'none';
+                    }
+                }
             }
         });
 
-        document.getElementById('submitButton').addEventListener('click', function() {
-            const gradeRadioGroup = document.querySelectorAll('#gradeRadioGroup input[type="radio"]');
-            let gradeSelected = false;
+        // Return true if all checkboxes inside #requiredCriteria are checked
+        function areAllRequiredCriteriaChecked() {
+            const boxes = Array.from(document.querySelectorAll('#requiredCriteria input[type="checkbox"]'));
+            if (boxes.length === 0) return false;
+            return boxes.every(cb => cb.checked);
+        }
 
-            gradeRadioGroup.forEach(radio => {
-                if (radio.checked) {
-                    gradeSelected = true;
-                }
-            });
+        // If the student panel exists, open it and ensure submit button is visible/enabled
+        function checkAndOpenStudentPanel() {
+            const sp = document.getElementById('studentPanel');
+            if (!sp) return;
 
-            
+            // Determine current student id if available from assignment object
+            const myId = <?= $this->auth->userId ?>;
 
-            if (submitButton.textContent === 'Esita' || submitButton.textContent === 'Muuda') {
-                const solutionUrl = solutionInput.value;
+            // Populate the inline panel for the logged-in student using existing openStudentModal logic
+            try {
+                openStudentModal(true, myId);
+            } catch (e) {
+                console.error('Failed to open student panel automatically:', e);
+            }
+
+            // Make submit button visible and enabled when we auto-open the panel
+            const submitButton = document.getElementById('submitButton');
+            if (submitButton) {
+                submitButton.style.display = '';
+                try { submitButton.disabled = false; } catch (e) {}
+            }
+        }
+
+        // Guarded handler: only attach if the modal submit button exists (may be removed for students)
+        (function() {
+            const sb = document.getElementById('submitButton');
+            if (!sb) return;
+
+            sb.addEventListener('click', function() {
+                // Only proceed when the button is enabled
+                if (sb.disabled) return;
+
+                const gradeRadioGroup = document.querySelectorAll('#gradeRadioGroup input[type="radio"]');
+                let gradeSelected = false;
+
+                gradeRadioGroup.forEach(radio => {
+                    if (radio.checked) {
+                        gradeSelected = true;
+                    }
+                });
+
+                const solutionInput = document.getElementById('solutionInput');
+                const solutionUrl = solutionInput ? solutionInput.value : '';
                 const criteria = getCriteriaList();
                 const comment = document.getElementById('studentComment').value;
 
@@ -637,18 +727,25 @@ foreach ($assignment['students'] as $s): ?>
                     function(error) {
                         alert(error ?? 'Tekkis viga serveriga suhtlemisel.');
                     });
-
-            }
-        });
-
-
-        document.querySelectorAll('#studentGradeCriteriaContainer input[type="checkbox"]').forEach(checkbox => {
-            checkbox.addEventListener('change', () => {
-                const allChecked = Array.from(document.querySelectorAll('#studentGradeCriteriaContainer input[type="checkbox"]'))
-                    .every(cb => cb.checked);
-                document.getElementById('submitButton').disabled = !allChecked;
             });
-        });
+        })();
+
+
+        // Criteria checkboxes removed from student panel; guard any code that relied on them
+        (function() {
+            const container = document.getElementById('studentGradeCriteriaContainer');
+            if (!container) return; // nothing to do when criteria section is absent
+
+            // If the container exists for some reason, attach change listener to keep behavior intact
+            container.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.addEventListener('change', () => {
+                    const allChecked = Array.from(container.querySelectorAll('input[type="checkbox"]'))
+                        .every(cb => cb.checked);
+                    const sb = document.getElementById('submitButton');
+                    if (sb) sb.disabled = !allChecked;
+                });
+            });
+        })();
 
         
 
@@ -658,7 +755,14 @@ foreach ($assignment['students'] as $s): ?>
             const solutionInput = document.getElementById('solutionInput');
             const solutionUrlContainer = document.getElementById('solutionUrlContainer');
             const submitButton = document.getElementById('submitButton');
-            const criteriaContainer = document.getElementById('checkboxesContainer');
+            let criteriaContainer = document.getElementById('checkboxesContainer');
+            if (!criteriaContainer) {
+                criteriaContainer = document.createElement('div');
+                criteriaContainer.id = 'checkboxesContainer';
+                criteriaContainer.style.display = 'none';
+                const sp = document.getElementById('studentPanel');
+                if (sp) sp.appendChild(criteriaContainer);
+            }
             const commentsContainer = document.getElementById('commentsContainer'); // Container for comments
             const student = assignment.students[studentId];
             currentStudentId = studentId;
@@ -697,18 +801,42 @@ foreach ($assignment['students'] as $s): ?>
                 if (isStudent) {
                 modalTitle.textContent = 'Sisesta Lahendus';
                 solutionInputContainer.style.display = 'block'; // Show the input for students to enter a link
-                submitButton.textContent = student.studentActionButtonName;
-                submitButton.disabled = true; // Initially disable the "Esita" button
 
-                solutionInput.addEventListener('input', updateSubmitButtonState);
+                if (submitButton) {
+                    submitButton.textContent = student.studentActionButtonName;
+                    // Always show the submit button when the student panel opens so it's accessible
+                    submitButton.style.display = '';
+                    // Ensure the button is enabled; validation functions (updateButtonState) can disable it later if needed
+                    try { submitButton.disabled = false; } catch (e) {}
+                }
 
-                document.getElementById('checkboxesContainer').addEventListener('change', function(event) {
-                    if (event.target && event.target.type === 'checkbox') {
-                        updateButtonState();
-                    }
-                });
+                if (solutionInput) {
+                    solutionInput.addEventListener('input', updateSubmitButtonState);
+                    // Immediate local handler to make the submit button responsive without waiting for async validation
+                    solutionInput.addEventListener('input', function() {
+                        try {
+                            if (!submitButton) return;
+                            const urlPresent = solutionInput.value.trim() !== '';
+                            submitButton.disabled = !(urlPresent && areAllRequiredCriteriaChecked());
+                        } catch (e) {
+                            console.debug('Error in immediate solutionInput handler', e);
+                        }
+                    });
+                }
 
-                solutionInput.addEventListener('input', updateSubmitButtonState);
+                // Attach change listener only if the checkboxes container exists
+                const _checkboxesEl = document.getElementById('checkboxesContainer');
+                if (_checkboxesEl) {
+                    _checkboxesEl.addEventListener('change', function(event) {
+                        if (event.target && event.target.type === 'checkbox') {
+                            updateButtonState();
+                        }
+                    });
+                }
+
+                if (solutionInput) {
+                    solutionInput.addEventListener('input', updateSubmitButtonState);
+                }
 
                 let isValidUrl = false;
 
@@ -716,11 +844,19 @@ foreach ($assignment['students'] as $s): ?>
                     const solutionUrlValue = solutionInput.value.trim();
                     const solutionInputFeedback = document.getElementById('solutionInputFeedback');
 
+                    // If empty, clear feedback and disable submit
                     if (solutionUrlValue === '') {
                         solutionInputFeedback.textContent = '';
-                        submitButton.disabled = true;
+                        isValidUrl = false;
+                        if (submitButton) submitButton.disabled = true;
                         return;
                     }
+
+                    // Optimistically consider a non-empty URL as valid so the submit button becomes accessible immediately.
+                    // Continue validating the URL asynchronously and update the feedback if validation fails.
+                    isValidUrl = true;
+                    updateButtonState();
+
                     try {
                         ajax('assignments/validateAndCheckLinkAccessibility', {
                             solutionUrl: solutionUrlValue,
@@ -744,15 +880,23 @@ foreach ($assignment['students'] as $s): ?>
                         isValidUrl = false;
                         updateButtonState();
                     }
-
-                    updateButtonState();
                 }
 
                 function updateButtonState() {
-                    const allChecked = Array.from(document.querySelectorAll('#checkboxesContainer input[type="checkbox"]'))
-                        .every(cb => cb.checked);
+                    // Determine whether required criteria are all checked.
+                    // Prefer the canonical #requiredCriteria on the page (user-visible),
+                    // but fall back to the per-student checkboxes inside the panel if present.
+                    let allChecked = areAllRequiredCriteriaChecked();
+                    const panelChecks = Array.from(document.querySelectorAll('#checkboxesContainer input[type="checkbox"]'));
+                    if (!allChecked && panelChecks.length > 0) {
+                        allChecked = panelChecks.every(cb => cb.checked);
+                    }
 
-                    submitButton.disabled = !(allChecked && isValidUrl);
+                    // Consider URL presence as sufficient for enabling immediately (optimistic). If empty, button stays disabled.
+                    const solutionUrlValue = solutionInput ? solutionInput.value.trim() : '';
+                    const urlPresent = solutionUrlValue !== '';
+
+                    if (submitButton) submitButton.disabled = !(allChecked && urlPresent);
                 }
 
             }
@@ -780,8 +924,18 @@ foreach ($assignment['students'] as $s): ?>
             });
 
 
-            const modal = new bootstrap.Modal(document.getElementById('studentModal'));
-            modal.show();
+            // Show inline student panel instead of Bootstrap modal
+            const studentPanel = document.getElementById('studentPanel');
+            if (studentPanel) {
+                studentPanel.style.display = '';
+                // Scroll into view for better UX
+                studentPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        function closeStudentPanel() {
+            const studentPanel = document.getElementById('studentPanel');
+            if (studentPanel) studentPanel.style.display = 'none';
         }
 
         function saveStudentCriteria() {
@@ -803,7 +957,8 @@ foreach ($assignment['students'] as $s): ?>
                 });
         }
 
-        function getCriteriaList(selector = '#studentGradeCriteriaContainer input[type="checkbox"]') {
+        // Collect criteria checkboxes from common containers. Default prefers '#requiredCriteria'
+        function getCriteriaList(selector = '#requiredCriteria input[type="checkbox"]') {
             const criteria = {};
             document.querySelectorAll(selector).forEach(cb => {
                 if (selector.startsWith('#edit')) {
@@ -814,6 +969,25 @@ foreach ($assignment['students'] as $s): ?>
                     criteria[parseInt(cb.id.replace('criterion_', ''))] = cb.checked;
                 }
             });
+
+            // If nothing found with the provided selector, try common fallback containers
+            if (Object.keys(criteria).length === 0) {
+                const fallbacks = ['#checkboxesContainer input[type="checkbox"]', '#studentGradeCriteriaContainer input[type="checkbox"]', '#editCriteriaContainer input[type="checkbox"]'];
+                for (let f of fallbacks) {
+                    document.querySelectorAll(f).forEach(cb => {
+                        const id = cb.id || '';
+                        if (id.includes('edit_criterion_')) {
+                            criteria[parseInt(id.replace('edit_criterion_', ''))] = cb.checked;
+                        } else if (id.includes('check_criterion_')) {
+                            criteria[parseInt(id.replace('check_criterion_', ''))] = cb.checked;
+                        } else if (id.includes('criterion_')) {
+                            criteria[parseInt(id.replace('criterion_', ''))] = cb.checked;
+                        }
+                    });
+
+                    if (Object.keys(criteria).length > 0) break;
+                }
+            }
             return criteria;
         }
 
