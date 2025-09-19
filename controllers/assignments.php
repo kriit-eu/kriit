@@ -523,6 +523,25 @@ class assignments extends Controller
         stop(200, 'Criteria saved');
     }
 
+    function ajax_addAssignmentComment(): void
+    {
+        $assignmentId = isset($_POST['assignmentId']) ? (int)$_POST['assignmentId'] : 0;
+        $this->checkIfUserHasPermissionForAction($assignmentId) || stop(403, 'Teil pole õigusi sellele tegevusele.');
+
+        $studentId = isset($_POST['studentId']) ? (int)$_POST['studentId'] : $this->auth->userId;
+        $comment = isset($_POST['comment']) ? trim($_POST['comment']) : '';
+
+        if ($comment === '') stop(400, 'Kommentaar on tühi');
+
+        // Add comment to userAssignments.comments
+        $this->addAssignmentCommentForStudent($studentId, $assignmentId, $comment, $this->auth->userName);
+
+    // Also save a message for activity/notification stream
+    $this->saveMessage($assignmentId, $this->auth->userId, $this->auth->userName . " lisas kommentaari: '" . $comment . "'", true);
+
+        stop(200, 'Comment saved');
+    }
+
     function ajax_saveMessage(): void
     {
         $assignmentId = $_POST['assignmentId'];

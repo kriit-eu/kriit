@@ -592,14 +592,26 @@ foreach ($assignment['students'] as $s):
     <div id="commentSection" class="card mb-4">
         <div class="card-body">
             <div class="mb-3">
-                <label for="studentComment" class="form-label fw-bold">Kommentaar</label>
+                <?php
+                // Use the reusable Markdown editor partial for comment input so users get live preview and image upload support.
+                $editorId = 'studentComment';
+                $previewId = 'studentCommentPreview';
+                $fieldName = 'studentComment';
+                $labelText = 'Kommentaar';
+                $initialValue = '';
+                include __DIR__ . '/../../templates/partials/markdown_editor.php';
+                ?>
+                <div class="mt-2 text-end">
+                    <button type="button" id="sendCommentButton" class="btn btn-secondary btn-sm">Saada kommentaar</button>
+                </div>
                 <div id="commentsContainer">
                     <?php
                     // Render existing comments for the current student so they are visible before the panel is opened.
+                    // Show newest comments first.
                     $currentStudentId = $this->auth->userId;
                     $studentComments = $assignment['students'][$currentStudentId]['comments'] ?? [];
                     if (!empty($studentComments)):
-                        foreach ($studentComments as $c): ?>
+                        foreach (array_reverse($studentComments) as $c): ?>
                             <div class="card mb-3">
                                 <div class="card-body">
                                     <p class="comment-date small text-muted"><?= htmlspecialchars($c['createdAt'] ?? '') ?> <strong><?= htmlspecialchars($c['name'] ?? 'Tundmatu') ?></strong></p>
@@ -611,7 +623,6 @@ foreach ($assignment['students'] as $s):
                         <p>Kommentaare pole.</p>
                     <?php endif; ?>
                 </div>
-                <textarea class="form-control" id="studentComment" rows="3" placeholder="Lisa kommentaar siia..."></textarea>
             </div>
         </div>
     </div>
@@ -656,6 +667,72 @@ foreach ($assignment['students'] as $s):
                 console.error('Failed to auto-open student panel:', e);
             }
         });
+
+        // Handler for sending a comment without submitting the assignment
+        (function() {
+            const sendBtn = document.getElementById('sendCommentButton');
+            if (!sendBtn) return;
+
+            sendBtn.addEventListener('click', function() {
+                // The markdown editor renders a textarea with id equal to the editorId (studentComment)
+                const textarea = document.getElementById('studentComment');
+                if (!textarea) return;
+                const commentText = textarea.value.trim();
+                if (!commentText) {
+                    alert('Kommentaar on tühi.');
+                    return;
+                }
+
+                sendBtn.disabled = true;
+                ajax('assignments/addAssignmentComment', {
+                    assignmentId: assignment.assignmentId,
+                    studentId: <?= $this->auth->userId ?>,
+                    comment: commentText
+                }, function(res) {
+                    if (res.status === 200) {
+                        // Append the new comment to the comments container for immediate feedback
+                        const commentsContainer = document.getElementById('commentsContainer');
+                        const card = document.createElement('div');
+                        card.className = 'card mb-3';
+                        const body = document.createElement('div');
+                        body.className = 'card-body';
+                        const meta = document.createElement('p');
+                        meta.className = 'comment-date small text-muted';
+                        const now = new Date();
+                        const formatted = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0') + ' ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+                        meta.innerHTML = formatted + ' <strong><?= htmlspecialchars($this->auth->userName, ENT_QUOTES) ?></strong>';
+                        const content = document.createElement('p');
+                        content.className = 'comment-text';
+                        content.setAttribute('data-raw-comment', commentText);
+                        body.appendChild(meta);
+                        body.appendChild(content);
+                        card.appendChild(body);
+                        if (commentsContainer) {
+                            // If "Kommentaare pole." placeholder exists, remove it
+                            const placeholder = commentsContainer.querySelector('p');
+                            if (placeholder && placeholder.textContent && placeholder.textContent.includes('Kommentaare pole')) {
+                                commentsContainer.innerHTML = '';
+                            }
+                            commentsContainer.insertAdjacentElement('afterbegin', card);
+                            // Let client-side processor render markdown/images
+                            try { processComments(); } catch (e) {}
+                        }
+                        // Clear the markdown editor textarea and update preview
+                        try {
+                            textarea.value = '';
+                            // Trigger input event so the markdown editor updates preview state
+                            textarea.dispatchEvent(new Event('input'));
+                        } catch (e) {}
+                    } else {
+                        alert(res.error || 'Kommentaari salvestamine ebaõnnestus');
+                    }
+                    sendBtn.disabled = false;
+                }, function(err) {
+                    alert(err || 'Võrguviga');
+                    sendBtn.disabled = false;
+                });
+            });
+        })();
 
         function initializeTooltips() {
             const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
@@ -818,9 +895,10 @@ foreach ($assignment['students'] as $s):
             // Reset comments container to ensure it's cleared before populating with new comments
             commentsContainer.innerHTML = '';
 
-            // Populate comments section with Bootstrap cards
+            // Populate comments section with Bootstrap cards (newest first)
             if (student && student.comments && student.comments.length > 0) {
-                student.comments.forEach(comment => {
+                for (let i = student.comments.length - 1; i >= 0; i--) {
+                    const comment = student.comments[i];
                     const card = document.createElement('div');
                     card.classList.add('card', 'mb-3'); // Add Bootstrap card classes
 
@@ -841,7 +919,7 @@ foreach ($assignment['students'] as $s):
 
                     // Append the card to the comments container
                     commentsContainer.appendChild(card);
-                });
+                }
             } else {
                 commentsContainer.innerHTML = '<p>Kommentaare pole.</p>';
             }

@@ -75,8 +75,14 @@ class images extends Controller
             stop(405, 'Method not allowed');
         }
 
-        // Check authentication
-        if (!$this->auth->userIsTeacher && !$this->auth->userIsAdmin && !$this->auth->userIsStudent) {
+        // Check authentication - use isset() to avoid undefined property warnings
+        $isTeacher = isset($this->auth->userIsTeacher) && $this->auth->userIsTeacher;
+        $isAdmin = isset($this->auth->userIsAdmin) && $this->auth->userIsAdmin;
+
+        // Students are represented by having a groupId and not being admin/teacher
+        $isStudent = isset($this->auth->groupId) && $this->auth->groupId && !$isAdmin && !$isTeacher;
+
+        if (!$isTeacher && !$isAdmin && !$isStudent) {
             stop(403, 'Authentication required');
         }
 
