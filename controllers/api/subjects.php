@@ -112,6 +112,29 @@ class subjects extends Controller
             ];
         }
 
+        // Enrich local missing assignments with assignmentLink as well
+        if (!empty($localMissing)) {
+            foreach ($localMissing as $subjectExtId => &$list) {
+                foreach ($list as &$item) {
+                    if (!empty($item['createdAssignmentId'])) {
+                        $assignmentId = $item['createdAssignmentId'];
+                        $row = \App\Db::getFirst(
+                            "SELECT s.groupId, g.groupName FROM assignments a JOIN subjects s ON a.subjectId = s.subjectId JOIN `groups` g ON s.groupId = g.groupId WHERE a.assignmentId = ?",
+                            [$assignmentId]
+                        );
+                        $groupName = $row['groupName'] ?? null;
+                        if ($groupName) {
+                            $item['assignmentLink'] = "Link ülesandele: https://kriit.vikk.ee/assignments/{$assignmentId}?group=" . rawurlencode($groupName);
+                        } else {
+                            $item['assignmentLink'] = "Link ülesandele: https://kriit.vikk.ee/assignments/{$assignmentId}";
+                        }
+                    }
+                }
+                unset($item);
+            }
+            unset($list);
+        }
+
         // Merge created-by-sync and preexisting local-missing lists (localMissing should not overwrite existing keys)
         foreach ($localMissing as $sx => $list) {
             if (!isset($newAssignments[$sx])) $newAssignments[$sx] = [];
