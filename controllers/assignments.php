@@ -264,6 +264,7 @@ class assignments extends Controller
                     'studentName' => $row['studentName'],
                     'grade' => !empty($row['userGrade']) ? trim($row['userGrade']) : '',
                     'assignmentStatusName' => $row['assignmentStatusName'] ?? 'Esitamata',
+                    'assignmentStatusId' => $row['assignmentStatusId'] ?? ASSIGNMENT_STATUS_NOT_SUBMITTED,
                     'initials' => isset($row['studentName']) ? mb_substr($row['studentName'], 0, 1) . mb_substr($row['studentName'], mb_strrpos($row['studentName'], ' ') + 1, 1) : '',
                     'solutionUrl' => isset($row['solutionUrl']) ? trim($row['solutionUrl']) : '',
                     'comments' => $comments,

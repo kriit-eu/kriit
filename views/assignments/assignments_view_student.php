@@ -539,10 +539,13 @@ foreach ($assignment['students'] as $s):
                     foreach ($assignment['students'] as $s):
                         if ($s['studentId'] == $currentUserId) continue;
 
-                        // Determine pass/fail status based on grade
+                        // Determine pass/fail status based on grade and assignment status
                         $grade = $s['grade'] ?? '';
+                        $assignmentStatusId = $s['assignmentStatusId'] ?? null;
                         $showOk = false;
                         $showFail = false;
+                        $showYellow = false;
+                        
                         if (!empty($grade)) {
                             if (in_array($grade, ['3', '4', '5', 'A'])) {
                                 $showOk = true;
@@ -550,14 +553,22 @@ foreach ($assignment['students'] as $s):
                                 $showFail = true;
                             }
                         }
+                        
+                        // Show yellow for not submitted assignments (assignmentStatusId = 1)
+                        if ($assignmentStatusId === 1) {
+                            $showYellow = true;
+                        }
 
-                        // Ensure we don't show a red-cell for other students; fall back to default styling
+                        // Use the server-generated class as base, but ensure we respect status-based coloring
                         $cellClass = isset($s['class']) ? $s['class'] : '';
-                        // Remove any occurrence of 'red-cell' to avoid red highlighting for fails
-                        $cellClass = trim(str_replace('red-cell', '', $cellClass));
                         // If student has a failing grade, mark with yellow background; if passing, add green
-                        if ($showFail) {
+                        if ($showFail && !$showYellow) {
                             $cellClass = trim($cellClass . ' yellow-cell');
+                        } elseif ($showYellow) {
+                            // Ensure yellow cell for not submitted (status 1)
+                            if (strpos($cellClass, 'yellow-cell') === false) {
+                                $cellClass = trim($cellClass . ' yellow-cell');
+                            }
                         }
                     ?>
                         <div>
