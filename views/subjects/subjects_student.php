@@ -49,6 +49,12 @@
 
 
 <div class="row student-view">
+    <div class="mb-3 d-flex justify-content-end">
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="filterUnfinishedFailingToggle">
+            <label class="form-check-label" for="filterUnfinishedFailingToggle">Esitamata või täiendamist vajavad ülesanded</label>
+        </div>
+    </div>
     <?php foreach ($this->groups as $group): ?>
         <h1><?= $group['groupName'] ?></h1>
 
@@ -71,7 +77,16 @@
                     </tr>
 
                     <?php foreach ($subject['assignments'] as $assignment): ?>
-                        <tr>
+                        <?php
+                        // Compute a flag for unfinished or failing for current student
+                        $uid = $this->auth->userId;
+                        $st = $assignment['assignmentStatuses'][$uid] ?? ['class'=>'','assignmentStatusName'=>'Esitamata','grade'=>'','tooltipText'=>''];
+                        $gradeVal = $st['grade'];
+                        $isFailing = ($gradeVal === 'MA') || (is_numeric($gradeVal) && intval($gradeVal) < 3);
+                        $isUnfinished = ($st['assignmentStatusName'] ?? '') === 'Esitamata' || empty($st['assignmentStatusName']);
+                        $unfinishedOrFailing = $isFailing || $isUnfinished;
+                        ?>
+                        <tr data-unfinished-failing="<?= $unfinishedOrFailing ? '1' : '0' ?>">
                             <td colspan="1">
                                 <div class="assignment-container">
                                     <div class="assignment-info">
@@ -88,10 +103,7 @@
                                     <?php endif; ?>
                                 </div>
                             </td>
-                            <?php
-                            $uid = $this->auth->userId;
-                            $st = $assignment['assignmentStatuses'][$uid] ?? ['class'=>'','assignmentStatusName'=>'Esitamata','grade'=>'','tooltipText'=>''];
-                            ?>
+                            <?php /* $st already computed above for filter flag */ ?>
                             <td class="<?= $st['class'] ?> text-center" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-html="true" title="<?= nl2br(htmlspecialchars($st['tooltipText'])) ?>" data-grade="<?= is_numeric($st['grade'])?intval($st['grade']):'' ?>" data-is-student="true" data-url="assignments/<?= $assignment['assignmentId'] ?>?group=<?= urlencode($group['groupName']) ?>" style="width:120px;min-width:120px;max-width:120px;">
                                 <?= $st['assignmentStatusName']==='Kontrollimisel'?'Kontrollimisel':($st['grade']?:$st['assignmentStatusName']) ?>
                             </td>
@@ -638,6 +650,46 @@
             };
         };
 
+        const prepareUnfinishedFailingToggle = () => {
+            const toggle = document.getElementById('filterUnfinishedFailingToggle');
+            if (!toggle) return;
+
+            function applyFilter() {
+                const enabled = toggle.checked;
+                // For each subject table, show/hide assignment rows
+                $$('#subject-table').forEach(table => {
+                    let anyVisible = false;
+                    $$('tr', table).forEach(row => {
+                        // header rows (contain <th>) should be handled after
+                        if (row.querySelector('th')) return;
+                        const val = row.dataset.unfinishedFailing === '1';
+                        if (!enabled) {
+                            row.style.display = '';
+                            anyVisible = true;
+                        } else {
+                            if (val) {
+                                row.style.display = '';
+                                anyVisible = true;
+                            } else {
+                                row.style.display = 'none';
+                            }
+                        }
+                    });
+                    // show or hide header row based on anyVisible
+                    $$('tr', table).forEach(row => {
+                        if (row.querySelector('th')) {
+                            row.style.display = anyVisible ? '' : 'none';
+                        }
+                    });
+                    const spacer = table.previousElementSibling;
+                    if (spacer && spacer.tagName === 'DIV') spacer.style.display = anyVisible ? '' : 'none';
+                    table.style.display = anyVisible ? '' : 'none';
+                });
+            }
+
+            toggle.addEventListener('change', applyFilter);
+        };
+
         const initSorting = ()=>{
             $$('.student-summary-table').forEach(tbl=>{
                 sortStates.set(tbl.dataset.group,{name:'none',pending:'none'});
@@ -649,6 +701,7 @@
             $$('[data-bs-toggle="tooltip"]').forEach(el=>new bootstrap.Tooltip(el));
             prepareClickableCells();
             prepareShowAllToggle();
+            prepareUnfinishedFailingToggle();
             setRedCellIntensity();
             updateBadges();
             initSorting();
