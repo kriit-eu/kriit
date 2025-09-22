@@ -1476,4 +1476,47 @@ class assignments extends Controller
 
         stop(200, ['assignmentId' => $assignmentId, 'studentsAssigned' => $studentsAssigned]);
     }
+
+    /**
+     * AJAX: delete an assignment (allowed for teachers with permission and admins)
+     * Expects POST: assignmentId
+     */
+    public function ajax_deleteAssignment()
+    {
+        if (empty($_POST['assignmentId']) || !is_numeric($_POST['assignmentId'])) {
+            stop(400, 'Vigane päring.');
+        }
+
+        $assignmentId = (int)$_POST['assignmentId'];
+
+        // Check permission: admin or teacher/group allowed
+        if (!$this->checkIfUserHasPermissionForAction($assignmentId)) {
+            stop(403, 'Teil pole õigusi sellele tegevusele.');
+        }
+
+        // Delete dependent data similar to admin::deleteAllAssignmentDependentData
+        // Delete criteria and related userDoneCriteria (table is `criteria`)
+        $criteria = Db::getAll('SELECT * FROM criteria WHERE assignmentId = ?', [$assignmentId]);
+        if (!empty($criteria)) {
+            foreach ($criteria as $c) {
+                // userDoneCriteria references criterionId
+                Db::delete('userDoneCriteria', 'criterionId = ?', [$c['criterionId']]);
+            }
+            Db::delete('criteria', 'assignmentId = ?', [$assignmentId]);
+        }
+
+        // Delete messages related to this assignment
+        Db::delete('messages', 'assignmentId = ?', [$assignmentId]);
+
+        // Delete userAssignments rows
+        Db::delete('userAssignments', 'assignmentId = ?', [$assignmentId]);
+
+        // Finally delete the assignment itself
+        Db::delete('assignments', 'assignmentId = ?', [$assignmentId]);
+
+        // Log activity
+        Activity::create(ACTIVITY_DELETE_ASSIGNMENT, $this->auth->userId, null, 'Kustutati ülesanne assignmentId=' . $assignmentId);
+
+        stop(200, 'OK');
+    }
 }

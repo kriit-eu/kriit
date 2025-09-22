@@ -2623,7 +2623,7 @@
             const params = new URLSearchParams();
             params.append('assignmentId', assignmentId);
 
-            fetch('/admin/AJAX_deleteAssignment', {
+            fetch('/assignments/ajax_deleteAssignment', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
