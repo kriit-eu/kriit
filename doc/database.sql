@@ -93,7 +93,7 @@ CONSTRAINT `assignments_subjectId_fk` FOREIGN KEY (`subjectId`) REFERENCES `subj
 LOCK TABLES `assignments` WRITE;
 /*!40000 ALTER TABLE `assignments` DISABLE KEYS */;
 INSERT INTO `assignments` VALUES
-(1,'Aatomi lõhustamine','',1,NULL,1,'2024-11-30',1,1,'',NULL,1,0);
+(1,'Aatomi lõhustamine','# Ülesanne 1 — Aatomi lõhustamine\n\nAeg: 45 min\n\n## Eesmärk\nSa pead kirjutama lihtsa HTML-lehe, mis demonstreerib teadmisi HTML-i ja CSS-i kohta. Selle ülesandega testitakse, et oskad luua semantilist HTML-i ja rakendada CSS-i, mis muudab elementide välimust.\n\n## Ülesande kirjeldus\nLoo HTML-leht, mille pealkiri on „Aatomi lõhustamine". Lehel peab olema:\n\n- Pealkiri (<code>&lt;h1&gt;</code>) tekstiga "Aatomi lõhustamine".\n- Kirjeldav lõik (<code>&lt;p&gt;</code>) ülesande kohta.\n- Kast (div) klassiga <code>atom</code>, mille sees on tekst "Atom".\n\nRakenda CSS nii, et:\n\n- Lehe taustavärv on valge (#ffffff).\n- Kast (.atom) on ümarate nurkadega (border-radius: 12px), mõõtmetega 200x200 px.\n- Kasti taust on lineaarne gradient, mis läheb vasakult paremale sinisest (#2196F3) roheliseks (#4CAF50).\n- Kasti sisu on keskel nii horisontaalselt kui vertikaalselt.\n- Kasti tekst on paks ja valge värviga.\n\n## Hinnangukriteeriumid\nHinnatakse järgmist:\n\n- HTML-i semantika (10%): kas kasutati sobivaid elemente (h1, p, div).\n- CSS-i omadused (50%): kas taust, gradient, border-radius, mõõtmed ja tekstistiil on õiged.\n- Paigutus (20%): kas kast on täpselt 200x200 px ning sisu on tsentreeritud.\n- Koodikvaliteet (10%): kas HTML ja CSS on puhtad, hästi loetavad ja vähemduplikaatsed.\n- Kommentaarid ja selgitused (10%): kas lehel on lühike kommentaar või README, mis selgitab tehtud valikuid.\n\nTäispunktide summa: 100\n\n## Aktsepteerimiskriteeriumid (automaatne kontroll)\nVõimalik validatsioon, mida automaatfunktsioon kontrollib:\n\n1. Leht kasutab <code>&lt;h1&gt;</code> elemendi pealkirja jaoks ja tekst täpselt "Aatomi lõhustamine".\n2. Lehel eksisteerib <code>div.atom</code> element.\n3. Lehe taustavärv on #ffffff (või valge, RGB 255,255,255).\n4. <code>div.atom</code> elemendi laius ja kõrgus on 200px.\n5. <code>div.atom</code> border-radius on 12px.\n6. <code>div.atom</code> background-image sisaldab lineaarset gradienti sinisest roheliseks (sisaldab värve #2196F3 ja #4CAF50 või RGB ekvivalente).\n7. <code>div.atom</code> tekst on valge ja paks (font-weight >= 600 või bold).\n8. Tekst on tsentreeritud nii horisontaalselt kui vertikaalselt.\n\n## Näpunäited\n- Kasuta Flexboxi, et tsentreerida sisu kasti sees.\n- Gradienti saab määrata näiteks: <code>background: linear-gradient(90deg, #2196F3 0%, #4CAF50 100%);</code>\n- Kasuta CSS-i eraldi faili või <code>&lt;style&gt;</code> sektsiooni.\n\n## Hinnete jaotus (näide)\n- 90–100: Täpne ja puhas lahendus, kõik kriteeriumid täidetud.\n- 75–89: Väikesed puudujäägid stiilis või paigutuses.\n- 50–74: Osaliselt täidetud, mõni oluline kriteerium puudub.\n- 0–49: Lahendus puudulik või ei tööta.\n\n## Luba ja autorlus\nKui saatsid oma vastuse, lisa kindlasti e-posti aadress ja nimi <code>userEmail</code> väljale, kui see on vajalik.\n','1',NULL,1,'2024-11-30',1,1,'',NULL,1,0);
 /*!40000 ALTER TABLE `assignments` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -109,7 +109,9 @@ CONSTRAINT `criteria_assignments_assignmentId_fk` FOREIGN KEY (`assignmentId`) R
 LOCK TABLES `criteria` WRITE;
 /*!40000 ALTER TABLE `criteria` DISABLE KEYS */;
 INSERT INTO `criteria` VALUES
-(1,'Aatom peab olema lõhustatud',1);
+(1,'HTML: õige semantika (kasuta h1, p, div.atom)',1),
+(2,'CSS: gradient, border-radius ja mõõtmed (200x200px)',1),
+(3,'Paigutus: kast peab olema tsentreeritud horisontaalselt ja vertikaalselt',1);
 /*!40000 ALTER TABLE `criteria` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -462,7 +464,9 @@ CONSTRAINT `userAssignments_users_userId_fk` FOREIGN KEY (`userId`) REFERENCES `
 LOCK TABLES `userAssignments` WRITE;
 /*!40000 ALTER TABLE `userAssignments` DISABLE KEYS */;
 INSERT INTO `userAssignments` VALUES
-(1,2,2,NULL,'https://www.google.com/','[]',NULL,NULL);
+(1,2,3,'MA','https://www.google.com/','[{"name":"Mati Vaarikas","comment":"Siin on minu link ja kommentaar. Palun vaadake.","createdAt":"2025-09-22 11:50:00"},{"name":"Kati Maasikas","comment":"Töö on ebapiisav: gradient puudub ja kast pole tsentreeritud — palun paranda need vead.","createdAt":"2025-09-22 12:30:00"}]',NULL,'2025-09-22 13:45:00'),
+(1,3,1,NULL,NULL,NULL,NULL,NULL),
+(1,4,3,'A','https://example.com/solutions/4','[{"name":"Jaan Sipelgas","comment":"Minu ülesanne valmis. Vaata palun.","createdAt":"2025-09-22 12:15:00"},{"name":"Kati Maasikas","comment":"Suurepärane töö — kõik kriteeriumid on täidetud, selge lahendus ja suurepärane kood. Väga hea!","createdAt":"2025-09-22 13:05:00"}]',NULL,'2025-09-22 13:35:00');
 /*!40000 ALTER TABLE `userAssignments` ENABLE KEYS */;
 UNLOCK TABLES;
 DELIMITER ;;
@@ -506,7 +510,7 @@ CONSTRAINT `userDoneCriteria_users_userId_fk` FOREIGN KEY (`userId`) REFERENCES 
 LOCK TABLES `userDoneCriteria` WRITE;
 /*!40000 ALTER TABLE `userDoneCriteria` DISABLE KEYS */;
 INSERT INTO `userDoneCriteria` VALUES
-(1,2);
+(1,2),(1,4),(2,4),(3,4);
 /*!40000 ALTER TABLE `userDoneCriteria` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -566,7 +570,9 @@ LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
 INSERT INTO `users` VALUES
 (1,'Kati Maasikas','41111111115',1,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,1,NULL,NULL,'demo',NULL,1,NULL,NULL,1),
-(2,'Mati Vaarikas','31111111114',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,1,NULL,NULL,'demo2',1,0,'',NULL,1);
+(2,'Mati Vaarikas','31111111114',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,1,NULL,NULL,'demo2',1,0,'',NULL,1),
+(3,'Mari Kadakas','51111111116',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,1,NULL,NULL,NULL,1,0,NULL,NULL,1),
+(4,'Jaan Sipelgas','61111111117',0,'$2y$10$vTje.ndUFKHyuotY99iYkO.2aHJUgOsy2x0RMXP1UmrTe6CQsKbtm',0,1,NULL,NULL,NULL,1,0,NULL,NULL,1);
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 -- Final view structure for view `userExercisesWithComputedStatus`
