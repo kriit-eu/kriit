@@ -228,6 +228,7 @@
         /* Reduce bottom margin to compensate for large utility class (mb-5) */
         #criterionDisplay {
             margin-bottom: 10px !important; /* original mb-5 equals 3rem (48px) in Bootstrap 5; reduce by 28px to 20px total */
+            background-color: #f2f2f2;
         }
 
     #notificationContainer {
@@ -302,6 +303,27 @@
     .card-body {
         word-wrap: break-word;
         /* Ensure long words break and wrap to the next line */
+        background-color: #f2f2f2;
+    }
+
+    /* Markdown editor sticky header styling */
+    .md-editor-sticky-header.d-flex.justify-content-between.align-items-center {
+        background-color: #f2f2f2;
+    }
+
+    /* Ensure card-body backgrounds respect card border-radius */
+    .card {
+        overflow: hidden;
+    }
+
+    /* Add margin to send comment button */
+    .btn.btn-secondary.btn-sm {
+        margin-bottom: 15px;
+    }
+
+    /* Remove margin from student comment container */
+    #studentComment_container {
+        margin: 0 !important;
     }
 
 
@@ -425,6 +447,12 @@
     #studentPanel.fade-hidden {
         opacity: 0;
         pointer-events: none;
+    }
+
+    /* Page background gradient */
+    body {
+        background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%);
+        min-height: 100vh;
     }
 </style>
 <div>
@@ -616,7 +644,7 @@ foreach ($assignment['students'] as $s):
                 $initialValue = '';
                 include __DIR__ . '/../../templates/partials/markdown_editor.php';
                 ?>
-                <div class="mt-2 text-end">
+                <div class="text-end">
                     <button type="button" id="sendCommentButton" class="btn btn-secondary btn-sm">Saada kommentaar</button>
                 </div>
                 <div id="commentsContainer">
@@ -1957,4 +1985,42 @@ foreach ($assignment['students'] as $s):
  }
             });
         }
+
+        // Persist and restore vertical scroll position across refreshes.
+        // Save position before unload (pagehide or beforeunload) and restore on load.
+        (function() {
+            const storageKey = 'assignments_view_scrollY_' + (assignment.assignmentId || 'unknown');
+
+            // Restore on DOMContentLoaded with a few retries to account for images or async loads
+            document.addEventListener('DOMContentLoaded', function() {
+                const saved = sessionStorage.getItem(storageKey);
+                if (!saved) return;
+                const y = parseInt(saved, 10);
+                if (isNaN(y)) return;
+
+                // Try to restore immediately and then a couple more times as content paints
+                const attempts = [0, 250, 600];
+                attempts.forEach((delay) => {
+                    setTimeout(() => {
+                        try {
+                            window.scrollTo(0, y);
+                        } catch (e) {
+                            // ignore
+                        }
+                    }, delay);
+                });
+            });
+
+            // Save on pagehide (recommended) and fallback to beforeunload
+            function saveScroll() {
+                try {
+                    sessionStorage.setItem(storageKey, String(window.scrollY || window.pageYOffset || 0));
+                } catch (e) {
+                    // ignore storage errors
+                }
+            }
+
+            window.addEventListener('pagehide', saveScroll);
+            window.addEventListener('beforeunload', saveScroll);
+        })();
     </script>
