@@ -1315,6 +1315,49 @@ class assignments extends Controller
     }
 
     /**
+     * Assigns all active students from the subject's group(s) to a new assignment
+     * 
+     * @param int $assignmentId The assignment ID
+     * @param int $subjectId The subject ID
+     * @return int Number of students assigned
+     */
+    private function assignStudentsToNewAssignment(int $assignmentId, int $subjectId): int
+    {
+        // Get all active students from the groups that this subject is assigned to
+        $students = Db::getAll("
+            SELECT DISTINCT u.userId 
+            FROM users u
+            INNER JOIN subjects s ON u.groupId = s.groupId
+            WHERE s.subjectId = ? 
+            AND u.userDeleted = 0 
+            AND u.userIsActive = 1 
+            AND u.userIsTeacher = 0
+            AND u.userIsAdmin = 0
+        ", [$subjectId]);
+
+        $studentsAssigned = 0;
+        
+        foreach ($students as $student) {
+            try {
+                // Create userAssignment entry with default status 'Esitamata' (Not submitted)
+                Db::insert('userAssignments', [
+                    'assignmentId' => $assignmentId,
+                    'userId' => $student['userId'],
+                    'assignmentStatusId' => ASSIGNMENT_STATUS_NOT_SUBMITTED, // 1 = Esitamata
+                    'comments' => '[]'
+                ]);
+                $studentsAssigned++;
+            } catch (\Exception $e) {
+                // Log the error but continue with other students
+                Activity::create(ACTIVITY_UPDATE_ASSIGNMENT, $this->auth->userId, $assignmentId, 
+                    "Failed to assign student {$student['userId']}: " . $e->getMessage());
+            }
+        }
+
+        return $studentsAssigned;
+    }
+
+    /**
      * Create a new assignment (for teachers and admins)
      * Teachers can only create assignments for subjects they teach
      */
@@ -1423,6 +1466,14 @@ class assignments extends Controller
             }
         }
 
-        stop(200, ['assignmentId' => $assignmentId]);
+        // Assign all students in the subject's group(s) to this new assignment
+        $studentsAssigned = $this->assignStudentsToNewAssignment($assignmentId, $subjectId);
+        
+        if ($studentsAssigned > 0) {
+            Activity::create(ACTIVITY_UPDATE_ASSIGNMENT, $this->auth->userId, $assignmentId, 
+                "Assigned $studentsAssigned students to assignment");
+        }
+
+        stop(200, ['assignmentId' => $assignmentId, 'studentsAssigned' => $studentsAssigned]);
     }
 }
