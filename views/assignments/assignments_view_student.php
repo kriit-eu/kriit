@@ -659,11 +659,7 @@ foreach ($assignment['students'] as $s):
                 include __DIR__ . '/../../templates/partials/markdown_editor.php';
                 ?>
                 <div class="text-end">
-                    <?php if (!$currentUserIsPositiveGrade): ?>
-                        <button type="button" id="sendCommentButton" class="btn btn-secondary btn-sm">Saada kommentaar</button>
-                    <?php else: ?>
-                        <p class="text-muted small mb-0">Sul on juba positiivne hinne - uute kommentaaride lisamine pole enam vajalik.</p>
-                    <?php endif; ?>
+                    <button type="button" id="sendCommentButton" class="btn btn-secondary btn-sm">Saada kommentaar</button>
                 </div>
                 <div id="commentsContainer">
                     <?php
