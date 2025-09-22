@@ -924,7 +924,7 @@
                             <td colspan="1">
                                 <div class="assignment-container">
                                     <div class="assignment-info">
-                                        <a href="assignments/<?= $assignment['assignmentId'] ?>?group=<?= urlencode($group['groupName']) ?>">
+                                        <a href="assignments/<?= $assignment['assignmentId'] ?>?group=<?= urlencode($group['groupName']) ?>" data-assignment-due-at="<?= htmlspecialchars($assignment['assignmentDueAt'] ?? '') ?>">
                                             <?php if (!empty($assignment['assignmentEntryDateFormatted'])): ?><span
                                                     class="entry-date"><?= $assignment['assignmentEntryDateFormatted'] ?></span><?php endif; ?>
                                             <?= $assignment['assignmentName'] ?>
@@ -936,10 +936,11 @@
                                     </button>
                                     <?php if ($assignment['showDueDate']): ?>
                                         <span class="badge <?= $assignment['finalBadgeClass'] ?> due-date-badge"
-                                            data-days-remaining="<?= $assignment['daysRemaining'] ?>"
-                                            data-is-student=<?= json_encode($this->isStudent) ?>>
-                                            <?= $assignment['assignmentDueAt'] ? (new DateTime($assignment['assignmentDueAt']))->format('d.m.y') : 'Pole tähtaega' ?>
-                                        </span>
+                                                data-days-remaining="<?= $assignment['daysRemaining'] ?>"
+                                                data-assignment-due-at="<?= htmlspecialchars($assignment['assignmentDueAt'] ?? '') ?>"
+                                                data-is-student=<?= json_encode($this->isStudent) ?>>
+                                                <?= $assignment['assignmentDueAt'] ? (new DateTime($assignment['assignmentDueAt']))->format('d.m.y') : 'Pole tähtaega' ?>
+                                            </span>
                                     <?php endif; ?>
                                 </div>
                             </td>
@@ -2479,6 +2480,43 @@
             const yellowCells = $$('.yellow-cell');
             const problematicCells = [];
             const affectedAssignments = new Map();
+            // Count of student-cells that belong to assignments whose due date is <= today
+            let includedCellsCount = 0;
+
+            // Helper: parse various date string formats to a Date object (date-only)
+            const parseDateString = (s) => {
+                if (!s) return null;
+                s = String(s).trim();
+                // ISO-ish: YYYY-MM-DD or full ISO
+                const isoMatch = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+                if (isoMatch) {
+                    const y = parseInt(isoMatch[1], 10);
+                    const m = parseInt(isoMatch[2], 10) - 1;
+                    const d = parseInt(isoMatch[3], 10);
+                    return new Date(y, m, d);
+                }
+                // dd.mm.yyyy or dd.mm.yy or dd.mm
+                const dm = s.match(/^(\d{1,2})\.(\d{1,2})(?:\.(\d{2,4}))?$/);
+                if (dm) {
+                    const day = parseInt(dm[1], 10);
+                    const month = parseInt(dm[2], 10) - 1;
+                    let year = null;
+                    if (dm[3]) {
+                        year = parseInt(dm[3], 10);
+                        if (dm[3].length === 2) year += 2000;
+                    } else {
+                        year = (new Date()).getFullYear();
+                    }
+                    return new Date(year, month, day);
+                }
+                // Fallback: try Date constructor
+                const fallback = new Date(s);
+                if (!isNaN(fallback.getTime())) return new Date(fallback.getFullYear(), fallback.getMonth(), fallback.getDate());
+                return null;
+            };
+
+            const today = new Date();
+            today.setHours(0,0,0,0);
 
             yellowCells.forEach(cell => {
                 const grade = cell.dataset.grade;
@@ -2487,19 +2525,37 @@
                 // Check if grade is empty/undefined AND cell text shows "Esitamata" or is empty
                 if ((!grade || grade === '' || grade === 'undefined') &&
                     (cellText === 'Esitamata' || cellText === '' || !cellText)) {
-                    problematicCells.push(cell);
 
                     // Find assignment name from the same row
                     const row = cell.closest('tr');
                     if (row) {
                         const assignmentLink = row.querySelector('a[href*="assignments/"]');
                         if (assignmentLink) {
-                            // Get assignment name (remove date if present)
-                            let assignmentName = assignmentLink.textContent.trim();
-                            // Remove date prefix like "28.11.24" if exists
-                            assignmentName = assignmentName.replace(/^\d{1,2}\.\d{1,2}\.\d{2,4}\s*/, '');
+                            // Raw text may start with a visual date like "04.09" or "04.09.24" followed by the name
+                            const rawText = assignmentLink.textContent.trim();
+                            let visualDate = null;
+                            let assignmentName = rawText;
+                            const visualMatch = rawText.match(/^(\d{1,2}\.\d{1,2}(?:\.\d{2,4})?)\s+(.+)$/);
+                            if (visualMatch) {
+                                visualDate = visualMatch[1];
+                                assignmentName = visualMatch[2];
+                            } else {
+                                // As a safety, also strip a leading date without a separating space
+                                assignmentName = rawText.replace(/^\d{1,2}\.\d{1,2}(?:\.\d{2,4})?\s*/, '');
+                            }
 
-                            const assignmentId = assignmentLink.href.match(/assignments\/(\d+)/)?.[1];
+                            // Robust assignment ID extraction: try href, data attributes, row/cell datasets
+                            let assignmentId = null;
+                            try {
+                                const href = assignmentLink.getAttribute('href') || '';
+                                const m = href.match(/assignments\/(?:view\/)?(\d+)/);
+                                if (m) assignmentId = m[1];
+                            } catch (e) {
+                                assignmentId = null;
+                            }
+                            if (!assignmentId) {
+                                assignmentId = assignmentLink.dataset.assignmentId || assignmentLink.getAttribute('data-assignment-id') || row.dataset.assignmentId || cell.dataset.assignmentId || null;
+                            }
 
                             // Find subject name from the table header
                             const table = row.closest('table');
@@ -2507,35 +2563,86 @@
                             if (table) {
                                 const headerRow = table.querySelector('tr th b');
                                 if (headerRow) {
-                                    // Get text content, but only the subject name part
                                     const headerLink = headerRow.querySelector('a');
                                     subjectName = headerLink ? headerLink.textContent.trim() :
                                         headerRow.childNodes[0]?.textContent?.trim() || '';
                                 }
                             }
 
+                            // Try to read DB due date from the link attribute first, then fallback to badge
+                            let dbDue = null;
+                            try {
+                                dbDue = assignmentLink.getAttribute('data-assignment-due-at') || null;
+                            } catch (e) {
+                                dbDue = null;
+                            }
+                            if (!dbDue) {
+                                try {
+                                    const badge = row.querySelector('.due-date-badge[data-assignment-due-at]');
+                                    if (badge) dbDue = badge.getAttribute('data-assignment-due-at') || null;
+                                } catch (e) {
+                                    dbDue = null;
+                                }
+                            }
+
+                            // Determine whether this assignment's due date has passed
+                            let includeAssignment = false;
+                            // Prefer DB due date
+                            const parsedDb = dbDue ? parseDateString(dbDue) : null;
+                            if (parsedDb) {
+                                parsedDb.setHours(0,0,0,0);
+                                // Include only if due date is strictly before today (do not count today)
+                                if (parsedDb.getTime() < today.getTime()) includeAssignment = true;
+                            } else if (visualDate) {
+                                const parsedVis = parseDateString(visualDate);
+                                if (parsedVis) {
+                                    parsedVis.setHours(0,0,0,0);
+                                    if (parsedVis.getTime() < today.getTime()) includeAssignment = true;
+                                }
+                            }
+
+                            // If neither DB nor visual date is parsable, skip — we only show entries whose due date passed
+                            if (!includeAssignment) {
+                                return; // skip this cell/assignment
+                            }
+
+                            // Only record this problematic cell if the assignment due date is past or today
+                            if (!includeAssignment) {
+                                return; // skip this cell/assignment
+                            }
+
+                            includedCellsCount++;
+
                             if (!affectedAssignments.has(assignmentId)) {
                                 affectedAssignments.set(assignmentId, {
                                     name: assignmentName,
                                     subject: subjectName,
-                                    count: 1
+                                    count: 1,
+                                    dueDateDb: dbDue,
+                                    visualDate: visualDate
                                 });
                             } else {
                                 affectedAssignments.get(assignmentId).count++;
+                                // If DB date is missing but newly found, record it
+                                const existing = affectedAssignments.get(assignmentId);
+                                if (!existing.dueDateDb && dbDue) existing.dueDateDb = dbDue;
+                                if (!existing.visualDate && visualDate) existing.visualDate = visualDate;
                             }
                         }
                     }
                 }
             });
 
-            // Show alert if problematic cells found
-            if (problematicCells.length > 0) {
+            // Show alert only if there are assignments with past due dates and missing grades
+            if (affectedAssignments.size > 0) {
                 const alertDiv = $('#overdue-alert');
                 const messageSpan = $('#overdue-message');
 
                 const assignmentCount = affectedAssignments.size;
-                const totalProblems = problematicCells.length;
+                // totalProblems should count only the student-cells that belong to included assignments
+                const totalProblems = includedCellsCount;
 
+                // Top message should show number of students affected (total problematic cells), details show assignments
                 let message = `Leiti ${totalProblems} esitamata ülesannet, mille tähtaeg on möödas, aga hinne puudub.<br>`;
                 message += `<small>Kontrollige, kas cronitöö töötab korralikult või on õpetaja seadnud tähtaja minevikku.</small><br><br>`;
                 message += `<details style="margin-top: 10px;">`;
@@ -2543,8 +2650,31 @@
                 message += `<ul style="margin-top: 10px; margin-bottom: 0;">`;
 
                 affectedAssignments.forEach((data, id) => {
-                    message += `<li><strong>${data.subject}:</strong> ${data.name} `;
-                    message += `<span class="badge bg-danger">${data.count} õpilast</span></li>`;
+                    let dueDateText = '';
+                    // Prefer DB due date if present
+                    if (data.dueDateDb) {
+                        try {
+                            const d = new Date(data.dueDateDb);
+                            if (!isNaN(d.getTime())) {
+                                const day = String(d.getDate()).padStart(2, '0');
+                                const month = String(d.getMonth() + 1).padStart(2, '0');
+                                dueDateText = `${day}.${month}`;
+                            }
+                        } catch (e) {
+                            dueDateText = '';
+                        }
+                    }
+                    // Fall back to visual date if DB missing
+                    if (!dueDateText && data.visualDate) {
+                        // visualDate may be in formats like 'dd.mm' or 'dd.mm.yy' — strip year if present
+                        const m = data.visualDate.match(/^(\d{1,2}\.\d{1,2})(?:\.\d{2,4})?$/);
+                        if (m) dueDateText = m[1];
+                    }
+
+                    // Build the list item in the desired format: "ID: 123: (DD.MM) Assignment title N õpilast"
+                    const dateHtml = dueDateText ? `<small class="text-muted">(${dueDateText})</small> ` : '';
+                    const idText = id ? `${id}: ` : '';
+                    message += `<li>ID: ${idText}${dateHtml}${data.name} <span class="badge bg-danger">${data.count} õpilast</span></li>`;
                 });
 
                 message += `</ul></details>`;
