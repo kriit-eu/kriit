@@ -493,6 +493,48 @@
     .tooltip {
         z-index: 2350 !important;
     }
+
+    /* Assignment instructions preview collapsed/expanded states */
+    #assignmentInstructionsPreview_full.ai-preview-collapsed {
+        max-height: 120px !important;
+        overflow: hidden !important;
+        position: relative;
+        transition: max-height 0.4s ease-in-out, opacity 0.3s ease;
+    }
+
+    #assignmentInstructionsPreview_full.ai-preview-expanded {
+        max-height: none !important;
+        overflow: visible !important;
+        transition: max-height 0.4s ease-in-out, opacity 0.3s ease;
+    }
+
+    #assignmentInstructionsPreview_full .ai-preview-fade-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 40px;
+        background: linear-gradient(transparent, #f8f9fa);
+        pointer-events: none;
+        opacity: 1;
+        transition: opacity 0.3s ease;
+    }
+
+    #assignmentInstructionsPreview_full.ai-preview-expanded .ai-preview-fade-overlay {
+        opacity: 0;
+    }
+
+    .ai-toggle-btn {
+        margin-top: 8px;
+        font-size: 0.875rem;
+        padding: 0.25rem 0.5rem;
+        transition: all 0.2s ease;
+    }
+
+    .ai-toggle-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
 </style>
 <style>
     /* Criteria trashcan button: gray by default, red bg and white icon on hover */
@@ -1603,6 +1645,8 @@
                             preview.style.height = '200px';
                         }
                     }
+                    // Setup assignment instructions preview toggle
+                    setupAssignmentInstructionsToggle();
                 });
                 setTimeout(() => {
                     updateCounter();
@@ -1649,6 +1693,119 @@
     }
 
     window.openEditAssignmentModal = openEditAssignmentModal;
+
+    // Assignment instructions preview show more/less functionality
+    function setupAssignmentInstructionsToggle() {
+        const previewFull = document.getElementById('assignmentInstructionsPreview_full');
+        if (!previewFull) return;
+
+        // Remove any existing toggle button to avoid duplicates
+        const existingToggle = previewFull.parentNode.querySelector('.ai-toggle-btn');
+        if (existingToggle) existingToggle.remove();
+
+        // Create toggle button
+        const toggleBtn = document.createElement('button');
+        toggleBtn.type = 'button';
+        toggleBtn.className = 'btn btn-outline-secondary btn-sm ai-toggle-btn';
+        toggleBtn.innerHTML = '<i class="fas fa-chevron-down me-1"></i>Näita rohkem';
+        toggleBtn.style.display = 'none'; // Initially hidden
+
+        // Create or update fade overlay
+        let fadeOverlay = previewFull.querySelector('.ai-preview-fade-overlay');
+        if (!fadeOverlay) {
+            fadeOverlay = document.createElement('div');
+            fadeOverlay.className = 'ai-preview-fade-overlay';
+            previewFull.appendChild(fadeOverlay);
+        }
+
+        // Insert button after preview
+        previewFull.parentNode.insertBefore(toggleBtn, previewFull.nextSibling);
+
+        let isExpanded = false;
+
+        // Toggle function
+        function togglePreview() {
+            isExpanded = !isExpanded;
+            
+            if (isExpanded) {
+                previewFull.classList.remove('ai-preview-collapsed');
+                previewFull.classList.add('ai-preview-expanded');
+                toggleBtn.innerHTML = '<i class="fas fa-chevron-up me-1"></i>Näita vähem';
+            } else {
+                previewFull.classList.remove('ai-preview-expanded');
+                previewFull.classList.add('ai-preview-collapsed');
+                toggleBtn.innerHTML = '<i class="fas fa-chevron-down me-1"></i>Näita rohkem';
+            }
+
+            // Trigger preview reflow for proper height calculation
+            setTimeout(() => {
+                const textarea = document.getElementById('assignmentInstructionsEditor');
+                if (textarea) {
+                    textarea.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            }, 50);
+        }
+
+        toggleBtn.addEventListener('click', togglePreview);
+
+        // Check if preview needs toggle button based on content height
+        function checkPreviewHeight() {
+            const textarea = document.getElementById('assignmentInstructionsEditor');
+            const content = textarea ? textarea.value.trim() : '';
+            if (!content) {
+                toggleBtn.style.display = 'none';
+                previewFull.classList.remove('ai-preview-collapsed', 'ai-preview-expanded');
+                return;
+            }
+
+            // Wait for content to render, then check height
+            setTimeout(() => {
+                // Temporarily remove constraints to measure natural height
+                const originalMaxHeight = previewFull.style.maxHeight;
+                const originalOverflow = previewFull.style.overflow;
+                previewFull.style.maxHeight = 'none';
+                previewFull.style.overflow = 'visible';
+                
+                const naturalHeight = previewFull.scrollHeight;
+                
+                // Restore original styles
+                previewFull.style.maxHeight = originalMaxHeight;
+                previewFull.style.overflow = originalOverflow;
+                
+                if (naturalHeight > 120) {
+                    toggleBtn.style.display = 'block';
+                    if (!isExpanded) {
+                        previewFull.classList.add('ai-preview-collapsed');
+                    }
+                } else {
+                    toggleBtn.style.display = 'none';
+                    previewFull.classList.remove('ai-preview-collapsed', 'ai-preview-expanded');
+                }
+            }, 100);
+        }
+
+        // Monitor content changes
+        const textarea = document.getElementById('assignmentInstructionsEditor');
+        if (textarea) {
+            // Create observer to watch for content changes
+            let contentCheckTimer;
+            const scheduleCheck = () => {
+                clearTimeout(contentCheckTimer);
+                contentCheckTimer = setTimeout(checkPreviewHeight, 200);
+            };
+
+            textarea.addEventListener('input', scheduleCheck);
+            textarea.addEventListener('keyup', scheduleCheck);
+            textarea.addEventListener('paste', () => setTimeout(scheduleCheck, 100));
+
+            // Also watch for programmatic changes to the preview
+            const observer = new MutationObserver(scheduleCheck);
+            observer.observe(previewFull, { childList: true, subtree: true, characterData: true });
+        }
+
+        // Initial check
+        checkPreviewHeight();
+    }
 
 
     // Inline add criterion logic (global scope)
