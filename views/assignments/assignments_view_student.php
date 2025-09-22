@@ -494,9 +494,20 @@
                     <?php 
 $currentUserId = $this->auth->userId;
 $studentCount = count($assignment['students']);
+// Determine if current user has a positive grade (to be used later for hiding buttons)
+$currentUserIsPositiveGrade = false;
 foreach ($assignment['students'] as $s): 
     // Only show the current student (viewer) on the left side
-    if ($s['studentId'] == $currentUserId): ?>
+    if ($s['studentId'] == $currentUserId): 
+        // Determine if current user's grade is positive
+        $grade = $s['grade'] ?? '';
+        $isPositiveGrade = !empty($grade) && in_array($grade, ['3', '4', '5', 'A']);
+        $currentUserIsPositiveGrade = $isPositiveGrade; // Store for later use
+        $cellClass = $s['class'] ?? '';
+        if ($isPositiveGrade) {
+            $cellClass = trim($cellClass . ' green-cell');
+        }
+        ?>
         <div>
             <div class="header-item" data-bs-toggle="tooltip" title="<?= $s['studentId'] == $currentUserId ? 'Hinne' : htmlspecialchars($s['studentName'], ENT_QUOTES) ?>" style="<?= $s['studentId'] !== array_key_first($assignment['students']) ? 'border-left: 1px solid #ccc;' : '' ?>">
                 <?php if ($s['studentId'] == $currentUserId): ?>
@@ -505,7 +516,7 @@ foreach ($assignment['students'] as $s):
                     <?= $s['initials'] ?>
                 <?php endif; ?>
             </div>
-            <div class="body-item <?= $s['class'] ?> text-center clickable-cells-row"
+            <div class="body-item <?= $cellClass ?> text-center clickable-cells-row"
                 data-bs-toggle="tooltip"
                 style="<?= $s['studentId'] !== array_key_first($assignment['students']) ? 'border-left: 1px solid #ccc;' : '' ?>"
                 <?php if (!$isStudent): ?>onclick="openStudentModal(false, <?= $s['studentId'] ?>)"<?php endif; ?> >
@@ -624,12 +635,15 @@ foreach ($assignment['students'] as $s):
             <!-- Kriteeriumid section removed for student submit panel -->
         </div>
         <div class="card-footer text-end">
-            <?php if ($isStudent): ?>
+            <?php if ($isStudent && !$currentUserIsPositiveGrade): ?>
                 <button type="button" class="btn btn-primary" id="submitButton" style="display:none;">Salvesta muudatused</button>
-            <?php else: ?>
+            <?php elseif (!$isStudent): ?>
                 <button type="button" class="btn btn-primary" id="submitButton">Salvesta muudatused</button>
             <?php endif; ?>
             <!-- Cancel button removed for student submit panel -->
+            <?php if ($isStudent && $currentUserIsPositiveGrade): ?>
+                <p class="text-muted small mb-0">Sul on juba positiivne hinne - muudatused pole enam võimalikud.</p>
+            <?php endif; ?>
         </div>
     </div>
     <div id="commentSection" class="card mb-4">
@@ -645,7 +659,11 @@ foreach ($assignment['students'] as $s):
                 include __DIR__ . '/../../templates/partials/markdown_editor.php';
                 ?>
                 <div class="text-end">
-                    <button type="button" id="sendCommentButton" class="btn btn-secondary btn-sm">Saada kommentaar</button>
+                    <?php if (!$currentUserIsPositiveGrade): ?>
+                        <button type="button" id="sendCommentButton" class="btn btn-secondary btn-sm">Saada kommentaar</button>
+                    <?php else: ?>
+                        <p class="text-muted small mb-0">Sul on juba positiivne hinne - uute kommentaaride lisamine pole enam vajalik.</p>
+                    <?php endif; ?>
                 </div>
                 <div id="commentsContainer">
                     <?php
@@ -675,6 +693,7 @@ foreach ($assignment['students'] as $s):
         let currentStudentId = null;
         let newAddedCriteria = [];
         const userIsAdmin = <?= $this->auth->userIsAdmin ? 'true' : 'false' ?>;
+        const currentUserHasPositiveGrade = <?= isset($currentUserIsPositiveGrade) && $currentUserIsPositiveGrade ? 'true' : 'false' ?>;
 
         document.addEventListener('DOMContentLoaded', function() {
             initializeTooltips();
@@ -932,9 +951,9 @@ foreach ($assignment['students'] as $s):
                 console.error('Failed to open student panel automatically:', e);
             }
 
-            // Make submit button visible and enabled when we auto-open the panel
+            // Make submit button visible and enabled when we auto-open the panel (only if user doesn't have positive grade)
             const submitButton = document.getElementById('submitButton');
-            if (submitButton) {
+            if (submitButton && !currentUserHasPositiveGrade) {
                 submitButton.style.display = '';
                 try { submitButton.disabled = false; } catch (e) {}
             }
