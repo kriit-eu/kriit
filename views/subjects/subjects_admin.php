@@ -373,6 +373,12 @@
         text-decoration: none;
     }
 
+    /* Prefilled date visual style for inputs */
+    .prefilled-date {
+        color: #6c757d !important; /* gray text */
+        background-color: #f8f9fa !important; /* light gray background */
+    }
+
     .due-date-badge {
         float: right;
         margin-left: 8px;
@@ -1448,8 +1454,16 @@
                 instructionsEditor.dispatchEvent(new Event('input', {
                     bubbles: true
                 }));
-                document.getElementById('assignmentDueAt').value = assignment.assignmentDueAt ? (assignment.assignmentDueAt.length > 0 ? assignment.assignmentDueAt.split('T')[0] : '') : '';
-                document.getElementById('assignmentEntryDate').value = assignment.assignmentEntryDate ? (assignment.assignmentEntryDate.length > 0 ? assignment.assignmentEntryDate.split('T')[0] : '') : '';
+                const dueEl = document.getElementById('assignmentDueAt');
+                const entryEl = document.getElementById('assignmentEntryDate');
+                if (dueEl) {
+                    dueEl.value = assignment.assignmentDueAt ? (assignment.assignmentDueAt.length > 0 ? assignment.assignmentDueAt.split('T')[0] : '') : '';
+                    try { dueEl.classList.remove('prefilled-date'); delete dueEl.dataset.prefilled; } catch (e) {}
+                }
+                if (entryEl) {
+                    entryEl.value = assignment.assignmentEntryDate ? (assignment.assignmentEntryDate.length > 0 ? assignment.assignmentEntryDate.split('T')[0] : '') : '';
+                    try { entryEl.classList.remove('prefilled-date'); delete entryEl.dataset.prefilled; } catch (e) {}
+                }
                 // Populate hours field if present
                 try {
                     if (document.getElementById('assignmentHours')) {
@@ -1955,10 +1969,60 @@
         const form = document.getElementById('editAssignmentForm');
         form.assignmentName.value = '';
         form.assignmentInstructions.value = '';
-        form.assignmentDueAt.value = '';
+        // Prefill dates: entry date = today, due date = tomorrow
+        try {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            const isoToday = `${yyyy}-${mm}-${dd}`;
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const tyyyy = tomorrow.getFullYear();
+            const tmm = String(tomorrow.getMonth() + 1).padStart(2, '0');
+            const tdd = String(tomorrow.getDate()).padStart(2, '0');
+            const isoTomorrow = `${tyyyy}-${tmm}-${tdd}`;
+            // Use assignmentEntryDate and assignmentDueAt if present
+            if (form.assignmentEntryDate) {
+                form.assignmentEntryDate.value = isoToday;
+                try {
+                    form.assignmentEntryDate.classList.add('prefilled-date');
+                    form.assignmentEntryDate.dataset.prefilled = '1';
+                } catch (e) {}
+            }
+            if (form.assignmentDueAt) {
+                form.assignmentDueAt.value = isoTomorrow;
+                try {
+                    form.assignmentDueAt.classList.add('prefilled-date');
+                    form.assignmentDueAt.dataset.prefilled = '1';
+                } catch (e) {}
+            }
+        } catch (e) {
+            // Fallback: clear due date only if present; do not clear entry date so prefill persists
+            if (form.assignmentDueAt) form.assignmentDueAt.value = '';
+        }
     if (form.assignmentHours) form.assignmentHours.value = '';
-        form.assignmentEntryDate.value = '';
         form.assignmentInvolvesOpenApi.checked = false;
+    // Remove prefilled marker on user interaction for date inputs
+    try {
+        const removePrefilled = (e) => {
+            try { e.target.classList.remove('prefilled-date'); } catch (ex) {}
+            try { delete e.target.dataset.prefilled; } catch (ex) {}
+            e.target.removeEventListener('input', removePrefilled);
+            e.target.removeEventListener('change', removePrefilled);
+            e.target.removeEventListener('focus', removePrefilled);
+        };
+        if (form.assignmentEntryDate) {
+            form.assignmentEntryDate.addEventListener('input', removePrefilled);
+            form.assignmentEntryDate.addEventListener('change', removePrefilled);
+            form.assignmentEntryDate.addEventListener('focus', removePrefilled);
+        }
+        if (form.assignmentDueAt) {
+            form.assignmentDueAt.addEventListener('input', removePrefilled);
+            form.assignmentDueAt.addEventListener('change', removePrefilled);
+            form.assignmentDueAt.addEventListener('focus', removePrefilled);
+        }
+    } catch (e) {}
     try { document.getElementById('assignmentSkipLinkCheck').checked = false; } catch (e) {}
         document.getElementById('editCriteriaContainer').innerHTML = '';
         // Set modal title
