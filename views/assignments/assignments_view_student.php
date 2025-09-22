@@ -1868,113 +1868,110 @@ foreach ($assignment['students'] as $s):
         }
 
         // Markdown parser function (handles both markdown and existing HTML)
+        // Prefer using markdown-it (used by the editor partial) for consistent rendering.
         function parseMarkdown(text) {
             if (!text) return '';
 
-            let html = text;
+            // If markdown-it is available, use it for full-featured rendering
+            if (window.markdownit) {
+                try {
+                    var md = window.markdownit({ html: true, linkify: true, typographer: true, breaks: true })
+                        .use(window.markdownitFootnote || function() {})
+                        .use(window.markdownitDeflist || function() {})
+                        .use(window.markdownitEmoji || function() {})
+                        .use(window.markdownitSub || function() {})
+                        .use(window.markdownitSup || function() {});
 
-            // Check if the text already contains HTML tags (like <p>, <img>, etc.)
-            if (html.includes('<img') || html.includes('<p>') || html.includes('</p>') || html.includes('<br')) {
+                    var rendered = md.render(text);
+                    // Post-process images to add modal handlers and container wrappers
+                    rendered = rendered.replace(/<img(.*?)src=["']([^"']+)["'](.*?)>/gi, function(match, before, src, after) {
+                        var altMatch = match.match(/alt=["']([^"']*)["']/i);
+                        var alt = altMatch ? altMatch[1] : '';
+                        var modalId = 'imageModal_' + Math.random().toString(36).substr(2, 9);
+                        // Escape single quotes in src/alt so they are safe inside single-quoted JS string arguments
+                        var escSrc = src.replace(/'/g, "\\'");
+                        var escAlt = alt.replace(/'/g, "\\'");
+                        // Build onclick attribute using double-quoted JS string to avoid nested-quote issues
+                        var onclickAttr = "onclick=\"showImageModal('" + modalId + "', '" + escSrc + "', '" + escAlt + "')\"";
+                        return '<div class="image-preview-container mt-2 mb-2">' +
+                            '<img src="' + src + '" alt="' + alt + '" ' +
+                            'class="comment-image img-fluid rounded shadow-sm" ' +
+                            'style="max-height: 200px; cursor: pointer; border: 1px solid #dee2e6; opacity: 0; transition: opacity 0.3s ease;" ' +
+                            onclickAttr + ' ' +
+                            'onload="this.style.opacity=1" ' +
+                            'onerror="this.style.display=\'none\'; this.nextElementSibling && (this.nextElementSibling.style.display=\'block\')">' +
+                            '<div class="image-error text-muted small" style="display: none; padding: 10px; border: 1px dashed #ccc; border-radius: 5px;">' +
+                            '<i class="bi bi-image"></i> Pilti ei õnnestunud laadida' +
+                            '</div>' +
+                            '</div>';
+                    });
 
-                // If it contains img tags, enhance them for our modal functionality
-                html = html.replace(/<img\s+([^>]*?)src=["']([^"']+)["']([^>]*?)alt=["']([^"']*?)["']([^>]*?)\/?>/gi, function(match, beforeSrc, src, betweenSrcAlt, alt, afterAlt) {
+                    return rendered;
+                } catch (e) {
+                    console.error('markdown-it rendering failed, falling back to simple parser:', e);
+                    // fallthrough to simple parser
+                }
+            }
 
-                    const modalId = 'imageModal_' + Math.random().toString(36).substr(2, 9);
+            // Fallback simple parser (keeps previous behavior)
+            var html = String(text);
+
+            // If the text already contains HTML tags, preserve them but ensure images get modal wrapper
+            if (html.match(/<img\s|<p\b|<br\b/i)) {
+                html = html.replace(/<img(.*?)src=["']([^"']+)["'](.*?)>/gi, function(match, before, src, after) {
+                    var altMatch = match.match(/alt=["']([^"']*)["']/i);
+                    var alt = altMatch ? altMatch[1] : '';
+                    var modalId = 'imageModal_' + Math.random().toString(36).substr(2, 9);
                     return '<div class="image-preview-container mt-2 mb-2">' +
                         '<img src="' + src + '" alt="' + alt + '" ' +
                         'class="comment-image img-fluid rounded shadow-sm" ' +
                         'style="max-height: 200px; cursor: pointer; border: 1px solid #dee2e6; opacity: 0; transition: opacity 0.3s ease;" ' +
                         'onclick="showImageModal(\'' + modalId + '\', \'' + src + '\', \'' + alt + '\')" ' +
                         'onload="this.style.opacity=1" ' +
-                        'onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'">' +
+                        'onerror="this.style.display=\'none\'; this.nextElementSibling && (this.nextElementSibling.style.display=\'block\')">' +
                         '<div class="image-error text-muted small" style="display: none; padding: 10px; border: 1px dashed #ccc; border-radius: 5px;">' +
                         '<i class="bi bi-image"></i> Pilti ei õnnestunud laadida' +
                         '</div>' +
                         '</div>';
                 });
-
-                // Also handle the alternative pattern where alt comes before src
-                html = html.replace(/<img\s+([^>]*?)alt=["']([^"']*?)["']([^>]*?)src=["']([^"']+)["']([^>]*?)\/?>/gi, function(match, beforeAlt, alt, betweenAltSrc, src, afterSrc) {
-
-                    const modalId = 'imageModal_' + Math.random().toString(36).substr(2, 9);
-                    return '<div class="image-preview-container mt-2 mb-2">' +
-                        '<img src="' + src + '" alt="' + alt + '" ' +
-                        'class="comment-image img-fluid rounded shadow-sm" ' +
-                        'style="max-height: 200px; cursor: pointer; border: 1px solid #dee2e6; opacity: 0; transition: opacity 0.3s ease;" ' +
-                        'onclick="showImageModal(\'' + modalId + '\', \'' + src + '\', \'' + alt + '\')" ' +
-                        'onload="this.style.opacity=1" ' +
-                        'onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'">' +
-                        '<div class="image-error text-muted small" style="display: none; padding: 10px; border: 1px dashed #ccc; border-radius: 5px;">' +
-                        '<i class="bi bi-image"></i> Pilti ei õnnestunud laadida' +
-                        '</div>' +
-                        '</div>';
-                });
-
                 return html;
             }
 
-            // Escape HTML first
-            html = html.replace(/&/g, '&amp;');
-            html = html.replace(/</g, '&lt;');
-            html = html.replace(/>/g, '&gt;');
-
-            // Convert line breaks
+            // Escape HTML
+            html = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
             html = html.replace(/\n/g, '<br>');
 
-            // Headers
+            // Simple markdown-like replacements (headers, bold, italic, code, links, lists, blockquotes)
             html = html.replace(/^#### (.*$)/gim, '<h4>$1</h4>');
             html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
             html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
             html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
-
-            // Bold
             html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
             html = html.replace(/__(.*?)__/g, '<strong>$1</strong>');
-
-            // Italic
             html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
             html = html.replace(/_(.*?)_/g, '<em>$1</em>');
-
-            // Code blocks
             html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
-
-            // Inline code
             html = html.replace(/`(.*?)`/g, '<code>$1</code>');
-
-            // Images - handle before links to avoid conflicts
             html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, function(match, alt, src) {
-                const modalId = 'imageModal_' + Math.random().toString(36).substr(2, 9);
+                var modalId = 'imageModal_' + Math.random().toString(36).substr(2, 9);
                 return '<div class="image-preview-container mt-2 mb-2">' +
                     '<img src="' + src + '" alt="' + alt + '" ' +
                     'class="comment-image img-fluid rounded shadow-sm" ' +
                     'style="max-height: 200px; cursor: pointer; border: 1px solid #dee2e6; opacity: 0; transition: opacity 0.3s ease;" ' +
                     'onclick="showImageModal(\'' + modalId + '\', \'' + src + '\', \'' + alt + '\')" ' +
                     'onload="this.style.opacity=1" ' +
-                    'onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'">' +
+                    'onerror="this.style.display=\'none\'; this.nextElementSibling && (this.nextElementSibling.style.display=\'block\')">' +
                     '<div class="image-error text-muted small" style="display: none; padding: 10px; border: 1px dashed #ccc; border-radius: 5px;">' +
                     '<i class="bi bi-image"></i> Pilti ei õnnestunud laadida' +
                     '</div>' +
                     '</div>';
             });
-
-            // Links
             html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
-
-            // Unordered lists
             html = html.replace(/^\* (.+)$/gm, '<li>$1</li>');
             html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
-
-            // Ordered lists
             html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
-            html = html.replace(/(<li>.*<\/li>)/s, function(match) {
-                if (match.includes('<ul>')) return match;
-                return '<ol>' + match + '</ol>';
-            });
-
-            // Blockquotes
+            html = html.replace(/(<li>.*<\/li>)/s, function(match) { if (match.includes('<ul>')) return match; return '<ol>' + match + '</ol>'; });
             html = html.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
-
-            // Horizontal rules
             html = html.replace(/^---$/gm, '<hr>');
 
             return html;
