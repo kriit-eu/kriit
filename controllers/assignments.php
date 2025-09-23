@@ -1179,12 +1179,53 @@ class assignments extends Controller
             return ['code' => 200, 'message' => 'Link ei vaja kättesaadavuse kontrolli antud ülesande seadistuse tõttu'];
         }
 
-        $headers = @get_headers($solutionUrl);
-        if ($headers && strpos($headers[0], '200')) {
-            return ['code' => 200, 'message' => 'Link on kättesaadav'];
-        } else {
-            return ['code' => 400, 'message' => 'Sisestatud link pole kättesaadav. Kontrollige, kas see on privaatne või vale link.'];
+        // Use curl with short timeouts to avoid blocking the PHP process on slow hosts.
+        // Try a HEAD request first; if server rejects HEAD (405) or returns no code, fall back to a small GET.
+        $curlTimeout = 5; // total timeout in seconds
+        $curlConnectTimeout = 3; // connect timeout
+
+        $checkWithCurl = function ($url, $head = true) use ($curlTimeout, $curlConnectTimeout) {
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, $curlTimeout);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $curlConnectTimeout);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt($ch, CURLOPT_USERAGENT, 'Kriit URL checker');
+            // Avoid downloading large bodies on GET fallback
+            if ($head) {
+                curl_setopt($ch, CURLOPT_NOBODY, true);
+            } else {
+                curl_setopt($ch, CURLOPT_NOBODY, false);
+                curl_setopt($ch, CURLOPT_RANGE, '0-1023');
+            }
+
+            // Try to verify SSL by default
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+
+            // Execute
+            @curl_exec($ch);
+            $errNo = curl_errno($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            return ['err' => $errNo, 'code' => (int)$httpCode];
+        };
+
+        $result = $checkWithCurl($solutionUrl, true);
+
+        // If head request failed due to method not allowed or returned no code, try GET fallback
+        if ($result['err'] !== 0 || $result['code'] === 0 || $result['code'] === 405) {
+            $result = $checkWithCurl($solutionUrl, false);
         }
+
+        // Consider 2xx and 3xx as acceptable (redirects followed above)
+        if ($result['err'] === 0 && $result['code'] >= 200 && $result['code'] < 400) {
+            return ['code' => 200, 'message' => 'Link on kättesaadav'];
+        }
+
+        return ['code' => 400, 'message' => 'Sisestatud link pole kättesaadav. Kontrollige, kas see on privaatne või vale link.'];
     }
 
     private function checkIfStudentHasPositiveGrade($studentId, $assignmentId): bool
