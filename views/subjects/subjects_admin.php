@@ -1648,20 +1648,43 @@
                 const modalEl = document.getElementById('editAssignmentModal');
                 modalEl.addEventListener('shown.bs.modal', function handler() {
                     modalEl.removeEventListener('shown.bs.modal', handler);
-                    var textarea = document.getElementById('assignmentInstructionsEditor');
-                    var preview = document.getElementById('assignmentInstructionsPreview');
-                    if (textarea && preview) {
-                        textarea.style.height = 'auto';
-                        textarea.style.height = (textarea.scrollHeight + 2) + 'px';
-                        preview.style.height = 'auto';
-                        if (preview.innerHTML.trim() !== '') {
-                            preview.style.height = (preview.scrollHeight + 2) + 'px';
+                    try {
+                        var textarea = document.getElementById('assignmentInstructionsEditor');
+                        var preview = document.getElementById('assignmentInstructionsPreview');
+                        // Decide purely from the textarea content to avoid races with preview rendering.
+                        var isEditorEmpty = !(textarea && textarea.value && textarea.value.trim());
+                        var editBtn = document.getElementById('assignmentInstructionsEditor_editBtn');
+                        var doneBtn = document.getElementById('assignmentInstructionsEditor_doneBtn');
+                        if (isEditorEmpty) {
+                            if (editBtn) {
+                                try { editBtn.click(); } catch (e) { try { textarea && textarea.focus(); } catch (e) {} }
+                            } else if (textarea) {
+                                try { textarea.focus(); } catch (e) {}
+                            }
                         } else {
-                            preview.style.height = '200px';
+                            if (doneBtn) {
+                                try { doneBtn.click(); } catch (e) {}
+                            }
                         }
+
+                        if (textarea) {
+                            try { textarea.style.height = 'auto'; textarea.style.height = (textarea.scrollHeight + 2) + 'px'; } catch (e) {}
+                        }
+                        if (preview) {
+                            try {
+                                preview.style.height = 'auto';
+                                if (preview.innerHTML.trim() !== '') {
+                                    preview.style.height = (preview.scrollHeight + 2) + 'px';
+                                } else {
+                                    preview.style.height = '200px';
+                                }
+                            } catch (e) {}
+                        }
+                        // Setup assignment instructions preview toggle
+                        try { setupAssignmentInstructionsToggle(); } catch (e) {}
+                    } catch (err) {
+                        console.error('edit modal shown handler error:', err);
                     }
-                    // Setup assignment instructions preview toggle
-                    setupAssignmentInstructionsToggle();
                 });
                 setTimeout(() => {
                     updateCounter();
@@ -2037,6 +2060,55 @@
 
         const modal = new bootstrap.Modal(document.getElementById('editAssignmentModal'));
         modal.show();
+        // Ensure markdown editor opens in edit mode when creating a new assignment and the editor is empty
+        const modalEl = document.getElementById('editAssignmentModal');
+        modalEl.addEventListener('shown.bs.modal', function createHandler() {
+            modalEl.removeEventListener('shown.bs.modal', createHandler);
+            try {
+                var textarea = document.getElementById('assignmentInstructionsEditor');
+                var preview = document.getElementById('assignmentInstructionsPreview');
+                // If textarea exists and is empty, switch markdown editor to edit mode
+                if (textarea && textarea.value.trim() === '') {
+                    // Prefer clicking the edit button if present
+                    var editBtn = document.getElementById('assignmentInstructionsEditor_editBtn') || document.getElementById('assignmentInstructionsEditor_editBtn');
+                    // In the partial the edit button id is assignmentInstructionsEditor_editBtn
+                    try {
+                        var topEditBtn = document.getElementById('assignmentInstructionsEditor_editBtn');
+                        if (topEditBtn) {
+                            topEditBtn.click();
+                        } else {
+                            // Fallback: call showEditMode by dispatching a click on the visible edit button inside the partial container
+                            var container = document.getElementById('assignmentInstructionsEditor_container');
+                            if (container) {
+                                var btn = container.querySelector('#assignmentInstructionsEditor_editBtn');
+                                if (btn) btn.click();
+                            }
+                        }
+                    } catch (e) {
+                        // As an ultimate fallback, attempt to focus the textarea so UI feels editable
+                        try { textarea.focus(); } catch (e) {}
+                    }
+                }
+                // Ensure preview toggle wiring runs
+                try { setupAssignmentInstructionsToggle(); } catch (e) {}
+                // Auto-expand sizes
+                if (textarea) {
+                    try { textarea.style.height = 'auto'; textarea.style.height = (textarea.scrollHeight + 2) + 'px'; } catch (e) {}
+                }
+                if (preview) {
+                    try {
+                        preview.style.height = 'auto';
+                        if (preview.innerHTML.trim() !== '') {
+                            preview.style.height = (preview.scrollHeight + 2) + 'px';
+                        } else {
+                            preview.style.height = '200px';
+                        }
+                    } catch (e) {}
+                }
+            } catch (err) {
+                console.error('create modal shown handler error:', err);
+            }
+        });
         // Populate ÕV combobox and wire up counter/checkbox logic same as edit modal
         setTimeout(() => {
             // character counter wiring (reuse updateCounter if available)
