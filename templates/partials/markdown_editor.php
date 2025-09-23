@@ -874,8 +874,16 @@
             }, 2000);
         }
 
-        // Start in preview-only mode, show only editBtn
-        showEditMode(false);
+        // Start mode: if there is no initial content, open editor so user can start typing immediately.
+        // Otherwise start in preview-only mode.
+        try {
+            var taStart = container ? container.querySelector('#' + editorId) : document.getElementById(editorId);
+            var startEditIfEmpty = taStart && taStart.value && taStart.value.trim() !== '' ? false : true;
+            showEditMode(startEditIfEmpty);
+        } catch (e) {
+            // Fallback: do not throw — default to preview-only
+            try { showEditMode(false); } catch (err) {}
+        }
 
     })();
 </script>
