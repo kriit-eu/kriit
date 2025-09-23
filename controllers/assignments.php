@@ -460,8 +460,27 @@ class assignments extends Controller
             Activity::create(ACTIVITY_SUBMIT_ASSIGNMENT, $this->auth->userId, $assignmentId, "esitas ülesande lahenduse");
             $studentName = Db::getOne('SELECT userName FROM users WHERE userId = ?', [$studentId]);
         } else {
-            Activity::create(ACTIVITY_SUBMIT_ASSIGNMENT, $this->auth->userId, $assignmentId, "esitas ülesande lahenduse uuesti");
+            // Determine if this is a true resubmission: existing row with a non-empty solutionUrl
+            $previousSolutionUrl = isset($existAssignment['solutionUrl']) ? trim($existAssignment['solutionUrl']) : '';
+
+            if ($previousSolutionUrl !== '') {
+                Activity::create(ACTIVITY_SUBMIT_ASSIGNMENT, $this->auth->userId, $assignmentId, "esitas ülesande lahenduse uuesti");
+            } else {
+                Activity::create(ACTIVITY_SUBMIT_ASSIGNMENT, $this->auth->userId, $assignmentId, "esitas ülesande lahenduse");
+            }
+
             $studentName = $existAssignment['userName'];
+
+            // Only append a system-generated resubmission comment when there was a previous non-empty solutionUrl
+            if ($previousSolutionUrl !== '') {
+                try {
+                    $resubmissionComment = $studentName . " esitas lahenduse uuesti";
+                    $this->addAssignmentCommentForStudent($studentId, $assignmentId, $resubmissionComment, 'Süsteem');
+                } catch (\Exception $e) {
+                    // Non-fatal: log activity if comment insertion fails but don't block submission
+                    Activity::create(ACTIVITY_UPDATE_ASSIGNMENT, $this->auth->userId, $assignmentId, 'Failed to add resubmission comment: ' . $e->getMessage());
+                }
+            }
         }
 
         // Set subject as not synchronized if the assignment is not synchronized
