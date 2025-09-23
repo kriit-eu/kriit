@@ -14,7 +14,7 @@ class assignments extends Controller
         }
         // Permission check (reuse existing logic)
         $this->checkIfUserHasPermissionForAction($assignmentId) || stop(403, 'Teil pole õigusi sellele tegevusele.');
-        $criteria = Db::getAll('SELECT criterionId, criterionName FROM criteria WHERE assignmentId = ?', [$assignmentId]);
+    $criteria = Db::getAll('SELECT criterionId, criterionName FROM criteria WHERE assignmentId = ? ORDER BY IFNULL(criterionOrderNr, criterionId) ASC', [$assignmentId]);
         stop(200, ['criteria' => $criteria]);
     }
 
@@ -43,11 +43,12 @@ class assignments extends Controller
                 SELECT 
                     c.criterionId, 
                     c.criterionName,
+                    c.criterionOrderNr,
                     CASE WHEN udc.criterionId IS NOT NULL THEN 1 ELSE 0 END AS isCompleted
                 FROM criteria c
                 LEFT JOIN userDoneCriteria udc ON c.criterionId = udc.criterionId AND udc.userId = ?
                 WHERE c.assignmentId = ?
-                ORDER BY c.criterionId
+                ORDER BY IFNULL(c.criterionOrderNr, c.criterionId) ASC
             ', [$studentId, $assignmentId]);
             
             // Get student assignment data
@@ -70,7 +71,7 @@ class assignments extends Controller
             ];
         } else {
             // No student specified, get basic criteria only
-            $criteria = Db::getAll('SELECT criterionId, criterionName FROM criteria WHERE assignmentId = ?', [$assignmentId]);
+        $criteria = Db::getAll('SELECT criterionId, criterionName FROM criteria WHERE assignmentId = ? ORDER BY IFNULL(criterionOrderNr, criterionId) ASC', [$assignmentId]);
             
             $response = [
                 'assignmentId' => $assignment['assignmentId'],
@@ -129,7 +130,7 @@ class assignments extends Controller
         $data = Db::getAll("
                 SELECT
                     a.assignmentId, a.assignmentName, a.assignmentInstructions, a.assignmentDueAt, a.assignmentInvolvesOpenApi,
-                    c.criterionId, c.criterionName,
+                    c.criterionId, c.criterionName, c.criterionOrderNr,
                     u.userId AS studentId, u.userName AS studentName, u.groupId, g.groupName,
                     ua.userGrade, ua.assignmentStatusId, ua.solutionUrl, ua.comments,
                     ast.statusName AS assignmentStatusName,
@@ -146,7 +147,7 @@ class assignments extends Controller
                 LEFT JOIN assignmentStatuses ast ON ua.assignmentStatusId = ast.assignmentStatusId
                 LEFT JOIN userDoneCriteria udc ON udc.criterionId = c.criterionId AND udc.userId = u.userId
                 WHERE a.assignmentId = ? {$studentFilterClause} AND u.userDeleted = 0 AND u.userIsActive = 1
-                ORDER BY g.groupName, u.userName, c.criterionId
+                ORDER BY g.groupName, u.userName, IFNULL(c.criterionOrderNr, c.criterionId)
             ", [$assignmentId]);
 
         $assignment = [
@@ -248,7 +249,8 @@ class assignments extends Controller
                 if (!isset($assignment['criteria'][$criteriaId])) {
                     $assignment['criteria'][$criteriaId] = [
                         'criteriaId' => $criteriaId,
-                        'criteriaName' => $row['criterionName']
+                        'criteriaName' => $row['criterionName'],
+                        'criterionOrderNr' => isset($row['criterionOrderNr']) ? $row['criterionOrderNr'] : null
                     ];
                 }
             }
@@ -1062,7 +1064,7 @@ class assignments extends Controller
     private function saveEditAssignmentCriteria($oldCriteria, $newCriteria, $assignmentId): void
     {
         //Get all criteria for this assignment
-        $criteria = Db::getAll('SELECT criterionId, criterionName FROM criteria WHERE assignmentId = ?', [$assignmentId]);
+    $criteria = Db::getAll('SELECT criterionId, criterionName FROM criteria WHERE assignmentId = ? ORDER BY IFNULL(criterionOrderNr, criterionId) ASC', [$assignmentId]);
 
         // Handle edited criteria
         $editedCriteria = $_POST['editedCriteria'] ?? [];
@@ -1095,7 +1097,20 @@ class assignments extends Controller
             }
         }
 
+        // If client provided an explicit ordering for existing criteria, apply it
+        if (isset($_POST['oldCriteriaOrder']) && is_array($_POST['oldCriteriaOrder']) && count($_POST['oldCriteriaOrder']) > 0) {
+            $orderNr = 1;
+            foreach ($_POST['oldCriteriaOrder'] as $critId) {
+                $critId = (int)$critId;
+                // Only update criteria that belong to this assignment (defensive)
+                Db::update('criteria', ['criterionOrderNr' => $orderNr], 'criterionId = ? AND assignmentId = ?', [$critId, $assignmentId]);
+                $orderNr++;
+            }
+        }
+
         if (count($newCriteria) > 0) {
+            $orderBase = Db::getOne('SELECT IFNULL(MAX(criterionOrderNr), 0) FROM criteria WHERE assignmentId = ?', [$assignmentId]);
+            if ($orderBase === false) $orderBase = 0;
             foreach ($newCriteria as $crit) {
                 // Accept both string and array/object
                 if (is_array($crit) && isset($crit['criteriaName'])) {
@@ -1104,7 +1119,8 @@ class assignments extends Controller
                     $criterionName = $crit;
                 }
                 if (!empty($criterionName)) {
-                    Db::insert('criteria', ['assignmentId' => $assignmentId, 'criterionName' => $criterionName]);
+                    $orderBase++;
+                    Db::insert('criteria', ['assignmentId' => $assignmentId, 'criterionName' => $criterionName, 'criterionOrderNr' => $orderBase]);
                         $message = "$_POST[teacherName] lisas uue kriteeriumi '$criterionName'.";
                         $this->saveMessage($assignmentId, $_POST['teacherId'], $message, true);
                     }
@@ -1447,6 +1463,7 @@ class assignments extends Controller
 
         // Handle criteria if provided
         if (isset($_POST['newCriteria']) && is_array($_POST['newCriteria']) && count($_POST['newCriteria']) > 0) {
+            $orderNr = 1;
             foreach ($_POST['newCriteria'] as $crit) {
                 // Accept both string and array/object
                 if (is_array($crit) && isset($crit['criteriaName'])) {
@@ -1456,12 +1473,13 @@ class assignments extends Controller
                 }
                 if (!empty($criterionName)) {
                     try {
-                        Db::insert('criteria', ['assignmentId' => $assignmentId, 'criterionName' => $criterionName]);
+                        Db::insert('criteria', ['assignmentId' => $assignmentId, 'criterionName' => $criterionName, 'criterionOrderNr' => $orderNr]);
                         Activity::create(ACTIVITY_UPDATE_ASSIGNMENT, $this->auth->userId, $assignmentId, "Added criterion: $criterionName");
                     } catch (\Exception $e) {
                         // Non-fatal: continue processing
                         Activity::create(ACTIVITY_UPDATE_ASSIGNMENT, $this->auth->userId, $assignmentId, "Failed to add criterion: " . $e->getMessage());
                     }
+                    $orderNr++;
                 }
             }
         }
@@ -1496,7 +1514,7 @@ class assignments extends Controller
 
         // Delete dependent data similar to admin::deleteAllAssignmentDependentData
         // Delete criteria and related userDoneCriteria (table is `criteria`)
-        $criteria = Db::getAll('SELECT * FROM criteria WHERE assignmentId = ?', [$assignmentId]);
+    $criteria = Db::getAll('SELECT * FROM criteria WHERE assignmentId = ? ORDER BY IFNULL(criterionOrderNr, criterionId) ASC', [$assignmentId]);
         if (!empty($criteria)) {
             foreach ($criteria as $c) {
                 // userDoneCriteria references criterionId

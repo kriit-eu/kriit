@@ -102,16 +102,17 @@ CREATE TABLE `criteria` (
 `criterionId` int unsigned NOT NULL AUTO_INCREMENT,
 `criterionName` varchar(2000) DEFAULT NULL,
 `assignmentId` int unsigned NOT NULL,
+`criterionOrderNr` int DEFAULT NULL,
 PRIMARY KEY (`criterionId`),
 KEY `criteria_assignments_assignmentId_fk` (`assignmentId`),
 CONSTRAINT `criteria_assignments_assignmentId_fk` FOREIGN KEY (`assignmentId`) REFERENCES `assignments` (`assignmentId`)
 );
 LOCK TABLES `criteria` WRITE;
 /*!40000 ALTER TABLE `criteria` DISABLE KEYS */;
-INSERT INTO `criteria` VALUES
-(1,'HTML: õige semantika (kasuta h1, p, div.atom)',1),
-(2,'CSS: gradient, border-radius ja mõõtmed (200x200px)',1),
-(3,'Paigutus: kast peab olema tsentreeritud horisontaalselt ja vertikaalselt',1);
+INSERT INTO `criteria` (`criterionId`,`criterionName`,`assignmentId`,`criterionOrderNr`) VALUES
+(1,'HTML: õige semantika (kasuta h1, p, div.atom)',1,1),
+(2,'CSS: gradient, border-radius ja mõõtmed (200x200px)',1,2),
+(3,'Paigutus: kast peab olema tsentreeritud horisontaalselt ja vertikaalselt',1,3);
 /*!40000 ALTER TABLE `criteria` ENABLE KEYS */;
 UNLOCK TABLES;
 

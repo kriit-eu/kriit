@@ -857,7 +857,19 @@ foreach ($assignment['students'] as $s): ?>
             const allCriteria = assignment.criteria;
 
             if (student && allCriteria) {
-                Object.keys(assignment.criteria).forEach(criteriaId => {
+                const criteriaArray = Object.keys(assignment.criteria).map(id => {
+                    const c = assignment.criteria[id];
+                    const order = (typeof c.criterionOrderNr !== 'undefined' && c.criterionOrderNr !== null) ? Number(c.criterionOrderNr) : Number(id);
+                    return { id: Number(id), name: c.criteriaName, order };
+                });
+
+                criteriaArray.sort((a, b) => {
+                    if (a.order === b.order) return a.id - b.id;
+                    return a.order - b.order;
+                });
+
+                criteriaArray.forEach(item => {
+                    const criteriaId = item.id;
                     const criterion = assignment.criteria[criteriaId];
                     const isCompleted = assignment.students[studentId]?.userDoneCriteria[criteriaId]?.completed;
 
@@ -1048,7 +1060,20 @@ foreach ($assignment['students'] as $s): ?>
 
             criteriaContainer.innerHTML = '';
 
-            Object.keys(assignment.criteria).forEach((criteriaId, index) => {
+            // Build sorted criteria array using criterionOrderNr (fallback to id)
+            const criteriaArray = Object.keys(assignment.criteria).map(id => {
+                const c = assignment.criteria[id];
+                const order = (typeof c.criterionOrderNr !== 'undefined' && c.criterionOrderNr !== null) ? Number(c.criterionOrderNr) : Number(id);
+                return { id: Number(id), name: c.criteriaName, order };
+            });
+
+            criteriaArray.sort((a, b) => {
+                if (a.order === b.order) return a.id - b.id;
+                return a.order - b.order;
+            });
+
+            criteriaArray.forEach((criterionObj, idx) => {
+                const criteriaId = criterionObj.id;
                 const criterion = assignment.criteria[criteriaId];
                 const isCompleted = assignment.students[studentId]?.userDoneCriteria[criteriaId]?.completed;
 
@@ -1056,7 +1081,7 @@ foreach ($assignment['students'] as $s): ?>
     <div class="form-check">
         <input class="form-check-input" type="checkbox" id="criterion_${criteriaId}" ${isCompleted ? 'checked' : ''}>
         <label class="form-check-label" for="criterion_${criteriaId}">
-            ${index + 1}. ${criterion.criteriaName}
+            ${idx + 1}. ${criterion.criteriaName}
         </label>
     </div>
     `;

@@ -1219,7 +1219,20 @@ foreach ($assignment['students'] as $s):
 
             criteriaContainer.innerHTML = '';
 
-            Object.keys(assignment.criteria).forEach((criteriaId, index) => {
+            // Build an ordered list of criteria using criterionOrderNr (fallback to criterionId)
+            const criteriaArray = Object.keys(assignment.criteria).map(id => {
+                const c = assignment.criteria[id];
+                return {
+                    id,
+                    name: c.criteriaName,
+                    order: (typeof c.criterionOrderNr !== 'undefined' && c.criterionOrderNr !== null) ? Number(c.criterionOrderNr) : Number(id)
+                };
+            });
+
+            criteriaArray.sort((a, b) => a.order - b.order || a.id - b.id);
+
+            criteriaArray.forEach((crit, idx) => {
+                const criteriaId = crit.id;
                 const criterion = assignment.criteria[criteriaId];
                 const isCompleted = assignment.students[studentId]?.userDoneCriteria[criteriaId]?.completed;
 
@@ -1227,7 +1240,7 @@ foreach ($assignment['students'] as $s):
     <div class="form-check">
         <input class="form-check-input" type="checkbox" id="criterion_${criteriaId}" ${isCompleted ? 'checked' : ''}>
         <label class="form-check-label" for="criterion_${criteriaId}">
-            ${index + 1}. ${criterion.criteriaName}
+            ${idx + 1}. ${criterion.criteriaName}
         </label>
     </div>
     `;

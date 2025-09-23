@@ -39,8 +39,8 @@
         rows.forEach((row, idx) => {
             const label = row.querySelector('.editable-criterion-label');
             if (label) {
-                // Remove any existing number prefix
-                label.textContent = label.textContent.replace(/^\d+\.\s*/, '');
+                // Remove any existing number prefix (strip any repeated leading numbers like "1. 2. ")
+                label.textContent = label.textContent.replace(/^(?:\s*\d+[)\.\-:]?\s*)+/, '');
                 label.textContent = (idx + 1) + '. ' + label.textContent;
             }
         });
@@ -134,6 +134,52 @@
         width: 100%;
         box-sizing: border-box;
         padding: 0 0.25rem;
+    }
+
+    /* Drag-and-drop styles for criteria reordering */
+    #editCriteriaContainer .criteria-row.dragging {
+        opacity: 0.6;
+    }
+
+    /* Show grab cursor for the whole card to indicate draggable area */
+    #editCriteriaContainer .criteria-row { cursor: grab; }
+    #editCriteriaContainer .criteria-row button, #editCriteriaContainer .criteria-row input, #editCriteriaContainer .criteria-row a { cursor: auto; }
+
+    #editCriteriaContainer .criteria-row.drag-over {
+        outline: 2px dashed rgba(13,110,253,0.6);
+        outline-offset: -4px;
+    }
+
+    .criteria-drag-handle {
+        cursor: grab;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        margin-right: 6px;
+        color: #6c757d;
+    }
+
+    /* Slightly larger hit area for drag handle to improve responsiveness on touch */
+    .criteria-drag-handle::before {
+        content: '';
+        display: inline-block;
+        width: 36px;
+        height: 36px;
+        margin-left: -4px;
+        margin-right: -4px;
+    }
+
+    .criteria-drag-handle:active { cursor: grabbing; }
+
+    /* Visual placeholder shown during drag-over */
+    .criteria-placeholder {
+        background: rgba(0,123,255,0.03);
+        border: 2px dashed rgba(0,123,255,0.25);
+        box-sizing: border-box;
+        margin: 6px 0;
+        height: 2.5rem;
+        border-radius: 6px;
     }
 
     #editCriteriaContainer .criteria-row .edit-criterion-input {
@@ -1241,17 +1287,29 @@
         // ÕV selection (array of selected IDs)
         const assignmentLearningOutcomeId = checkedBoxes.map(cb => cb.value);
         // Criteria (if present)
-        // Collect new criteria added in modal
-        // Collect all existing criteria IDs still present in the modal (not deleted)
-        let oldCriteria = [];
-        document.querySelectorAll('#editCriteriaContainer .criteria-row').forEach(row => {
+        // Collect criteria in DOM order so ordering is preserved on save
+        const criteriaRows = Array.from(document.querySelectorAll('#editCriteriaContainer .criteria-row'));
+        const oldCriteria = [];
+        const editedNames = {};
+        const newCriteriaFromDom = [];
+        criteriaRows.forEach((row) => {
             const id = row.dataset.criterionId;
-            // Only push if it's an existing criterion (not new)
+            const label = row.querySelector('.editable-criterion-label');
+            const name = label ? label.textContent.replace(/^(?:\s*\d+[)\.\-:]?\s*)+/, '').trim() : '';
             if (id && !id.startsWith('new_')) {
                 oldCriteria.push(id);
+                if (window.editedCriteria && window.editedCriteria[id]) {
+                    editedNames[id] = window.editedCriteria[id];
+                } else if (name) {
+                    // If label changed without going through editedCriteria map, include it
+                    // but only if different from original (best-effort)
+                    // We'll rely on server-side to accept or ignore unchanged names
+                    editedNames[id] = name;
+                }
+            } else {
+                if (name) newCriteriaFromDom.push(name);
             }
         });
-        const newCriteria = Array.isArray(window.newCriteria) ? window.newCriteria : [];
 
         // Basic validation
         if (!assignmentName) {
@@ -1293,30 +1351,21 @@
         assignmentLearningOutcomeId.forEach((id, idx) => {
             formData.append(`assignmentLearningOutcomeId[${idx}]`, id);
         });
-        // Add oldCriteria to keep
+        // Add oldCriteria to keep (preserve order) AND keep backward-compatible keyed format
         oldCriteria.forEach((id, idx) => {
+            formData.append(`oldCriteriaOrder[${idx}]`, id);
+            // backward compat: oldCriteria[id]=true
             formData.append(`oldCriteria[${id}]`, true);
         });
-        // Add edited criteria names
-        if (window.editedCriteria) {
-            Object.entries(window.editedCriteria).forEach(([id, name]) => {
-                formData.append(`editedCriteria[${id}]`, name);
-            });
-        }
-        // Add newCriteria from window.newAddedCriteria (inline add)
-        if (window.newAddedCriteria && window.newAddedCriteria.length > 0) {
-            window.newAddedCriteria.forEach((name, idx) => {
-                formData.append(`newCriteria[${idx}][criteriaName]`, name);
-            });
-        }
-        // Add newCriteria from modal (legacy)
-        newCriteria.forEach((crit, idx) => {
-            if (crit.criteriaName) {
-                formData.append(`newCriteria[${window.newAddedCriteria ? window.newAddedCriteria.length + idx : idx}][criteriaName]`, crit.criteriaName);
-            }
-            if (crit.criteriaId) {
-                formData.append(`newCriteria[${window.newAddedCriteria ? window.newAddedCriteria.length + idx : idx}][criteriaId]`, crit.criteriaId);
-            }
+        // Add edited criteria names (only those present)
+        Object.entries(editedNames).forEach(([id, name]) => {
+            formData.append(`editedCriteria[${id}]`, name);
+        });
+        // Add newCriteria collected from DOM (preserve order)
+        newCriteriaFromDom.forEach((name, idx) => {
+            formData.append(`newCriteria[${idx}][criteriaName]`, name);
+            // backward compat: simple list format
+            formData.append(`newCriteria[${idx}]`, name);
         });
         formData.append('teacherName', teacherName);
         formData.append('teacherId', teacherId);
@@ -1573,7 +1622,10 @@
                         const row = document.createElement('div');
                         row.className = 'criteria-row d-flex align-items-center justify-content-between w-100';
                         row.dataset.criterionId = criterion.criterionId;
-                        row.innerHTML = `<div class=\"d-inline-block\"><label class=\"editable-criterion-label\" style=\"cursor:pointer;color:#212529 !important;\">${criterion.criterionName}</label></div> <button type=\"button\" class=\"remove-criterion-btn p-0 ms-2\" title=\"Eemalda kriteerium\" style=\"background:none;border:none;\"><i class=\"fa fa-trash\"></i></button>`;
+                        row.innerHTML = `<div class=\"d-flex align-items-center flex-grow-1\">` +
+                            `<span class=\"criteria-drag-handle\" title=\"Tõmba ümber\">☰</span>` +
+                            `<div class=\"d-inline-block\"><label class=\"editable-criterion-label\" style=\"cursor:pointer;color:#212529 !important;\">${criterion.criterionName}</label></div>` +
+                            `</div> <button type=\"button\" class=\"remove-criterion-btn p-0 ms-2\" title=\"Eemalda kriteerium\" style=\"background:none;border:none;\"><i class=\"fa fa-trash\"></i></button>`;
                         // Add remove handler
                         row.querySelector('.remove-criterion-btn').onclick = function() {
                             showDeleteCriterionModal({
@@ -1599,7 +1651,7 @@
                             // Prevent multiple inputs
                             if (row.querySelector('input.edit-criterion-input')) return;
                             // Remove number prefix for editing
-                            const oldName = label.textContent.replace(/^\d+\.\s*/, '');
+                            const oldName = label.textContent.replace(/^(?:\s*\d+[)\.\-:]?\s*)+/, '');
                             // Create input
                             const input = document.createElement('input');
                             input.type = 'text';
@@ -1638,6 +1690,9 @@
                                 }
                             });
                         });
+                        // Make draggable
+                        row.draggable = true;
+                        makeCriteriaRowDraggable(row);
                         criteriaContainer.appendChild(row);
                     });
                     updateCriteriaNumbers();
@@ -1861,6 +1916,151 @@
         return parts.map(s => s.replace(/^\s*\d+[)\.\-:\s]*/, '').trim()).filter(Boolean);
     }
 
+    // Drag-and-drop helpers for criteria reordering
+    function getCriteriaContainer() {
+        return document.getElementById('editCriteriaContainer');
+    }
+    // Internal helper: create a transparent drag image for smoother dragging
+    function _createTransparentDragImage() {
+        const img = document.createElement('img');
+        // 1x1 transparent GIF
+        img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
+        return img;
+    }
+
+    // Singleton container-level handlers and placeholder
+    (function() {
+        let containerHandlersAttached = false;
+        let placeholder = null;
+        let rafScheduled = false;
+
+        function ensurePlaceholder() {
+            if (placeholder) return placeholder;
+            placeholder = document.createElement('div');
+            placeholder.className = 'criteria-placeholder w-100';
+            placeholder.style.height = '2.5rem';
+            placeholder.style.border = '2px dashed #007bff';
+            placeholder.style.margin = '4px 0';
+            placeholder.style.borderRadius = '4px';
+            return placeholder;
+        }
+
+        function attachContainerHandlers() {
+            if (containerHandlersAttached) return;
+            const container = getCriteriaContainer();
+            if (!container) return;
+
+            const dragImage = _createTransparentDragImage();
+
+            container.addEventListener('dragstart', (e) => {
+                const dragging = e.target.closest('.criteria-row');
+                if (!dragging) return;
+                // make sure we only start when handle was used (flag set on element)
+                if (!dragging._allowDrag) {
+                    e.preventDefault();
+                    return;
+                }
+                dragging.classList.add('dragging');
+                try { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setDragImage(dragImage, 0, 0); } catch (err) {}
+            });
+
+            container.addEventListener('dragend', (e) => {
+                const dragging = container.querySelector('.criteria-row.dragging');
+                if (dragging) dragging.classList.remove('dragging');
+                container.querySelectorAll('.criteria-row').forEach(r => r.classList.remove('drag-over'));
+                const ph = ensurePlaceholder(); if (ph && ph.parentNode) ph.parentNode.removeChild(ph);
+                updateCriteriaNumbers();
+            });
+
+            container.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                // throttle layout calculations using rAF
+                if (rafScheduled) return;
+                rafScheduled = true;
+                requestAnimationFrame(() => {
+                    rafScheduled = false;
+                    const container = getCriteriaContainer();
+                    const after = getDragAfterElement(container, e.clientY);
+                    container.querySelectorAll('.criteria-row').forEach(r => r.classList.remove('drag-over'));
+                    const ph = ensurePlaceholder();
+                    // remove existing placeholder before inserting
+                    if (ph.parentNode) ph.parentNode.removeChild(ph);
+                    if (after == null) {
+                        // end -> append placeholder
+                        container.appendChild(ph);
+                    } else {
+                        container.insertBefore(ph, after);
+                        // only show placeholder, do not mark the target row with drag-over
+                    }
+                });
+            });
+
+            container.addEventListener('drop', (e) => {
+                e.preventDefault();
+                const container = getCriteriaContainer();
+                const dragging = container.querySelector('.criteria-row.dragging');
+                if (!dragging) return;
+                const ph = ensurePlaceholder();
+                if (ph && ph.parentNode) {
+                    ph.parentNode.insertBefore(dragging, ph);
+                    ph.parentNode.removeChild(ph);
+                } else {
+                    container.appendChild(dragging);
+                }
+                container.querySelectorAll('.criteria-row').forEach(r => r.classList.remove('drag-over'));
+                updateCriteriaNumbers();
+            });
+
+            containerHandlersAttached = true;
+        }
+
+        // expose a function to allow makeCriteriaRowDraggable to attach handlers once
+        window.__ensureCriteriaContainerHandlers = attachContainerHandlers;
+    })();
+
+    function makeCriteriaRowDraggable(row) {
+        if (!row) return;
+
+        // Ensure container-level handlers attached once
+        try { window.__ensureCriteriaContainerHandlers(); } catch (e) {}
+
+        // allow drag start when pointerdown occurs anywhere on the row except on interactive elements
+        row._allowDrag = false;
+        row.style.touchAction = 'manipulation';
+        row.addEventListener('pointerdown', function(ev) {
+            // Do not start drag when clicking remove buttons, inputs, or other interactive controls
+            const interactive = ev.target.closest('button, input, textarea, a, .remove-criterion-btn, .edit-criterion-input');
+            if (interactive) {
+                row._allowDrag = false;
+                return;
+            }
+            // mark this row as allowed to start dragging until pointerup
+            row._allowDrag = true;
+        });
+
+        // For safety, ensure pointerup anywhere clears allow flag for this row
+        row.addEventListener('pointerup', function() {
+            row._allowDrag = false;
+        });
+
+        // Set native draggable true (required by HTML5 drag API)
+        row.draggable = true;
+    }
+
+    function getDragAfterElement(container, y) {
+        const draggableElements = [...container.querySelectorAll('.criteria-row:not(.dragging):not(.criteria-placeholder)')];
+        let closest = { offset: -Infinity, element: null };
+        for (let i = 0; i < draggableElements.length; i++) {
+            const child = draggableElements[i];
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            if (offset < 0 && offset > closest.offset) {
+                closest = { offset: offset, element: child };
+            }
+        }
+        return closest.element || null;
+    }
+
     function addCriterionInline(name, _isBulk) {
         var criteriaContainer = document.getElementById('editCriteriaContainer');
         if (!name || !name.toString().trim()) return;
@@ -1878,7 +2078,7 @@
         // Prevent duplicates (normalize by trimming and removing visual numeric prefixes)
         var existing = [];
         try {
-            existing = Array.from(criteriaContainer.querySelectorAll('.form-check-label, .editable-criterion-label')).map(l => l.textContent.replace(/^\s*\d+\.\s*/, '').trim());
+            existing = Array.from(criteriaContainer.querySelectorAll('.form-check-label, .editable-criterion-label')).map(l => l.textContent.replace(/^(?:\s*\d+[)\.\-:]?\s*)+/, '').trim());
         } catch (e) {
             existing = [];
         }
@@ -1890,7 +2090,11 @@
         window.newAddedCriteria.push(name);
         var row = document.createElement('div');
         row.className = 'criteria-row d-flex align-items-center justify-content-between w-100';
-        row.innerHTML = `<div class="d-inline-block"><label class="editable-criterion-label" style="color:#212529 !important;">${name}</label></div> <button type="button" class="remove-criterion-btn p-0 ms-2" title="Eemalda kriteerium" style="background:none;border:none;"><i class="fa fa-trash"></i></button>`;
+        row.draggable = true;
+        row.innerHTML = `<div class="d-flex align-items-center flex-grow-1">` +
+            `<span class="criteria-drag-handle" title="Tõmba ümber">☰</span>` +
+            `<div class="d-inline-block"><label class="editable-criterion-label" style="color:#212529 !important;">${name}</label></div>` +
+            `</div> <button type="button" class="remove-criterion-btn p-0 ms-2" title="Eemalda kriteerium" style="background:none;border:none;"><i class="fa fa-trash"></i></button>`;
         // Remove Bootstrap color classes and force color for new inline criteria
         const label = row.querySelector('.editable-criterion-label');
         if (label) {
@@ -1903,7 +2107,7 @@
                 // Prevent multiple inputs
                 if (row.querySelector('input.edit-criterion-input')) return;
                 // Remove number prefix for editing
-                const oldName = label.textContent.replace(/^\d+\.\s*/, '');
+                const oldName = label.textContent.replace(/^(?:\s*\d+[)\.\-:]?\s*)+/, '');
                 // Create input
                 const input = document.createElement('input');
                 input.type = 'text';
@@ -1956,6 +2160,9 @@
                 }
             });
         };
+
+        // Wire drag handlers
+        makeCriteriaRowDraggable(row);
 
         criteriaContainer.appendChild(row);
         updateCriteriaNumbers();
@@ -2301,15 +2508,26 @@
                 : today;
             params.append('assignmentEntryDate', entryDateToSend);
 
-            // Include criteria directly in the create call
-            const newCriteria = window.newAddedCriteria ? window.newAddedCriteria : [];
-            newCriteria.forEach((c, idx) => {
+            // Include criteria directly in the create call, using DOM order (supports inline edits)
+            const criteriaRows = Array.from(document.querySelectorAll('#editCriteriaContainer .criteria-row'));
+            const newCriteriaFromDom = [];
+            criteriaRows.forEach(row => {
+                const id = row.dataset.criterionId;
+                const label = row.querySelector('.editable-criterion-label');
+                const name = label ? label.textContent.replace(/^(?:\s*\d+[)\.\-:]?\s*)+/, '').trim() : '';
+                if (!id || id.startsWith('new_')) {
+                    if (name) newCriteriaFromDom.push(name);
+                }
+            });
+            newCriteriaFromDom.forEach((c, idx) => {
                 params.append(`newCriteria[${idx}]`, c);
+                params.append(`newCriteria[${idx}][criteriaName]`, c);
             });
 
             // Require at least one criterion when creating a new assignment
             const criteriaInDom = document.querySelectorAll('#editCriteriaContainer .criteria-row').length;
-            const newCriteriaCount = newCriteria.length;
+            // Use the locally collected newCriteriaFromDom (avoid undefined global/newCriteria)
+            const newCriteriaCount = Array.isArray(newCriteriaFromDom) ? newCriteriaFromDom.length : 0;
             if (criteriaInDom === 0 && newCriteriaCount === 0) {
                 alert('Lisa vähemalt üks kriteerium!');
                 const inputEl = document.getElementById('newCriterionInput');

@@ -210,7 +210,7 @@ class admin extends Controller
     private function deleteAllAssignmentDependentData($assignmentId): void
     {
         try {
-            $criteria = Db::getAll("SELECT criterionId FROM criteria WHERE assignmentId = ?", [$assignmentId]);
+            $criteria = Db::getAll("SELECT criterionId FROM criteria WHERE assignmentId = ? ORDER BY IFNULL(criterionOrderNr, criterionId) ASC", [$assignmentId]);
             foreach ($criteria as $criterion) {
                 Db::delete('userDoneCriteria', 'criterionId = ?', [$criterion['criterionId']]);
             }
