@@ -257,6 +257,13 @@ class Application
             $this->action = 'groups_view';
         }
 
+        // Custom routing for /courses/{id}/ranking -> courses::ranking
+        if ($this->controller == 'courses' && is_numeric($this->action) && isset($this->params[0]) && $this->params[0] === 'ranking') {
+            $courseId = $this->action;
+            $this->action = 'ranking';
+            $this->params = [$courseId];
+        }
+
         // Allow shorter URLs (users/view/3 becomes users/3)
         if (is_numeric($this->action)) {
 
