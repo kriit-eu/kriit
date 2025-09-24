@@ -16,7 +16,12 @@ class courses extends Controller
         }
 
         // List all courses
-        $this->courses = Db::getAll("SELECT * FROM courses ORDER BY sortOrder, id");
+        $hasSortOrder = Db::getOne("SHOW COLUMNS FROM courses LIKE 'sortOrder'") ? true : false;
+        if ($hasSortOrder) {
+            $this->courses = Db::getAll("SELECT * FROM courses ORDER BY sortOrder, id");
+        } else {
+            $this->courses = Db::getAll("SELECT * FROM courses ORDER BY id");
+        }
     }
 
     function view(): void
@@ -177,7 +182,7 @@ class courses extends Controller
         $description = trim($_POST['description'] ?? '');
         $visibility = ($_POST['visibility'] ?? 'private') === 'public' ? 'public' : 'private';
         $status = ($_POST['status'] ?? 'inactive') === 'active' ? 'active' : 'inactive';
-        $assignmentId = !empty($_POST['assignmentId']) ? intval($_POST['assignmentId']) : null;
+    $assignmentId = !empty($_POST['assignmentId']) ? intval($_POST['assignmentId']) : null;
 
         // Validate
         if ($name === '') {
@@ -212,8 +217,6 @@ class courses extends Controller
             'description' => $description,
             'visibility' => $visibility,
             'status' => $status,
-            'sortOrder' => 0,
-            'assignment_id' => $assignmentId,
             'createdBy' => $this->auth->userId,
             'createdAt' => $now,
             'updatedAt' => $now,
@@ -222,7 +225,7 @@ class courses extends Controller
     $courseId = Db::insert('courses', $data);
 
     // Activity log: course created
-    Activity::create(ACTIVITY_CREATE_COURSE ?? 0, $this->auth->userId, $courseId, ['assignment_id' => $assignmentId]);
+    Activity::create(ACTIVITY_CREATE_COURSE ?? 0, $this->auth->userId, $courseId);
 
         // Redirect to courses index or new course view
         $_SESSION['flash_success'] = 'Kursus loodud.';

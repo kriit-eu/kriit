@@ -13,8 +13,7 @@ CREATE TABLE IF NOT EXISTS `courses` (
   `description` TEXT NULL,
   `visibility` ENUM('public','private') NOT NULL DEFAULT 'private',
   `status` ENUM('active','inactive') NOT NULL DEFAULT 'active',
-  `sortOrder` INT NOT NULL DEFAULT 0,
-  `createdBy` INT NULL,
+  `createdBy` INT UNSIGNED NULL,
   `createdAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updatedAt` DATETIME NULL ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
@@ -22,10 +21,16 @@ CREATE TABLE IF NOT EXISTS `courses` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Ensure Sisseastumine course exists with id=1. If a row with id=1 exists, do not overwrite.
-INSERT INTO `courses` (`id`, `name`, `description`, `visibility`, `status`, `sortOrder`, `createdAt`)
-SELECT 1, 'Sisseastumine', 'Default entrance exam course', 'private', 'active', 0, NOW()
+INSERT INTO `courses` (`id`, `name`, `description`, `visibility`, `status`, `createdAt`)
+SELECT 1, 'Sisseastumine', 'Default entrance exam course', 'private', 'active', NOW()
 FROM DUAL
 WHERE NOT EXISTS (SELECT 1 FROM `courses` WHERE `id` = 1);
+
+-- Ensure activity for creating courses exists (activityId = 30). If missing, insert it.
+INSERT INTO `activities` (`activityId`, `activityName`, `activityDescription`)
+SELECT 30, 'createCourse', 'created course'
+FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM `activities` WHERE `activityId` = 30);
 
 -- Add courseId to exercises if not exists
 ALTER TABLE `exercises`
