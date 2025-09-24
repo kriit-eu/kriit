@@ -100,89 +100,17 @@ $isStudent = $isStudent ?? false;
                     </h6>
                     
                     <div id="commentFormSection" class="comment-section-collapsed">
-                    
-                    <!-- Split view: Editor and Preview -->
-                    <div class="row">
-                        <!-- Text Editor Column -->
-                        <div class="col-md-6">
-                            <div class="editor-wrapper">
-                                <div class="editor-header">
-                                    <small class="text-muted">
-                                        <i class="fas fa-edit"></i> Redaktor
-                                    </small>
-                                </div>
-                                <textarea class="form-control" id="newMessageContent" rows="8"
-                                          placeholder="Kirjuta kommentaar õpilasele... (pildide kleepimiseks kasuta Ctrl+V)"
-                                          style="resize: none; min-height: 200px; overflow: hidden;"></textarea>
-                            </div>
-                        </div>
-                        
-                        <!-- Preview Column -->
-                        <div class="col-md-6">
-                            <div class="preview-wrapper">
-                                <div class="preview-header">
-                                    <small class="text-muted">
-                                        <i class="fas fa-eye"></i> Eelvaade
-                                    </small>
-                                </div>
-                                <div id="messagePreview" class="form-control" 
-                                     style="min-height: 200px; background-color: #f8f9fa; overflow-y: hidden; word-wrap: break-word;">
-                                    <div class="text-muted text-center p-3">
-                                        <i class="fas fa-eye-slash"></i><br>
-                                        Eelvaade ilmub siia...
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Image Upload Progress -->
-                    <div id="imageUploadProgress" class="mt-2 d-none">
-                        <div class="card border-primary">
-                            <div class="card-body p-3">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <h6 class="mb-0">Pildi üleslaadimine</h6>
-                                    <button type="button" class="btn btn-sm btn-outline-danger" id="cancelUpload">
-                                        <i class="fas fa-times"></i> Tühista
-                                    </button>
-                                </div>
-                                <div class="progress mb-2" style="height: 8px;">
-                                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
-                                         id="uploadProgressBar" role="progressbar" style="width: 0%"></div>
-                                </div>
-                                <div class="d-flex align-items-center">
-                                    <div class="spinner-border spinner-border-sm me-2" role="status">
-                                        <span class="visually-hidden">Laadimine...</span>
-                                    </div>
-                                    <small class="text-muted" id="uploadStatusText">Alustamine...</small>
-                                </div>
-                                <div id="uploadResults" class="mt-2"></div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Image Upload Zone -->
-                    <div class="mt-2">
-                        <div class="row">
-                            <div class="col-md-8">
-                                <div class="form-text">
-                                    <small class="text-muted">
-                                        💡 <strong>Näpunäide:</strong> Kopeeri ükskõik milline pilt ja kleebi see otse redaktorisse (Ctrl+V)! 
-                                        Pildid lisatakse automaatselt Markdown-vormingus.
-                                    </small>
-                                </div>
-                            </div>
-                            <div class="col-md-4 text-end">
-                                <button type="button" class="btn btn-outline-primary btn-sm" id="selectImagesBtn">
-                                    <i class="fas fa-image"></i> Vali pildid
-                                </button>
-                                <input type="file" id="imageFileInput" multiple accept="image/*" style="display: none;">
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="invalid-feedback" id="messageError"></div>
-                    
+                        <?php
+                        // Use shared markdown editor partial for the new message form.
+                        // Keep IDs compatible with existing JS by using the same textarea and preview IDs.
+                        $editorId = 'newMessageContent';
+                        $previewId = 'messagePreview';
+                        $fieldName = 'newMessageContent';
+                        $labelText = 'Kommentaar';
+                        $initialValue = '';
+                        include __DIR__ . '/../markdown_editor.php';
+                        ?>
+                        <div class="invalid-feedback" id="messageError"></div>
                     </div> <!-- End commentFormSection -->
                 </div>
 

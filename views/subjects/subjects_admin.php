@@ -572,6 +572,29 @@
         transition: opacity 0.3s ease;
     }
 
+    /* Remove rounded corners for the full preview container so it appears square */
+    #assignmentInstructionsPreview_full,
+    #assignmentInstructionsPreview_full.ai-preview-collapsed,
+    #assignmentInstructionsPreview_full.ai-preview-expanded {
+        border-radius: 0 !important;
+    }
+
+    /* Also ensure the fade overlay doesn't show rounded corners */
+    #assignmentInstructionsPreview_full .ai-preview-fade-overlay {
+        border-radius: 0 !important;
+    }
+
+    /* Remove rounded corners from the split-view preview as well */
+    #assignmentInstructionsPreview,
+    #assignmentInstructionsPreview.ai-preview-collapsed,
+    #assignmentInstructionsPreview.ai-preview-expanded {
+        border-radius: 0 !important;
+    }
+
+    #assignmentInstructionsPreview .ai-preview-fade-overlay {
+        border-radius: 0 !important;
+    }
+
     #assignmentInstructionsPreview_full.ai-preview-expanded .ai-preview-fade-overlay {
         opacity: 0;
     }
@@ -1699,7 +1722,7 @@
                 }
                 const modal = new bootstrap.Modal(document.getElementById('editAssignmentModal'));
                 modal.show();
-                // When modal is fully shown, trigger autoExpand for the markdown editor
+                        // When modal is fully shown, trigger autoExpand for the markdown editor
                 const modalEl = document.getElementById('editAssignmentModal');
                 modalEl.addEventListener('shown.bs.modal', function handler() {
                     modalEl.removeEventListener('shown.bs.modal', handler);
@@ -1708,17 +1731,19 @@
                         var preview = document.getElementById('assignmentInstructionsPreview');
                         // Decide purely from the textarea content to avoid races with preview rendering.
                         var isEditorEmpty = !(textarea && textarea.value && textarea.value.trim());
-                        var editBtn = document.getElementById('assignmentInstructionsEditor_editBtn');
-                        var doneBtn = document.getElementById('assignmentInstructionsEditor_doneBtn');
+                        // New partial exposes *_editOnlyBtn and *_viewBtn. Prefer clicking those so
+                        // the partial's own setMode handling runs. Fall back to focusing textarea.
+                        var editOnlyBtn = document.getElementById('assignmentInstructionsEditor_editOnlyBtn');
+                        var viewBtn = document.getElementById('assignmentInstructionsEditor_viewBtn');
                         if (isEditorEmpty) {
-                            if (editBtn) {
-                                try { editBtn.click(); } catch (e) { try { textarea && textarea.focus(); } catch (e) {} }
+                            if (editOnlyBtn) {
+                                try { editOnlyBtn.click(); } catch (e) { try { textarea && textarea.focus(); } catch (e) {} }
                             } else if (textarea) {
                                 try { textarea.focus(); } catch (e) {}
                             }
                         } else {
-                            if (doneBtn) {
-                                try { doneBtn.click(); } catch (e) {}
+                            if (viewBtn) {
+                                try { viewBtn.click(); } catch (e) {}
                             }
                         }
 
@@ -2276,23 +2301,16 @@
                 var preview = document.getElementById('assignmentInstructionsPreview');
                 // If textarea exists and is empty, switch markdown editor to edit mode
                 if (textarea && textarea.value.trim() === '') {
-                    // Prefer clicking the edit button if present
-                    var editBtn = document.getElementById('assignmentInstructionsEditor_editBtn') || document.getElementById('assignmentInstructionsEditor_editBtn');
-                    // In the partial the edit button id is assignmentInstructionsEditor_editBtn
+                    // Prefer clicking the new edit-only button exposed by the partial
+                    var topEditOnlyBtn = document.getElementById('assignmentInstructionsEditor_editOnlyBtn');
                     try {
-                        var topEditBtn = document.getElementById('assignmentInstructionsEditor_editBtn');
-                        if (topEditBtn) {
-                            topEditBtn.click();
+                        if (topEditOnlyBtn) {
+                            topEditOnlyBtn.click();
                         } else {
-                            // Fallback: call showEditMode by dispatching a click on the visible edit button inside the partial container
-                            var container = document.getElementById('assignmentInstructionsEditor_container');
-                            if (container) {
-                                var btn = container.querySelector('#assignmentInstructionsEditor_editBtn');
-                                if (btn) btn.click();
-                            }
+                            // Fallback: focus the textarea so UI feels editable
+                            try { textarea.focus(); } catch (e) {}
                         }
                     } catch (e) {
-                        // As an ultimate fallback, attempt to focus the textarea so UI feels editable
                         try { textarea.focus(); } catch (e) {}
                     }
                 }

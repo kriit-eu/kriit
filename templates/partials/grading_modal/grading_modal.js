@@ -116,8 +116,14 @@ function resetModalForm() {
   saveBtnSpinner.classList.add("d-none");
 
   // Clear new message form and preview
-  const textarea = document.getElementById("newMessageContent");
-  const preview = document.getElementById("messagePreview");
+  // Resolve textarea and preview (markdown editor uses either bare IDs or prefixed ones)
+  const textarea =
+    document.getElementById("newMessageContent") ||
+    document.querySelector('textarea[name="newMessageContent"]');
+  const preview =
+    document.getElementById("messagePreview") ||
+    document.getElementById("newMessageContent_messagePreview") ||
+    document.querySelector("#messagePreview");
 
   if (textarea) {
     textarea.value = "";
@@ -152,14 +158,19 @@ function resetModalForm() {
   currentImageId = null;
 
   // Hide any image upload progress elements
-  const uploadProgress = document.getElementById("imageUploadProgress");
-  if (uploadProgress) {
-    uploadProgress.classList.add("d-none");
+  // Hide any image upload progress elements (support both bare and prefixed IDs)
+  const _uploadProgress =
+    document.getElementById("imageUploadProgress") ||
+    document.getElementById("newMessageContent_imageUploadProgress");
+  if (_uploadProgress) {
+    _uploadProgress.classList.add("d-none");
   }
 
-  const uploadResults = document.getElementById("uploadResults");
-  if (uploadResults) {
-    uploadResults.innerHTML = "";
+  const _uploadResults =
+    document.getElementById("uploadResults") ||
+    document.getElementById("newMessageContent_uploadResults");
+  if (_uploadResults) {
+    _uploadResults.innerHTML = "";
   }
 
   // Clear grade error and hide it
@@ -552,7 +563,10 @@ function saveGradeAndComment() {
   const selectedGrade = document.querySelector(
     'input[name="grade"]:checked'
   )?.value;
-  const comment = document.getElementById("newMessageContent").value.trim();
+  const _ta =
+    document.getElementById("newMessageContent") ||
+    document.querySelector('textarea[name="newMessageContent"]');
+  const comment = _ta ? _ta.value.trim() : "";
   const gradeError = document.getElementById("gradeError");
   const saveBtn = document.getElementById("saveBtn");
   const saveBtnText = document.getElementById("saveBtnText");
@@ -612,7 +626,10 @@ function saveGradeAndComment() {
     .then((data) => {
       if (data.status === 200) {
         // Clear comment form and reload messages
-        document.getElementById("newMessageContent").value = "";
+        const _ta2 =
+          document.getElementById("newMessageContent") ||
+          document.querySelector('textarea[name="newMessageContent"]');
+        if (_ta2) _ta2.value = "";
 
         // Clear image tracking
         currentImageId = null;
@@ -1377,12 +1394,34 @@ function initializeCommentToggle() {
       toggleBtn.innerHTML =
         '<i class="fas fa-chevron-down me-1"></i>Lisa kommentaar';
 
-      // Focus on textarea when expanded
-      const textarea = document.getElementById("newMessageContent");
+      // Focus on textarea when expanded (support either ID or textarea[name])
+      const textarea =
+        document.getElementById("newMessageContent") ||
+        document.querySelector('textarea[name="newMessageContent"]');
       if (textarea) {
         setTimeout(() => textarea.focus(), 350);
       }
     }
+
+    // After toggling, immediately sync heights so textarea/preview expand to
+    // fit existing content instead of showing an internal scrollbar. Use a
+    // short delay so DOM updates from the class toggle have applied.
+    setTimeout(() => {
+      try {
+        const ta =
+          document.getElementById("newMessageContent") ||
+          document.querySelector('textarea[name="newMessageContent"]');
+        const preview =
+          document.getElementById("messagePreview") ||
+          document.getElementById("newMessageContent_messagePreview") ||
+          document.querySelector("#messagePreview");
+        if (ta && preview && typeof syncElementHeights === "function") {
+          syncElementHeights(ta, preview);
+        }
+      } catch (e) {
+        console.error("sync after expand failed", e);
+      }
+    }, 60);
   });
 }
 
@@ -1413,16 +1452,43 @@ document.addEventListener("DOMContentLoaded", initGradingModal);
 
 // Image pasting functionality
 function initializeImagePasting() {
-  const textarea = document.getElementById("newMessageContent");
-  const uploadProgress = document.getElementById("imageUploadProgress");
-  const uploadProgressBar = document.getElementById("uploadProgressBar");
-  const uploadStatusText = document.getElementById("uploadStatusText");
-  const uploadResults = document.getElementById("uploadResults");
-  const cancelUploadBtn = document.getElementById("cancelUpload");
-  const selectImagesBtn = document.getElementById("selectImagesBtn");
-  const imageFileInput = document.getElementById("imageFileInput");
+  // Prefer elements provided by the shared markdown editor partial which uses
+  // prefixed IDs like `${editorId}_imageUploadProgress` etc. Fall back to the
+  // legacy bare IDs for backward compatibility.
+  const textarea =
+    document.getElementById("newMessageContent") ||
+    document.querySelector('textarea[name="newMessageContent"]');
+
+  // Helper to resolve either the bare ID or the markdown editor prefixed ID
+  function resolveEditorId(bareId, editorPrefix) {
+    const bare = document.getElementById(bareId);
+    if (bare) return bare;
+    if (!editorPrefix) editorPrefix = "newMessageContent";
+    // common mapping: imageUploadProgress -> ${editorPrefix}_imageUploadProgress
+    const prefixed = document.getElementById(editorPrefix + "_" + bareId);
+    return prefixed || null;
+  }
+
+  const uploadProgress = resolveEditorId("imageUploadProgress");
+  const uploadProgressBar = resolveEditorId("uploadProgressBar");
+  const uploadStatusText = resolveEditorId("uploadStatusText");
+  const uploadResults = resolveEditorId("uploadResults");
+  const cancelUploadBtn = resolveEditorId("cancelUpload");
+  const selectImagesBtn = resolveEditorId("selectImagesBtn");
+  const imageFileInput = resolveEditorId("imageFileInput");
 
   // Check if required elements exist (they might not be in all modal configurations)
+  // If a markdown editor partial has already initialized paste/upload handlers
+  // for this editor (by setting window.__hasMarkdownEditor_<editorId>), skip
+  // the grading modal's own initialization to avoid double uploads.
+  try {
+    if (window.__hasMarkdownEditor_newMessageContent) {
+      // The shared markdown editor handles paste/drag/drop/upload for the
+      // textarea; no need to initialize duplicate handlers here.
+      return;
+    }
+  } catch (e) {}
+
   if (!textarea) {
     return;
   }
@@ -1960,8 +2026,13 @@ function performElementHeightSync(textarea, preview) {
 
 // Real-time preview functionality
 function initializePreview() {
-  const textarea = document.getElementById("newMessageContent");
-  const preview = document.getElementById("messagePreview");
+  const textarea =
+    document.getElementById("newMessageContent") ||
+    document.querySelector('textarea[name="newMessageContent"]');
+  const preview =
+    document.getElementById("messagePreview") ||
+    document.getElementById("newMessageContent_messagePreview") ||
+    document.querySelector("#messagePreview");
 
   // Check if required elements exist
   if (!textarea || !preview) {
@@ -1998,8 +2069,13 @@ function initializePreview() {
 
   // Make updatePreview globally available for manual reset
   window.updateGradingPreview = function () {
-    const currentTextarea = document.getElementById("newMessageContent");
-    const currentPreview = document.getElementById("messagePreview");
+    const currentTextarea =
+      document.getElementById("newMessageContent") ||
+      document.querySelector('textarea[name="newMessageContent"]');
+    const currentPreview =
+      document.getElementById("messagePreview") ||
+      document.getElementById("newMessageContent_messagePreview") ||
+      document.querySelector("#messagePreview");
     if (currentTextarea && currentPreview) {
       const content = currentTextarea.value.trim();
       if (content === "") {

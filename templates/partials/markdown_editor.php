@@ -114,11 +114,17 @@
     <div class="md-editor-sticky-header d-flex justify-content-between align-items-center">
         <label for="<?= htmlspecialchars($editorId) ?>" class="form-label fw-bold mb-0"><?= htmlspecialchars($labelText) ?></label>
         <div class="d-flex" style="gap:0.5em;">
-            <button type="button" class="btn btn-outline-secondary btn-sm" id="<?= htmlspecialchars($editorId) ?>_editBtn" style="display:none;">
-                <i class="fas fa-edit"></i> Muuda
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="<?= htmlspecialchars($editorId) ?>_editOnlyBtn" title="Ainult redaktor — avab ainult redaktori (kirjuta ja kleebi pilte)" aria-label="Ainult redaktor: avab ainult redaktori, kus saab kirjutada ja kleepida pilte">
+                <i class="fas fa-edit" aria-hidden="true"></i>
+                <span class="d-none d-sm-inline ms-1">Redaktor</span>
             </button>
-            <button type="button" class="btn btn-outline-secondary btn-sm" id="<?= htmlspecialchars($editorId) ?>_doneBtn" style="display:none;">
-                <i class="fas fa-eye"></i> Vaata
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="<?= htmlspecialchars($editorId) ?>_splitBtn" title="Jagatud vaade — näitab redaktorit ja eelvaadet kõrvuti" aria-label="Jagatud vaade: näitab redaktorit vasakul ja eelvaadet paremal">
+                <i class="fas fa-columns" aria-hidden="true"></i>
+                <span class="d-none d-sm-inline ms-1">Jagatud</span>
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="<?= htmlspecialchars($editorId) ?>_viewBtn" title="Ainult eelvaade — näitab vormindatud eelvaadet, ei luba muuta" aria-label="Ainult eelvaade: näitab vormindatud eelvaadet, ei luba muuta">
+                <i class="fas fa-eye" aria-hidden="true"></i>
+                <span class="d-none d-sm-inline ms-1">Eelvaade</span>
             </button>
         </div>
     </div>
@@ -141,15 +147,13 @@
     </div>
     <!-- Split view (edit mode) -->
     <div class="row" id="<?= htmlspecialchars($editorId) ?>_splitRow" style="display:none;">
-        <!-- Editor -->
+        <!-- Editor placeholder (left column of split) -->
         <div class="col-md-6">
             <div class="editor-wrapper">
                 <div class="editor-header">
                     <small class="text-muted"><i class="fas fa-edit"></i> Redaktor</small>
                 </div>
-                <textarea class="form-control" id="<?= htmlspecialchars($editorId) ?>" name="<?= htmlspecialchars($fieldName) ?>" rows="8"
-                    placeholder="Kirjuta ülesande juhend... (Markdown, pildid Ctrl+V)"
-                    style="resize: none; min-height: 200px; overflow: hidden;"><?= htmlspecialchars($initialValue) ?></textarea>
+                <div id="<?= htmlspecialchars($editorId) ?>_splitEditorHolder"></div>
             </div>
         </div>
         <!-- Preview -->
@@ -165,6 +169,17 @@
                         Eelvaade ilmub siia...
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+    <!-- Editor-only view (full width editor) -->
+    <div class="row" id="<?= htmlspecialchars($editorId) ?>_editorOnlyRow" style="display:none;">
+        <div class="col-12">
+            <div class="editor-wrapper">
+                <div class="editor-header">
+                    <small class="text-muted"><i class="fas fa-edit"></i> Redaktor</small>
+                </div>
+                <div id="<?= htmlspecialchars($editorId) ?>_editorOnlyHolder"></div>
             </div>
         </div>
     </div>
@@ -208,7 +223,7 @@
             .use(window.markdownitEmoji)
             .use(window.markdownitSub)
             .use(window.markdownitSup);
-        var editorId = '<?= addslashes($editorId) ?>';
+    var editorId = '<?= addslashes($editorId) ?>';
         var previewId = '<?= addslashes($previewId) ?>';
         // Prefer scoping lookups to this partial's container so multiple instances or other elements with same IDs won't collide
         var container = document.getElementById(editorId + '_container');
@@ -277,12 +292,85 @@
             updatePreview();
         }
 
-        if (editBtn) editBtn.addEventListener('click', function() {
-            showEditMode(true);
-        });
-        if (doneBtn) doneBtn.addEventListener('click', function() {
-            showEditMode(false);
-        });
+        // Legacy buttons removed; new mode buttons: editOnly, split, view
+        var editOnlyBtn = document.getElementById(editorId + '_editOnlyBtn');
+        var splitBtn = document.getElementById(editorId + '_splitBtn');
+        var viewBtn = document.getElementById(editorId + '_viewBtn');
+
+        // Create a single shared textarea element and helpers to move it between holders
+        var sharedTextarea = null;
+        function createSharedTextarea() {
+            if (sharedTextarea) return sharedTextarea;
+            // create a textarea element with the proper attributes
+            var ta = document.createElement('textarea');
+            ta.className = 'form-control';
+            ta.id = editorId;
+            ta.name = '<?= addslashes($fieldName) ?>';
+            ta.rows = 8;
+            ta.placeholder = 'Sisesta sisu siia… (Markdown + pildid Ctrl+V)';
+            ta.style.resize = 'none';
+            ta.style.minHeight = '200px';
+            ta.style.overflow = 'hidden';
+            try { ta.value = <?= json_encode($initialValue) ?> || ''; } catch (e) { ta.value = '' }
+            sharedTextarea = ta;
+            return ta;
+        }
+
+        function placeSharedTextareaIn(holderId) {
+            var holder = document.getElementById(holderId);
+            if (!holder) return;
+            var ta = createSharedTextarea();
+            // If textarea is already elsewhere, remove it first
+            if (ta.parentNode && ta.parentNode !== holder) ta.parentNode.removeChild(ta);
+            // append into holder
+            if (!holder.contains(ta)) holder.appendChild(ta);
+            // ensure listeners are attached
+            attachTextareaListeners();
+        }
+
+        function setMode(mode) {
+            // mode: 'edit' (editor-only), 'split' (editor+preview), 'view' (preview-only)
+            try {
+                // hide all rows first
+                if (previewOnlyRow) previewOnlyRow.style.display = 'none';
+                if (splitRow) splitRow.style.display = 'none';
+                if (document.getElementById(editorId + '_editorOnlyRow')) document.getElementById(editorId + '_editorOnlyRow').style.display = 'none';
+                // hide edit controls by default
+                if (editControls) editControls.style.display = 'none';
+
+                // reset active styling on buttons
+                [editOnlyBtn, splitBtn, viewBtn].forEach(function(b) { if (b) b.classList.remove('active'); });
+
+                if (mode === 'edit') {
+                    var r = document.getElementById(editorId + '_editorOnlyRow');
+                    if (r) r.style.display = '';
+                    if (editControls) editControls.style.display = '';
+                    if (editOnlyBtn) editOnlyBtn.classList.add('active');
+                    // place shared textarea in editor-only holder so edits persist
+                    placeSharedTextareaIn(editorId + '_editorOnlyHolder');
+                    // focus editor
+                    setTimeout(function() { try { var ta = document.getElementById(editorId); if (ta) ta.focus({preventScroll:true}); } catch (e) { try { var ta2 = document.getElementById(editorId); if (ta2) ta2.focus(); } catch (err) {} } }, 100);
+                } else if (mode === 'split') {
+                    if (splitRow) splitRow.style.display = '';
+                    if (editControls) editControls.style.display = '';
+                    if (splitBtn) splitBtn.classList.add('active');
+                    // place shared textarea in split editor holder (left column)
+                    placeSharedTextareaIn(editorId + '_splitEditorHolder');
+                } else {
+                    // view
+                    if (previewOnlyRow) previewOnlyRow.style.display = '';
+                    if (viewBtn) viewBtn.classList.add('active');
+                }
+                // update preview to reflect current textarea content
+                scheduleUpdatePreview(true);
+            } catch (e) {
+                console.error('setMode failed', e);
+            }
+        }
+
+        if (editOnlyBtn) editOnlyBtn.addEventListener('click', function() { setMode('edit'); });
+        if (splitBtn) splitBtn.addEventListener('click', function() { setMode('split'); });
+        if (viewBtn) viewBtn.addEventListener('click', function() { setMode('view'); });
 
         // Helper: when preview or textarea resizes inside a Bootstrap modal, updates
         // can cause the modal to scroll/jump. We save and restore the nearest
@@ -555,19 +643,60 @@
                         scheduleUpdatePreview();
                     } catch (e) {}
                 });
-                ta.addEventListener('paste', function() {
-                    setTimeout(function() {
-                        scheduleUpdatePreview(true);
-                    }, 10);
-                    setTimeout(function() {
-                        scheduleUpdatePreview(true);
-                    }, 800);
+                // paste handler: schedule updates and support image paste from clipboard
+                ta.addEventListener('paste', function(e) {
+                    // schedule preview updates
+                    setTimeout(function() { scheduleUpdatePreview(true); }, 10);
+                    setTimeout(function() { scheduleUpdatePreview(true); }, 800);
+                    try {
+                        var items = (e.clipboardData || (e.originalEvent && e.originalEvent.clipboardData));
+                        var dataItems = items && items.items ? items.items : null;
+                        var imageFiles = [];
+                        if (dataItems && dataItems.length) {
+                            for (var i = 0; i < dataItems.length; i++) {
+                                var it = dataItems[i];
+                                if (!it) continue;
+                                if (it.type && it.type.indexOf('image') !== -1) {
+                                    if (typeof it.getAsFile === 'function') imageFiles.push(it.getAsFile());
+                                }
+                            }
+                        }
+                        if (imageFiles.length > 0) {
+                            e.preventDefault();
+                            handleMultipleFiles(imageFiles);
+                        }
+                    } catch (err) {}
                 });
                 ta.addEventListener('mouseup', function() {
                     scheduleUpdatePreview();
                 });
                 ta.addEventListener('focus', function() {
                     scheduleUpdatePreview(true);
+                });
+                // drag & drop support for images
+                ta.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    try { ta.classList.add('image-paste-active'); } catch (err) {}
+                });
+                ta.addEventListener('dragenter', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    try { ta.classList.add('image-paste-active'); } catch (err) {}
+                });
+                ta.addEventListener('dragleave', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    try { if (!ta.contains(e.relatedTarget)) ta.classList.remove('image-paste-active'); } catch (err) {}
+                });
+                ta.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    try { ta.classList.remove('image-paste-active'); } catch (err) {}
+                    try {
+                        var files = Array.from(e.dataTransfer.files).filter(function(file) { return file.type && file.type.indexOf('image') !== -1; });
+                        if (files.length > 0) handleMultipleFiles(files);
+                    } catch (err) {}
                 });
 
             } catch (err) {
@@ -664,45 +793,7 @@
                 e.target.value = '';
             });
         }
-        if (textarea) {
-            textarea.addEventListener('paste', function(e) {
-                var items = (e.clipboardData || e.originalEvent.clipboardData).items;
-                var imageFiles = [];
-                for (var i = 0; i < items.length; i++) {
-                    if (items[i].type.indexOf('image') !== -1) {
-                        imageFiles.push(items[i].getAsFile());
-                    }
-                }
-                if (imageFiles.length > 0) {
-                    e.preventDefault();
-                    handleMultipleFiles(imageFiles);
-                }
-            });
-            textarea.addEventListener('dragover', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                textarea.classList.add('image-paste-active');
-            });
-            textarea.addEventListener('dragenter', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                textarea.classList.add('image-paste-active');
-            });
-            textarea.addEventListener('dragleave', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                if (!textarea.contains(e.relatedTarget)) textarea.classList.remove('image-paste-active');
-            });
-            textarea.addEventListener('drop', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                textarea.classList.remove('image-paste-active');
-                var files = Array.from(e.dataTransfer.files).filter(function(file) {
-                    return file.type.indexOf('image') !== -1;
-                });
-                if (files.length > 0) handleMultipleFiles(files);
-            });
-        }
+        // Paste/drag-drop handlers are attached to the shared textarea inside attachTextareaListeners().
         if (cancelUploadBtn) {
             cancelUploadBtn.addEventListener('click', function() {
                 cancelAllUploads();
@@ -845,19 +936,36 @@
         }
 
         function insertImageMarkdown(imageId, fileName) {
-            if (!textarea) return;
+            // always find the current textarea (shared instance)
+            var ta = container ? container.querySelector('#' + editorId) : document.getElementById(editorId);
+            if (!ta) return;
             var imageMarkdown = '![' + fileName + '](images/' + imageId + ')';
-            var cursorPos = textarea.selectionStart;
-            var textBefore = textarea.value.substring(0, cursorPos);
-            var textAfter = textarea.value.substring(cursorPos);
-            var needsNewlineBefore = textBefore.length > 0 && !textBefore.endsWith('\n');
-            var needsNewlineAfter = textAfter.length > 0 && !textAfter.startsWith('\n');
-            var finalMarkdown = (needsNewlineBefore ? '\n' : '') + imageMarkdown + (needsNewlineAfter ? '\n' : '');
-            textarea.value = textBefore + finalMarkdown + textAfter;
-            var newCursorPos = cursorPos + finalMarkdown.length;
-            textarea.selectionStart = textarea.selectionEnd = newCursorPos;
-            textarea.focus();
-            textarea.dispatchEvent(new Event('input'));
+            var cursorPos = ta.selectionStart;
+            var textBefore = ta.value.substring(0, cursorPos);
+            var textAfter = ta.value.substring(cursorPos);
+
+            // Determine whether to add a newline before/after
+            var addNlBefore = textBefore.length > 0 && !textBefore.endsWith('\n');
+            var addNlAfter = textAfter.length > 0 && !textAfter.startsWith('\n');
+
+            // Build the final inserted string. We want a single separating newline
+            // so that inserting image between lines doesn't produce an extra blank line
+            var prefix = addNlBefore ? '\n' : '';
+            var suffix = addNlAfter ? '\n' : '\n'; // always ensure at least one newline after image
+
+            var finalMarkdown = prefix + imageMarkdown + suffix;
+
+            // Replace textarea content
+            ta.value = textBefore + finalMarkdown + textAfter;
+
+            // Position cursor at the start of the line after the image (after the single newline)
+            var newCursorPos = (textBefore.length) + prefix.length + imageMarkdown.length + 1; // +1 moves cursor onto the newline after the image
+            // Clamp to valid range
+            if (newCursorPos < 0) newCursorPos = 0;
+            if (newCursorPos > ta.value.length) newCursorPos = ta.value.length;
+            ta.selectionStart = ta.selectionEnd = newCursorPos;
+            ta.focus();
+            ta.dispatchEvent(new Event('input'));
         }
 
         function cancelAllUploads() {
@@ -874,16 +982,28 @@
             }, 2000);
         }
 
-        // Start mode: if there is no initial content, open editor so user can start typing immediately.
-        // Otherwise start in preview-only mode.
+        // Start mode: prefer server-provided initial content value when deciding default.
+        // If there is content loaded into the editor (initialValue), open preview by default;
+        // otherwise open editor-only so the user can start typing immediately.
         try {
-            var taStart = container ? container.querySelector('#' + editorId) : document.getElementById(editorId);
-            var startEditIfEmpty = taStart && taStart.value && taStart.value.trim() !== '' ? false : true;
-            showEditMode(startEditIfEmpty);
+            var initialValueFromServer = '';
+            try { initialValueFromServer = <?= json_encode($initialValue) ?> || ''; } catch (e) { initialValueFromServer = ''; }
+            var hasInitialContent = initialValueFromServer && String(initialValueFromServer).trim() !== '';
+            if (hasInitialContent) {
+                setMode('view');
+            } else {
+                setMode('edit');
+            }
         } catch (e) {
-            // Fallback: do not throw — default to preview-only
-            try { showEditMode(false); } catch (err) {}
+            try { setMode('view'); } catch (err) {}
         }
+
+        // Expose a global marker so other scripts (like grading modal) can detect
+        // that this markdown editor instance is present and avoid duplicate
+        // initialization of paste/upload handlers for the same textarea.
+        try {
+            window['__hasMarkdownEditor_' + editorId] = true;
+        } catch (e) {}
 
     })();
 </script>

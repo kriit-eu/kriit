@@ -114,155 +114,6 @@
   font-size: 0.85em;
   background-color: #f8f9fa;
 }
-
-/* Markdown content styling */
-.markdown-content {
-  line-height: 1.6;
-}
-
-/* Ensure instruction preview matches markdown editor behavior: expand to fit content */
-.markdown-content,
-.form-control.markdown-content,
-.markdown-content #assignmentInstructionsPreview,
-.form-control #assignmentInstructionsPreview {
-  min-height: 40px;
-  height: auto !important;
-  max-height: none !important;
-  overflow-y: visible !important;
-  resize: none;
-  box-sizing: border-box;
-}
-
-/* Show more / less button spacing and behavior */
-#showMoreInstructions {
-  display: inline-block;
-  margin-top: 8px;
-  margin-bottom: 4px;
-}
-
-/* When preview is expanded, ensure preview wrapper can grow and doesn't clip content */
-.assignment-instructions-expanded #assignmentInstructionsPreview {
-  max-height: none !important;
-  overflow: visible !important;
-  background-image: none !important;
-}
-
-/* Explicit wrapper that will be toggled by JS. Defaults to collapsed state. */
-#assignmentInstructionsWrapper {
-  max-height: 120px; /* collapsed preview height */
-  overflow: hidden;
-  position: relative;
-  transition: max-height 0.28s ease;
-}
-
-/* Fade gradient at bottom when collapsed to hint at more content */
-#assignmentInstructionsWrapper::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 3.2rem;
-  pointer-events: none;
-  background: linear-gradient(
-    to bottom,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 1) 85%
-  );
-  transition: opacity 0.18s ease;
-}
-
-/* When expanded, allow full content and remove fade */
-#assignmentInstructionsWrapper.assignment-instructions-expanded {
-  max-height: 2000px; /* large enough to show all content */
-}
-
-#assignmentInstructionsWrapper.assignment-instructions-expanded::after {
-  opacity: 0;
-}
-
-/* Ensure the toggle button is visually separated and does not overlap */
-#showMoreInstructions {
-  display: inline-block;
-  margin-top: 12px;
-  margin-bottom: 6px;
-}
-
-.markdown-content img {
-  max-width: 100%;
-  height: auto;
-}
-
-.markdown-content h1,
-.markdown-content h2,
-.markdown-content h3,
-.markdown-content h4,
-.markdown-content h5,
-.markdown-content h6 {
-  margin-top: 1rem;
-  margin-bottom: 0.5rem;
-  font-weight: 600;
-}
-
-.markdown-content h1 {
-  font-size: 1.5rem;
-}
-
-.markdown-content h2 {
-  font-size: 1.3rem;
-}
-
-.markdown-content h3 {
-  font-size: 1.1rem;
-}
-
-.markdown-content h4,
-.markdown-content h5,
-.markdown-content h6 {
-  font-size: 1rem;
-}
-
-.markdown-content ul,
-.markdown-content ol {
-  padding-left: 1.5rem;
-  margin-bottom: 1rem;
-}
-
-.markdown-content li {
-  margin-bottom: 0.25rem;
-}
-
-.markdown-content code {
-  background-color: #f1f3f4;
-  padding: 0.125rem 0.25rem;
-  border-radius: 0.25rem;
-  font-family: "Courier New", monospace;
-  font-size: 0.9em;
-}
-
-.markdown-content pre {
-  background-color: #f8f9fa;
-  border: 1px solid #e9ecef;
-  border-radius: 0.375rem;
-  padding: 1rem;
-  overflow-x: auto;
-  margin-bottom: 1rem;
-  line-height: 1 !important;
-  font-size: 0.875rem;
-}
-
-.markdown-content pre code {
-  background-color: transparent;
-  padding: 0 !important;
-  margin: 0 !important;
-  line-height: 1 !important;
-  white-space: pre !important;
-  display: block;
-  font-size: inherit;
-  border: none !important;
-}
-
-/* Specific targeting for message content code blocks */
 .message-content pre {
   line-height: 1 !important;
   font-size: 0.875rem;
@@ -284,26 +135,6 @@
   margin: 0 !important;
   font-size: inherit;
   border: none !important;
-}
-
-.markdown-content blockquote {
-  border-left: 4px solid #dee2e6;
-  padding-left: 1rem;
-  margin-left: 0;
-  margin-bottom: 1rem;
-  color: #6c757d;
-}
-
-.markdown-content p {
-  margin-bottom: 1rem;
-}
-
-.markdown-content strong {
-  font-weight: 600;
-}
-
-.markdown-content em {
-  font-style: italic;
 }
 
 /* Table styling within message content */
@@ -401,140 +232,8 @@
   text-align: center;
 }
 
-/* Image upload and preview styles */
-.message-image {
-  max-width: 100%;
-  height: auto;
-  border-radius: 8px;
-  margin: 10px 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-#newMessageContent.image-paste-active {
-  border-color: #007bff !important;
-  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
-  background-color: #f8f9ff !important;
-}
-
-.image-upload-hint {
-  font-size: 0.875rem;
-  color: #6c757d;
-  margin-top: 4px;
-}
-
-.drag-drop-zone {
-  position: relative;
-  border: 2px dashed #dee2e6;
-  border-radius: 8px;
-  padding: 20px;
-  text-align: center;
-  transition: all 0.3s ease;
-  background-color: #f8f9fa;
-}
-
-.drag-drop-zone.drag-over {
-  border-color: #007bff;
-  background-color: #f0f8ff;
-  transform: scale(1.01);
-}
-
-.upload-item {
-  background-color: #f8f9fa;
-  border: 1px solid #dee2e6;
-  border-radius: 6px;
-  padding: 8px 12px;
-  margin-bottom: 8px;
-}
-
-.upload-item.success {
-  background-color: #d4edda;
-  border-color: #c3e6cb;
-  color: #155724;
-}
-
-.upload-item.error {
-  background-color: #f8d7da;
-  border-color: #f5c6cb;
-  color: #721c24;
-}
-
-.file-info {
-  font-size: 0.875rem;
-  color: #6c757d;
-}
-
-/* Split editor styles */
-.editor-wrapper,
-.preview-wrapper {
-  border: 1px solid #dee2e6;
-  border-radius: 0.375rem;
-  overflow: hidden;
-}
-
-.editor-header,
-.preview-header {
-  background-color: #f8f9fa;
-  padding: 8px 12px;
-  border-bottom: 1px solid #dee2e6;
-  font-weight: 500;
-}
-
-.editor-wrapper textarea {
-  border: none;
-  border-radius: 0;
-  box-shadow: none;
-  padding: 12px;
-}
-
-.editor-wrapper textarea:focus {
-  border: none;
-  box-shadow: none;
-}
-
-#messagePreview {
-  border: none;
-  border-radius: 0;
-  padding: 12px;
-  font-family: inherit;
-  line-height: 1.5;
-}
-
-#messagePreview img {
-  max-width: 100%;
-  height: auto;
-  border-radius: 6px;
-  margin: 8px 0;
-}
-
-#messagePreview h1,
-#messagePreview h2,
-#messagePreview h3,
-#messagePreview h4 {
-  margin-top: 1rem;
-  margin-bottom: 0.5rem;
-}
-
-#messagePreview code {
-  background-color: #f1f3f4;
-  padding: 2px 4px;
-  border-radius: 3px;
-  font-size: 0.9em;
-}
-
-#messagePreview pre {
-  background-color: #f8f9fa;
-  padding: 1rem;
-  border-radius: 6px;
-  border-left: 4px solid #007bff;
-  overflow-x: auto;
-}
-
-/* Dynamic resizing styles */
+/* Dynamic resizing styles for message area */
 #newMessageContent {
-  transition: height 0.2s ease;
-}
-
-#messagePreview {
   transition: height 0.2s ease;
 }
 
@@ -542,7 +241,8 @@
 #commentFormSection {
   transition: max-height 0.3s ease-out, opacity 0.3s ease-out,
     padding 0.3s ease-out;
-  overflow: hidden;
+  /* Allow inner elements to manage overflow (textarea/preview will scroll if needed) */
+  overflow: visible;
 }
 
 #commentFormSection.comment-section-collapsed {
@@ -552,17 +252,29 @@
   padding-bottom: 0;
 }
 
+/* When expanded, don't artificially cap the form height. Let inner controls
+   (textarea / preview) manage their own scrolling behaviour. */
 #commentFormSection.comment-section-expanded {
-  max-height: 2000px; /* Large enough to fit the form */
+  max-height: none;
   opacity: 1;
   padding-top: 1rem;
   padding-bottom: 0;
 }
 
+/* Allow the new message textarea to be vertically resizable and scrollable
+   so long comments can be authored and reviewed. Use a sensible maximum
+   to prevent it from growing beyond the viewport. */
+#commentFormSection textarea.form-control {
+  /* Let JS control the height so the textarea auto-expands to fit content
+     instead of showing an internal scrollbar. Keep vertical resize available. */
+  resize: vertical !important;
+  overflow-y: hidden !important;
+  min-height: 120px;
+  /* No max-height here; allow the textarea to expand and the modal to scroll
+     if needed so the full content is visible. */
+}
+
 /* Mobile responsiveness */
 @media (max-width: 768px) {
-  .editor-wrapper,
-  .preview-wrapper {
-    margin-bottom: 1rem;
-  }
+  /* keep modal-friendly spacing for responsive layouts */
 }
