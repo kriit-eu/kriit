@@ -34,6 +34,13 @@ class courses extends Controller
             stop(404, 'Course not found');
         }
 
+        // Visibility: if private, only admin or creator may view
+        if ($this->course['visibility'] === 'private') {
+            if (!$this->auth->userIsAdmin && intval($this->course['createdBy']) !== intval($this->auth->userId)) {
+                stop(403, 'Sul puudub õigus seda kursust vaadata.');
+            }
+        }
+
         // Fetch exercises for this course. We'll assume exercises have a courseId column in future; for now
         // map all existing exercises to the default Sisseastumine course (id=1). If courseId exists use it.
         $hasCourseColumn = Db::getOne("SHOW COLUMNS FROM exercises LIKE 'courseId'") ? true : false;
@@ -118,6 +125,108 @@ class courses extends Controller
         $courseId = $this->getId();
         // Redirect to course view with tab=ranking so user stays on same page and tabs are handled client-side
         header('Location: ' . BASE_URL . "courses/{$courseId}?tab=ranking");
+        exit();
+    }
+
+    /**
+     * Return assignments grouped by subject for the current user to populate the dropdown.
+     * Admins see all subjects/assignments; teachers see only their own subjects.
+     */
+    function assignments_for_dropdown(): void
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        if (!$this->auth->userIsTeacher && !$this->auth->userIsAdmin) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Access denied']);
+            exit();
+        }
+
+        if ($this->auth->userIsAdmin) {
+            $subjects = Db::getAll("SELECT subjectId, subjectName, groupId, teacherId FROM subjects ORDER BY subjectName");
+        } else {
+            // teacher: subjects where subjects.teacherId equals current user
+            $subjects = Db::getAll("SELECT subjectId, subjectName, groupId, teacherId FROM subjects WHERE teacherId = ? ORDER BY subjectName", [$this->auth->userId]);
+        }
+
+        // also include groups and teacher lists to populate filter menus on the client
+        $groups = Db::getAll("SELECT groupId, groupName FROM groups ORDER BY groupName");
+        $teachers = Db::getAll("SELECT userId, userName FROM users WHERE userIsTeacher = 1 ORDER BY userName");
+
+        $out = ['subjects' => [], 'teacherHasSubjects' => count($subjects) > 0, 'groups' => $groups, 'teachers' => $teachers];
+        foreach ($subjects as $s) {
+            // assignments table uses assignmentName; align keys for frontend (id/name)
+            $assignments = Db::getAll("SELECT assignmentId, assignmentName AS name FROM assignments WHERE subjectId = ? ORDER BY assignmentName", [$s['subjectId']]);
+            $out['subjects'][] = ['id' => $s['subjectId'], 'name' => $s['subjectName'], 'groupId' => $s['groupId'], 'teacherId' => $s['teacherId'], 'assignments' => $assignments];
+        }
+
+        echo json_encode($out);
+        exit();
+    }
+
+    /**
+     * Create a new course (POST).
+     */
+    function create(): void
+    {
+        // Only teachers and admins may create courses
+        if (!$this->auth->userIsTeacher && !$this->auth->userIsAdmin) {
+            stop(403, 'Access denied');
+        }
+
+        $name = trim($_POST['name'] ?? '');
+        $description = trim($_POST['description'] ?? '');
+        $visibility = ($_POST['visibility'] ?? 'private') === 'public' ? 'public' : 'private';
+        $status = ($_POST['status'] ?? 'inactive') === 'active' ? 'active' : 'inactive';
+        $assignmentId = !empty($_POST['assignmentId']) ? intval($_POST['assignmentId']) : null;
+
+        // Validate
+        if ($name === '') {
+            $_SESSION['flash_error'] = 'Nimi on kohustuslik.';
+            header('Location: ' . BASE_URL . 'courses');
+            exit();
+        }
+
+        // Ensure unique name
+        $exists = Db::getOne("SELECT COUNT(1) FROM courses WHERE name = ?", [$name]);
+        if ($exists) {
+            $_SESSION['flash_error'] = 'Kursus sellise nimega juba eksisteerib.';
+            header('Location: ' . BASE_URL . 'courses');
+            exit();
+        }
+
+        // If teacher and assignment provided, ensure assignment belongs to one of their subjects
+        if (!$this->auth->userIsAdmin && $assignmentId !== null) {
+            // ensure the assignment belongs to a subject taught by this teacher
+            $valid = Db::getOne("SELECT COUNT(1) FROM assignments a JOIN subjects s ON a.subjectId = s.subjectId WHERE a.assignmentId = ? AND s.teacherId = ?", [$assignmentId, $this->auth->userId]);
+            if (!$valid) {
+                $_SESSION['flash_error'] = 'Valitud ülesanne pole sinu õppetöös.';
+                header('Location: ' . BASE_URL . 'courses');
+                exit();
+            }
+        }
+
+        // Insert using Db helper
+        $now = date('Y-m-d H:i:s');
+        $data = [
+            'name' => $name,
+            'description' => $description,
+            'visibility' => $visibility,
+            'status' => $status,
+            'sortOrder' => 0,
+            'assignment_id' => $assignmentId,
+            'createdBy' => $this->auth->userId,
+            'createdAt' => $now,
+            'updatedAt' => $now,
+        ];
+
+    $courseId = Db::insert('courses', $data);
+
+    // Activity log: course created
+    Activity::create(ACTIVITY_CREATE_COURSE ?? 0, $this->auth->userId, $courseId, ['assignment_id' => $assignmentId]);
+
+        // Redirect to courses index or new course view
+        $_SESSION['flash_success'] = 'Kursus loodud.';
+        header('Location: ' . BASE_URL . "courses/{$courseId}");
         exit();
     }
 }

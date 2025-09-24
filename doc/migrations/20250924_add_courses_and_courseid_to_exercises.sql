@@ -14,11 +14,11 @@ CREATE TABLE IF NOT EXISTS `courses` (
   `visibility` ENUM('public','private') NOT NULL DEFAULT 'private',
   `status` ENUM('active','inactive') NOT NULL DEFAULT 'active',
   `sortOrder` INT NOT NULL DEFAULT 0,
-  `assignment_id` INT NULL,
   `createdBy` INT NULL,
   `createdAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updatedAt` DATETIME NULL ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  KEY `courses_createdBy_fk` (`createdBy`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Ensure Sisseastumine course exists with id=1. If a row with id=1 exists, do not overwrite.
@@ -38,6 +38,10 @@ UPDATE `exercises` SET `courseId` = 1 WHERE `courseId` IS NULL;
 ALTER TABLE `exercises`
   MODIFY COLUMN `courseId` INT NOT NULL,
   ADD CONSTRAINT `fk_exercises_course` FOREIGN KEY (`courseId`) REFERENCES `courses` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- Add foreign key for courses.createdBy -> users.userId if users table exists
+ALTER TABLE `courses`
+  ADD CONSTRAINT `fk_courses_createdBy_users` FOREIGN KEY (`createdBy`) REFERENCES `users` (`userId`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 COMMIT;
 

@@ -16,6 +16,16 @@
     <?php
     require 'templates/partials/admin_and_logout_buttons.php';
 
+    // Flash messages
+    if (!empty($_SESSION['flash_error'])) {
+        echo '<div class="container mt-3"><div class="alert alert-danger">' . htmlspecialchars($_SESSION['flash_error']) . '</div></div>';
+        unset($_SESSION['flash_error']);
+    }
+    if (!empty($_SESSION['flash_success'])) {
+        echo '<div class="container mt-3"><div class="alert alert-success">' . htmlspecialchars($_SESSION['flash_success']) . '</div></div>';
+        unset($_SESSION['flash_success']);
+    }
+
     /** @var string $controller set in Application::__construct() */
     /** @var string $action set in Application::__construct() */
     if (!file_exists("views/$controller/{$controller}_$action.php")) {
