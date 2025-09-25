@@ -68,7 +68,7 @@
 
     <div class="footer-container">
             <div class="footer clickable-footer">
-                <a class="btn btn-secondary footer-btn-left" href="exercises" tabindex="-1">
+                <a class="btn btn-secondary footer-btn-left" href="<?= isset($this->returnCourseId) && $this->returnCourseId ? BASE_URL . 'courses/' . intval($this->returnCourseId) . '?tab=exercises' : 'exercises' ?>" tabindex="-1">
                     <i class="bi bi-arrow-left"></i>
                     Ülesannete loendisse
                 </a>
@@ -318,6 +318,7 @@
 <script src="/assets/js/csslint-cdn-bridge.js"></script>
 <script>
     let editor;
+    window.returnCourseUrl = <?= isset($this->returnCourseId) && $this->returnCourseId ? json_encode(BASE_URL . 'courses/' . intval($this->returnCourseId) . '?tab=exercises&exerciseSaved=1') : 'null' ?>;
 
     function initEditor() {
         if (!editor) {
@@ -598,7 +599,11 @@
                     ajax(`exercises/markAsSolved/${exerciseId}`, {answer: userCode},
                         function (res) {
                             if (res.status === 200) {
-                                window.location.href = 'exercises';
+                                if (window.returnCourseUrl) {
+                                    window.location.href = window.returnCourseUrl;
+                                } else {
+                                    window.location.href = 'exercises';
+                                }
                             } else {
                                 alert('Tekkis viga serveriga suhtlemisel.');
                             }

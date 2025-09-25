@@ -26,46 +26,98 @@ class courses extends Controller
 
     function view(): void
     {
-        // Only teachers and admins may view course pages
-        if (!$this->auth->userIsTeacher && !$this->auth->userIsAdmin) {
-            stop(403, 'Access denied');
-        }
-
         $courseId = $this->getId();
+        $isTeacherOrAdmin = $this->auth->userIsTeacher || $this->auth->userIsAdmin;
+        $isStudent = !$isTeacherOrAdmin;
+
         // Basic course info
         $this->course = Db::getFirst("SELECT * FROM courses WHERE id = ?", [$courseId]);
 
         if (!$this->course) {
-            stop(404, 'Course not found');
+            stop(404, 'Kursust ei leitud.');
         }
 
-        // Visibility: if private, only admin or creator may view
-        if ($this->course['visibility'] === 'private') {
+        // Visibility: if private, teachers/admins must own it; students bypass visibility per requirements
+        if ($this->course['visibility'] === 'private' && $isTeacherOrAdmin) {
             if (!$this->auth->userIsAdmin && intval($this->course['createdBy']) !== intval($this->auth->userId)) {
                 stop(403, 'Sul puudub õigus seda kursust vaadata.');
             }
         }
 
-        // Fetch exercises for this course. We'll assume exercises have a courseId column in future; for now
-        // map all existing exercises to the default Sisseastumine course (id=1). If courseId exists use it.
+        if ($isStudent) {
+            $groupId = $this->auth->groupId;
+            $userId = $this->auth->userId;
+
+            $hasAssignment = Db::getOne(
+                "SELECT COUNT(1)
+                 FROM assignments a
+                 JOIN subjects s ON a.subjectId = s.subjectId
+                 WHERE a.courseId = ? AND s.groupId = ?",
+                [$courseId, $groupId]
+            );
+
+            if (!$hasAssignment) {
+                $hasAssignment = Db::getOne(
+                    "SELECT COUNT(1)
+                     FROM assignments a
+                     JOIN userAssignments ua ON ua.assignmentId = a.assignmentId AND ua.userId = ?
+                     WHERE a.courseId = ?",
+                    [$userId, $courseId]
+                );
+            }
+
+            if (!$hasAssignment) {
+                stop(404, 'Kursust ei leitud.');
+            }
+        }
+
+        $this->courseIsActive = ($this->course['status'] ?? '') === 'active';
         $hasCourseColumn = Db::getOne("SHOW COLUMNS FROM exercises LIKE 'courseId'") ? true : false;
+        $hasSortOrder = Db::getOne("SHOW COLUMNS FROM exercises LIKE 'sortOrder'") ? true : false;
+        $orderBy = $hasSortOrder ? 'ORDER BY sortOrder, exerciseId' : 'ORDER BY exerciseId';
 
         if ($hasCourseColumn) {
-            $this->exercises = Db::getAll("SELECT * FROM exercises WHERE courseId = ? ORDER BY exerciseId", [$courseId]);
+            if ($isStudent) {
+                $this->exercises = Db::getAll(
+                    "SELECT e.*, ue.status AS userStatus, ue.startTime, ue.endTime
+                     FROM exercises e
+                     LEFT JOIN userExercisesWithComputedStatus ue
+                        ON ue.exerciseId = e.exerciseId AND ue.userId = ?
+                     WHERE e.courseId = ?
+                     {$orderBy}",
+                    [$this->auth->userId, $courseId]
+                );
+            } else {
+                $this->exercises = Db::getAll(
+                    "SELECT * FROM exercises WHERE courseId = ? {$orderBy}",
+                    [$courseId]
+                );
+            }
         } else {
-            // For backwards compatibility: if course id is 1 (Sisseastumine) show all exercises, otherwise empty
+            // Backwards compatibility: associate all exercises with default course id 1
             if ($courseId == 1) {
-                $this->exercises = Db::getAll("SELECT * FROM exercises ORDER BY exerciseId");
+                if ($isStudent) {
+                    $this->exercises = Db::getAll(
+                        "SELECT e.*, ue.status AS userStatus, ue.startTime, ue.endTime
+                         FROM exercises e
+                         LEFT JOIN userExercisesWithComputedStatus ue
+                            ON ue.exerciseId = e.exerciseId AND ue.userId = ?
+                         {$orderBy}",
+                        [$this->auth->userId]
+                    );
+                } else {
+                    $this->exercises = Db::getAll("SELECT * FROM exercises {$orderBy}");
+                }
             } else {
                 $this->exercises = [];
             }
         }
 
-        // Determine which tab to show (exercises or ranking). Default is exercises.
-        $this->tab = isset($_GET['tab']) && $_GET['tab'] === 'ranking' ? 'ranking' : 'exercises';
+        $allowedTabs = ['overview', 'exercises', 'ranking'];
+        $defaultTab = $isStudent ? 'overview' : 'exercises';
+        $requestedTab = $_GET['tab'] ?? $defaultTab;
+        $this->tab = in_array($requestedTab, $allowedTabs, true) ? $requestedTab : $defaultTab;
 
-        // Prepare ranking data so view has $this->users regardless of initial tab,
-        // enabling client-side tab switching without a reload.
         $hasCourseColumn = Db::getOne("SHOW COLUMNS FROM exercises LIKE 'courseId'") ? true : false;
 
         if ($hasCourseColumn) {
@@ -104,20 +156,93 @@ class courses extends Controller
                 ", [$courseId]
             );
         } else {
-            // Fallback to admin ranking SQL (no course filtering)
             $allUsers = Db::getAll("\n        SELECT\n            u.*,\n            COUNT(DISTINCT ue.exerciseId) AS userExercisesDone,\n            MIN(a.activityLogTimestamp) AS userFirstLogin,\n            ROW_NUMBER() OVER (\n                ORDER BY\n                    COUNT(DISTINCT ue.exerciseId) DESC,\n                    CASE\n                        WHEN u.userTimeTotal IS NOT NULL THEN 0\n                        ELSE 1\n                    END ASC,\n                    u.userTimeTotal ASC,\n                    u.userId ASC\n            ) AS userRank\n        FROM\n            users u\n        LEFT JOIN\n            activityLog a ON u.userId = a.userId AND a.activityId = 1\n        LEFT JOIN\n            userExercisesWithComputedStatus ue ON u.userId = ue.userId AND ue.status = 'completed'\n        WHERE\n            u.userIsAdmin = 0\n            AND u.userIsTeacher = 0\n            AND u.groupId IS NULL\n        GROUP BY\n            u.userId\n        ORDER BY\n            userRank ASC;\n    ");
         }
 
-        // Filter users who have completed at least one task and compute averages (same as admin)
         $this->filteredUsers = array_filter($allUsers, function ($user) {
             return $user['userExercisesDone'] > 0;
         });
 
-        $this->users = $allUsers;  // Keep all users for ranking display
+        $this->users = $allUsers;
 
         $totalSolvedTasks = array_sum(array_column($this->filteredUsers, 'userExercisesDone'));
         $userCount = count($this->filteredUsers);
         $this->averageExercisesDone = $userCount > 0 ? $totalSolvedTasks / $userCount : 0;
+
+        if ($isStudent) {
+            $completed = 0;
+            foreach ($this->exercises as &$exercise) {
+                $status = $exercise['userStatus'] ?? 'not_started';
+                $label = 'Tegemata';
+                $action = 'Ava';
+                $actionClass = 'btn-primary';
+
+                if ($status === 'completed') {
+                    $label = 'Tehtud';
+                    $action = 'Vaata';
+                    $actionClass = 'btn-outline-success';
+                    $completed++;
+                } elseif ($status === 'started') {
+                    $label = 'Pooleli';
+                    $action = 'Jätka';
+                    $actionClass = 'btn-warning text-dark';
+                }
+
+                $exercise['statusLabel'] = $label;
+                $exercise['actionLabel'] = $action;
+                $exercise['actionClass'] = $actionClass;
+                $exercise['actionDisabled'] = !$this->courseIsActive;
+            }
+            unset($exercise);
+
+            $this->completedExercisesCount = $completed;
+            $this->totalExercisesCount = count($this->exercises);
+            $this->progressLabel = sprintf('Edenemine: %d/%d', $completed, $this->totalExercisesCount);
+
+            $this->studentRanking = array_map(function ($user) {
+                return [
+                    'userRank' => $user['userRank'],
+                    'userName' => $user['userName'],
+                    'userExercisesDone' => $user['userExercisesDone'],
+                ];
+            }, $this->users ?? []);
+
+            $this->linkedAssignments = Db::getAll(
+                "SELECT DISTINCT a.assignmentId, a.assignmentName, a.assignmentDueAt
+                 FROM assignments a
+                 JOIN subjects s ON s.subjectId = a.subjectId
+                 LEFT JOIN userAssignments ua ON ua.assignmentId = a.assignmentId AND ua.userId = ?
+                 WHERE a.courseId = ?
+                   AND (s.groupId = ? OR ua.userId IS NOT NULL)
+                 ORDER BY ISNULL(a.assignmentDueAt), a.assignmentDueAt",
+                [$this->auth->userId, $courseId, $this->auth->groupId]
+            );
+
+            $this->showExerciseSavedToast = isset($_GET['exerciseSaved']) && $_GET['exerciseSaved'] === '1';
+            $this->action = 'view_student';
+        }
+
+        // For teachers/admins also populate linked assignments so the overview shows them
+        if (!isset($this->linkedAssignments)) {
+            if ($this->auth->userIsAdmin) {
+                $this->linkedAssignments = Db::getAll(
+                    "SELECT assignmentId, assignmentName, assignmentDueAt FROM assignments WHERE courseId = ? ORDER BY ISNULL(assignmentDueAt), assignmentDueAt",
+                    [$courseId]
+                );
+            } else {
+                $this->linkedAssignments = Db::getAll(
+                    "SELECT a.assignmentId, a.assignmentName, a.assignmentDueAt
+                     FROM assignments a
+                     JOIN subjects s ON s.subjectId = a.subjectId
+                     WHERE a.courseId = ? AND s.teacherId = ?
+                     ORDER BY ISNULL(a.assignmentDueAt), a.assignmentDueAt",
+                    [$courseId, $this->auth->userId]
+                );
+            }
+        }
+
+        $this->isStudent = $isStudent;
+        $this->courseId = $courseId;
     }
 
     function ranking(): void
@@ -340,6 +465,19 @@ class courses extends Controller
         // Redirect to courses index or new course view
         $_SESSION['flash_success'] = 'Kursus loodud.';
         header('Location: ' . BASE_URL . "courses/{$courseId}");
+        exit();
+    }
+
+    function edit(): void
+    {
+        $courseId = $this->getId();
+        if (!$this->auth->userIsTeacher && !$this->auth->userIsAdmin) {
+            $_SESSION['flash_error'] = 'Sul puudub õigus seda kursust muuta.';
+            header('Location: ' . BASE_URL . "courses/{$courseId}");
+            exit();
+        }
+
+        header('Location: ' . BASE_URL . "courses/{$courseId}?tab=exercises");
         exit();
     }
 }

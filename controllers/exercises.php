@@ -73,6 +73,11 @@ class exercises extends Controller {
         $exerciseId = $this->getId();
         $userId = $this->auth->userId;
 
+        $returnCourseId = isset($_GET['courseId']) ? intval($_GET['courseId']) : null;
+        if ($returnCourseId > 0) {
+            $this->returnCourseId = $returnCourseId;
+        }
+
     $exerciseState = Db::getFirst("SELECT * FROM userExercisesWithComputedStatus WHERE userId = ? AND exerciseId = ?", [$userId, $exerciseId]);
 
         if ($exerciseState) {
