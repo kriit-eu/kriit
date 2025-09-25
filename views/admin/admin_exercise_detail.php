@@ -241,7 +241,7 @@ $progress = App\Db::getAll('
     <div class="container custom-container">
         <div class="detail-card">
             <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
-                <a href="/admin/ranking" class="btn btn-info btn-lg fw-bold shadow-sm rounded-pill px-4 py-2 me-3" style="letter-spacing:0.02em;"><i class="fas fa-arrow-left me-2"></i>Tagasi admini vaatesse</a>
+                <a href="/courses/1" class="btn btn-info btn-lg fw-bold shadow-sm rounded-pill px-4 py-2 me-3" style="letter-spacing:0.02em;"><i class="fas fa-arrow-left me-2"></i>Tagasi admini vaatesse</a>
                 <h2 class="mb-0 flex-grow-1"><i class="fas fa-user"></i> <?= htmlspecialchars($user['userName']) ?> &mdash; Ülesannete detailvaade</h2>
             </div>
             <div class="table-responsive">

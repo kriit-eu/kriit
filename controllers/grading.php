@@ -6,7 +6,7 @@
  */
 class grading extends Controller
 {
-    public $template = 'admin';
+    public $template = 'master';
 
     /**
      * This is the default function that will be called when this controller is invoked

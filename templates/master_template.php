@@ -7,6 +7,10 @@
     <nav class="nav nav-pills flex-column flex-sm-row" style="margin-bottom: 4em">
         <a class="flex-sm-fill text-sm-center nav-link <?= $this->setActive('subjects/index') ?>"
            aria-current="subjects" href="subjects">Ained</a>
+        <?php if (isset($auth) && ($auth->userIsTeacher || $auth->userIsAdmin)): ?>
+            <a class="flex-sm-fill text-sm-center nav-link <?= $this->setActive('grading/index') ?>" href="grading">Hindamine</a>
+            <a class="flex-sm-fill text-sm-center nav-link <?= $this->setActive('courses/index') ?>" href="courses">Kursused</a>
+        <?php endif; ?>
     </nav>
     <?php endif; ?>
     <?php

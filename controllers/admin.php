@@ -641,7 +641,9 @@ class admin extends Controller
 
     function exercises()
     {
-        $this->exercises = Db::getAll("SELECT * FROM exercises");
+        // Old admin/exercises URL should redirect to the Sisseastumine course (id=1)
+        header('Location: ' . BASE_URL . 'courses/1');
+        exit();
     }
 
     function AJAX_editExercise()

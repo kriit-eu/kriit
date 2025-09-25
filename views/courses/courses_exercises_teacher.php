@@ -1,15 +1,16 @@
 <!-- Include Ace editor library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
 
-<div class="row custom-container">
-    <div class="row align-items-center">
-        <div class="col">
-            <h1>Ülesanded</h1>
+<div class="container">
+    <div class="custom-container" style="max-width:1300px;margin:0 auto;">
+        <div class="row align-items-center">
+            <div class="col">
+                <h1>Ülesanded</h1>
+            </div>
+            <div class="col-auto">
+                <button id="add-new-exercise" class="btn btn-success">Lisa uus ülesanne</button>
+            </div>
         </div>
-        <div class="col-auto">
-            <button id="add-new-exercise" class="btn btn-success">Lisa uus ülesanne</button>
-        </div>
-    </div>
     <div class="exercises-container">
         <?php foreach ($exercises as $exercise): ?>
             <section class="exercise-card">
@@ -64,7 +65,6 @@
             </section>
         <?php endforeach; ?>
     </div>
-
 
 </div>
 
@@ -628,12 +628,13 @@
         border: 2px solid red !important; /* Draw a red border */
     }
 
+    /* Constrain content width and center it horizontally */
     #container {
-        max-width: 100%; /* Override Bootstrap's container width */
+        max-width: 1300px; /* Increased width for courses pages */
         padding-left: 0;
         padding-right: 0;
-        margin-left: 0;
-        margin-right: 0;
+        margin-left: auto;
+        margin-right: auto;
     }
 
     .custom-container {
@@ -641,6 +642,8 @@
         margin-right: auto;
         padding-left: 0;
         padding-right: 0;
+        max-width: 1300px;
+        box-sizing: border-box;
     }
 
     .validation-passed {
@@ -663,4 +666,5 @@
 </style>
 
 
+</div>
 

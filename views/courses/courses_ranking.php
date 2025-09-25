@@ -187,3 +187,8 @@
     setInterval(updateTimeLeft, 1000);
     window.addEventListener('DOMContentLoaded', updateTimeLeft);
 </script>
+<?php
+// For now reuse the existing admin ranking view to show per-course ranking
+// The courses controller is responsible for setting $this->users or $this->filteredUsers
+// so include the admin ranking template which expects $this->users etc.
+@include __DIR__ . '/../admin/admin_ranking.php';
