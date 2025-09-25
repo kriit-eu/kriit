@@ -699,6 +699,12 @@ class admin extends Controller
             'exerciseValidationFunction' => isset($_POST['validation_function']) ? $_POST['validation_function'] : '',
         ];
 
+        // If courseId is provided and column exists, include it
+        $hasCourseColumn = Db::getOne("SHOW COLUMNS FROM exercises LIKE 'courseId'") ? true : false;
+        if ($hasCourseColumn && !empty($_POST['courseId']) && is_numeric($_POST['courseId'])) {
+            $data['courseId'] = (int)$_POST['courseId'];
+        }
+
         // Insert the new exercise
         $exerciseId = Db::insert('exercises', $data);
 

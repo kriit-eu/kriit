@@ -168,6 +168,85 @@ class courses extends Controller
         exit();
     }
 
+    // AJAX: create exercise within this course (teachers and admins)
+    function AJAX_createExercise()
+    {
+        if (!$this->auth->userIsTeacher && !$this->auth->userIsAdmin) {
+            stop(403, 'Access denied');
+        }
+
+        if (empty($_POST['exercise_name'])) {
+            stop(400, 'Exercise name is required.');
+        }
+
+        $data = [
+            'exerciseName' => $_POST['exercise_name'],
+            'exerciseInstructions' => $_POST['instructions'] ?? '',
+            'exerciseInitialCode' => $_POST['initial_code'] ?? '',
+            'exerciseValidationFunction' => $_POST['validation_function'] ?? '',
+        ];
+
+        // Attach courseId if provided and column exists
+        $hasCourseColumn = Db::getOne("SHOW COLUMNS FROM exercises LIKE 'courseId'") ? true : false;
+        if ($hasCourseColumn && !empty($_POST['courseId']) && is_numeric($_POST['courseId'])) {
+            $data['courseId'] = (int)$_POST['courseId'];
+        }
+
+        try {
+            $exerciseId = Db::insert('exercises', $data);
+        } catch (\Exception $e) {
+            stop(400, $e->getMessage());
+        }
+
+        stop(200, ['id' => $exerciseId]);
+    }
+
+    function AJAX_editExercise()
+    {
+        if (!$this->auth->userIsTeacher && !$this->auth->userIsAdmin) {
+            stop(403, 'Access denied');
+        }
+
+        $exerciseId = $_POST['id'] ?? null;
+        if (empty($exerciseId) || !is_numeric($exerciseId)) {
+            stop(400, 'Invalid exercise id');
+        }
+
+        if (isset($_POST['exercise_name'])) {
+            Db::update('exercises', ['exerciseName' => $_POST['exercise_name']], 'exerciseId = ?', [$exerciseId]);
+        }
+
+        if (isset($_POST['instructions'])) {
+            Db::update('exercises', ['exerciseInstructions' => $_POST['instructions']], 'exerciseId = ?', [$exerciseId]);
+        }
+
+        if (isset($_POST['initial_code'])) {
+            Db::update('exercises', ['exerciseInitialCode' => $_POST['initial_code']], 'exerciseId = ?', [$exerciseId]);
+        }
+
+        if (isset($_POST['validation_function'])) {
+            Db::update('exercises', ['exerciseValidationFunction' => $_POST['validation_function']], 'exerciseId = ?', [$exerciseId]);
+        }
+
+        stop(200);
+    }
+
+    function AJAX_deleteExercise()
+    {
+        if (!$this->auth->userIsTeacher && !$this->auth->userIsAdmin) {
+            stop(403, 'Access denied');
+        }
+
+        if (empty($_POST['id']) || !is_numeric($_POST['id'])) {
+            stop(400, 'Invalid exercise id');
+        }
+
+        Db::delete('userExercises', 'exerciseId = ?', [$_POST['id']]);
+        Db::delete('exercises', 'exerciseId = ?', [$_POST['id']]);
+
+        stop(200);
+    }
+
     /**
      * Create a new course (POST).
      */
