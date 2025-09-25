@@ -88,7 +88,7 @@
             `<?= addcslashes(trim($exercise['exerciseValidationFunction']), "`\"'\\") ?>`);
         <?php endforeach; ?>
 
-        document.getElementById('add-new-exercise').addEventListener('click', function () {
+    document.getElementById('add-new-exercise').addEventListener('click', function () {
             const newExerciseId = 'new-' + Date.now();
             const newExerciseHTML = `
             <section class="exercise-card" id="exercise-card-${newExerciseId}">
@@ -186,8 +186,8 @@
             document.querySelector('.save-button[data-id="' + exerciseId + '"]').disabled = true;
 
             // Attach event listener to save button
-            document.querySelector('.save-button[data-id="' + exerciseId + '"]').addEventListener('click', function () {
-                saveContent(exerciseId, editorInstructions[exerciseId], editorInitialCodes[exerciseId], editorValidationFunctions[exerciseId], titleChanged);
+        document.querySelector('.save-button[data-id="' + exerciseId + '"]').addEventListener('click', function () {
+            saveContent(exerciseId, editorInstructions[exerciseId], editorInitialCodes[exerciseId], editorValidationFunctions[exerciseId], titleChanged);
             });
 
             document.querySelector('.delete-exercise[data-id="' + exerciseId + '"]').addEventListener('click', function (event) {
@@ -202,7 +202,7 @@
 
 
     function ajaxDeleteExercise(exerciseId, exerciseCard) {
-        ajax('admin/exercises/delete', {id: exerciseId}, function (res) {
+    ajax('courses/deleteExercise', {id: exerciseId}, function (res) {
             if (res.status === 200) {
                 exerciseCard.remove();
             } else {
@@ -409,7 +409,17 @@
         const data = {
             id: isNewExercise ? null : exerciseId
         };
-        const url = `admin/exercises/${isNewExercise ? 'create' : 'edit'}`;
+    const url = `courses/${isNewExercise ? 'createExercise' : 'editExercise'}`;
+        // If we're on a course page, include courseId so backend can associate the exercise
+        try {
+            const pathParts = window.location.pathname.split('/').filter(Boolean);
+            // Expect URL like /courses/{id}
+            if (pathParts.length >= 2 && pathParts[0] === 'courses') {
+                data.courseId = parseInt(pathParts[1], 10);
+            }
+        } catch (e) {
+            // ignore
+        }
 
         const titleElement = document.getElementById('exercise-name-' + exerciseId);
         if (titleChanged[exerciseId] && titleElement?.value.trim()) {

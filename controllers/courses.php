@@ -16,7 +16,12 @@ class courses extends Controller
         }
 
         // List all courses
-        $this->courses = Db::getAll("SELECT * FROM courses ORDER BY sortOrder, id");
+        $hasSortOrder = Db::getOne("SHOW COLUMNS FROM courses LIKE 'sortOrder'") ? true : false;
+        if ($hasSortOrder) {
+            $this->courses = Db::getAll("SELECT * FROM courses ORDER BY sortOrder, id");
+        } else {
+            $this->courses = Db::getAll("SELECT * FROM courses ORDER BY id");
+        }
     }
 
     function view(): void
@@ -32,6 +37,13 @@ class courses extends Controller
 
         if (!$this->course) {
             stop(404, 'Course not found');
+        }
+
+        // Visibility: if private, only admin or creator may view
+        if ($this->course['visibility'] === 'private') {
+            if (!$this->auth->userIsAdmin && intval($this->course['createdBy']) !== intval($this->auth->userId)) {
+                stop(403, 'Sul puudub õigus seda kursust vaadata.');
+            }
         }
 
         // Fetch exercises for this course. We'll assume exercises have a courseId column in future; for now
@@ -118,6 +130,185 @@ class courses extends Controller
         $courseId = $this->getId();
         // Redirect to course view with tab=ranking so user stays on same page and tabs are handled client-side
         header('Location: ' . BASE_URL . "courses/{$courseId}?tab=ranking");
+        exit();
+    }
+
+    /**
+     * Return assignments grouped by subject for the current user to populate the dropdown.
+     * Admins see all subjects/assignments; teachers see only their own subjects.
+     */
+    function assignments_for_dropdown(): void
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        if (!$this->auth->userIsTeacher && !$this->auth->userIsAdmin) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Access denied']);
+            exit();
+        }
+
+        if ($this->auth->userIsAdmin) {
+            $subjects = Db::getAll("SELECT subjectId, subjectName, groupId, teacherId FROM subjects ORDER BY subjectName");
+        } else {
+            // teacher: subjects where subjects.teacherId equals current user
+            $subjects = Db::getAll("SELECT subjectId, subjectName, groupId, teacherId FROM subjects WHERE teacherId = ? ORDER BY subjectName", [$this->auth->userId]);
+        }
+
+        // also include groups and teacher lists to populate filter menus on the client
+        $groups = Db::getAll("SELECT groupId, groupName FROM groups ORDER BY groupName");
+        $teachers = Db::getAll("SELECT userId, userName FROM users WHERE userIsTeacher = 1 ORDER BY userName");
+
+        $out = ['subjects' => [], 'teacherHasSubjects' => count($subjects) > 0, 'groups' => $groups, 'teachers' => $teachers];
+        foreach ($subjects as $s) {
+            // assignments table uses assignmentName; align keys for frontend (id/name)
+            $assignments = Db::getAll("SELECT assignmentId, assignmentName AS name FROM assignments WHERE subjectId = ? ORDER BY assignmentName", [$s['subjectId']]);
+            $out['subjects'][] = ['id' => $s['subjectId'], 'name' => $s['subjectName'], 'groupId' => $s['groupId'], 'teacherId' => $s['teacherId'], 'assignments' => $assignments];
+        }
+
+        echo json_encode($out);
+        exit();
+    }
+
+    // AJAX: create exercise within this course (teachers and admins)
+    function AJAX_createExercise()
+    {
+        if (!$this->auth->userIsTeacher && !$this->auth->userIsAdmin) {
+            stop(403, 'Access denied');
+        }
+
+        if (empty($_POST['exercise_name'])) {
+            stop(400, 'Exercise name is required.');
+        }
+
+        $data = [
+            'exerciseName' => $_POST['exercise_name'],
+            'exerciseInstructions' => $_POST['instructions'] ?? '',
+            'exerciseInitialCode' => $_POST['initial_code'] ?? '',
+            'exerciseValidationFunction' => $_POST['validation_function'] ?? '',
+        ];
+
+        // Attach courseId if provided and column exists
+        $hasCourseColumn = Db::getOne("SHOW COLUMNS FROM exercises LIKE 'courseId'") ? true : false;
+        if ($hasCourseColumn && !empty($_POST['courseId']) && is_numeric($_POST['courseId'])) {
+            $data['courseId'] = (int)$_POST['courseId'];
+        }
+
+        try {
+            $exerciseId = Db::insert('exercises', $data);
+        } catch (\Exception $e) {
+            stop(400, $e->getMessage());
+        }
+
+        stop(200, ['id' => $exerciseId]);
+    }
+
+    function AJAX_editExercise()
+    {
+        if (!$this->auth->userIsTeacher && !$this->auth->userIsAdmin) {
+            stop(403, 'Access denied');
+        }
+
+        $exerciseId = $_POST['id'] ?? null;
+        if (empty($exerciseId) || !is_numeric($exerciseId)) {
+            stop(400, 'Invalid exercise id');
+        }
+
+        if (isset($_POST['exercise_name'])) {
+            Db::update('exercises', ['exerciseName' => $_POST['exercise_name']], 'exerciseId = ?', [$exerciseId]);
+        }
+
+        if (isset($_POST['instructions'])) {
+            Db::update('exercises', ['exerciseInstructions' => $_POST['instructions']], 'exerciseId = ?', [$exerciseId]);
+        }
+
+        if (isset($_POST['initial_code'])) {
+            Db::update('exercises', ['exerciseInitialCode' => $_POST['initial_code']], 'exerciseId = ?', [$exerciseId]);
+        }
+
+        if (isset($_POST['validation_function'])) {
+            Db::update('exercises', ['exerciseValidationFunction' => $_POST['validation_function']], 'exerciseId = ?', [$exerciseId]);
+        }
+
+        stop(200);
+    }
+
+    function AJAX_deleteExercise()
+    {
+        if (!$this->auth->userIsTeacher && !$this->auth->userIsAdmin) {
+            stop(403, 'Access denied');
+        }
+
+        if (empty($_POST['id']) || !is_numeric($_POST['id'])) {
+            stop(400, 'Invalid exercise id');
+        }
+
+        Db::delete('userExercises', 'exerciseId = ?', [$_POST['id']]);
+        Db::delete('exercises', 'exerciseId = ?', [$_POST['id']]);
+
+        stop(200);
+    }
+
+    /**
+     * Create a new course (POST).
+     */
+    function create(): void
+    {
+        // Only teachers and admins may create courses
+        if (!$this->auth->userIsTeacher && !$this->auth->userIsAdmin) {
+            stop(403, 'Access denied');
+        }
+
+        $name = trim($_POST['name'] ?? '');
+        $description = trim($_POST['description'] ?? '');
+        $visibility = ($_POST['visibility'] ?? 'private') === 'public' ? 'public' : 'private';
+        $status = ($_POST['status'] ?? 'inactive') === 'active' ? 'active' : 'inactive';
+    $assignmentId = !empty($_POST['assignmentId']) ? intval($_POST['assignmentId']) : null;
+
+        // Validate
+        if ($name === '') {
+            $_SESSION['flash_error'] = 'Nimi on kohustuslik.';
+            header('Location: ' . BASE_URL . 'courses');
+            exit();
+        }
+
+        // Ensure unique name
+        $exists = Db::getOne("SELECT COUNT(1) FROM courses WHERE name = ?", [$name]);
+        if ($exists) {
+            $_SESSION['flash_error'] = 'Kursus sellise nimega juba eksisteerib.';
+            header('Location: ' . BASE_URL . 'courses');
+            exit();
+        }
+
+        // If teacher and assignment provided, ensure assignment belongs to one of their subjects
+        if (!$this->auth->userIsAdmin && $assignmentId !== null) {
+            // ensure the assignment belongs to a subject taught by this teacher
+            $valid = Db::getOne("SELECT COUNT(1) FROM assignments a JOIN subjects s ON a.subjectId = s.subjectId WHERE a.assignmentId = ? AND s.teacherId = ?", [$assignmentId, $this->auth->userId]);
+            if (!$valid) {
+                $_SESSION['flash_error'] = 'Valitud ülesanne pole sinu õppetöös.';
+                header('Location: ' . BASE_URL . 'courses');
+                exit();
+            }
+        }
+
+        // Insert using Db helper
+        $now = date('Y-m-d H:i:s');
+        $data = [
+            'name' => $name,
+            'description' => $description,
+            'visibility' => $visibility,
+            'status' => $status,
+            'createdBy' => $this->auth->userId,
+            'createdAt' => $now,
+            'updatedAt' => $now,
+        ];
+
+    $courseId = Db::insert('courses', $data);
+
+    // Activity log: course created
+    Activity::create(ACTIVITY_CREATE_COURSE ?? 0, $this->auth->userId, $courseId);
+
+        // Redirect to courses index or new course view
+        $_SESSION['flash_success'] = 'Kursus loodud.';
+        header('Location: ' . BASE_URL . "courses/{$courseId}");
         exit();
     }
 }

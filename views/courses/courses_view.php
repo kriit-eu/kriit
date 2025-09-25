@@ -18,8 +18,8 @@
 <div class="mt-3">
     <div id="panel-exercises" style="display: <?= ($this->tab === 'exercises') ? 'block' : 'none' ?>;">
         <?php
-        // For the default Sisseastumine course (id=1) include the course-specific admin editor
-        if (!empty($this->course) && intval($this->course['id']) === 1) {
+        // If current user is a teacher or admin, include the course-specific teacher editor for any course
+        if (!empty($this->course) && ($this->auth->userIsTeacher || $this->auth->userIsAdmin)) {
             $exercises = $this->exercises;
             include __DIR__ . '/courses_exercises_teacher.php';
         } else {
