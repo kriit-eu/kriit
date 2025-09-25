@@ -64,11 +64,20 @@ class assignments extends Controller
                 'assignmentInstructions' => $assignment['assignmentInstructions'] ?? '',
                     'assignmentInvolvesOpenApi' => $assignment['assignmentInvolvesOpenApi'] ?? false,
                     'assignmentSkipLinkCheck' => isset($assignment['assignmentSkipLinkCheck']) ? (int)$assignment['assignmentSkipLinkCheck'] : 0,
+                'assignmentCourseId' => isset($assignment['courseId']) ? (int)$assignment['courseId'] : null,
+                'assignmentCourseName' => null,
                 'criteria' => $criteria,
                 'solutionUrl' => $studentAssignment['solutionUrl'] ?? '',
                 'currentGrade' => $studentAssignment['userGrade'] ?? '',
                 'assignmentStatusId' => $studentAssignment['assignmentStatusId'] ?? null
             ];
+            // If assignment has a courseId, try to fetch its name
+            if (!empty($response['assignmentCourseId'])) {
+                $course = Db::getFirst('SELECT id AS courseId, name AS courseName FROM courses WHERE id = ?', [$response['assignmentCourseId']]);
+                if ($course) {
+                    $response['assignmentCourseName'] = $course['courseName'];
+                }
+            }
         } else {
             // No student specified, get basic criteria only
         $criteria = Db::getAll('SELECT criterionId, criterionName FROM criteria WHERE assignmentId = ? ORDER BY IFNULL(criterionOrderNr, criterionId) ASC', [$assignmentId]);
@@ -79,8 +88,16 @@ class assignments extends Controller
                 'assignmentInstructions' => $assignment['assignmentInstructions'] ?? '',
                 'assignmentInvolvesOpenApi' => $assignment['assignmentInvolvesOpenApi'] ?? false,
                     'assignmentSkipLinkCheck' => isset($assignment['assignmentSkipLinkCheck']) ? (int)$assignment['assignmentSkipLinkCheck'] : 0,
+                'assignmentCourseId' => isset($assignment['courseId']) ? (int)$assignment['courseId'] : null,
+                'assignmentCourseName' => null,
                 'criteria' => $criteria
             ];
+            if (!empty($response['assignmentCourseId'])) {
+                $course = Db::getFirst('SELECT id AS courseId, name AS courseName FROM courses WHERE id = ?', [$response['assignmentCourseId']]);
+                if ($course) {
+                    $response['assignmentCourseName'] = $course['courseName'];
+                }
+            }
         }
         
         stop(200, $response);
@@ -635,6 +652,35 @@ class assignments extends Controller
             'assignmentHours' => $assignmentHours,
             'assignmentSkipLinkCheck' => isset($_POST['assignmentSkipLinkCheck']) ? (int)$_POST['assignmentSkipLinkCheck'] : 0
         ], 'assignmentId = ?', [$assignmentId]);
+
+        // Handle optional assignmentCourseId update
+        $postedCourseId = isset($_POST['assignmentCourseId']) && $_POST['assignmentCourseId'] !== '' ? (int)$_POST['assignmentCourseId'] : null;
+        if ($postedCourseId !== null) {
+            $courseRow = Db::getFirst('SELECT id, createdBy FROM courses WHERE id = ?', [$postedCourseId]);
+            if (!$courseRow) {
+                stop(400, 'Invalid courseId');
+            }
+
+            if (!$this->auth->userIsAdmin) {
+                $hasCreatedBy = Db::getOne("SHOW COLUMNS FROM courses LIKE 'createdBy'") ? true : false;
+                if ($hasCreatedBy && (int)$courseRow['createdBy'] !== $this->auth->userId) {
+                    stop(403, 'You are not allowed to attach this course');
+                }
+            }
+
+            $hasCourseColumn = Db::getOne("SHOW COLUMNS FROM assignments LIKE 'courseId'") ? true : false;
+            if ($hasCourseColumn) {
+                Db::update('assignments', ['courseId' => $postedCourseId], 'assignmentId = ?', [$assignmentId]);
+            }
+        } else {
+            // If empty string posted or null and column exists, clear the courseId
+            if (isset($_POST['assignmentCourseId']) && $_POST['assignmentCourseId'] === '') {
+                $hasCourseColumn = Db::getOne("SHOW COLUMNS FROM assignments LIKE 'courseId'") ? true : false;
+                if ($hasCourseColumn) {
+                    Db::update('assignments', ['courseId' => null], 'assignmentId = ?', [$assignmentId]);
+                }
+            }
+        }
 
         if ($existAssignment['assignmentName'] !== $assignmentName) {
             $message = "$_POST[teacherName] muutis ülesande nimeks '$assignmentName'.";
@@ -1486,6 +1532,29 @@ class assignments extends Controller
             'assignmentHours' => $assignmentHours,
             'assignmentSkipLinkCheck' => isset($_POST['assignmentSkipLinkCheck']) ? (int)$_POST['assignmentSkipLinkCheck'] : 0
         ];
+
+        // Optionally attach a course to the assignment if provided and the assignments table has the column
+        $postedCourseId = isset($_POST['assignmentCourseId']) && $_POST['assignmentCourseId'] !== '' ? (int)$_POST['assignmentCourseId'] : null;
+        if ($postedCourseId !== null) {
+            // Validate course exists
+            $courseRow = Db::getFirst('SELECT id, createdBy FROM courses WHERE id = ?', [$postedCourseId]);
+            if (!$courseRow) {
+                stop(400, 'Invalid courseId');
+            }
+
+            // If courses.createdBy exists, enforce ownership for non-admins
+            if (!$this->auth->userIsAdmin) {
+                $hasCreatedBy = Db::getOne("SHOW COLUMNS FROM courses LIKE 'createdBy'") ? true : false;
+                if ($hasCreatedBy && (int)$courseRow['createdBy'] !== $this->auth->userId) {
+                    stop(403, 'You are not allowed to attach this course');
+                }
+            }
+
+            $hasCourseColumn = Db::getOne("SHOW COLUMNS FROM assignments LIKE 'courseId'") ? true : false;
+            if ($hasCourseColumn) {
+                $data['courseId'] = $postedCourseId;
+            }
+        }
 
         try {
             $assignmentId = Db::insert('assignments', $data);

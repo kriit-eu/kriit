@@ -686,6 +686,181 @@
         <?php endif; ?>
     </div>
 <?php endif; ?>
+<!-- Course selection modal -->
+<div class="modal fade" id="chooseCourseModal" tabindex="-1" aria-labelledby="chooseCourseModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="chooseCourseModalLabel">Vali kursus</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Sulge"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-2">
+                    <input id="chooseCourseSearch" class="form-control form-control-sm" type="search" placeholder="Otsi kursust..." aria-label="Otsi kursust">
+                </div>
+                <div class="list-group" id="chooseCourseList" style="max-height:50vh;overflow:auto;">
+                    <div class="text-muted">Laen kursuste nimekirja...</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tühista</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Ensure the course chooser modal appears above the edit modal/backdrop */
+    #chooseCourseModal.modal.show {
+        z-index: 2200 !important;
+    }
+    #chooseCourseModal+.modal-backdrop.show {
+        z-index: 2150 !important;
+    }
+    /* Fallback when Bootstrap places backdrop as sibling of body first */
+    body>.modal-backdrop.choose-course-backdrop.show {
+        z-index: 2150 !important;
+    }
+</style>
+
+<script>
+    // Ensure backdrop stacking when course modal is shown/hidden
+    (function() {
+        const modalEl = document.getElementById('chooseCourseModal');
+        if (!modalEl || typeof bootstrap === 'undefined') return;
+        modalEl.addEventListener('shown.bs.modal', function() {
+            setTimeout(function() {
+                var backdrops = Array.from(document.querySelectorAll('.modal-backdrop.show'));
+                if (backdrops.length) {
+                    var confBackdrop = backdrops[backdrops.length - 1];
+                    try { confBackdrop.style.zIndex = '2150'; } catch (e) {}
+                    confBackdrop.classList.add('choose-course-backdrop');
+                }
+                try { modalEl.style.zIndex = '2200'; } catch (e) {}
+            }, 10);
+        });
+        modalEl.addEventListener('hidden.bs.modal', function() {
+            // remove marker class
+            var backdrops = Array.from(document.querySelectorAll('.modal-backdrop.choose-course-backdrop'));
+            backdrops.forEach(bd => bd.classList.remove('choose-course-backdrop'));
+        });
+    })();
+
+    // Simple debounce helper
+    function debounce(fn, wait) {
+        let t;
+        return function() {
+            const args = arguments;
+            clearTimeout(t);
+            t = setTimeout(() => fn.apply(this, args), wait);
+        };
+    }
+
+    // Wire up client-side search/filtering for the course chooser
+    (function() {
+        const searchEl = document.getElementById('chooseCourseSearch');
+        const listEl = document.getElementById('chooseCourseList');
+        if (!searchEl || !listEl) return;
+
+        function filterList() {
+            const q = (searchEl.value || '').trim().toLowerCase();
+            const items = Array.from(listEl.querySelectorAll('.course-select-item'));
+            if (!q) {
+                items.forEach(it => it.style.display = '');
+                return;
+            }
+            items.forEach(it => {
+                const name = (it.dataset.courseName || it.textContent || '').toLowerCase();
+                if (name.indexOf(q) === -1) it.style.display = 'none'; else it.style.display = '';
+            });
+        }
+
+        const debouncedFilter = debounce(filterList, 150);
+        searchEl.addEventListener('input', debouncedFilter);
+        // Clear search when modal hidden
+        const modalEl = document.getElementById('chooseCourseModal');
+        if (modalEl) {
+            modalEl.addEventListener('hidden.bs.modal', function() {
+                try { searchEl.value = ''; } catch (e) {}
+                try { filterList(); } catch (e) {}
+            });
+        }
+    })();
+
+    // Fetch courses for current user when opening the course chooser and render them
+    (function() {
+        const modalEl = document.getElementById('chooseCourseModal');
+        const listEl = document.getElementById('chooseCourseList');
+        const searchEl = document.getElementById('chooseCourseSearch');
+        if (!modalEl || !listEl) return;
+
+        let coursesLoaded = false;
+        let lastCourses = [];
+
+        function renderCourses(courses) {
+            lastCourses = courses || [];
+            if (!Array.isArray(courses) || courses.length === 0) {
+                listEl.innerHTML = '<div class="text-muted">Kursuste nimekiri puudub.</div>';
+                return;
+            }
+            listEl.innerHTML = '';
+            courses.forEach(c => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'list-group-item list-group-item-action course-select-item';
+                btn.dataset.courseId = c.courseId;
+                btn.dataset.courseName = c.courseName;
+                btn.textContent = c.courseName;
+                btn.addEventListener('click', function() {
+                    const courseIdField = document.getElementById('assignmentCourseId');
+                    if (courseIdField) { courseIdField.value = c.courseId; courseIdField.dataset.courseName = c.courseName; }
+                    const useCourse = document.getElementById('assignmentUseCourse'); if (useCourse) useCourse.checked = true;
+                    const chosenName = document.getElementById('chosenCourseName'); if (chosenName) chosenName.textContent = c.courseName;
+                    const chosenLabel = document.getElementById('chosenCourseLabel'); if (chosenLabel) chosenLabel.style.display = '';
+                    // trigger UI update
+                    try { if (useCourse) useCourse.dispatchEvent(new Event('change', { bubbles: true })); } catch (e) {}
+                    // hide modal
+                    const modalInstance = bootstrap.Modal.getInstance(modalEl) || bootstrap.Modal.getOrCreateInstance(modalEl);
+                    if (modalInstance) modalInstance.hide();
+                });
+                listEl.appendChild(btn);
+            });
+            // Re-apply any active search filter
+            try { if (searchEl && searchEl.value) searchEl.dispatchEvent(new Event('input')); } catch (e) {}
+        }
+
+        function fetchCourses() {
+            coursesLoaded = false;
+            listEl.innerHTML = '<div class="text-muted">Laen kursuste nimekirja...</div>';
+            fetch('/courses/ajax_getMyCourses', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(res => res.json())
+                .then(json => {
+                    const courses = (json && Array.isArray(json.courses)) ? json.courses : [];
+                    renderCourses(courses);
+                    coursesLoaded = true;
+                })
+                .catch(err => {
+                    coursesLoaded = false;
+                    listEl.innerHTML = '<div class="text-danger">Kursuste laadimine ebaõnnestus</div>';
+                    console.error('Failed to load courses:', err);
+                });
+        }
+
+        modalEl.addEventListener('shown.bs.modal', function() {
+            if (!coursesLoaded) fetchCourses();
+        });
+
+        // If user clicks the list container (or focuses search), ensure we have loaded courses
+        listEl.addEventListener('click', function() {
+            if (!coursesLoaded) fetchCourses();
+        });
+        if (searchEl) {
+            searchEl.addEventListener('input', function() {
+                if (!coursesLoaded) fetchCourses();
+            });
+        }
+    })();
+</script>
 
 <div class="row <?= $this->isStudent ? 'student-view' : 'teacher-view' ?>">
     <?php foreach ($this->groups as $group): ?>
@@ -1194,6 +1369,17 @@
                             <label for="assignmentHours" class="form-label fw-bold">Tundide arv</label>
                             <input type="number" min="0" step="1" class="form-control form-control-sm" id="assignmentHours" name="assignmentHours" value="" style="max-width:120px;">
                         </div>
+
+                        <!-- Course attaching: checkbox + choose button -->
+                        <div class="mb-3 d-flex align-items-center" id="assignmentCourseContainer" style="gap:8px;">
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" id="assignmentUseCourse">
+                                <label class="form-check-label" for="assignmentUseCourse">Lisa kursus</label>
+                            </div>
+                            <button type="button" class="btn btn-outline-primary btn-sm" id="chooseCourseBtn" style="display:none;">vali kursus</button>
+                            <span id="chosenCourseLabel" style="display:none; font-weight:500;">Valitud: <span id="chosenCourseName"></span></span>
+                            <input type="hidden" id="assignmentCourseId" name="assignmentCourseId" value="">
+                        </div>
                         <div class="mb-3 form-check">
                             <input type="checkbox" class="form-check-input" id="assignmentInvolvesOpenApi"
                                 name="assignmentInvolvesOpenApi">
@@ -1204,7 +1390,7 @@
                             <label class="form-check-label" for="assignmentSkipLinkCheck">Ära kontrolli linkide staatust</label>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label fw-bold">Kriteeriumid
+                            <label id="assignmentCriteriaLabel" class="form-label fw-bold">Kriteeriumid
                                 <button type="button" class="btn btn-link btn-sm p-0 align-text-top ms-2" id="newCriterionHelpBtn" data-bs-toggle="tooltip" data-bs-placement="top" title="Kleebi mitu rida (Enteriga eraldatud). Iga rida lisatakse eraldi kriteeriumina." aria-label="Kriteeriumi abi">
                                     <i class="fa fa-info-circle" aria-hidden="true"></i>
                                 </button>
@@ -1398,6 +1584,18 @@
         } catch (e) {
             formData.append('assignmentSkipLinkCheck', 0);
         }
+        // Include attached courseId if enabled
+        try {
+            const useCourse = document.getElementById('assignmentUseCourse');
+            const courseIdField = document.getElementById('assignmentCourseId');
+            if (useCourse && useCourse.checked && courseIdField && courseIdField.value) {
+                formData.append('assignmentCourseId', courseIdField.value);
+            } else {
+                formData.append('assignmentCourseId', '');
+            }
+        } catch (e) {
+            // ignore
+        }
 
         // AJAX POST to backend
         fetch('/assignments/ajax_editAssignment', {
@@ -1551,6 +1749,12 @@
                 try {
                     document.getElementById('assignmentSkipLinkCheck').checked = assignment.assignmentSkipLinkCheck ? true : false;
                 } catch (e) { /* ignore if element missing */ }
+                // Prefill course selection if backend provides it (assignment.assignmentCourseId or assignment.courseId)
+                try {
+                    var cid = assignment.assignmentCourseId || assignment.courseId || null;
+                    var cname = assignment.assignmentCourseName || assignment.courseName || null;
+                    if (window.__prefillAssignmentCourse) window.__prefillAssignmentCourse(cid, cname);
+                } catch (e) {}
                 var combobox = document.getElementById('assignmentLearningOutcomeCombobox');
                 var subjectExternalId = assignment.subjectExternalId;
                 var outcomes = subjectLearningOutcomes[subjectExternalId] || [];
@@ -1811,6 +2015,137 @@
     }
 
     window.openEditAssignmentModal = openEditAssignmentModal;
+
+    // Course selection handlers
+    function setupCourseSelectionHandlers() {
+        const useCourse = document.getElementById('assignmentUseCourse');
+        const chooseBtn = document.getElementById('chooseCourseBtn');
+        const chosenLabel = document.getElementById('chosenCourseLabel');
+        const chosenName = document.getElementById('chosenCourseName');
+        const courseIdField = document.getElementById('assignmentCourseId');
+
+        function updateUI() {
+            if (useCourse && useCourse.checked) {
+                if (chooseBtn) chooseBtn.style.display = '';
+                if (courseIdField && courseIdField.value) {
+                    if (chosenLabel) chosenLabel.style.display = '';
+                    if (chosenName) chosenName.textContent = courseIdField.dataset.courseName || courseIdField.value;
+                } else {
+                    if (chosenLabel) chosenLabel.style.display = 'none';
+                }
+                // Hide subject-only fields when attaching a course
+                try {
+                    const ovCombobox = document.getElementById('assignmentLearningOutcomeCombobox');
+                    const ovBadges = document.getElementById('assignmentOvBadges');
+                    const criteriaContainer = document.getElementById('editCriteriaContainer');
+                    const criteriaLabel = document.getElementById('assignmentCriteriaLabel');
+                    const criteriaGroup = criteriaLabel ? criteriaLabel.closest('.mb-3') : null;
+                    const addCriterionInline = document.getElementById('addCriterionInlineContainer');
+                    const openApiInput = document.getElementById('assignmentInvolvesOpenApi');
+                    const skipLinkInput = document.getElementById('assignmentSkipLinkCheck');
+
+                    if (ovCombobox) ovCombobox.style.display = 'none';
+                    if (ovBadges) ovBadges.style.display = 'none';
+                    if (criteriaContainer) criteriaContainer.style.display = 'none';
+                    if (criteriaLabel) criteriaLabel.style.display = 'none';
+                    if (criteriaGroup) criteriaGroup.style.display = 'none';
+                    if (addCriterionInline) addCriterionInline.style.display = 'none';
+                    if (openApiInput) { openApiInput.checked = false; const p = openApiInput.closest('.form-check'); if (p) p.style.display = 'none'; }
+                    if (skipLinkInput) { skipLinkInput.checked = false; const p2 = skipLinkInput.closest('.form-check'); if (p2) p2.style.display = 'none'; }
+                } catch (e) {}
+            } else {
+                if (chooseBtn) chooseBtn.style.display = 'none';
+                if (chosenLabel) chosenLabel.style.display = 'none';
+                // Show subject-only fields when not using a course
+                try {
+                    const ovCombobox = document.getElementById('assignmentLearningOutcomeCombobox');
+                    const ovBadges = document.getElementById('assignmentOvBadges');
+                    const criteriaContainer = document.getElementById('editCriteriaContainer');
+                    const criteriaLabel = document.getElementById('assignmentCriteriaLabel');
+                    const criteriaGroup = criteriaLabel ? criteriaLabel.closest('.mb-3') : null;
+                    const addCriterionInline = document.getElementById('addCriterionInlineContainer');
+                    const openApiInput = document.getElementById('assignmentInvolvesOpenApi');
+                    const skipLinkInput = document.getElementById('assignmentSkipLinkCheck');
+
+                    if (ovCombobox) ovCombobox.style.display = '';
+                    if (ovBadges) ovBadges.style.display = '';
+                    if (criteriaContainer) criteriaContainer.style.display = '';
+                    if (criteriaLabel) criteriaLabel.style.display = '';
+                    if (criteriaGroup) criteriaGroup.style.display = '';
+                    if (addCriterionInline) addCriterionInline.style.display = '';
+                    if (openApiInput) { const p = openApiInput.closest('.form-check'); if (p) p.style.display = ''; }
+                    if (skipLinkInput) { const p2 = skipLinkInput.closest('.form-check'); if (p2) p2.style.display = ''; }
+                } catch (e) {}
+            }
+        }
+
+        if (useCourse) {
+            useCourse.addEventListener('change', function() {
+                updateUI();
+            });
+        }
+
+        if (chooseBtn) {
+            chooseBtn.addEventListener('click', function() {
+                const modal = new bootstrap.Modal(document.getElementById('chooseCourseModal'));
+                modal.show();
+            });
+        }
+
+        // Course list clicks
+        document.querySelectorAll('.course-select-item').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                const id = btn.dataset.courseId;
+                const name = btn.dataset.courseName || btn.textContent.trim();
+                if (courseIdField) {
+                    courseIdField.value = id;
+                    courseIdField.dataset.courseName = name;
+                }
+                if (document.getElementById('assignmentUseCourse')) document.getElementById('assignmentUseCourse').checked = true;
+                if (document.getElementById('chosenCourseName')) document.getElementById('chosenCourseName').textContent = name;
+                if (document.getElementById('chosenCourseLabel')) document.getElementById('chosenCourseLabel').style.display = '';
+                // trigger UI update (checkbox change handler) to hide subject-only fields
+                try { document.getElementById('assignmentUseCourse').dispatchEvent(new Event('change', { bubbles: true })); } catch (e) {}
+                // hide modal
+                const modalEl = document.getElementById('chooseCourseModal');
+                const modal = bootstrap.Modal.getInstance(modalEl) || bootstrap.Modal.getOrCreateInstance(modalEl);
+                if (modal) modal.hide();
+                try { if (typeof updateUI === 'function') updateUI(); } catch (e) {}
+            });
+        });
+
+        // Expose a small helper to prefill when opening edit modal
+        window.__prefillAssignmentCourse = function(courseId, courseName) {
+            if (!courseId) {
+                if (courseIdField) { courseIdField.value = ''; delete courseIdField.dataset.courseName; }
+                if (useCourse) {
+                    useCourse.checked = false;
+                    try { useCourse.dispatchEvent(new Event('change', { bubbles: true })); } catch (e) {}
+                }
+                if (chosenLabel) chosenLabel.style.display = 'none';
+                if (chooseBtn) chooseBtn.style.display = 'none';
+                try { if (typeof updateUI === 'function') updateUI(); } catch (e) {}
+                return;
+            }
+            if (courseIdField) { courseIdField.value = courseId; courseIdField.dataset.courseName = courseName || ''; }
+            if (useCourse) {
+                useCourse.checked = true;
+                try { useCourse.dispatchEvent(new Event('change', { bubbles: true })); } catch (e) {}
+            }
+            if (chosenName) chosenName.textContent = courseName || courseId;
+            if (chosenLabel) chosenLabel.style.display = '';
+            if (chooseBtn) chooseBtn.style.display = '';
+            try { if (typeof updateUI === 'function') updateUI(); } catch (e) {}
+        };
+
+        // Initial UI update
+        updateUI();
+    }
+
+    // Ensure handlers exist on DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', function() {
+        try { setupCourseSelectionHandlers(); } catch (e) {}
+    });
 
     // Assignment instructions preview show more/less functionality
     function setupAssignmentInstructionsToggle() {
@@ -2258,6 +2593,17 @@
         }
     if (form.assignmentHours) form.assignmentHours.value = '';
         form.assignmentInvolvesOpenApi.checked = false;
+        // Clear course selection when creating new assignment
+        try {
+            const courseField = document.getElementById('assignmentCourseId');
+            const useCourse = document.getElementById('assignmentUseCourse');
+            const chosenLabel = document.getElementById('chosenCourseLabel');
+            if (courseField) { courseField.value = ''; delete courseField.dataset.courseName; }
+            if (useCourse) useCourse.checked = false;
+            if (chosenLabel) chosenLabel.style.display = 'none';
+            const chooseBtn = document.getElementById('chooseCourseBtn'); if (chooseBtn) chooseBtn.style.display = 'none';
+            try { if (useCourse) useCourse.dispatchEvent(new Event('change', { bubbles: true })); } catch (e) {}
+        } catch (e) {}
     // Remove prefilled marker on user interaction for date inputs
     try {
         const removePrefilled = (e) => {
@@ -2515,6 +2861,16 @@
             // Include hours to initial create POST
             const assignmentHours = form.assignmentHours ? form.assignmentHours.value.trim() : '';
             params.append('assignmentHours', assignmentHours);
+            // Include attached course id when creating
+            try {
+                const useCourse = document.getElementById('assignmentUseCourse');
+                const courseIdField = document.getElementById('assignmentCourseId');
+                if (useCourse && useCourse.checked && courseIdField && courseIdField.value) {
+                    params.append('assignmentCourseId', courseIdField.value);
+                } else {
+                    params.append('assignmentCourseId', '');
+                }
+            } catch (e) {}
             // Include skip-link-check flag for creation
             try { params.append('assignmentSkipLinkCheck', form.assignmentSkipLinkCheck && form.assignmentSkipLinkCheck.checked ? 1 : 0); } catch (e) { params.append('assignmentSkipLinkCheck', 0); }
             // Ensure assignmentEntryDate is sent to server when creating from subjects page.
@@ -2543,19 +2899,36 @@
             });
 
             // Require at least one criterion when creating a new assignment
+            // However, if teacher chose to attach a course (assignmentUseCourse), skip this requirement
             const criteriaInDom = document.querySelectorAll('#editCriteriaContainer .criteria-row').length;
             // Use the locally collected newCriteriaFromDom (avoid undefined global/newCriteria)
             const newCriteriaCount = Array.isArray(newCriteriaFromDom) ? newCriteriaFromDom.length : 0;
-            if (criteriaInDom === 0 && newCriteriaCount === 0) {
-                alert('Lisa vähemalt üks kriteerium!');
-                const inputEl = document.getElementById('newCriterionInput');
-                if (inputEl) {
-                    inputEl.focus();
-                    // brief visual hint
-                    inputEl.classList.add('is-invalid');
-                    setTimeout(() => inputEl.classList.remove('is-invalid'), 1500);
+            try {
+                const useCourseEl = document.getElementById('assignmentUseCourse');
+                const useCourseChecked = useCourseEl && useCourseEl.checked;
+                if (!useCourseChecked && criteriaInDom === 0 && newCriteriaCount === 0) {
+                    alert('Lisa vähemalt üks kriteerium!');
+                    const inputEl = document.getElementById('newCriterionInput');
+                    if (inputEl) {
+                        inputEl.focus();
+                        // brief visual hint
+                        inputEl.classList.add('is-invalid');
+                        setTimeout(() => inputEl.classList.remove('is-invalid'), 1500);
+                    }
+                    return;
                 }
-                return;
+            } catch (e) {
+                // If anything goes wrong reading the checkbox, fall back to requiring criteria
+                if (criteriaInDom === 0 && newCriteriaCount === 0) {
+                    alert('Lisa vähemalt üks kriteerium!');
+                    const inputEl = document.getElementById('newCriterionInput');
+                    if (inputEl) {
+                        inputEl.focus();
+                        inputEl.classList.add('is-invalid');
+                        setTimeout(() => inputEl.classList.remove('is-invalid'), 1500);
+                    }
+                    return;
+                }
             }
 
             console.log('Creating assignment, params:', params.toString());

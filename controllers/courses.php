@@ -134,6 +134,37 @@ class courses extends Controller
     }
 
     /**
+     * AJAX: return courses visible to the current user (teacher's own courses or all for admin)
+     */
+    function ajax_getMyCourses(): void
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        if (!$this->auth->userIsTeacher && !$this->auth->userIsAdmin) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Access denied']);
+            exit();
+        }
+        // Some installations might not have a sortOrder column; detect it and adjust ORDER BY accordingly
+        $hasSortOrder = Db::getOne("SHOW COLUMNS FROM courses LIKE 'sortOrder'") ? true : false;
+        $orderBy = $hasSortOrder ? 'ORDER BY sortOrder, id' : 'ORDER BY id';
+
+        if ($this->auth->userIsAdmin) {
+            $courses = Db::getAll("SELECT id AS courseId, name AS courseName FROM courses {$orderBy}");
+        } else {
+            // Teacher: return courses created by this teacher when possible, fallback to all
+            $hasCreatedBy = Db::getOne("SHOW COLUMNS FROM courses LIKE 'createdBy'") ? true : false;
+            if ($hasCreatedBy) {
+                $courses = Db::getAll("SELECT id AS courseId, name AS courseName FROM courses WHERE createdBy = ? {$orderBy}", [$this->auth->userId]);
+            } else {
+                $courses = Db::getAll("SELECT id AS courseId, name AS courseName FROM courses {$orderBy}");
+            }
+        }
+
+        echo json_encode(['courses' => $courses]);
+        exit();
+    }
+
+    /**
      * Return assignments grouped by subject for the current user to populate the dropdown.
      * Admins see all subjects/assignments; teachers see only their own subjects.
      */

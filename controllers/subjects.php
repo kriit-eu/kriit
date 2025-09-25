@@ -113,6 +113,8 @@ class subjects extends Controller
                                 a.assignmentEntryDate,
                                 a.assignmentHours,
                                 a.assignmentInvolvesOpenApi,
+                                a.courseId AS assignmentCourseId,
+                                c.name AS assignmentCourseName,
 
                                 ua.userGrade,
                                 ua.assignmentStatusId,
@@ -120,10 +122,11 @@ class subjects extends Controller
                                 ua.userAssignmentSubmittedAt,
                                 ua.userAssignmentGradedAt
                         FROM subjects            AS s
-                        JOIN groups              AS g  USING (groupId)
-                        JOIN users               AS u  USING (groupId)
-                        JOIN users               AS t  ON  t.userId = s.teacherId
-                        LEFT JOIN assignments    AS a  USING (subjectId)
+                         JOIN groups              AS g  USING (groupId)
+                         JOIN users               AS u  USING (groupId)
+                         JOIN users               AS t  ON  t.userId = s.teacherId
+                         LEFT JOIN assignments    AS a  USING (subjectId)
+                         LEFT JOIN courses       AS c  ON c.id = a.courseId
                         LEFT JOIN userAssignments AS ua
                                      ON  ua.assignmentId = a.assignmentId
                                      AND ua.userId      = u.userId
@@ -236,6 +239,9 @@ class subjects extends Controller
                         'assignmentId' => $assignmentId,
                         'assignmentName' => $row['assignmentName'],
                         'assignmentInstructions' => $row['assignmentInstructions'],
+                        // Course association (may be null)
+                        'assignmentCourseId' => isset($row['assignmentCourseId']) ? $row['assignmentCourseId'] : null,
+                        'assignmentCourseName' => isset($row['assignmentCourseName']) ? $row['assignmentCourseName'] : null,
                         'assignmentInvolvesOpenApi' => isset($row['assignmentInvolvesOpenApi']) ? (int)$row['assignmentInvolvesOpenApi'] : 0,
                         'assignmentDueAt' => $row['assignmentDueAt'],
                         'assignmentEntryDate' => $row['assignmentEntryDate'],
