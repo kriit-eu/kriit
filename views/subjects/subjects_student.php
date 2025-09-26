@@ -103,10 +103,19 @@
                                     <?php endif; ?>
                                 </div>
                             </td>
-                            <?php /* $st already computed above for filter flag */ ?>
-                            <td class="<?= $st['class'] ?> text-center" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-html="true" title="<?= nl2br(htmlspecialchars($st['tooltipText'])) ?>" data-grade="<?= is_numeric($st['grade'])?intval($st['grade']):'' ?>" data-is-student="true" data-url="assignments/<?= $assignment['assignmentId'] ?>?group=<?= urlencode($group['groupName']) ?>" style="width:120px;min-width:120px;max-width:120px;">
-                                <?= $st['assignmentStatusName']==='Kontrollimisel'?'Kontrollimisel':($st['grade']?:$st['assignmentStatusName']) ?>
-                            </td>
+                            <?php if (!empty($assignment['assignmentCourseId'])): ?>
+                                <td class="text-center" style="width:120px;min-width:120px;max-width:120px;">
+                                    <a href="courses/<?= $assignment['assignmentCourseId'] ?>"
+                                       class="btn btn-primary btn-sm w-100"
+                                       title="Ava selle ülesandega seotud kursus">
+                                        Ava kursus
+                                    </a>
+                                </td>
+                            <?php else: ?>
+                                <td class="<?= $st['class'] ?> text-center" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-html="true" title="<?= nl2br(htmlspecialchars($st['tooltipText'])) ?>" data-grade="<?= is_numeric($st['grade'])?intval($st['grade']):'' ?>" data-is-student="true" data-url="assignments/<?= $assignment['assignmentId'] ?>?group=<?= urlencode($group['groupName']) ?>" style="width:120px;min-width:120px;max-width:120px;">
+                                    <?= $st['assignmentStatusName']==='Kontrollimisel'?'Kontrollimisel':($st['grade']?:$st['assignmentStatusName']) ?>
+                                </td>
+                            <?php endif; ?>
                         </tr>
                     <?php endforeach; ?>
                 </table>

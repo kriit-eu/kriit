@@ -455,6 +455,10 @@
         min-height: 100vh;
     }
 </style>
+<style>
+    /* Small visual tweak: ensure main content has a little space at the bottom */
+    #main-container { padding-bottom: 5px; }
+</style>
 <div>
     <div class="mb-3">
         <h2 class="mb-2"><?= $assignment['assignmentName'] ?></h2>
@@ -477,9 +481,7 @@
         <p class="mb-0"><?= $assignmentInstructionsHtml ?></p>
         <p class="mt-4 fw-bold">Tähtaeg: <?= $assignment['assignmentDueAt'] ?></p>
 
-        <?php if ($isStudent): ?>
-            <!-- Student action panel is rendered inline below only when all criteria are completed. -->
-        <?php endif; ?>
+        <!-- Student action panel is rendered inline below only when all criteria are completed. -->
 
     </div>
 
@@ -602,6 +604,7 @@ foreach ($assignment['students'] as $s):
 
     </div>
 
+    <?php if (empty($assignment['courseId'])): ?>
     <div id="criterionDisplay" class="adaptive-background p-3 mb-5 mt-5">
     <h5 class="mb-3">Kriteeriumid</h5>
     <p class="text-muted small mb-3">Täida kõik kriteeriumid enne ülesande esitamist.</p>
@@ -628,13 +631,12 @@ foreach ($assignment['students'] as $s):
                     </div>
                 <?php endforeach; ?>
             </div>
-            <?php if ($isStudent): ?>
                 <!-- 'Salvesta' button removed: criteria are saved together with the submit action -->
-            <?php endif; ?>
         </form>
     </div>
+    <?php endif; ?>
 
-    <?php if ($isStudent): ?>
+    <?php if (empty($assignment['courseId'])): ?>
     <!-- Inline student panel: appears in page flow instead of as an overlay modal. Render for students but keep hidden by default; client-side will open when appropriate -->
     <div id="studentPanel" class="card mb-4 fade-hidden" style="display:none;">
         <div class="card-header d-flex justify-content-between align-items-center">
@@ -657,17 +659,17 @@ foreach ($assignment['students'] as $s):
             <!-- Kriteeriumid section removed for student submit panel -->
         </div>
         <div class="card-footer text-end">
-            <?php if ($isStudent && !$currentUserIsPositiveGrade): ?>
+            <?php if (!$currentUserIsPositiveGrade): ?>
                 <button type="button" class="btn btn-primary" id="submitButton" style="display:none;">Salvesta muudatused</button>
-            <?php elseif (!$isStudent): ?>
-                <button type="button" class="btn btn-primary" id="submitButton">Salvesta muudatused</button>
-            <?php endif; ?>
-            <!-- Cancel button removed for student submit panel -->
-            <?php if ($isStudent && $currentUserIsPositiveGrade): ?>
+            <?php else: ?>
                 <p class="text-muted small mb-0">Sul on juba positiivne hinne - muudatused pole enam võimalikud.</p>
             <?php endif; ?>
+            <!-- Cancel button removed for student submit panel -->
         </div>
     </div>
+    <?php endif; ?>
+
+    <!-- Student comment section: this view is rendered for students -->
     <div id="commentSection" class="card mb-4">
         <div class="card-body">
             <div class="mb-3">
@@ -705,7 +707,6 @@ foreach ($assignment['students'] as $s):
             </div>
         </div>
     </div>
-    <?php endif; ?>
     <script>
         const assignment = <?= json_encode($assignment) ?>;
         let currentStudentId = null;
@@ -865,7 +866,7 @@ foreach ($assignment['students'] as $s):
             if (!requiredContainer) return;
 
             // Only attach auto-save handlers for student users
-            const isStudentViewer = <?= $isStudent ? 'true' : 'false' ?>;
+                const isStudentViewer = true;
             if (!isStudentViewer) return;
 
             // Debounce helper

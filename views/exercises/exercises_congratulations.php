@@ -9,7 +9,7 @@ if (empty($_SESSION['userId'])) {
 }
 $userId = $_SESSION['userId'];
 $totalExercises = App\Db::getOne('SELECT COUNT(*) FROM exercises');
-$completedExercises = App\Db::getOne('SELECT COUNT(*) FROM userExercisesWithComputedStatus WHERE userId = ? AND status = "completed"', [$userId]);
+$completedExercises = App\Db::getOne('SELECT COUNT(*) FROM userExercises WHERE userId = ? AND status = "completed"', [$userId]);
 if ($completedExercises < $totalExercises) {
     header('Location: /exercises');
     exit;

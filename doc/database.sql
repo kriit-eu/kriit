@@ -1,4 +1,4 @@
--- Dump created on 2025-09-25 14:59:57 by f96b19cfb7e4
+-- Dump created on 2025-09-26 10:45:13 by f96b19cfb7e4
 SET FOREIGN_KEY_CHECKS=0;
 SET @@SESSION.sql_mode='NO_AUTO_VALUE_ON_ZERO';
 
@@ -222,7 +222,7 @@ INSERT INTO `exercises` VALUES
 (4,'Muuda pildi laiust','Muuda pildi laiuseks 200 pikslit.','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 4</title>\n</head>\n<body>\n    <img src=\"https://via.placeholder.com/150\" alt=\"Näidispilt\">\n</body>\n</html>','function validate() {\n return document.querySelector(\'img\').width === 200;\n}',1),
 (5,'Märgista tekstkast kohustuslikuks','Märgista lisatud tekstkast kohustuslikuks.','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 5</title>\n</head>\n<body>\n    <input type=\"text\">\n</body>\n</html>','function validate() {\n return document.querySelector(\'input\').required;\n}',1),
 (6,'Lisa lehele form e-maili väliga','Lisa lehele vorm ja sisesta sinna e-maili väli.','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 6</title>\n</head>\n<body>\n    <!-- Lisa vorm siia -->\n</body>\n</html>','function validate() {\n return !!document.querySelector(\'form\') && !!document.querySelector(\'input[type=\"email\"]\');\n}',1),
-(7,'Muuda tekste positsiooni','Muuda lehe tekst keskel joondatuks (kasuta <code>text-align: center</code>).','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 7</title>\n    <style>body {text-align: left;}</style>\n</head>\n<body>\n    <h1>Tere maailm!</h1>\n    <p>See on lihtne HTML leht.</p>\n</body>\n</html>','function validate() {\n return window.getComputedStyle(document.body).textAlign === \'center\';\n}\n',1),
+(7,'Muuda teksti positsiooni','Muuda lehe tekst keskel joondatuks (kasuta <code>text-align: center</code>).','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 7</title>\n    <style>body {text-align: left;}</style>\n</head>\n<body>\n    <h1>Tere maailm!</h1>\n    <p>See on lihtne HTML leht.</p>\n</body>\n</html>','function validate() {\n return window.getComputedStyle(document.body).textAlign === \'center\';\n}\n',1),
 (8,'Lisa pilt lehele','Lisa lehele pilt <a href=\"https://bit.ly/ipz\">https://bit.ly/ipz</a>.','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 8</title>\n</head>\n<body>\n    <!-- Lisa pilt siia -->\n</body>\n</html>','function validate() {\n return document.querySelector(\'img\') !== null;\n}\n',1),
 (9,'Lisa märkeruut ja märgista valituks','Lisa vormile märkeruut (linnuke) ja märgista see vaikimisi valituks.','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 9</title>\n</head>\n<body>\n    <!-- Lisa märkeruut siia -->\n</body>\n</html>','function validate() {\n return document.querySelector(\'input[type=\"checkbox\"]\').checked;\n}\n',1),
 (10,'Lisa div \'konteiner\' klassiga','Lisa lehele <code>div</code> element ja anna sellele klass \"<code>konteiner</code>\".','<!DOCTYPE html>\n<html lang=\"et\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Ülesanne 21</title>\n</head>\n<body>\n    <!-- Lisa div siia -->\n</body>\n</html>','function validate() {\n return document.querySelector(\'div.konteiner\') !== null;\n}\n',1),
@@ -547,8 +547,10 @@ CREATE TABLE `userExercises` (
 `exerciseId` int unsigned NOT NULL,
 `startTime` timestamp NULL DEFAULT NULL,
 `endTime` timestamp NULL DEFAULT NULL,
+`status` enum('not_started','started','completed','timed_out') NOT NULL DEFAULT 'not_started',
 PRIMARY KEY (`exerciseId`,`userId`),
 KEY `userId` (`userId`),
+KEY `idx_userExercises_status` (`status`),
 CONSTRAINT `userdoneexercises_ibfk_1` FOREIGN KEY (`exerciseId`) REFERENCES `exercises` (`exerciseId`),
 CONSTRAINT `userdoneexercises_ibfk_2` FOREIGN KEY (`userId`) REFERENCES `users` (`userId`)
 );

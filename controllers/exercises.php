@@ -36,7 +36,7 @@ class exercises extends Controller {
                 ue.startTime,
                 ue.endTime
             FROM exercises e
-            LEFT JOIN userExercisesWithComputedStatus ue
+            LEFT JOIN userExercises ue
                 ON e.exerciseId = ue.exerciseId
                 AND ue.userId = ?
             ORDER BY e.exerciseId",
@@ -73,7 +73,12 @@ class exercises extends Controller {
         $exerciseId = $this->getId();
         $userId = $this->auth->userId;
 
-    $exerciseState = Db::getFirst("SELECT * FROM userExercisesWithComputedStatus WHERE userId = ? AND exerciseId = ?", [$userId, $exerciseId]);
+        $returnCourseId = isset($_GET['courseId']) ? intval($_GET['courseId']) : null;
+        if ($returnCourseId > 0) {
+            $this->returnCourseId = $returnCourseId;
+        }
+
+    $exerciseState = Db::getFirst("SELECT * FROM userExercises WHERE userId = ? AND exerciseId = ?", [$userId, $exerciseId]);
 
         if ($exerciseState) {
             if ($exerciseState['status'] === 'completed') {
@@ -93,7 +98,8 @@ class exercises extends Controller {
             } elseif ($exerciseState['status'] === 'not_started') {
                 // Set startTime (status will be computed automatically)
                 Db::update('userExercises', [
-                    'startTime' => date('Y-m-d H:i:s')
+                    'startTime' => date('Y-m-d H:i:s'),
+                    'status' => 'started'
                 ], 'userId = ? AND exerciseId = ?', [$userId, $exerciseId]);
                 $this->elapsedTime = 0;
             } else {
@@ -104,6 +110,7 @@ class exercises extends Controller {
                 'userId' => $userId,
                 'exerciseId' => $exerciseId,
                 'startTime' => date('Y-m-d H:i:s'),
+                'status' => 'started'
             ]);
             $this->elapsedTime = 0;
         }
@@ -155,7 +162,7 @@ class exercises extends Controller {
     function congratulations()
     {
         $userId = $_SESSION['userId'];
-        $this->solvedExercisesCount = Db::getOne("SELECT COUNT(*) FROM userExercisesWithComputedStatus WHERE userId = ? AND status = 'completed'", [$userId]);
+    $this->solvedExercisesCount = Db::getOne("SELECT COUNT(*) FROM userExercises WHERE userId = ? AND status = 'completed'", [$userId]);
 
         Activity::create(ACTIVITY_LOGOUT, $userId);
     }
@@ -176,6 +183,7 @@ class exercises extends Controller {
                 Db::insert('userExercises', [
                     'userId' => $userId,
                     'exerciseId' => $exerciseId,
+                    'status' => 'not_started',
                 ]);
             }
         }
@@ -261,26 +269,27 @@ class exercises extends Controller {
 
     private function markExerciseAsSolved($userId, $exerciseId)
     {
-    $exerciseState = Db::getFirst("SELECT * FROM userExercisesWithComputedStatus WHERE userId = ? AND exerciseId = ?", [$userId, $exerciseId]);
+    $exerciseState = Db::getFirst("SELECT * FROM userExercises WHERE userId = ? AND exerciseId = ?", [$userId, $exerciseId]);
 
         if ($exerciseState) {
-            if ($exerciseState['status'] === 'completed') {
+            if (($exerciseState['status'] ?? null) === 'completed') {
                 Activity::create(ACTIVITY_SOLVED_AGAIN_THE_SAME_EXERCISE, $userId, $exerciseId);
                 return;
             }
             Db::update('userExercises',
-                ['endTime' => date('Y-m-d H:i:s')],
+                ['endTime' => date('Y-m-d H:i:s'), 'status' => 'completed'],
                 "userId = ? AND exerciseId = ?",
                 [$userId, $exerciseId]
             );
             Activity::create(ACTIVITY_SOLVED_EXERCISE, $userId, $exerciseId);
         } else {
-            // This case is unlikely if view() logic is correct, but as a fallback:
+            // Fallback: insert a completed row
             Db::insert('userExercises', [
                 'userId' => $userId,
                 'exerciseId' => $exerciseId,
                 'startTime' => date('Y-m-d H:i:s'),
-                'endTime' => date('Y-m-d H:i:s')
+                'endTime' => date('Y-m-d H:i:s'),
+                'status' => 'completed'
             ]);
             Activity::create(ACTIVITY_SOLVED_EXERCISE, $userId, $exerciseId);
         }

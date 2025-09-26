@@ -41,7 +41,7 @@ class admin extends Controller
         LEFT JOIN
             activityLog a ON u.userId = a.userId AND a.activityId = 1
         LEFT JOIN
-            userExercisesWithComputedStatus ue ON u.userId = ue.userId AND ue.status = 'completed'
+            userExercises ue ON u.userId = ue.userId AND ue.status = 'completed'
         WHERE
             u.userIsAdmin = 0
             AND u.userIsTeacher = 0
