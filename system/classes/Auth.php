@@ -96,8 +96,19 @@ class Auth
             $this->show_login(['Tundmatu isik']);
         }
 
+        // If the user has been added to a group (i.e. is a student), ensure any stale
+        // userTimeUpAt value is cleared so they won't be treated as having a finished
+        // timed session and redirected to the timeup page. Persist change to DB and
+        // update the local $user array so subsequent checks use the new value.
+        if (!empty($user['groupId']) && $user['userTimeUpAt'] !== null) {
+            Db::update('users', ['userTimeUpAt' => null], 'userId = ?', [$user['userId']]);
+            $user['userTimeUpAt'] = null;
+        }
+
         // Show login again if user has already completed the exercises
-        if ($user['userTimeUpAt'] !== null && strtotime($user['userTimeUpAt']) < time()) {
+        $hasTimedOut = ($user['userTimeUpAt'] !== null && strtotime($user['userTimeUpAt']) < time());
+        $isExemptFromTimeout = (!empty($user['groupId']) || !empty($user['userIsTeacher']) || !empty($user['userIsAdmin']));
+        if ($hasTimedOut && !$isExemptFromTimeout) {
             $this->show_login(['Katsed on juba sooritatud!']);
         }
 
