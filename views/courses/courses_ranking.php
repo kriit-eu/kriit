@@ -1,3 +1,67 @@
+<?php
+// If controller didn't provide $users (or we want to refresh from DB), load users and aggregate
+// per-course completed exercise counts using the userExercises table joined with exercises.
+use App\Db;
+
+$courseId = $this->courseId ?? null;
+if (empty($users) && $courseId) {
+    // Load users ordered by their userTimeUpAt as requested
+    $dbUsers = Db::getAll("SELECT * FROM users ORDER BY userTimeUpAt DESC");
+
+    $users = [];
+    foreach ($dbUsers as $u) {
+        // Skip teachers and admins from ranking list
+        if (!empty($u['userIsTeacher']) || !empty($u['userIsAdmin'])) {
+            continue;
+        }
+        // Count distinct completed exercises for this course using the raw userExercises table
+        // Here we consider a row completed when endTime IS NOT NULL
+        $count = Db::getOne(
+            "SELECT COUNT(DISTINCT ue.exerciseId) FROM userExercises ue JOIN exercises e ON ue.exerciseId = e.exerciseId WHERE ue.userId = ? AND e.courseId = ? AND ue.endTime IS NOT NULL",
+            [$u['userId'], $courseId]
+        );
+
+        $users[] = [
+            'userId' => $u['userId'],
+            'userName' => $u['userName'],
+            'userPersonalCode' => $u['userPersonalCode'] ?? '',
+            'userTimeTotal' => $u['userTimeTotal'] ?? null,
+            'userTimeUpAt' => $u['userTimeUpAt'] ?? null,
+            // Include groupId so the view can decide to hide grouped users for legacy course 1
+            'groupId' => $u['groupId'] ?? null,
+            'userExercisesDone' => (int)$count,
+        ];
+    }
+
+    // If this is course 1, apply legacy filter: exclude users who belong to a group
+    if ($courseId == 1) {
+        $users = array_values(array_filter($users, function ($x) { return empty($x['groupId']); }));
+    }
+
+    // Compute ranks: simply by current ordering (userTimeUpAt DESC) but prefer to rank by exercises done desc then time
+    usort($users, function ($a, $b) {
+        if ($a['userExercisesDone'] !== $b['userExercisesDone']) return $b['userExercisesDone'] <=> $a['userExercisesDone'];
+        // Fallback to userTimeTotal asc (smaller is better) if available
+        $at = $a['userTimeTotal'] ?? PHP_INT_MAX;
+        $bt = $b['userTimeTotal'] ?? PHP_INT_MAX;
+        if ($at !== $bt) return $at <=> $bt;
+        return $a['userId'] <=> $b['userId'];
+    });
+
+    $rank = 1;
+    foreach ($users as &$u) {
+        $u['userRank'] = $rank++;
+    }
+    unset($u);
+
+    // Compute average
+    $filtered = array_filter($users, function ($x) { return ($x['userExercisesDone'] ?? 0) > 0; });
+    $totalSolved = array_sum(array_column($filtered, 'userExercisesDone'));
+    $userCount = count($filtered);
+    $this->averageExercisesDone = $userCount > 0 ? $totalSolved / $userCount : 0;
+}
+?>
+
 <h1 style="margin-bottom: 1em">Kandidaadi Ranking</h1>
 <style>
     /* Responsive styles for phones */
@@ -188,7 +252,11 @@
     window.addEventListener('DOMContentLoaded', updateTimeLeft);
 </script>
 <?php
-// For now reuse the existing admin ranking view to show per-course ranking
-// The courses controller is responsible for setting $this->users or $this->filteredUsers
-// so include the admin ranking template which expects $this->users etc.
-@include __DIR__ . '/../admin/admin_ranking.php';
+// Previously this file attempted to include an admin ranking template
+// which doesn't exist in some installations and caused a fatal error.
+// The per-course ranking table is rendered above, so no include is necessary.
+// If an admin ranking template is added later, guard it with file_exists here.
+// Example (uncomment to enable):
+// if (file_exists(__DIR__ . '/../admin/admin_ranking.php')) {
+//     include __DIR__ . '/../admin/admin_ranking.php';
+// }

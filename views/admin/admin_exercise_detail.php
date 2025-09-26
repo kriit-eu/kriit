@@ -22,10 +22,10 @@ $progress = App\Db::getAll('
         ue.startTime AS startedAt, 
         ue.endTime AS completedAt, 
         ue.status,
-        ue.userTimeUpAt,
-        ue.durationSeconds
+        NULL AS userTimeUpAt,
+        NULL AS durationSeconds
     FROM exercises e
-    LEFT JOIN userExercisesWithComputedStatus ue ON ue.exerciseId = e.exerciseId AND ue.userId = ?
+    LEFT JOIN userExercises ue ON ue.exerciseId = e.exerciseId AND ue.userId = ?
     ORDER BY e.exerciseId
 ', [$userId]);
 
@@ -281,24 +281,42 @@ $progress = App\Db::getAll('
                                 </td>
                                     <td data-label="Kestus">
                                     <?php
-                                    if ($row['status'] === 'completed' && $row['durationSeconds']) {
-                                        $duration = $row['durationSeconds'];
-                                        $hours = floor($duration / 3600);
-                                        $minutes = floor(($duration % 3600) / 60);
-                                        $seconds = $duration % 60;
-                                        printf('<span class="badge bg-success">%02d:%02d:%02d</span>', $hours, $minutes, $seconds);
+                                    // If DB supplies durationSeconds use it; otherwise compute client-side from timestamps
+                                    if ($row['status'] === 'completed') {
+                                        if (!empty($row['durationSeconds'])) {
+                                            $duration = $row['durationSeconds'];
+                                            $hours = floor($duration / 3600);
+                                            $minutes = floor(($duration % 3600) / 60);
+                                            $seconds = $duration % 60;
+                                            printf('<span class="badge bg-success">%02d:%02d:%02d</span>', $hours, $minutes, $seconds);
+                                        } elseif (!empty($row['startedAt']) && !empty($row['completedAt'])) {
+                                            // Render placeholder and data attributes; JS will compute duration
+                                            $startIso = (new DateTime($row['startedAt']))->format(DateTime::ATOM);
+                                            $endIso = (new DateTime($row['completedAt']))->format(DateTime::ATOM);
+                                            echo '<span class="badge bg-success duration" data-start="' . htmlspecialchars($startIso) . '" data-end="' . htmlspecialchars($endIso) . '">-</span>';
+                                        } else {
+                                            echo '<span class="text-muted">-</span>';
+                                        }
                                     } elseif ($row['status'] === 'started' && $row['startedAt']) {
                                         // Live timer for started exercises
                                         $startIso = (new DateTime($row['startedAt']))->format(DateTime::ATOM);
                                         $timeUpAtIso = $row['userTimeUpAt'] ? (new DateTime($row['userTimeUpAt']))->format(DateTime::ATOM) : null;
                                         echo '<span class="badge bg-warning text-dark live-timer" data-start="' . htmlspecialchars($startIso) . '" data-timeup="' . htmlspecialchars($timeUpAtIso ?: '') . '">00:00:00</span>';
-                                    } elseif ($row['status'] === 'timed_out' && $row['durationSeconds']) {
-                                        // Show duration up to time limit (computed by database)
-                                        $duration = $row['durationSeconds'];
-                                        $hours = floor($duration / 3600);
-                                        $minutes = floor(($duration % 3600) / 60);
-                                        $seconds = $duration % 60;
-                                        printf('<span class="badge bg-danger">%02d:%02d:%02d</span>', $hours, $minutes, $seconds);
+                                    } elseif ($row['status'] === 'timed_out') {
+                                        if (!empty($row['durationSeconds'])) {
+                                            $duration = $row['durationSeconds'];
+                                            $hours = floor($duration / 3600);
+                                            $minutes = floor(($duration % 3600) / 60);
+                                            $seconds = $duration % 60;
+                                            printf('<span class="badge bg-danger">%02d:%02d:%02d</span>', $hours, $minutes, $seconds);
+                                        } elseif (!empty($row['startedAt']) && !empty($row['userTimeUpAt'])) {
+                                            // Show duration up to time limit; compute client-side
+                                            $startIso = (new DateTime($row['startedAt']))->format(DateTime::ATOM);
+                                            $timeUpAtIso = (new DateTime($row['userTimeUpAt']))->format(DateTime::ATOM);
+                                            echo '<span class="badge bg-danger duration" data-start="' . htmlspecialchars($startIso) . '" data-end="' . htmlspecialchars($timeUpAtIso) . '">-</span>';
+                                        } else {
+                                            echo '<span class="text-muted">-</span>';
+                                        }
                                     } else {
                                         echo '<span class="text-muted">-</span>';
                                     }
@@ -367,6 +385,23 @@ $progress = App\Db::getAll('
     }
     setInterval(updateLiveTimers, 1000);
     window.addEventListener('DOMContentLoaded', updateLiveTimers);
+    // Compute and render durations for completed/timed_out rows when DB doesn't provide durationSeconds
+    function computeDurations() {
+        document.querySelectorAll('.duration').forEach(function(el) {
+            var startIso = el.getAttribute('data-start');
+            var endIso = el.getAttribute('data-end');
+            if (!startIso || !endIso) return;
+            var start = new Date(startIso);
+            var end = new Date(endIso);
+            var diff = Math.floor((end - start) / 1000);
+            if (diff < 0) diff = 0;
+            var hours = Math.floor(diff / 3600);
+            var minutes = Math.floor((diff % 3600) / 60);
+            var seconds = diff % 60;
+            el.textContent = (hours < 10 ? '0' : '') + hours + ':' + (minutes < 10 ? '0' : '') + minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
+        });
+    }
+    document.addEventListener('DOMContentLoaded', computeDurations);
 </script>
 
 </html>

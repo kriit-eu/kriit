@@ -146,7 +146,7 @@ class assignments extends Controller
 
         $data = Db::getAll("
                 SELECT
-                    a.assignmentId, a.assignmentName, a.assignmentInstructions, a.assignmentDueAt, a.assignmentInvolvesOpenApi,
+                    a.assignmentId, a.assignmentName, a.assignmentInstructions, a.assignmentDueAt, a.assignmentInvolvesOpenApi, a.courseId, a.assignmentSkipLinkCheck,
                     c.criterionId, c.criterionName, c.criterionOrderNr,
                     u.userId AS studentId, u.userName AS studentName, u.groupId, g.groupName,
                     ua.userGrade, ua.assignmentStatusId, ua.solutionUrl, ua.comments,
@@ -173,6 +173,8 @@ class assignments extends Controller
             'assignmentInstructions' => null,
             'assignmentDueAt' => null,
             'assignmentInvolvesOpenApi' => 0,
+            'courseId' => null,
+            'assignmentSkipLinkCheck' => 0,
             'teacherId' => null,
             'teacherName' => null,
             'criteria' => [],
@@ -200,6 +202,7 @@ class assignments extends Controller
                 $assignment['assignmentDueAt'] = !empty($basic['assignmentDueAt']) ? date('d.m.Y', strtotime($basic['assignmentDueAt'])) : 'Pole tähtaega';
                 $assignment['assignmentInvolvesOpenApi'] = (int)$basic['assignmentInvolvesOpenApi'];
                 $assignment['assignmentSkipLinkCheck'] = isset($basic['assignmentSkipLinkCheck']) ? (int)$basic['assignmentSkipLinkCheck'] : 0;
+                $assignment['courseId'] = isset($basic['courseId']) ? $basic['courseId'] : null;
                 $assignment['teacherId'] = $basic['teacherId'];
                 $assignment['teacherName'] = $basic['teacherName'];
             }
@@ -241,11 +244,13 @@ class assignments extends Controller
         $parsedown = Parsedown::instance();
 
         foreach ($data as $row) {
-            if (empty($assignment['assignmentName'])) {
+                if (empty($assignment['assignmentName'])) {
                 $assignment['assignmentName'] = $row['assignmentName'];
                 $assignment['assignmentInstructions'] = $row['assignmentInstructions'];
                 $assignment['assignmentDueAt'] = !empty($row['assignmentDueAt']) ? date('d.m.Y', strtotime($row['assignmentDueAt'])) : 'Pole tähtaega';
                 $assignment['assignmentInvolvesOpenApi'] = (int)$row['assignmentInvolvesOpenApi'];
+                    $assignment['courseId'] = isset($row['courseId']) ? $row['courseId'] : null;
+                    $assignment['assignmentSkipLinkCheck'] = isset($row['assignmentSkipLinkCheck']) ? (int)$row['assignmentSkipLinkCheck'] : 0;
                 $assignment['teacherId'] = $row['teacherId'];
                 $assignment['teacherName'] = $row['teacherName'];
                 $assignment['primaryGroupName'] = $primaryGroupName;

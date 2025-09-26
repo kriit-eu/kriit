@@ -73,6 +73,33 @@ class courses extends Controller
 
         $this->courseIsActive = ($this->course['status'] ?? '') === 'active';
         $hasCourseColumn = Db::getOne("SHOW COLUMNS FROM exercises LIKE 'courseId'") ? true : false;
+        // If course 1 should use the legacy behavior, avoid limiting by userAssignments for courseId == 1
+        $limitToAssignedSql = '';
+        $assignedParams = [];
+        if ($courseId != 1) {
+            $limitToAssignedSql = " AND u.userId IN (
+                        SELECT DISTINCT ua.userId
+                        FROM userAssignments ua
+                        JOIN assignments a ON ua.assignmentId = a.assignmentId
+                        WHERE a.courseId = ?
+                    )";
+            $assignedParams = [$courseId];
+        }
+        // Course 1 legacy: exclude users who are assigned to groups (groupId IS NOT NULL)
+        $groupFilterSql = '';
+        if ($courseId == 1 && Db::getOne("SHOW COLUMNS FROM users LIKE 'groupId'")) {
+            $groupFilterSql = ' AND u.groupId IS NULL';
+        }
+        // Detect optional user flags columns (older installs may not have them)
+        $hasUserIsDeleted = Db::getOne("SHOW COLUMNS FROM users LIKE 'userIsDeleted'") ? true : false;
+        $hasUserIsActive = Db::getOne("SHOW COLUMNS FROM users LIKE 'userIsActive'") ? true : false;
+        $userFlagsSql = '';
+        if ($hasUserIsDeleted) {
+            $userFlagsSql .= " AND COALESCE(u.userIsDeleted, 0) = 0";
+        }
+        if ($hasUserIsActive) {
+            $userFlagsSql .= " AND COALESCE(u.userIsActive, 1) = 1";
+        }
         $hasSortOrder = Db::getOne("SHOW COLUMNS FROM exercises LIKE 'sortOrder'") ? true : false;
         $orderBy = $hasSortOrder ? 'ORDER BY sortOrder, exerciseId' : 'ORDER BY exerciseId';
 
@@ -81,7 +108,7 @@ class courses extends Controller
                 $this->exercises = Db::getAll(
                     "SELECT e.*, ue.status AS userStatus, ue.startTime, ue.endTime
                      FROM exercises e
-                     LEFT JOIN userExercisesWithComputedStatus ue
+                    LEFT JOIN userExercises ue
                         ON ue.exerciseId = e.exerciseId AND ue.userId = ?
                      WHERE e.courseId = ?
                      {$orderBy}",
@@ -100,8 +127,8 @@ class courses extends Controller
                     $this->exercises = Db::getAll(
                         "SELECT e.*, ue.status AS userStatus, ue.startTime, ue.endTime
                          FROM exercises e
-                         LEFT JOIN userExercisesWithComputedStatus ue
-                            ON ue.exerciseId = e.exerciseId AND ue.userId = ?
+                                 LEFT JOIN userExercises ue
+                                     ON ue.exerciseId = e.exerciseId AND ue.userId = ?
                          {$orderBy}",
                         [$this->auth->userId]
                     );
@@ -121,15 +148,16 @@ class courses extends Controller
         $hasCourseColumn = Db::getOne("SHOW COLUMNS FROM exercises LIKE 'courseId'") ? true : false;
 
         if ($hasCourseColumn) {
+            // Include all users (including those with zero solved exercises) but compute solved count for the course
             $allUsers = Db::getAll(
                 "
                 SELECT
                     u.*,
-                    COUNT(DISTINCT ue.exerciseId) AS userExercisesDone,
+                    COALESCE(COUNT(DISTINCT CASE WHEN e.courseId = ? THEN e.exerciseId END), 0) AS userExercisesDone,
                     MIN(a.activityLogTimestamp) AS userFirstLogin,
                     ROW_NUMBER() OVER (
                         ORDER BY
-                            COUNT(DISTINCT ue.exerciseId) DESC,
+                            COALESCE(COUNT(DISTINCT CASE WHEN e.courseId = ? THEN e.exerciseId END), 0) DESC,
                             CASE
                                 WHEN u.userTimeTotal IS NOT NULL THEN 0
                                 ELSE 1
@@ -142,27 +170,61 @@ class courses extends Controller
                 LEFT JOIN
                     activityLog a ON u.userId = a.userId AND a.activityId = 1
                 LEFT JOIN
-                    userExercisesWithComputedStatus ue ON u.userId = ue.userId AND ue.status = 'completed'
+                    userExercises ue ON u.userId = ue.userId AND ue.status = 'completed'
                 LEFT JOIN
-                    exercises e ON ue.exerciseId = e.exerciseId AND e.courseId = ?
+                    exercises e ON ue.exerciseId = e.exerciseId
                 WHERE
                     u.userIsAdmin = 0
                     AND u.userIsTeacher = 0
-                    AND u.groupId IS NULL
+                    {$userFlagsSql}
+                    {$limitToAssignedSql}
+                    {$groupFilterSql}
                 GROUP BY
                     u.userId
                 ORDER BY
                     userRank ASC
-                ", [$courseId]
+                ", array_merge([$courseId, $courseId], $assignedParams)
             );
         } else {
-            $allUsers = Db::getAll("\n        SELECT\n            u.*,\n            COUNT(DISTINCT ue.exerciseId) AS userExercisesDone,\n            MIN(a.activityLogTimestamp) AS userFirstLogin,\n            ROW_NUMBER() OVER (\n                ORDER BY\n                    COUNT(DISTINCT ue.exerciseId) DESC,\n                    CASE\n                        WHEN u.userTimeTotal IS NOT NULL THEN 0\n                        ELSE 1\n                    END ASC,\n                    u.userTimeTotal ASC,\n                    u.userId ASC\n            ) AS userRank\n        FROM\n            users u\n        LEFT JOIN\n            activityLog a ON u.userId = a.userId AND a.activityId = 1\n        LEFT JOIN\n            userExercisesWithComputedStatus ue ON u.userId = ue.userId AND ue.status = 'completed'\n        WHERE\n            u.userIsAdmin = 0\n            AND u.userIsTeacher = 0\n            AND u.groupId IS NULL\n        GROUP BY\n            u.userId\n        ORDER BY\n            userRank ASC;\n    ");
+            // installations without exercises.courseId treat all exercises as belonging to course 1
+            if ($courseId == 1) {
+                // Build a derived table that counts completed exercises per user for the requested course
+                // but include all users and left-join the counts so zero-count users are present with solvedCount = 0
+                $allUsers = Db::getAll(
+                    "SELECT
+                        u.*,
+                        COALESCE(ue_c.solvedCount, 0) AS userExercisesDone,
+                        MIN(a.activityLogTimestamp) AS userFirstLogin,
+                        ROW_NUMBER() OVER (
+                            ORDER BY
+                                COALESCE(ue_c.solvedCount, 0) DESC,
+                                CASE WHEN u.userTimeTotal IS NOT NULL THEN 0 ELSE 1 END ASC,
+                                u.userTimeTotal ASC,
+                                u.userId ASC
+                        ) AS userRank
+                    FROM users u
+                    LEFT JOIN activityLog a ON u.userId = a.userId AND a.activityId = 1
+                    LEFT JOIN (
+                        SELECT ue.userId, COUNT(DISTINCT ue.exerciseId) AS solvedCount
+                        FROM userExercises ue
+                        JOIN exercises e ON ue.exerciseId = e.exerciseId
+                        WHERE ue.status = 'completed' AND e.courseId = ?
+                        GROUP BY ue.userId
+                    ) ue_c ON ue_c.userId = u.userId
+                                                                                                    WHERE u.userIsAdmin = 0 AND u.userIsTeacher = 0
+                                                                                                        {$userFlagsSql}
+                                                                                                        {$limitToAssignedSql}
+                                                                                                        {$groupFilterSql}
+                    GROUP BY u.userId, ue_c.solvedCount
+                    ORDER BY userRank ASC",
+                    array_merge([$courseId], $assignedParams)
+                );
+
+            }
         }
 
-        $this->filteredUsers = array_filter($allUsers, function ($user) {
-            return $user['userExercisesDone'] > 0;
-        });
-
+        // Since SQL returns only users with >0 solved exercises, assign directly
+        $this->filteredUsers = $allUsers;
         $this->users = $allUsers;
 
         $totalSolvedTasks = array_sum(array_column($this->filteredUsers, 'userExercisesDone'));

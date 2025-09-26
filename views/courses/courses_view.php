@@ -94,7 +94,8 @@
 
     <div id="panel-ranking" class="tab-pane fade <?= $this->tab === 'ranking' ? 'show active' : '' ?>" role="tabpanel">
         <?php
-            $users = $this->users ?? [];
+            // Only pass users who have solved at least one exercise for this course
+            $users = $this->filteredUsers ?? [];
             include __DIR__ . '/courses_ranking.php';
         ?>
     </div>
